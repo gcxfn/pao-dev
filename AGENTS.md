@@ -83,10 +83,10 @@
 ## Structure
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
-- `src/` — pi 扩展代码（待建）
-- `tests/` — 测试（待建）
-- `部门/` — 部门配方（待建）
-- `.agents/notes/{implemented,rejected}/` — 决策笔记：选型、架构/流程决策与其否决留笔记；纯机械改动不留
+- `PAO/` — pao 本体：pi 0.99.2 源码 fork（独立 git 仓库，保留上游 remote，主分支 `pao-main`，基线 0.99.2；已从本仓库 .gitignore，备份另配）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
+- `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（M0 起开张）
+- `部门/` — 部门配方与部门知识库（骨架见 `plans/v2-ARCHITECTURE.md` §6.2，待建）
+- `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
 
 ## Commands
 
@@ -95,13 +95,14 @@
 ## Working Rules
 
 - 动手前先读 `plans/` 两份定案文档；已对齐决策不重新讨论，要推翻先留否决笔记（标日期与原因）再改文档。
-- pi 基座锁定 `@earendil-works/pi-coding-agent` 0.99.2（截至 2026-10-01）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步，升级后同批订正本文件的版本断言。
+- pi 基座：`PAO/` 为 pi 0.99.2 源码 fork（2026-10-02 起 fork 路线，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动），升级后同批订正本文件的版本断言。
 - 不做常驻服务，主会话关闭全停（架构 §1）。
-- 编排状态（任务卡、计划）放 `.hermes/`（根公约默认），不散落项目根。
+- 编排状态（任务卡、黑板、产物）放 `.pao/`（pao 自有编排目录，2026-10-02 定案，根公约允许项目自声明；任务工作区制见 `plans/v2-ARCHITECTURE.md` §2.1）。
+- 本项目例外（2026-10-02 用户定案）：pao 自身的经验教训正本住部门知识库（架构 §6.2），不上交 Vault；跨项目通用经验仍归 Vault，两边互放指针。此为对上级公约归属表「经验教训」条的项目级例外声明（嵌入区不改，下次 agents-md-authoring 刷新时同步）。
 
 ## Verification
 
-- 暂无自动验证；`src/` 有代码后必须先补测试命令再谈完成。
+- 暂无自动验证；`PAO/` 有代码后必须先补测试命令再谈完成。
 
 ## Maintenance
 
