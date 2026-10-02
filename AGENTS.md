@@ -96,7 +96,7 @@
 ## Working Rules
 
 - 动手前先读 `plans/` 两份定案文档；已对齐决策不重新讨论，要推翻先留否决笔记（标日期与原因）再改文档。
-- pi 基座：`PAO/` 为 pi 1.0.0 源码 fork（2026-10-02 起 fork 路线并同日升至 1.0.0，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动；2026-10-02 实操沉淀见 `plans/持续维护与升级.md` 与 fork 提交 `10952dda6`），升级后同批订正本文件的版本断言。
+- pi 基座：`PAO/` 为 pi 1.0.0 源码 fork（2026-10-02 起 fork 路线并同日升至 1.0.0，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动；2026-10-02 实操沉淀见 `plans/持续维护与升级.md` 与 fork 提交 `10952dda6`），升级后同批订正本文件的版本断言。**rebase 制的代价：每次升级 rebase 后，历史整链重写，推备份远端必须 `git push --force-with-lease backup pao-main`**（普通推会被 non-fast-forward 拒；2026-10-02 实测，推前 fetch 核对远端独有提交均已含在本地）。
 - 不做常驻服务，主会话关闭全停（架构 §1）。
 - 编排状态（任务卡、黑板、产物）放 `.pao/`（pao 自有编排目录，2026-10-02 定案，根公约允许项目自声明；任务工作区制见 `plans/v2-ARCHITECTURE.md` §2.1）。
 - 本项目例外（2026-10-02 用户定案）：pao 自身的经验教训正本住部门知识库（架构 §6.2），不上交 Vault；跨项目通用经验仍归 Vault，两边互放指针。此为对上级公约归属表「经验教训」条的项目级例外声明（嵌入区不改，下次 agents-md-authoring 刷新时同步）。
