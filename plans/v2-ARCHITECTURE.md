@@ -482,7 +482,7 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 ### 18.1 事实层（薄索引常驻＋语义库自动召回；2026-10-02 深夜增补后半）
 
 - **常驻索引**：`PAO_HOME/主控记忆/MEMORY.md`——定长上限（约 2000 字）、条目化、**严格准入**（写入亮 diff 供用户过目）；主控会话启动注入系统提示。只放「每轮必须知道的少数事」（用户契约、环境约定、偏好）；任务状态不入（R10）。
-- **语义记忆库**（用户 Hermes 实用经验定案：**光 MEMORY.md 不够**——事实的长尾需要可增长、按相关性自动召回的库）：条目住记忆供应商的库（§18.5，默认 mnemosyne，与 Hermes 分 bank），主控低门槛自由写入；**每轮按当前对话自动召回 top3**、带防污染标注（「召回记忆，非用户输入」）注入——召回由 pao 直连供应商完成，不经模型工具调用环；上下文压缩时把未结事实 handoff 进供应商（注入纪律抄 pi-memory，MIT；与 Hermes 每轮 prefetch 实战同构）。
+- **语义记忆库**（用户 Hermes 实用经验定案：**光 MEMORY.md 不够**——事实的长尾需要可增长、按相关性自动召回的库）：条目住记忆供应商的库（§18.5，默认 mnemosyne，与 Hermes **共库**），主控低门槛自由写入；**每轮按当前对话自动召回 top3**、带防污染标注（「召回记忆，非用户输入」）注入——召回由 pao 直连供应商完成，不经模型工具调用环；上下文压缩时把未结事实 handoff 进供应商（注入纪律抄 pi-memory，MIT；与 Hermes 每轮 prefetch 实战同构）。
 - 分工口径：常驻索引＝必须知道；语义库＝应该想起；经验层（18.2）＝干活教训。
 
 ### 18.2 经验层（厚、按需）
@@ -505,7 +505,8 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 
 - **接口契约**（供应商须实现）：写入（remember）／召回（recall(query, topN)）／忘却（可选，须显式授权）；能力声明（是否语义检索、是否需嵌入端点）。配置：`PAO_HOME/pao配置/记忆.json`（供应商名＋参数）——**换供应商＝改配置**；数据不自动迁移（各供应商管各的库，迁移走显式导入导出）。
 - **两种实现形态**：①外部 MCP 供应商——stdio 子进程由主会话拉起、经 pi 原生 MCP 机制挂载，pao 零代码依赖（rebase 面不增）；②内置适配器——TS 进程内实现（兜底供应商 qmd 即此类）。
-- **默认供应商＝mnemosyne**（PyPI 包 `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne，MIT，作者 Abdias J；用户 Hermes 侧已在用 4.0.0b3）：`mnemosyne mcp`（stdio 传输）为主会话子进程，`--bank` 与 Hermes 的库隔离；pao 侧自装 `mnemosyne-memory[mcp]`（独立于 Hermes 的安装，升级节奏互不捆绑）；R05 相容（子进程随主会话全停）；引擎为 SQLite＋FTS5＋向量混合排序（词法 0.3／向量 0.5／重要性 0.2 加权＋新近度半衰期），嵌入走它自家配置（API 或本地 fastembed 二选一），**密钥不经 pao 手**（pao 侧 EMBED_\* 占位只备将来自建向量用）；锁版与升级纪律同 pi 口径。
+- **默认供应商＝mnemosyne**（PyPI 包 `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne，MIT，作者 Abdias J；用户 Hermes 侧已在用 4.0.0b3）：`mnemosyne mcp`（stdio 传输）为主会话子进程；R05 相容（子进程随主会话全停）；引擎为 SQLite＋FTS5＋向量混合排序（词法 0.3／向量 0.5／重要性 0.2 加权＋新近度半衰期），嵌入走它自家配置（API 或本地 fastembed 二选一），**密钥不经 pao 手**（pao 侧 EMBED_\* 占位只备将来自建向量用）。
+- **与 Hermes 共用同一记忆库（2026-10-02 用户定向定案：一个大脑）**：pao 的 `mnemosyne mcp` 指到 Hermes 的 mnemosyne 数据目录（经 `--env-file`／环境变量设 home，实施期核变量名），**不自装、复用 Hermes 的同一份安装与同一个库**——Hermes 已积累的用户/环境事实 pao 直接可召回，反之亦然。护栏：①写入带 pao 作者标识（`MNEMOSYNE_AUTHOR_ID`，多代理共库是其设计内场景；召回不分作者，标识留作排查）；②pao 侧准入口径不变——只有用户契约/环境/偏好类事实进库，任务态不入（R10），防污染 Hermes 的整理与 persona；③版本随 Hermes 走（共库必须同版，复用同一安装天然满足；Hermes 升级 mnemosyne 后 pao 同批跑冒烟：召回＋写入各一条）；④并发：SQLite WAL＋库自带 init 锁，单人使用两进程同时活跃概率低，兜底足够。逃生舱（摩擦驱动，不预建）：分家走 mnemosyne 自带 export/import 或 sync 定向同步（`sync_roles` 可只同步用户级事实）。
 - **兜底供应商＝qmd**（BM25 扫 markdown，零 Python 依赖）：无 Python 环境／无嵌入端点／mnemosyne 不可用时降级用它，保证召回闭环不断。
 - **被否**：Node 同构自建向量库（重造 mnemosyne 已成熟件，违背复用优先）；mnemosy.ai 的 TS 版 mnemosyne（Aristotle Intelligence 出品，同名异厂、与本机 Hermes 侧无亲缘，引入徒增混淆）。
 - **实施核（M2 接入时）**：Windows 下 stdio 子进程冷启动延迟与每轮召回的延迟预算；pi MCP 挂载的工具 exposure 控制（供应商工具按需暴露，别全量灌给模型）；断链降级路径（供应商挂了自动落 qmd 还是只报警，按实测定）。

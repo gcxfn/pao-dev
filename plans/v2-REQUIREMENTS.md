@@ -69,7 +69,7 @@
 >
 > 2026-10-02 深夜全网狩猎销账（多代理编排与同类产品，对照后判定）：CrewAI 任务护栏（期望产出＋验收器＋自动重试）＝失败分型重试已有；A2A `input-required` 状态＝缺输入退回补卡已有，**不可变 Artifact 采纳**（回执不可变→架构 §14）；Claude Agent Teams 自认领＝扇出补位已有、点对点信箱不抄（星型纪律）；Deep Agents「brief＋文件引用」＝指针铁律已有；OpenAI handoffs 的 `input_filter`＝地图层已有；Spec Kit **clarify/converge 采纳**（大活流程配方加澄清门与漂移复核→§11.4）；Backlog.md 看板不抄（M3 壳自然产物）；「反多代理门槛」＝例外直干已有；Cursor 注入劫持案例→**注入防线采纳**（§12.2）。
 >
-> 2026-10-02 深夜再订正（记忆供应商专题）：当晚早先的「引擎终选 qmd」作废——机盘核实 PyPI `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne（MIT）自带 `mnemosyne mcp`（stdio，专为宿主 agent 子进程设计，支持 `--bank` 分库），升级为插拔式供应商接口（架构 §18.5），默认 mnemosyne；mnemosy.ai 的 TS 同名异厂（Aristotle Intelligence）不引入；qmd 降为经验层文件检索＋兜底供应商。
+> 2026-10-02 深夜再订正（记忆供应商专题）：当晚早先的「引擎终选 qmd」作废——机盘核实 PyPI `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne（MIT）自带 `mnemosyne mcp`（stdio，专为宿主 agent 子进程设计），升级为插拔式供应商接口（架构 §18.5），默认 mnemosyne，且与 Hermes **共用同一安装与同一记忆库**（用户定向「一个大脑」，护栏与逃生舱见 §18.5）；mnemosy.ai 的 TS 同名异厂（Aristotle Intelligence）不引入；qmd 降为经验层文件检索＋兜底供应商。
 
 OMP（can1357/oh-my-pi，MIT、34k star）是 pi 的整个 fork 而非插件——只借鉴设计，不引入；`context-mode`（Elastic-2.0）不引入。2026-10-02 深夜机盘销账——**采纳**：模型角色表结构＋context 溢出升级（先升档后压缩、只认显式配置目标）；重试链（可重试分类器＋封顶指数退避＋冷却回切＋「已产出可见文本不许静默重放」）；task 批量派发 schema（context/solutionSpace/outputSchema/isolated——作派发提示词构造参考，不加卡字段）；herdr 命名管道单向状态上报（M3 壳观察通道参考）；usage 表结构（model_perf 记 TTFT，体感选型）；modelPresets 整套角色快照切换；autoloadSkills 派发时按卡注入技能。**不抄**：Agent Hub TUI 本体、agent 间消息（worker 无再派发权）、mnemopi 记忆后端（已有双层记忆定案）、通知与定时（OMP 亦无，边界一致）。prewalk（大模型起步、首编辑切小模型）记档备查。
 

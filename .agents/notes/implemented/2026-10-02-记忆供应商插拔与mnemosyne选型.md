@@ -3,8 +3,17 @@
 ## 定案
 
 - §18.1 语义记忆库的引擎升级为**插拔式记忆供应商接口**（架构 §18.5）：契约＝写入/召回/忘却（可选）＋能力声明；配置 `PAO_HOME/pao配置/记忆.json`，换供应商＝改配置；数据不自动迁移。
-- **默认供应商＝mnemosyne**（PyPI `mnemosyne-memory`，`mnemosyne mcp` stdio 子进程挂载，`--bank` 与 Hermes 分库）；**兜底＝qmd**（零 Python 依赖，降级保召回闭环）。
+- **默认供应商＝mnemosyne**（PyPI `mnemosyne-memory`，`mnemosyne mcp` stdio 子进程挂载）；**兜底＝qmd**（零 Python 依赖，降级保召回闭环）。
+- **与 Hermes 共用同一安装与同一记忆库**（用户定向「一个大脑」，当晚二问定案）：不自装、共享库；护栏＝pao 作者标识写入＋准入口径防污染＋版本随 Hermes 同批；分家逃生舱＝export/import 或 sync 定向同步（`sync_roles` 过滤用户级事实）。
 - 同晚早先的「检索引擎终选 qmd」就此作废（门面从单引擎串行改为：供应商召回＋经验层文件检索并行两路）。
+
+## 为什么共库（并推翻当晚早先「自装独立」的建议）
+
+- 用户诉求实质：Hermes 已积累的用户/环境/偏好事实不想重新教一遍，两边此后学的互通——分 bank 满足不了。
+- 共库必须同版，与其两套安装锁同版，不如直接复用 Hermes 的同一份安装，版本天然一致、零漂移。
+- 多代理共库是 mnemosyne 设计内场景：`MNEMOSYNE_AUTHOR_ID` 作者标识、SQLite WAL、数据目录自带 `mnemosyne.db.init.lock` 并发初始化锁。
+- 单人使用，Hermes 与 pao 主会话同时高频写库概率低，写竞争可忽略；共享不改变「记忆单点」现状（本来就只有一份）。
+- 风险知情项：Hermes 的自动整理（sleep 巩固/persona/model refresh）会消化 pao 写入的内容——由准入口径（只有用户契约/环境/偏好类事实进库，任务态不入，R10）控制写入面来缓解；mnemosyne 4.x 是 beta 线，Hermes 升级带 schema 迁移时 pao 同批跑冒烟。
 
 ## 为什么
 
