@@ -102,10 +102,11 @@ OMP（can1357/oh-my-pi，MIT、34k star）是 pi 的整个 fork 而非插件—�
 - **持续**：升级纪律运转；摩擦日志滚动。
 - **预案登记（2026-10-02 功能面补遗定案；先记档不动工，与架构 §24/§25 同款摩擦驱动待遇）**：① worker shell 路径护栏（cwd 锁工作区＋敏感路径黑名单：`.env`、系统目录、PAO_HOME 外）——**硬门槛：巡库 worker（无人值守）上线前必须已装**，有人盯的日常用法可等第一次误写事故提前触发，事故不能是唯一条件；参考件已销账（trim21 workspace guard 思路，§4.1）。② 升级适配脚本化一半——升 pi 1.0 当天边做边沉淀 §5.4 第①步（抓两版间 CHANGELOG，对照 `src/pao/` 挂接点清单关键词初筛），第一次升级是唯一能边做边沉淀的机会。③ 失败分型机械预分类器（exit code／超时／rate-limit 错误串 → 机械预判瞬时故障，模型只在预分类之外裁决）——等重试量大到看得出分布再做，现在做是猜。
 
-## 7. 旧 PAO 资产处置（存档已办，复用取舍待确认）
+## 7. 旧 PAO 资产处置（✅ 2026-10-02 拍板闭环：存档已办，复用取舍已确认）
 
 - 无论取舍：**D:\PAO 的 167 项未提交变更先 commit 存档**——✅ 已办（2026-10-02，commit `b2ef83b`，194 文件整体归档，只存档不推送不改内容）。
-- 保留复用：`docs/code-audit/pi-capabilities.md`（能力审计范式与已知坑，如 setThinkingLevel 污染全局设置）、`prompts/`、冒烟测试思路、worker spawner 思路（M2 参考）。
+- 保留复用（2026-10-02 用户拍板「除了 prompts 都用」，只取思路不搬代码）：`docs/code-audit/pi-capabilities.md`（能力审计范式与已知坑，如 setThinkingLevel 污染全局设置）、冒烟测试思路（`tests/smoke/`，已被 `pao_体检` 部分吸收重生）、worker spawner 思路（`src/runtime/subprocess-spawner.ts`＋`agent-rpc.ts`，M2-03 前先读）。
+- 不复用：`prompts/` 三件（嵌已砍概念词汇，只污染新配方，不取）。
 - 不复活：Kernel / 编排 / 控制协议 / Desktop。
 
 ## 8. 待验证清单（M0/M1 中核实）
