@@ -1,6 +1,8 @@
-# PAO
+# PAO（开发项目）
 
 以 pi 为内核的个人编码 agent（v2 重启）：终端先行、桌面端二期做纯壳，目标完全替代 ZCode。需求与架构的权威定案在 `plans/`，本文件只放干活时必须遵守的执行规则。
+
+**双仓结构（2026-10-02 分仓定案）**：本仓库 `D:\AI\workspace\pao-dev\` 是**开发项目**（fork、定案、摩擦日志、开发用任务卡）；pao 的**使用现场**（PAO_HOME）在 `D:\AI\workspace\pao\`——独立 git 仓库，只放运行时数据：`部门/`（配方与部门知识库）、`pao配置/`（档位/装载清单/skills）、`.pao/体检/`。两者是并列的两个仓库，不是嵌套；跑 pao 命令须 `PAO_HOME` 指使用现场。NTFS 大小写不敏感：同父目录下 `pao` 与 `PAO` 是同一目录，禁在本仓内创建小写 `pao/` 子目录。
 
 <!-- 上级公约嵌入区：由 agents-md-authoring 按根公约现行版刷新，勿手改 -->
 
@@ -83,20 +85,21 @@
 ## Structure
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
-- `pao配置/` — pao 自身运行时配置唯一归属（档位、记忆供应商选择等，随对应功能实施落文件；见其 README）
 - `PAO/` — pao 本体：pi 1.0.0 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 1.0.0——2026-10-02 自 0.99.2 rebase 升级、零冲突，升级留档见提交 `10952dda6`；升级前锚点分支 `pre-1.0-upgrade`；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
 - `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（2026-10-02 已开张）
-- `部门/` — 部门配方与部门知识库（骨架见 `plans/v2-ARCHITECTURE.md` §6.2，待建）
 - `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
+- `.pao/` — 本开发项目的编排目录（任务卡、基线、体检留档等）
+- 使用现场 `D:\AI\workspace\pao\`（独立仓库，不在本仓库内）— `部门/`（配方＋部门知识库，骨架见 `plans/v2-ARCHITECTURE.md` §6.2）、`pao配置/`（档位.json、装载清单.md＝R10 正本、skills/）、`.pao/体检/`；其 README 说明各目录用途
 
 ## Commands
 
-- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。品牌：fork 经 `package.json → piConfig.name="pao"` 官方改名口子换 APP_NAME（帮助/终端标题/启动字标，configDir 仍 `.pi` 保登录态与目录）。**禁跑 `pao update`（含 `pao update self`）**——自更新不识别 fork 身份，会以上游产物覆写本 fork；升级只走 rebase 路线。TUI 说明：pi 1.0 起 fullscreen 为默认模式，空会话下与 regular 观感接近，转录变长后编辑区固定才可见；`/settings` 可核当前模式。
-- pao 一条龙（M1 起真实可用）：`PAO_HOME` 指本工作区根后，headless 主控 `pao --mode json -p --no-session --model 主力|快 "…"` 驱动 pao_建部/建卡/扇出/改状态/入库/查库；worker 由扇出拉起（`PAO_ROLE=worker` 自动注入），回执证据落 `%TEMP%\pao-worker-evidence\`，卡在 `.pao/卡/`。技能目录 `pao配置/skills/`、两档 `pao配置/档位.json`、装载清单 `pao配置/装载清单.md`（R10 正本）。
+- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `D:\AI\workspace\pao-dev\PAO\packages\coding-agent\dist\bundle\cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。跑 pao 须 `PAO_HOME=D:\AI\workspace\pao`（使用现场）。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。品牌：fork 经 `package.json → piConfig.name="pao"` 官方改名口子换 APP_NAME（帮助/终端标题/启动字标，configDir 仍 `.pi` 保登录态与目录）。**禁跑 `pao update`（含 `pao update self`）**——自更新不识别 fork 身份，会以上游产物覆写本 fork；升级只走 rebase 路线。TUI 说明：pi 1.0 起 fullscreen 为默认模式，空会话下与 regular 观感接近，转录变长后编辑区固定才可见；`/settings` 可核当前模式。
+- pao 一条龙（M1 起真实可用）：`PAO_HOME` 指使用现场 `D:\AI\workspace\pao` 后，headless 主控 `pao --mode json -p --no-session --model 主力|快 "…"` 驱动 pao_建部/建卡/扇出/改状态/入库/查库（查库等知识库工具推荐传 `部门` 参数，由工具从 PAO_HOME 解析路径，不手拼）；worker 由扇出拉起（`PAO_ROLE=worker` 自动注入），回执证据落 `%TEMP%\pao-worker-evidence\`。技能目录、两档配置、装载清单（R10 正本）均在 `$PAO_HOME/pao配置/`；卡按项目放 `<项目>/.pao/卡/`。
 
 ## Working Rules
 
 - 动手前先读 `plans/` 两份定案文档；已对齐决策不重新讨论，要推翻先留否决笔记（标日期与原因）再改文档。
+- 双仓边界：开发产物（代码、定案、测试）只进本仓；使用现场只进运行时数据（部门库、配置、体检）。运行时问题在使用现场修（经 pao 工具），修代码回本仓改 fork 再重建；两边互不混放。使用现场仓库的远端备份待配（M2 §17 外层远端补配并批处理）。
 - pi 基座：`PAO/` 为 pi 1.0.0 源码 fork（2026-10-02 起 fork 路线并同日升至 1.0.0，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动；2026-10-02 实操沉淀见 `plans/持续维护与升级.md` 与 fork 提交 `10952dda6`），升级后同批订正本文件的版本断言。**rebase 制的代价：每次升级 rebase 后，历史整链重写，推备份远端必须 `git push --force-with-lease backup pao-main`**（普通推会被 non-fast-forward 拒；2026-10-02 实测，推前 fetch 核对远端独有提交均已含在本地）。
 - 不做常驻服务，主会话关闭全停（架构 §1）。
 - 编排状态（任务卡、黑板、产物）放 `.pao/`（pao 自有编排目录，2026-10-02 定案，根公约允许项目自声明；任务工作区制见 `plans/v2-ARCHITECTURE.md` §2.1）。
