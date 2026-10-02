@@ -84,19 +84,19 @@
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
 - `pao配置/` — pao 自身运行时配置唯一归属（档位、记忆供应商选择等，随对应功能实施落文件；见其 README）
-- `PAO/` — pao 本体：pi 0.99.2 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 0.99.2；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
+- `PAO/` — pao 本体：pi 1.0.0 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 1.0.0——2026-10-02 自 0.99.2 rebase 升级、零冲突，升级留档见提交 `10952dda6`；升级前锚点分支 `pre-1.0-upgrade`；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
 - `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（2026-10-02 已开张）
 - `部门/` — 部门配方与部门知识库（骨架见 `plans/v2-ARCHITECTURE.md` §6.2，待建）
 - `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
 
 ## Commands
 
-- `pao` — 本项目 CLI（pi 0.99.2 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build -w packages/coding-agent` 重建才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。
+- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。升级后用户可见变化：pi 1.0 起 TUI 默认全屏模式。
 
 ## Working Rules
 
 - 动手前先读 `plans/` 两份定案文档；已对齐决策不重新讨论，要推翻先留否决笔记（标日期与原因）再改文档。
-- pi 基座：`PAO/` 为 pi 0.99.2 源码 fork（2026-10-02 起 fork 路线，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动），升级后同批订正本文件的版本断言。
+- pi 基座：`PAO/` 为 pi 1.0.0 源码 fork（2026-10-02 起 fork 路线并同日升至 1.0.0，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动；2026-10-02 实操沉淀见 `plans/持续维护与升级.md` 与 fork 提交 `10952dda6`），升级后同批订正本文件的版本断言。
 - 不做常驻服务，主会话关闭全停（架构 §1）。
 - 编排状态（任务卡、黑板、产物）放 `.pao/`（pao 自有编排目录，2026-10-02 定案，根公约允许项目自声明；任务工作区制见 `plans/v2-ARCHITECTURE.md` §2.1）。
 - 本项目例外（2026-10-02 用户定案）：pao 自身的经验教训正本住部门知识库（架构 §6.2），不上交 Vault；跨项目通用经验仍归 Vault，两边互放指针。此为对上级公约归属表「经验教训」条的项目级例外声明（嵌入区不改，下次 agents-md-authoring 刷新时同步）。
@@ -104,7 +104,7 @@
 ## Verification
 
 - pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死——2026-10-02 K3 审查实测 218，R23）。
-- coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 67 失败（POSIX 路径假设等上游债，留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修。该口径已机械化（M0-09，PAO fork `ded2b74a0`）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线。
+- coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 68 失败/21 文件（POSIX 假设等上游债，2026-10-02 随 pi 1.0.0 升级重建——新增上游 experimental durable 测试在 Windows 缺 `process.getuid`，旧 0.99.2 基线 67 失败中 3 处已消失；留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修；并发计时类测试偶发轮换失败属环境抖动，隔离复跑判定。该口径已机械化（M0-09）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线、`--save-log` 留档新基线。
 
 ## Maintenance
 
