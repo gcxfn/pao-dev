@@ -31,7 +31,7 @@
 
 ## 许可证与维护状态
 
-- `mnemosyne-memory`：MIT，作者 Abdias J（github.com/mnemosyne-oss/mnemosyne），活跃（本机 4.0.0b3，随 Hermes 插件目录安装）。注意 4.x 是 beta 线，pao 侧自装 `mnemosyne-memory[mcp]` 并锁版（与 Hermes 的安装互不捆绑），升级按批次纪律。
+- `mnemosyne-memory`：MIT，作者 Abdias J（github.com/mnemosyne-oss/mnemosyne），活跃（本机 4.0.0b3，随 Hermes 插件目录安装）。注意 4.x 是 beta 线；pao 不自装，复用 Hermes 同一份安装（共库必须同版，复用天然满足），mnemosyne 升级随 Hermes 走、pao 同批跑冒烟（召回＋写入各一条）——R21 订正，原「自装并互不捆绑」系共库定案前残句。
 - 依赖面：需要本机 Python 3.10+（用户机器已有，Hermes 在用）。
 
 ## 实施红线

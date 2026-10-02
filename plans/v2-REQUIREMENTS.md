@@ -7,7 +7,7 @@
 ## 1. 一句话定位
 
 以 pi 为内核的个人编码 agent：**终端先行、桌面端二期做纯壳，最终完全替代 ZCode 成为日常编码主力**。
-一切定制优先走 pi 扩展 API，不动 pi 源码；跟 pi 上游更新的成本必须保持低。
+一切定制在 fork（`PAO/`）内集中、模块化实现，压 rebase 面；升级成本靠锁版与慢推缓冲（2026-10-02 fork 定案订正，R12）。
 
 ## 2. 需求定案（访谈结论）
 
@@ -16,7 +16,7 @@
 | 为什么推倒重来 | 基座受限（有的功能可能要 fork 源码，但想跟上更新）＋方向不对（旧 PAO 做成了重型编排平台）＋没真用起来 |
 | 真实场景 | 日常编码主力（对标 ZCode / Claude Code），自己掌控提示词、工具、上下文策略 |
 | 交互形态 | 先终端；桌面端最终要，但必须是「壳不带内核」——内核跟 pi 上游同步 |
-| 上游同步策略 | **锁版本使用，升级时适配**（2026-10-01 定案）：不追单个 release、不维护 fork；锁定一个 pi 版本日常用，按批次升级，升级时执行一次适配（见 §5.4） |
+| 上游同步策略 | **锁版本使用，升级时适配**（2026-10-01 定案；2026-10-02 fork 后订正）：不追单个 release；fork 锁版使用，升级走 §5.4 四步（③＝rebase fork 改动） |
 | 验收标准 | 日常杂活全部切过去，能顶住就算成 |
 | 投入节奏 | 慢推：每天 1–2 小时，重可持续不重速度 |
 | 必须能力 | ①模型路由 ②扩展生态（skills+MCP） ③跨会话记忆 ④子代理与工作流（四块全选） |
@@ -36,13 +36,13 @@
 | v2 需求 | pi 0.99 已有能力 | 需要 fork？ |
 |---|---|---|
 | 模型路由 | `models.json` 自定义 provider（OpenAI 兼容端点）；0.99 起扩展可 `registerVirtualModel()` 按请求路由物理模型与思考档位 | 否 |
-| 扩展生态 | 内置 MCP（`mcp.json` / `pi mcp add` / `pi.registerMcpServer()`，stdio+HTTP+OAuth）；`skills/` 原生；工具 `exposure`/`namespace`/`prepareLoadload` 注：`prepareLoadout()` | 否 |
+| 扩展生态 | 内置 MCP（`mcp.json` / `pi mcp add` / `pi.registerMcpServer()`，stdio+HTTP+OAuth）；`skills/` 原生；工具 `exposure`/`namespace`/`prepareLoadout()` | 否 |
 | 跨会话记忆 | 自写文件式知识库即可（**hindsight 已否决**，2026-10-01：噪音/成本/重；pi 生态该能力存在但不用） | 否 |
 | 子代理与工作流 | SDK `createAgentSession` / `pi --print` 子进程；RPC `steer`/`follow_up` | 否（自建薄调度层） |
 | 上下文工程 | `context` / `context_with_system` / `before_agent_start`(systemPrompt) / `ContextEditEntry` / per-model compaction | 否 |
 | 桌面壳（二期） | `pi --mode rpc` / `RpcClient` / rpc-extension-ui 文档 | 否（壳经 RPC 对接，不内置内核） |
 
-**结论：访谈中担心的「基座受限」在 0.99 已大幅缓解，四块必须能力大概率零 fork 可达成；先用 M0/M1 实测验证，再谈任何 fork。**
+**结论：访谈中担心的「基座受限」在 0.99.2 已大幅缓解，四块必须能力在 API 面齐备；实施载体 2026-10-02 起为 fork（`PAO/`，见 §5 订正）。**
 
 ### 4.1 复用清单（2026-10-01/02 生态盘点定案）
 
@@ -82,7 +82,7 @@ OMP（can1357/oh-my-pi，MIT、34k star）是 pi 的整个 fork 而非插件—�
 3. **摩擦日志驱动**：日常使用每次「这不行」记一条；只有反复出现的摩擦才立项。
 4. **升级纪律（已定案）**：锁版本使用，不逐版追逐；**按批次升级**——默认每月一次，或摩擦日志出现「新版才修复/才有」的项时提前。每次升级执行适配四步：
    ① 比对锁定版 → 目标版之间的 CHANGELOG，重点扫 breaking changes 与自己依赖面相关的条目；
-   ② 跑冒烟测试集（覆盖扩展包实际用到的 pi API）；
+   ② 跑冒烟测试集（覆盖 fork 改动面实际用到的 pi API）；
    ③ 修复扩展包/配置中受影响处；
    ④ 更新锁版记录（版本号 + 日期），同步订正文档中的现状断言。
    当前锁定：**0.99.2（2026-10-01）**。2026-10-02 深夜拍板：下一次升级＝**v1.0.0，时机提前至 M2a 开工前**（触发条件＝「新版才有」的项已出现：pi-durable 后台任务/断点续跑与 codemode 省 token 是 M2a 地基，先升后建避免自建后拆换白干）。

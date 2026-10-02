@@ -83,8 +83,9 @@
 ## Structure
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
+- `pao配置/` — pao 自身运行时配置唯一归属（档位、记忆供应商选择等，随对应功能实施落文件；见其 README）
 - `PAO/` — pao 本体：pi 0.99.2 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 0.99.2；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
-- `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（M0 起开张）
+- `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（2026-10-02 已开张）
 - `部门/` — 部门配方与部门知识库（骨架见 `plans/v2-ARCHITECTURE.md` §6.2，待建）
 - `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
 
@@ -102,7 +103,7 @@
 
 ## Verification
 
-- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（2026-10-02 起 186 用例，须全绿）。
+- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死——2026-10-02 K3 审查实测 218，R23）。
 - coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 67 失败（POSIX 路径假设等上游债，留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修。
 
 ## Maintenance
