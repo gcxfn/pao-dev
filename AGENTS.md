@@ -90,7 +90,7 @@
 
 ## Commands
 
-- 暂无（骨架阶段，尚无代码与脚本）；出现首个可运行命令时补入本节。
+- `pao` — 本项目 CLI（pi 0.99.2 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build -w packages/coding-agent` 重建才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。
 
 ## Working Rules
 
@@ -102,7 +102,8 @@
 
 ## Verification
 
-- 暂无自动验证；`PAO/` 有代码后必须先补测试命令再谈完成。
+- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（2026-10-02 起 186 用例，须全绿）。
+- coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 67 失败（POSIX 路径假设等上游债，留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修。
 
 ## Maintenance
 
