@@ -467,7 +467,7 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 ### 17.1 备份
 
 - 现状核实（2026-10-02 分仓后）：开发仓＝`D:\AI\workspace\pao-dev\`（plans 定案、PAO fork、摩擦日志、开发用 `.pao/`）；使用现场＝`D:\AI\workspace\pao\`（`部门/`、`pao配置/`、`.pao/体检/`）——**独立 git 仓库**（2026-10-02 分仓定案，首提交 `f4cbab3`），两仓并列不嵌套。`.env` 凭证已 ignore；本体 fork 在开发仓内 ignore、备份另配（gcxfn/pao）。
-- 缺口＝远端：两个外层仓库（开发仓、使用现场仓）各配 GitHub 私有远端（使用现场建议名 `gcxfn/pao-home`），remote＋首推走代理（慢操作用户可接手）。**用户定案：先记录进定案、仓库延后建**——建立前的机器损坏风险自担，建好后此处订正。
+- 远端已补齐（2026-10-02 深夜用户拍板「补」，当日建好首推）：开发仓→`gcxfn/pao-dev`（private，main）；使用现场仓→`gcxfn/pao-home`（private，master，用 §17.1 建议名）；本体 fork 备份远端 `backup`＝`gcxfn/pao`（pao-main 分支，升级 rebase 后推须 `--force-with-lease`）。remote＋push 走代理 127.0.0.1:7897。
 - 节奏同 §13 口径：commit 随日常（定案/交卷顺手提交），**push 用户手动**，不自动化。
 - 各项目自己的 `.pao/`（其他项目用 pao 干活时的卡与黑板）随各项目仓库走，不集中——任务真相随项目走。
 - ignore 边界维持：凭证（`.env*`）不入库；开发仓内本体 fork（`/PAO/`）不入库；使用现场日后新增目录（`工作流/`、`定时/`）默认入库，沙箱等临时目录进 ignore。
