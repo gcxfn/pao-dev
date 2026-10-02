@@ -104,7 +104,7 @@
 ## Verification
 
 - pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死——2026-10-02 K3 审查实测 218，R23）。
-- coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 67 失败（POSIX 路径假设等上游债，留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修。
+- coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 67 失败（POSIX 路径假设等上游债，留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修。该口径已机械化（M0-09，PAO fork `ded2b74a0`）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线。
 
 ## Maintenance
 
