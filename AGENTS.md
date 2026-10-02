@@ -91,7 +91,7 @@
 
 ## Commands
 
-- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。升级后用户可见变化：pi 1.0 起 TUI 默认全屏模式。
+- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `PAO/packages/coding-agent/dist/bundle/cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。品牌：fork 经 `package.json → piConfig.name="pao"` 官方改名口子换 APP_NAME（帮助/终端标题/启动字标，configDir 仍 `.pi` 保登录态与目录）。**禁跑 `pao update`（含 `pao update self`）**——自更新不识别 fork 身份，会以上游产物覆写本 fork；升级只走 rebase 路线。TUI 说明：pi 1.0 起 fullscreen 为默认模式，空会话下与 regular 观感接近，转录变长后编辑区固定才可见；`/settings` 可核当前模式。
 
 ## Working Rules
 
