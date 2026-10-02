@@ -86,20 +86,20 @@
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
 - `PAO/` — pao 本体：pi 1.0.0 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 1.0.0——2026-10-02 自 0.99.2 rebase 升级、零冲突，升级留档见提交 `10952dda6`；升级前锚点分支 `pre-1.0-upgrade`；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
-- `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（2026-10-02 已开张）
+- `摩擦日志.md` — 日常使用 PAO 的正式摩擦日志唯一正本；机器草稿为运行数据，落 `$PAO_HOME/.pao/摩擦草稿.md`，人工补记后转正式区（2026-10-03）
 - `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
 - `.pao/` — 本开发项目的编排目录（任务卡、基线、体检留档等）
-- 使用现场 `D:\AI\workspace\pao\`（独立仓库，不在本仓库内）— `部门/`（配方＋部门知识库，骨架见 `plans/v2-ARCHITECTURE.md` §6.2）、`pao配置/`（档位.json、装载清单.md＝R10 正本、skills/）、`.pao/体检/`；其 README 说明各目录用途
+- 使用现场 `D:\AI\workspace\pao\`（独立仓库，不在本仓库内）— `部门/`（配方＋部门知识库，骨架见 `plans/v2-ARCHITECTURE.md` §6.2）、`pao配置/`（档位.json、装载清单.md＝R10 正本、skills/）、`.pao/`（体检、摩擦草稿等运行数据）；其 README 说明各目录用途
 
 ## Commands
 
-- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-02：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `D:\AI\workspace\pao-dev\PAO\packages\coding-agent\dist\bundle\cli.js`；改代码后须在 `PAO/` 下 `npm run build`（按依赖序全仓构建，单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂）才生效。跑 pao 须 `PAO_HOME=D:\AI\workspace\pao`（使用现场）。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。品牌：fork 经 `package.json → piConfig.name="pao"` 官方改名口子换 APP_NAME（帮助/终端标题/启动字标，configDir 仍 `.pi` 保登录态与目录）。**禁跑 `pao update`（含 `pao update self`）**——自更新不识别 fork 身份，会以上游产物覆写本 fork；升级只走 rebase 路线。TUI 说明：pi 1.0 起 fullscreen 为默认模式，空会话下与 regular 观感接近，转录变长后编辑区固定才可见；`/settings` 可核当前模式。
-- pao 一条龙（M1 起真实可用）：`PAO_HOME` 指使用现场 `D:\AI\workspace\pao` 后，headless 主控 `pao --mode json -p --no-session --model 主力|快 "…"` 驱动 pao_建部/建卡/扇出/改状态/入库/查库（查库等知识库工具推荐传 `部门` 参数，由工具从 PAO_HOME 解析路径，不手拼）；worker 由扇出拉起（`PAO_ROLE=worker` 自动注入），回执证据落 `%TEMP%\pao-worker-evidence\`。技能目录、两档配置、装载清单（R10 正本）均在 `$PAO_HOME/pao配置/`；卡按项目放 `<项目>/.pao/卡/`。
+- `pao` — 本项目 CLI（pi 1.0.0 fork 构建产物，含 pao 扩展）。截至 2026-10-03：全局命令经 `D:\npm-global` 三个垫片（`pao`/`pao.cmd`/`pao.ps1`）指向 `D:\AI\workspace\pao-dev\PAO\packages\coding-agent\dist\bundle\cli.js`；改代码后须在 `PAO/` 下按依赖序全仓构建才生效：普通本地修复用 `npm run build:offline`，需要刷新模型目录时才用 `npm run build`；单独 `-w packages/coding-agent` 会因兄弟包 dist 过期而挂。跑 pao 须 `PAO_HOME=D:\AI\workspace\pao`（使用现场）。上游 `pi` 全局命令（npm 安装的 0.99.2）不受影响、命令名未被占用。品牌：fork 经 `package.json → piConfig.name="pao"` 官方改名口子换 APP_NAME（帮助/终端标题/启动字标，configDir 仍 `.pi` 保登录态与目录）。**禁跑 `pao update`（含 `pao update self`）**——自更新不识别 fork 身份，会以上游产物覆写本 fork；升级只走 rebase 路线。TUI 说明：pi 1.0 起 fullscreen 为默认模式，空会话下与 regular 观感接近，转录变长后编辑区固定才可见；`/settings` 可核当前模式。
+- pao 一条龙（M1 正常最小链路已真实跑通；完整集成验收边界见当前修复计划）：`PAO_HOME` 指使用现场 `D:\AI\workspace\pao` 后，headless 主控 `pao --mode json -p --no-session --model 主力|快 "…"` 驱动 pao_建部/建卡/扇出/改状态/入库/查库（查库等知识库工具推荐传 `部门` 参数，由工具从 PAO_HOME 解析路径，不手拼）；worker 由扇出拉起（`PAO_ROLE=worker` 自动注入），回执证据默认落 `%TEMP%\pao-worker-evidence\`，2026-10-03 起绑定完整卡路径／卡面尝试号／执行标识并独占新建文件，保留历史证据。技能目录、两档配置、装载清单（R10 正本）均在 `$PAO_HOME/pao配置/`；卡按项目放 `<项目>/.pao/卡/`。
 
 ## Working Rules
 
 - 动手前先读 `plans/` 两份定案文档；已对齐决策不重新讨论，要推翻先留否决笔记（标日期与原因）再改文档。
-- 双仓边界：开发产物（代码、定案、测试）只进本仓；使用现场只进运行时数据（部门库、配置、体检）。运行时问题在使用现场修（经 pao 工具），修代码回本仓改 fork 再重建；两边互不混放。使用现场仓库的远端备份待配（M2 §17 外层远端补配并批处理）。
+- 双仓边界：开发产物（代码、定案、测试）只进本仓；使用现场只进运行时数据（部门库、配置、体检）。运行时问题在使用现场修（经 pao 工具），修代码回本仓改 fork 再重建；两边互不混放。三仓私有远端已于 2026-10-02 补齐，截至 2026-10-03 本地 remote 配置复核一致；唯一备份声明见架构 §17.1，push 不自动执行。
 - pi 基座：`PAO/` 为 pi 1.0.0 源码 fork（2026-10-02 起 fork 路线并同日升至 1.0.0，上游 github.com/earendil-works/pi）；升级走 `v2-REQUIREMENTS.md` §5.4 适配四步（第③步＝rebase fork 改动；2026-10-02 实操沉淀见 `plans/持续维护与升级.md` 与 fork 提交 `10952dda6`），升级后同批订正本文件的版本断言。**rebase 制的代价：每次升级 rebase 后，历史整链重写，推备份远端必须 `git push --force-with-lease backup pao-main`**（普通推会被 non-fast-forward 拒；2026-10-02 实测，推前 fetch 核对远端独有提交均已含在本地）。
 - 不做常驻服务，主会话关闭全停（架构 §1）。
 - 编排状态（任务卡、黑板、产物）放 `.pao/`（pao 自有编排目录，2026-10-02 定案，根公约允许项目自声明；任务工作区制见 `plans/v2-ARCHITECTURE.md` §2.1）。
@@ -107,9 +107,13 @@
 
 ## Verification
 
-- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死——2026-10-02 K3 审查实测 218，R23）。
+- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死）。最近检查与真实／模拟边界见[当前修复计划](plans/未完成/2026-10-03-审查修复与验收补齐.md)链接报告；模块通过不替代正式入口和目标 Windows 集成验收。
 - coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 68 失败/21 文件（POSIX 假设等上游债，2026-10-02 随 pi 1.0.0 升级重建——新增上游 experimental durable 测试在 Windows 缺 `process.getuid`，旧 0.99.2 基线 67 失败中 3 处已消失；留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修；并发计时类测试偶发轮换失败属环境抖动，隔离复跑判定。该口径已机械化（M0-09）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线、`--save-log` 留档新基线。
 - 全仓 `tsc --noEmit`（上游 pre-commit 链的一环）：pi 1.0.0 上游自带 1 错——`packages/ai/test/together-models.test.ts` 引用目录里不存在的 `deepseek-ai/DeepSeek-V4-Pro` 字面量（vitest 不查类型故测试不红）；我方对 `packages/ai` 零改动，不替上游修，类型门＝除该上游项外无错。
+
+截至 2026-10-03，R33 基线漏检／完整性及 R34 Windows 启动代码已修；最新验证证据见当前修复计划链接报告。基线包括文件级失败及未处理错误，纯 Vitest JSON 缺错误证据时不能当完整验收报告；上游失败集合不扩大的门槛不变。脚本实际全量运行采用隔离配置、离线／非 e2e 测试，不加载用户端点凭证。升级脚本已测 Windows npm/npx 启动，未执行真实升级；打印 dry-run 不算升级成功。
+
+2026-10-03 修复后实跑仍未通过旧 68 基线门槛：当前 fork 的品牌与相关配置测试已超出该历史记录。已用修复前 HEAD 做同隔离环境的补充归因，当前唯一新增项定向未复现；基准树的安装目录差异另列。原基线保留，不能把补充归因当全量 PASS；完整结果只维护在当前修复计划链接报告。
 
 ## Maintenance
 

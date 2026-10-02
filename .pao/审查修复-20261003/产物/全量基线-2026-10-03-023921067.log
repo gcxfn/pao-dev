@@ -1,0 +1,58 @@
+已留档测试结果与运行错误键：D:\AI\workspace\pao-dev\.pao\审查修复-20261003\产物\coding-agent全量-2026-10-03-023921067.json
+基线：D:\AI\workspace\pao-dev\.pao\并行实施-20261002\产物\基线测试-coding-agent.log
+  失败用例 68 个 / 失败文件 21 个
+当前：vitest run（D:\AI\workspace\pao-dev\PAO\packages\coding-agent）
+  失败用例 112 个 / 失败文件 35 个
+
+新增失败 48 处（基线里没有，本次有）：
+  FAIL test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should queue extension-origin steering messages while streaming
+  FAIL test/agent-session-dynamic-tools.test.ts > AgentSession dynamic tool registration > exposes session state before custom bash spawn hooks and supports opting out
+  FAIL test/bash-close-hang-windows.test.ts > Windows child-process close handling > executeBash resolves after the shell exits even if inherited stdio handles stay open
+  FAIL test/bash-close-hang-windows.test.ts > Windows child-process close handling > bash tool resolves after the shell exits even if inherited stdio handles stay open
+  FAIL test/credential-print.test.ts > credential print commands > reports unknown auth options like package commands
+  FAIL test/first-time-setup.test.ts > shouldRunFirstTimeSetup > returns true when experimental, default agent dir, and no settings.json
+  FAIL test/interactive-mode-bug-report-hint.test.ts > InteractiveMode bug report hints > identifies extensions with frames in a crash stack
+  FAIL test/mcp-command.test.ts > pi mcp > adds HTTP servers and keeps other content of the file
+  FAIL test/model-registry.test.ts > ModelRegistry > API key resolution > request-time resolution > command is executed on every provider lookup
+  FAIL test/model-registry.test.ts > ModelRegistry > API key resolution > request-time resolution > commands are re-executed across registry instances
+  FAIL test/model-registry.test.ts > ModelRegistry > API key resolution > request-time resolution > failed commands are retried
+  FAIL test/model-registry.test.ts > ModelRegistry > API key resolution > request-time resolution > getApiKeyAndHeaders resolves authHeader on every request
+  FAIL test/model-registry.test.ts > ModelRegistry > API key resolution > request-time resolution > getApiKeyAndHeaders resolves configured auth exactly once
+  FAIL test/package-command-paths.test.ts > package commands > allows local package install to initialize fresh project settings
+  FAIL test/package-command-paths.test.ts > package commands > shows install subcommand help
+  FAIL test/package-command-paths.test.ts > package commands > shows a friendly error for unknown install options
+  FAIL test/package-command-paths.test.ts > package commands > shows a friendly error for missing install source
+  FAIL test/package-command-paths.test.ts > package commands > allows explicit self-update checks when automatic version checks are disabled
+  FAIL test/package-command-paths.test.ts > package commands > updates installer-managed Pi through a staged immutable release
+  FAIL test/package-command-paths.test.ts > package commands > rejects forced managed reinstalls
+  FAIL test/package-command-paths.test.ts > package commands > keeps npm self-updates non-managed when the managed environment is inherited
+  FAIL test/package-command-paths.test.ts > package commands > uses the current package name when the update check omits packageName
+  FAIL test/resolve-config-value.test.ts > resolveConfigValue > caches successful and failed commands until explicitly cleared
+  FAIL test/resolve-config-value.test.ts > resolveConfigValue > uncached resolution executes a command on every call
+  FAIL test/sdk-session-manager.test.ts > createAgentSession session manager defaults > exposes current session state to the built-in bash tool
+  FAIL test/session-file-invalid.test.ts > --session invalid file handling > prints a friendly error and preserves non-session file content
+  FAIL test/theme-export.test.ts > getThemeExportColors > resolves export variable references using the same syntax as colors
+  FAIL test/theme-export.test.ts > getThemeExportColors > converts OKHSL export colors to hex because CSS does not support them
+  FAIL test/theme-export.test.ts > getThemeExportColors > resolves recursive vars and converts 256-color export values to hex
+  FAIL test/theme-picker.test.ts > theme picker > uses custom theme content names instead of file names
+  FAIL test/tools.test.ts > Coding Agent Tools > bash tool > should prepend command prefix when configured
+  FAIL test/tools.test.ts > Coding Agent Tools > bash tool > should include output from both prefix and command
+  FAIL test/tools.test.ts > Coding Agent Tools > bash tool > should work without command prefix
+  FAIL test/tools.test.ts > Coding Agent Tools > bash tool > should expose local bash operations for extension reuse
+  FAIL test/tools.test.ts > Coding Agent Tools > find tool > should include hidden files that are not gitignored
+  FAIL test/tools.test.ts > Coding Agent Tools > find tool > should respect .gitignore
+  FAIL test/tools.test.ts > Coding Agent Tools > find tool > should surface fd glob parse errors
+  FAIL test/tools.test.ts > Coding Agent Tools > find tool > should treat flag-like patterns as search text
+  FAIL test/tools.test.ts > tool cwd resolution > find uses ctx.cwd when provided
+  FAIL test/suite/agent-session-mcp-oauth.test.ts > AgentSession MCP OAuth > registers with the configured client name
+  FAIL test/session-manager/file-operations.test.ts > SessionManager.setSessionFile with corrupted files > throws and preserves non-empty file without valid header
+  FAIL test/session-manager/file-operations.test.ts > SessionManager.setSessionFile with corrupted files > throws and preserves non-session JSONL files
+  FAIL test/suite/regressions/3302-find-path-glob.test.ts > issue #3302 find returns no results for path-based glob patterns > basename pattern still matches (regression-safe)
+  FAIL test/suite/regressions/3302-find-path-glob.test.ts > issue #3302 find returns no results for path-based glob patterns > directory-prefixed pattern with ** tail matches subtree
+  FAIL test/suite/regressions/3302-find-path-glob.test.ts > issue #3302 find returns no results for path-based glob patterns > leading ** wildcard with path segments matches
+  FAIL test/suite/regressions/3302-find-path-glob.test.ts > issue #3302 find returns no results for path-based glob patterns > src/**/*.spec.ts matches nested spec file
+  FAIL test/suite/regressions/3303-find-nested-gitignore.test.ts > issue #3303 nested .gitignore rules leak into sibling directories > flat sibling case > applies a/.gitignore only inside a/ and leaves b/ untouched
+  FAIL test/suite/regressions/3303-find-nested-gitignore.test.ts > issue #3303 nested .gitignore rules leak into sibling directories > deeply nested case > scopes each .gitignore to its own subtree
+基线中已消失的失败 5 处（已修复或不再复现，仅提示，不影响退出码）
+
+结论：失败集合较基线扩大，验收不通过
