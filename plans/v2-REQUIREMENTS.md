@@ -56,7 +56,7 @@
 | 会话内 todolist | `@juicesharp/rpiv-todo`（MIT、活跃） | 直接装 |
 | goal/验收审计 | `pi-goal-x`（MIT，含独立完成审计员） | M1 末评估直用或借设计 |
 | 子代理/蜂群 | 官方 `examples/extensions/subagent/` 骨架；扇出/记账/worktree 参考 `@quintinshaw/pi-dynamic-workflows`（2026-10-02 销账：扇出已落地；记账随工作流引擎 v1；引擎不抄——工作流以卡为唯一真相，见架构 §11） | 抄改 |
-| 语义搜索（查库＋记忆召回） | 引擎终选 **qmd**（pi-memory 同款，MIT、BM25）；门面路由自建薄层；事实层语义库抄 pi-memory 结构（常驻 MEMORY.md 之外补可增长自动召回库——用户 Hermes 实用经验：光 MEMORY.md 不够） | 抄改＋薄自建 |
+| 语义搜索（查库＋记忆召回） | 记忆供应商接口（架构 §18.5，插拔式）：默认 **mnemosyne**（`mnemosyne-memory`，MIT，自带 MCP stdio server，`mnemosyne mcp` 子进程挂载）；经验层文件检索用 qmd/grep 薄层；事实层注入纪律抄 pi-memory（常驻 MEMORY.md＋自动召回库——用户 Hermes 实用经验：光 MEMORY.md 不够） | 直接接＋薄自建 |
 | 任务卡/看板/队列 | pi 生态与 OMP 均无现成品 | 纯自写 |
 | 交互提问（人工门/对齐问卷） | `@juicesharp/rpiv-ask-user-question`（rpiv-mono，MIT、活跃、高下载量） | 抄改 |
 | 交卷 staging 追踪 | pi-git-assistant「工具触碰文件自动追踪」机制 | 抄机制 |
@@ -68,6 +68,8 @@
 > 2026-10-02 深夜复用审计补记（子代理扫 pi.dev/packages＋GitHub 对照架构 §12–§23）：以上新增行据此销账；机械验收（§12）与仪表盘（§21）生态无贴合现成品、确认自建；后台任务确认 pi-durable 覆盖（pi-background-tasks 的「运行凭证」概念记档备查）；沙箱参考 trim21/pi-extensions 的 workspace guard 路径白名单思路（bwrap 为 Linux 件不适用）；rpiv-todo 另有两点可抄——overlay 渲染与「状态跨 compaction 持久化」。
 >
 > 2026-10-02 深夜全网狩猎销账（多代理编排与同类产品，对照后判定）：CrewAI 任务护栏（期望产出＋验收器＋自动重试）＝失败分型重试已有；A2A `input-required` 状态＝缺输入退回补卡已有，**不可变 Artifact 采纳**（回执不可变→架构 §14）；Claude Agent Teams 自认领＝扇出补位已有、点对点信箱不抄（星型纪律）；Deep Agents「brief＋文件引用」＝指针铁律已有；OpenAI handoffs 的 `input_filter`＝地图层已有；Spec Kit **clarify/converge 采纳**（大活流程配方加澄清门与漂移复核→§11.4）；Backlog.md 看板不抄（M3 壳自然产物）；「反多代理门槛」＝例外直干已有；Cursor 注入劫持案例→**注入防线采纳**（§12.2）。
+>
+> 2026-10-02 深夜再订正（记忆供应商专题）：当晚早先的「引擎终选 qmd」作废——机盘核实 PyPI `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne（MIT）自带 `mnemosyne mcp`（stdio，专为宿主 agent 子进程设计，支持 `--bank` 分库），升级为插拔式供应商接口（架构 §18.5），默认 mnemosyne；mnemosy.ai 的 TS 同名异厂（Aristotle Intelligence）不引入；qmd 降为经验层文件检索＋兜底供应商。
 
 OMP（can1357/oh-my-pi，MIT、34k star）是 pi 的整个 fork 而非插件——只借鉴设计，不引入；`context-mode`（Elastic-2.0）不引入。2026-10-02 深夜机盘销账——**采纳**：模型角色表结构＋context 溢出升级（先升档后压缩、只认显式配置目标）；重试链（可重试分类器＋封顶指数退避＋冷却回切＋「已产出可见文本不许静默重放」）；task 批量派发 schema（context/solutionSpace/outputSchema/isolated——作派发提示词构造参考，不加卡字段）；herdr 命名管道单向状态上报（M3 壳观察通道参考）；usage 表结构（model_perf 记 TTFT，体感选型）；modelPresets 整套角色快照切换；autoloadSkills 派发时按卡注入技能。**不抄**：Agent Hub TUI 本体、agent 间消息（worker 无再派发权）、mnemopi 记忆后端（已有双层记忆定案）、通知与定时（OMP 亦无，边界一致）。prewalk（大模型起步、首编辑切小模型）记档备查。
 
