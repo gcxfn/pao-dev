@@ -83,7 +83,7 @@
 ## Structure
 
 - `plans/` — 需求与架构定案（`v2-REQUIREMENTS.md`、`v2-ARCHITECTURE.md`），架构决策的唯一归属；内部规范见 `plans/AGENTS.md`
-- `PAO/` — pao 本体：pi 0.99.2 源码 fork（独立 git 仓库，保留上游 remote，主分支 `pao-main`，基线 0.99.2；已从本仓库 .gitignore，备份另配）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
+- `PAO/` — pao 本体：pi 0.99.2 源码 fork（独立 git 仓库，主分支 `pao-main`，基线 0.99.2；已从本仓库 .gitignore；备份＝私有远端 `backup`→github.com/gcxfn/pao，2026-10-02 起推送，上游 remote 为 `origin`→github.com/earendil-works/pi）。2026-10-02 路线变更，原「自含扩展包」方案作废，见 `.agents/notes/`
 - `摩擦日志.md` — 日常使用 PAO 的摩擦滚动记录（M0 起开张）
 - `部门/` — 部门配方与部门知识库（骨架见 `plans/v2-ARCHITECTURE.md` §6.2，待建）
 - `.agents/notes/{implemented,rejected}/` — 决策笔记：只记 why 与被否方案；现行规则的正文住 `plans/`，两边互引、不各存一套结论；纯机械改动不留
