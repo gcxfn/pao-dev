@@ -56,7 +56,7 @@
 | 会话内 todolist | `@juicesharp/rpiv-todo`（MIT、活跃） | 直接装 |
 | goal/验收审计 | `pi-goal-x`（MIT，含独立完成审计员） | M1 末评估直用或借设计 |
 | 子代理/蜂群 | 官方 `examples/extensions/subagent/` 骨架；扇出/记账/worktree 参考 `@quintinshaw/pi-dynamic-workflows`（2026-10-02 销账：扇出已落地；记账随工作流引擎 v1；引擎不抄——工作流以卡为唯一真相，见架构 §11） | 抄改 |
-| 语义搜索（查库） | 按架构 §6.3 自建；`pi-memory`（qmd，MIT）备选评估 | 自建为主 |
+| 语义搜索（查库＋记忆召回） | 引擎终选 **qmd**（pi-memory 同款，MIT、BM25）；门面路由自建薄层；事实层语义库抄 pi-memory 结构（常驻 MEMORY.md 之外补可增长自动召回库——用户 Hermes 实用经验：光 MEMORY.md 不够） | 抄改＋薄自建 |
 | 任务卡/看板/队列 | pi 生态与 OMP 均无现成品 | 纯自写 |
 | 交互提问（人工门/对齐问卷） | `@juicesharp/rpiv-ask-user-question`（rpiv-mono，MIT、活跃、高下载量） | 抄改 |
 | 交卷 staging 追踪 | pi-git-assistant「工具触碰文件自动追踪」机制 | 抄机制 |
