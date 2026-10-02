@@ -66,6 +66,8 @@
 | 验收 TDD 循环结构 | kreek/pi-proof（MIT、已停更）——只借「验收标准→可执行测试→不过即回流」结构 | 借设计 |
 
 > 2026-10-02 深夜复用审计补记（子代理扫 pi.dev/packages＋GitHub 对照架构 §12–§23）：以上新增行据此销账；机械验收（§12）与仪表盘（§21）生态无贴合现成品、确认自建；后台任务确认 pi-durable 覆盖（pi-background-tasks 的「运行凭证」概念记档备查）；沙箱参考 trim21/pi-extensions 的 workspace guard 路径白名单思路（bwrap 为 Linux 件不适用）；rpiv-todo 另有两点可抄——overlay 渲染与「状态跨 compaction 持久化」。
+>
+> 2026-10-02 深夜全网狩猎销账（多代理编排与同类产品，对照后判定）：CrewAI 任务护栏（期望产出＋验收器＋自动重试）＝失败分型重试已有；A2A `input-required` 状态＝缺输入退回补卡已有，**不可变 Artifact 采纳**（回执不可变→架构 §14）；Claude Agent Teams 自认领＝扇出补位已有、点对点信箱不抄（星型纪律）；Deep Agents「brief＋文件引用」＝指针铁律已有；OpenAI handoffs 的 `input_filter`＝地图层已有；Spec Kit **clarify/converge 采纳**（大活流程配方加澄清门与漂移复核→§11.4）；Backlog.md 看板不抄（M3 壳自然产物）；「反多代理门槛」＝例外直干已有；Cursor 注入劫持案例→**注入防线采纳**（§12.2）。
 
 OMP（oh-my-pi）是 pi 的整个 fork 而非插件——只借鉴设计，不引入；`context-mode`（Elastic-2.0）不引入。OMP 借鉴点备忘：模型角色表与 context 溢出自动升级、重试链（摩擦日志候选）；task 批量派发 schema；Agent Hub（M3 壳设计参考）。
 
