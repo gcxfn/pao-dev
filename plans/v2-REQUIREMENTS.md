@@ -58,6 +58,14 @@
 | 子代理/蜂群 | 官方 `examples/extensions/subagent/` 骨架；扇出/记账/worktree 参考 `@quintinshaw/pi-dynamic-workflows`（2026-10-02 销账：扇出已落地；记账随工作流引擎 v1；引擎不抄——工作流以卡为唯一真相，见架构 §11） | 抄改 |
 | 语义搜索（查库） | 按架构 §6.3 自建；`pi-memory`（qmd，MIT）备选评估 | 自建为主 |
 | 任务卡/看板/队列 | pi 生态与 OMP 均无现成品 | 纯自写 |
+| 交互提问（人工门/对齐问卷） | `@juicesharp/rpiv-ask-user-question`（rpiv-mono，MIT、活跃、高下载量） | 抄改 |
+| 交卷 staging 追踪 | pi-git-assistant「工具触碰文件自动追踪」机制 | 抄机制 |
+| 用量状态行渲染 | narumiruna/pi-extensions 的 statusline（MIT、活跃） | 抄改 |
+| 系统通知 | pi 官方 `examples/extensions/notify.ts`（事件钩子，百行内） | 直接抄 |
+| 模型选择器交互 | pi-model-picker 分类分组键盘交互（许可证待核，只借交互） | 抄交互 |
+| 验收 TDD 循环结构 | kreek/pi-proof（MIT、已停更）——只借「验收标准→可执行测试→不过即回流」结构 | 借设计 |
+
+> 2026-10-02 深夜复用审计补记（子代理扫 pi.dev/packages＋GitHub 对照架构 §12–§23）：以上新增行据此销账；机械验收（§12）与仪表盘（§21）生态无贴合现成品、确认自建；后台任务确认 pi-durable 覆盖（pi-background-tasks 的「运行凭证」概念记档备查）；沙箱参考 trim21/pi-extensions 的 workspace guard 路径白名单思路（bwrap 为 Linux 件不适用）；rpiv-todo 另有两点可抄——overlay 渲染与「状态跨 compaction 持久化」。
 
 OMP（oh-my-pi）是 pi 的整个 fork 而非插件——只借鉴设计，不引入；`context-mode`（Elastic-2.0）不引入。OMP 借鉴点备忘：模型角色表与 context 溢出自动升级、重试链（摩擦日志候选）；task 批量派发 schema；Agent Hub（M3 壳设计参考）。
 
