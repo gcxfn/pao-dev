@@ -105,6 +105,7 @@
 
 - pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死——2026-10-02 K3 审查实测 218，R23）。
 - coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 68 失败/21 文件（POSIX 假设等上游债，2026-10-02 随 pi 1.0.0 升级重建——新增上游 experimental durable 测试在 Windows 缺 `process.getuid`，旧 0.99.2 基线 67 失败中 3 处已消失；留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修；并发计时类测试偶发轮换失败属环境抖动，隔离复跑判定。该口径已机械化（M0-09）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线、`--save-log` 留档新基线。
+- 全仓 `tsc --noEmit`（上游 pre-commit 链的一环）：pi 1.0.0 上游自带 1 错——`packages/ai/test/together-models.test.ts` 引用目录里不存在的 `deepseek-ai/DeepSeek-V4-Pro` 字面量（vitest 不查类型故测试不红）；我方对 `packages/ai` 零改动，不替上游修，类型门＝除该上游项外无错。
 
 ## Maintenance
 
