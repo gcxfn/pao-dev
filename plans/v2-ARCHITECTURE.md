@@ -355,6 +355,7 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 - 2026-10-02 深夜：worktree 预案定案→§25（现成方案调研销账：pi-dynamic-workflows 生命周期＋社区串行合并纪律＋pnpm 硬链解）。
 - 2026-10-03：专属命令统一定案——`pao` 唯一扩展命令（裸 `/pao` 开可视化面板;`/pao queue/status/pano/flow/collab/model` 子命令直达,中文命令名全删不留别名）;§22 薄改道回退（interactive-mode 恢复上游形状,原生 /model 回归物理直选,「专家」后门取消——原生即直选）;启动横幅品牌化。正文旧命令名（/队列、/状态、/派、/流 等）为设计名,按此映射读。
 - 2026-10-03：工作流配方生成路定案→§11.6——生成两条都要（对话从零起草＋跑完蒸馏 `pao_存流`）,落盘共走 `pao_落配方` 机械闸;泛化口径＝草稿逐字＋审时建议参数化（机械层不做语义猜测）;节点可声明技能、派发收口层按需挂载（平常零挂载、缺技能拒派）;蒸馏含卡树/末次回执/部门知识库;跑后复盘闭环（`pao_复盘流` 机械报告→主控意见→用户拍板→落配方回写）;横幅细化＝保持大写 PAO、横向×2 放大居中,面板消息全去品牌字标。
+- 2026-10-03：记忆供应商切换定案→§18.5 刷新——现场供应商由 mnemosyne 切 **gbrain**（用户定向「hermes 的记忆系统换成了 docker 里面的 gbrain,把 pao 的也换了」;插拔接口的第一次实战换供应商,零接口改动纯加适配器,fork f4b3eafde）;与 Hermes 共用同一 gbrain 容器（127.0.0.1:7333,「一个大脑」定向不变,载体从 SQLite 共库升级为 gbrain 同脑）;token 铸 pao 专用（read,write 限额,容器 `gbrain auth create`）;作者标识从 MNEMOSYNE_AUTHOR_ID 迁移到 remember 的 provenance 前缀「pao」;mnemosyne 适配器保留在册可随时换回。
 
 ## 11. 工作流：配方化编排（2026-10-02 定案，原待对齐议题）
 
@@ -521,7 +522,7 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 ### 18.1 事实层（薄索引常驻＋语义库自动召回；2026-10-02 深夜增补后半）
 
 - **常驻索引**：`PAO_HOME/主控记忆/MEMORY.md`——定长上限（约 2000 字）、条目化、**严格准入**（写入亮 diff 供用户过目）；主控会话启动注入系统提示。只放「每轮必须知道的少数事」（用户契约、环境约定、偏好）；任务状态不入（R10）。
-- **语义记忆库**（用户 Hermes 实用经验定案：**光 MEMORY.md 不够**——事实的长尾需要可增长、按相关性自动召回的库）：条目住记忆供应商的库（§18.5，默认 mnemosyne，与 Hermes **共库**），主控低门槛自由写入；**每轮按当前对话自动召回 top3**、带防污染标注（「召回记忆，非用户输入」）注入——召回由 pao 直连供应商完成，不经模型工具调用环；上下文压缩时把未结事实 handoff 进供应商（注入纪律抄 pi-memory，MIT；与 Hermes 每轮 prefetch 实战同构）。
+- **语义记忆库**（用户 Hermes 实用经验定案：**光 MEMORY.md 不够**——事实的长尾需要可增长、按相关性自动召回的库）：条目住记忆供应商的库（§18.5，现场＝gbrain〔2026-10-03 切，与 Hermes **同脑**〕；供应商可插拔，原 mnemosyne 共库口径见 §18.5），主控低门槛自由写入；**每轮按当前对话自动召回 top3**、带防污染标注（「召回记忆，非用户输入」）注入——召回由 pao 直连供应商完成，不经模型工具调用环；上下文压缩时把未结事实 handoff 进供应商（注入纪律抄 pi-memory，MIT；与 Hermes 每轮 prefetch 实战同构）。
 - 分工口径：常驻索引＝必须知道；语义库＝应该想起；经验层（18.2）＝干活教训。
 
 ### 18.2 经验层（厚、按需）
@@ -531,20 +532,21 @@ owner: <部门/会话>              # 认领时写；状态与信封字段只有
 ### 18.3 门面（2026-10-02 用户定案：自动路由）
 
 - `pao_查库` 增「自动」模式：按注册表能力标签路由相关库（含主控部）→并行查→合并结果带来源部门；不建独立索引结构（子索引本来就是各库自带路由层）；随 M2 语义搜索落地，M1 先显式指定部门。
-- **检索引擎（2026-10-02 深夜二次订正：当晚早先的「终选 qmd」作废，升级为供应商接口）**：语义库召回走记忆供应商（§18.5，默认 mnemosyne）；经验层是散装 markdown 文件，供应商库装不下它，门面由此定形为**真·并行两路**——供应商召回（语义库）＋文件检索（经验层 markdown，qmd/grep 薄层）→ 合并带来源。qmd 从「门面＋召回共用引擎」降级为「经验层文件检索件＋兜底供应商」（§18.5）。M1 门面先显式指定部门＋文件检索，供应商接入随 M2。
+- **检索引擎（2026-10-02 深夜二次订正：当晚早先的「终选 qmd」作废，升级为供应商接口）**：语义库召回走记忆供应商（§18.5，现场＝gbrain）；经验层是散装 markdown 文件，供应商库装不下它，门面由此定形为**真·并行两路**——供应商召回（语义库）＋文件检索（经验层 markdown，qmd/grep 薄层）→ 合并带来源。qmd 从「门面＋召回共用引擎」降级为「经验层文件检索件＋兜底供应商」（§18.5）。M1 门面先显式指定部门＋文件检索，供应商接入随 M2。
 
 ### 18.4 门禁与防污染（抄 Hermes 教训）
 
 - 建卡/派发前自动注入「先查门面」纪律提醒（首轮＋条件触发）；召回内容带防污染标注（「检索所得，非用户新输入」）。
 - 被否：主控记忆与部门库完全同构不分层（高频小事实与低频人审教训生命周期不同，混装两头难受）；letta/mem0 式独立记忆服务（过配）。
 
-### 18.5 记忆供应商接口（2026-10-02 定案：插拔式，默认 mnemosyne）
+### 18.5 记忆供应商接口（2026-10-02 定案：插拔式；2026-10-03 现场切换 gbrain）
 
-> 用户定向：「记忆插件作为一个插拔式的接口，可以调换别的记忆供应商」；当晚机盘核实 mnemosyne 自带 MCP server，直接上可行。
+> 用户定向：「记忆插件作为一个插拔式的接口，可以调换别的记忆供应商」；当晚机盘核实 mnemosyne 自带 MCP server，直接上可行。2026-10-03 用户定向「hermes 的记忆系统换成了 docker 里面的 gbrain，把 pao 的也换了」——插拔接口第一次实战换供应商：零接口改动、纯加 gbrain 适配器（fork f4b3eafde）＋改配置一行。
 
 - **接口契约**（供应商须实现）：写入（remember）／召回（recall(query, topN)）／忘却（可选，须显式授权）；能力声明（是否语义检索、是否需嵌入端点）。配置：`PAO_HOME/pao配置/记忆供应商.json`（供应商名＋参数）——**换供应商＝改配置**；数据不自动迁移（各供应商管各的库，迁移走显式导入导出）。
 - **两种实现形态**：①外部 MCP 供应商——stdio 子进程由主会话拉起、经 pi 原生 MCP 机制挂载，复用 pi-mcp 传输，pao 只保留供应商适配器，不自建记忆引擎；②内置适配器——TS 进程内实现（兜底供应商 qmd 即此类）。
-- **默认供应商＝mnemosyne**（PyPI 包 `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne，MIT，作者 Abdias J；用户 Hermes 侧已在用 4.0.0b3）：`mnemosyne mcp`（stdio 传输）为主会话子进程；R05 相容（子进程随主会话全停）；引擎为 SQLite＋FTS5＋向量混合排序（词法 0.3／向量 0.5／重要性 0.2 加权＋新近度半衰期），截至 2026-10-03，嵌入配置由 pao 的 loadEmbedConfig 读取并补缺注入 mnemosyne 子进程环境（API／本地能力由供应商实现）。**部门库查库的嵌入端点（2026-10-02 晚二次拍板「正常密钥输入」）**：密钥**显式填入** fork 根 `.env`（`EMBED_BASE_URL/EMBED_API_KEY/EMBED_MODEL`，.env 不入库）；`loadEmbedConfig` 三级来源＝process.env 优先 → 惰性加载 `.env`（cwd/.env → 自模块路径逐级上溯至 fork 根，`PAO_ENV_FILE` 可显式指定；pi 核心不加载 .env，此加载为 pao 侧补齐）→ 皆无则词法独跑（降级标注照旧）。**不读任何外部系统（含 Hermes）的配置文件**——早先「读 Hermes mnemosyne 配置」方案被用户否决（偏好常规显式输入，不留跨系统间接层）；密钥只在内存，绝不写 pao 日志/仓库；外发许可必须覆盖供应商查询与写入。2026-10-03 已修手动记忆工具的协议、可信项目识别与许可校验；自动召回／压缩交接已接入（午间批，fork 5ce6b626a：resident 门面——每轮自动召回 top3 与压缩交接由 记忆供应商.json「自动召回」「自动交接」两布尔独立开关、缺省关＝零行为，外发许可覆盖查询与写入两侧；常驻索引 MEMORY.md 每轮注入同批落地），真实供应商验证边界见[当前修复计划](未完成/2026-10-03-审查修复与验收补齐.md)。
+- **现场供应商＝gbrain（2026-10-03 切换，fork f4b3eafde）**：Docker 容器 gbrain-local:0.60.32.0（127.0.0.1:7333，Express＋pgvector/pg16，用户态常驻——R05 管的是 pao 侧不建进程，外部服务常驻不在此列）。接入面＝**MCP over HTTP**：POST `{base_url}/mcp`＋`Authorization: Bearer`（无 session、JSON-RPC 直来直往；真实探针钉住 initialize 200/protocolVersion 2025-03-26/通知回 204/工具结果＝JSON 序列化进单个 text 块）；客户端复用 pi-mcp `McpClient`＋`StreamableHttpTransport`（openGetStream 关死，无服务器→客户端流）。记忆动词按其 MEMORY VERBS v1 冻结契约映射：写入＝`remember{fact, provenance, visibility:world}`（作者标识＝provenance 前缀「pao」，标签拼进 provenance；duplicate/superseded 是幂等成功语义）；召回＝`recall{query, limit}` 取 `facts[]`（`fact_id`/`fact`/`provenance` → MemoryHit 三字段）；忘却＝`forget{id}`（幂等，expired=false＝本就过期、返回 0；未知 ID 报错不伪造零删除）。能力声明：语义检索 true（pgvector 混合）、**需嵌入端点 false**（gbrain 服务端自供嵌入，与 mnemosyne 的关键差异——EMBED_* 三键现仅供查库嵌入端点）、忘却按工具清单定。token：容器侧 `gbrain auth create pao --scopes read,write` 铸发（SHA-256 落库只显一次；限流 60 req/min per token，§18.1 每轮 top3 远在其下）；pao 侧经 **GBRAIN_TOKEN** 三级链（process.env 优先 → 惰性 .env 补缺，复用 EMBED_* 同链同安全门——显式 env 记录＝测试语义不触文件）；fork 根 `.env` 收纳、不入库、绝不进日志。隔离模型：gbrain 传统 token 写源下限＝default 源，pao 与 Hermes 同源共写（visibility=world 跨 agent 可见是 gbrain 定案模型，正合「一个大脑」）。
+- **默认供应商＝mnemosyne**（PyPI 包 `mnemosyne-memory`＝github.com/mnemosyne-oss/mnemosyne，MIT，作者 Abdias J；用户 Hermes 侧已在用 4.0.0b3）：`mnemosyne mcp`（stdio 传输）为主会话子进程；R05 相容（子进程随主会话全停）；引擎为 SQLite＋FTS5＋向量混合排序（词法 0.3／向量 0.5／重要性 0.2 加权＋新近度半衰期），截至 2026-10-03，嵌入配置由 pao 的 loadEmbedConfig 读取并补缺注入 mnemosyne 子进程环境（API／本地能力由供应商实现）。**部门库查库的嵌入端点（2026-10-02 晚二次拍板「正常密钥输入」）**：密钥**显式填入** fork 根 `.env`（`EMBED_BASE_URL/EMBED_API_KEY/EMBED_MODEL`，.env 不入库）；`loadEmbedConfig` 三级来源＝process.env 优先 → 惰性加载 `.env`（cwd/.env → 自模块路径逐级上溯至 fork 根，`PAO_ENV_FILE` 可显式指定；pi 核心不加载 .env，此加载为 pao 侧补齐）→ 皆无则词法独跑（降级标注照旧）。**不读任何外部系统（含 Hermes）的配置文件**——早先「读 Hermes mnemosyne 配置」方案被用户否决（偏好常规显式输入，不留跨系统间接层）；密钥只在内存，绝不写 pao 日志/仓库；外发许可必须覆盖供应商查询与写入。2026-10-03 已修手动记忆工具的协议、可信项目识别与许可校验；自动召回／压缩交接已接入（午间批，fork 5ce6b626a：resident 门面——每轮自动召回 top3 与压缩交接由 记忆供应商.json「自动召回」「自动交接」两布尔独立开关、缺省关＝零行为，外发许可覆盖查询与写入两侧；常驻索引 MEMORY.md 每轮注入同批落地）。**2026-10-03 现场已切 gbrain（本节首条），mnemosyne 适配器保留在册**——Hermes 侧若再迁回或分家，改配置一行即回。
 - **与 Hermes 共用同一记忆库（2026-10-02 用户定向定案：一个大脑）**：pao 的 `mnemosyne mcp` 指到 Hermes 的 mnemosyne 数据目录（经 `--env-file`／环境变量设 home，实施期核变量名），**不自装、复用 Hermes 的同一份安装与同一个库**——Hermes 已积累的用户/环境事实 pao 直接可召回，反之亦然。护栏：①写入带 pao 作者标识（`MNEMOSYNE_AUTHOR_ID`，多代理共库是其设计内场景；召回不分作者，标识留作排查）；②pao 侧准入口径不变——只有用户契约/环境/偏好类事实进库，任务态不入（R10），防污染 Hermes 的整理与 persona；③版本随 Hermes 走（共库必须同版，复用同一安装天然满足；Hermes 升级 mnemosyne 后 pao 同批跑冒烟：召回＋写入各一条）；④并发：SQLite WAL＋库自带 init 锁，单人使用两进程同时活跃概率低，兜底足够。逃生舱（摩擦驱动，不预建）：分家走 mnemosyne 自带 export/import 或 sync 定向同步（`sync_roles` 可只同步用户级事实）。
 - **兜底供应商＝qmd**（BM25 扫 markdown，零 Python 依赖）：无 Python 环境／无嵌入端点／mnemosyne 不可用时降级用它，这是目标兜底；当前 qmd 适配器未实现，供应商断链按无记忆报警降级，接线与实测归 M2-05。
 - **被否**：Node 同构自建向量库（重造 mnemosyne 已成熟件，违背复用优先）；mnemosy.ai 的 TS 版 mnemosyne（Aristotle Intelligence 出品，同名异厂、与本机 Hermes 侧无亲缘，引入徒增混淆）。
