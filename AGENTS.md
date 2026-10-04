@@ -107,13 +107,15 @@
 
 ## Verification
 
-- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死）。最近检查与真实／模拟边界见[当前修复计划](plans/未完成/2026-10-03-审查修复与验收补齐.md)链接报告；模块通过不替代正式入口和目标 Windows 集成验收。
+- pao 模块测试：`PAO/packages/coding-agent` 下 `npx vitest run test/pao/`（须全绿；用例数不在此写死）。最近检查与真实／模拟边界见[存档·修复计划](plans/未完成/存档-收编-2026-10-04/2026-10-03-审查修复与验收补齐.md)链接报告；后续任务与验收面以[后续执行总册](plans/未完成/2026-10-04-后续执行总册.md)为准；模块通过不替代正式入口和目标 Windows 集成验收。
 - coding-agent 全量：同目录 `npx vitest run`；Windows 下上游基线 68 失败/21 文件（POSIX 假设等上游债，2026-10-02 随 pi 1.0.0 升级重建——新增上游 experimental durable 测试在 Windows 缺 `process.getuid`，旧 0.99.2 基线 67 失败中 3 处已消失；留档 `.pao/并行实施-20261002/产物/基线测试-coding-agent.log`），验收口径＝失败集合较基线不扩大，不替上游修；并发计时类测试偶发轮换失败属环境抖动，隔离复跑判定。该口径已机械化（M0-09）：`PAO/` 仓库根 `node scripts/check-baseline-failures.mjs` 自己跑全量再比对，`--log <文件>` 比对现成输出、`--baseline` 换基线、`--save-log` 留档新基线。
 - 全仓 `tsc --noEmit`（上游 pre-commit 链的一环）：pi 1.0.0 上游自带 1 错——`packages/ai/test/together-models.test.ts` 引用目录里不存在的 `deepseek-ai/DeepSeek-V4-Pro` 字面量（vitest 不查类型故测试不红）；我方对 `packages/ai` 零改动，不替上游修，类型门＝除该上游项外无错。
 
 截至 2026-10-03，R33 基线漏检／完整性及 R34 Windows 启动代码已修；最新验证证据见当前修复计划链接报告。基线包括文件级失败及未处理错误，纯 Vitest JSON 缺错误证据时不能当完整验收报告；上游失败集合不扩大的门槛不变。脚本实际全量运行采用隔离配置、离线／非 e2e 测试，不加载用户端点凭证。升级脚本已测 Windows npm/npx 启动，未执行真实升级；打印 dry-run 不算升级成功。
 
 2026-10-03 修复后实跑仍未通过旧 68 基线门槛：当前 fork 的品牌与相关配置测试已超出该历史记录。已用修复前 HEAD 做同隔离环境的补充归因，当前唯一新增项定向未复现；基准树的安装目录差异另列。原基线保留，不能把补充归因当全量 PASS；完整结果只维护在当前修复计划链接报告。
+
+2026-10-04 最新检查点已完整通过原失败集合门，未替换基线；隔离环境、原始输出和后续新增修复的重验状态只维护在[后续执行交付报告](.pao/后续执行-20261004/交付报告.md)。该检查点不表示 S0—S7 整体验收完成。
 
 ## Maintenance
 
