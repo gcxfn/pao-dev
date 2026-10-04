@@ -1,0 +1,6 @@
+// 用途：只读复核T1真实目录及读取错误；输入冻结已完成副本，不改源码。
+import assert from 'node:assert/strict';import {mkdirSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {createJiti} from 'file:///D:/AI/workspace/pao-dev/PAO/node_modules/jiti/lib/jiti.mjs';
+const jiti=createJiti(import.meta.url);const results=[];
+for(const id of ['T1-O','T1-N']){const {listRecipes}=await jiti.import('D:/AI/workspace/临时文件夹/PAO-对照验收-20261004/'+id+'/packages/coding-agent/src/pao/workflow/recipe.ts');const dir=mkdtempSync(join(tmpdir(),'pao-independent-t1-'));try{assert.deepEqual(listRecipes(dir),[]);writeFileSync(join(dir,'工作流'),'not a directory');assert.throws(()=>listRecipes(dir));rmSync(join(dir,'工作流'));mkdirSync(join(dir,'工作流'));for(const name of ['z.md','a.md','note.txt'])writeFileSync(join(dir,'工作流',name),'fixture');mkdirSync(join(dir,'工作流','fake.md'));assert.deepEqual(listRecipes(dir),['a','z']);results.push({id,actualDirectoryAndReadError:'通过'});}finally{rmSync(dir,{recursive:true,force:true});}}
+console.log(JSON.stringify(results,null,2));
+

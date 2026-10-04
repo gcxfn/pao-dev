@@ -1,0 +1,2935 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ❯ test/config.test.ts (16 tests | 7 failed) 3472ms
+     ✓ skips binary metadata copied into dist 4ms
+     ✓ detects pnpm from Windows .pnpm install paths  549ms
+     ✓ does not self-update unknown wrapper installs 0ms
+     ✓ self-updates npm installs from custom prefixes  404ms
+     ✓ self-updates exact npm versions without uninstalling the current package  368ms
+     ✓ self-updates renamed packages from the current install prefix  338ms
+     × self-update respects configured npmCommand 342ms
+     ✓ self-update treats empty npmCommand as unset  351ms
+     ✓ quotes npm self-update display paths  330ms
+     ✓ does not infer Windows npm custom prefixes from package paths 0ms
+     × self-updates bun global installs from bun pm bin 26ms
+     × self-updates renamed pnpm global installs by removing the old package first 42ms
+     × self-updates pnpm v11 global installs resolved through the store 93ms
+     × self-updates renamed yarn global installs by removing the old package first 119ms
+     × self-updates renamed bun global installs by removing the old package first 75ms
+     × does not self-update when npm install path is not writable 428ms
+ ❯ test/sdk-session-manager.test.ts (4 tests | 2 failed) 180ms
+     × uses agentDir for the default persisted session path 46ms
+     ✓ keeps an explicit sessionManager override 24ms
+     × derives cwd from an explicit sessionManager when cwd is omitted 27ms
+     ✓ exposes current session state to the built-in bash tool 81ms
+ ❯ test/package-manager.test.ts (127 tests | 1 failed) 632ms
+       ✓ should return no package-sourced paths when no sources configured 6ms
+       ✓ should resolve local extension paths from settings 4ms
+       ✓ should resolve built-in extensions with user exclusions and project overrides 4ms
+       ✓ should resolve skill paths from settings 4ms
+       ✓ should auto-discover root markdown skills from .pi skill dirs 3ms
+       ✓ should resolve project paths relative to .pi 3ms
+       ✓ should auto-discover user prompts with overrides 4ms
+       × should resolve symlinked user and project resources once 11ms
+       ✓ should auto-discover project prompts with overrides 4ms
+       ✓ should resolve directory with package.json pi.extensions in extensions setting 5ms
+       ✓ should use the agent dir as baseDir for user .pi/agent skills 3ms
+       ✓ should use the project .pi dir as baseDir for project .pi skills 4ms
+       ✓ should use ~/.agents as baseDir for user .agents skills 4ms
+       ✓ should use each project .agents dir as baseDir for project .agents skills 8ms
+       ✓ should scan .agents/skills from cwd up to git repo root 9ms
+       ✓ should scan .agents/skills up to filesystem root when not in a git repo 7ms
+       ✓ should ignore root markdown files in .agents/skills but discover nested markdown skills 6ms
+       ✓ should keep ~/.agents/skills user-scoped when cwd is under home in a non-git directory 6ms
+       ✓ should dedupe user skill entries when ~/.pi/agent/skills is a symlink to ~/.agents/skills 5ms
+       ✓ should respect .gitignore in skill directories 8ms
+       ✓ should not apply parent .gitignore to .pi auto-discovery 5ms
+       ✓ should resolve local paths 3ms
+       ✓ should handle directories with pi manifest 6ms
+       ✓ should keep pi manifest entries with leading tilde package-relative 9ms
+       ✓ should handle directories with auto-discovery layout 4ms
+       ✓ should stop recursing when a package skill directory contains SKILL.md 4ms
+       ✓ should emit progress events 2ms
+       ✓ should preserve argv entries containing spaces 70ms
+       ✓ should use npmCommand argv for npm installs 5ms
+       ✓ should pass legacy peer deps when uninstalling npm packages 2ms
+       ✓ should use bun --cwd for npm package installs 2ms
+       ✓ should install git package dependencies without auto-installing peers 5ms
+       ✓ should remove a newly created checkout when git clone fails 4ms
+       ✓ should remove a newly cloned checkout when dependency installation fails 5ms
+       ✓ should reconcile an existing git checkout to a pinned ref during install 7ms
+       ✓ should reconcile an existing git checkout to its update target when installing without a ref 5ms
+       ✓ should prefer the package manager after a separator over the outer executable 2ms
+       ✓ should detect pnpm through a corepack wrapper without a separator 5ms
+       ✓ should disable peer installation for git package dependencies with bun 4ms
+       ✓ should update git package dependencies without auto-installing peers 5ms
+       ✓ should repair missing git package dependencies when the checkout is already current 4ms
+       ✓ should repair deleted git package dependencies when cleaning fails 4ms
+       ✓ should disable peer installation through wrapped pnpm when updating git dependencies 5ms
+       ✓ should use npmCommand argv for npm root lookup and invalidate cached root when npmCommand changes 5ms
+       ✓ should install user npm packages into the pi-managed npm root 9ms
+       ✓ should load legacy pnpm global package paths from pnpm list output 10ms
+       ✓ should resolve wrapped pnpm global package paths from pnpm list output 4ms
+       ✓ should ignore malformed legacy pnpm global package lists 2ms
+       ✓ should emit progress events on install attempt 6ms
+       ✓ should recognize github URLs without git: prefix 4ms
+       ✓ should parse package source types from docs examples 3ms
+       ✓ should never parse dot-relative paths as git 3ms
+       ✓ should reject paths outside git install roots 5ms
+       ✓ should place temporary npm packages under the agent temp extension folder 3ms
+       ✓ should store global local packages relative to agent settings base 4ms
+       ✓ should store project local packages relative to .pi settings base 3ms
+       ✓ should remove local package entries using equivalent path forms 4ms
+       ✓ should return false when adding the same git source with the same ref 1ms
+       ✓ should update the ref when adding the same git source with a different ref 1ms
+       ✓ should preserve package filters when replacing a package source ref 1ms
+       ✓ should parse HTTPS GitHub URLs correctly 1ms
+       ✓ should parse HTTPS URLs with git: prefix 1ms
+       ✓ should parse HTTPS URLs with ref 1ms
+       ✓ should parse host/path shorthand only with git: prefix 1ms
+       ✓ should treat host/path shorthand as local without git: prefix 1ms
+       ✓ should parse HTTPS URLs with .git suffix 1ms
+       ✓ should parse GitLab HTTPS URLs 1ms
+       ✓ should parse Bitbucket HTTPS URLs 1ms
+       ✓ should parse Codeberg HTTPS URLs 1ms
+       ✓ should generate correct package identity for protocol and git:-prefixed URLs 1ms
+       ✓ should deduplicate git URLs with different supported formats 2ms
+       ✓ should handle HTTPS URLs with refs in resolve 1ms
+       ✓ should exclude extensions with ! pattern 4ms
+       ✓ should filter themes with glob patterns 4ms
+       ✓ should filter prompts with exclusion pattern 3ms
+       ✓ should filter skills with exclusion pattern 6ms
+       ✓ should work without patterns (backward compatible) 3ms
+       ✓ should support glob patterns in manifest extensions 8ms
+       ✓ should support glob patterns in manifest skills 6ms
+       ✓ should expand positive glob manifest entries before collecting skills 10ms
+       ✓ should sort manifest glob matches and use exact entries for dot paths and symlink traversal 13ms
+       ✓ should apply user filters on top of manifest filters (not replace) 5ms
+       ✓ should exclude extensions from package with ! pattern 5ms
+       ✓ should filter themes from package 4ms
+       ✓ should combine include and exclude patterns 5ms
+       ✓ should work with direct paths (no patterns) 4ms
+       ✓ should resolve autoload-disabled project package entries as deltas over global packages 8ms
+       ✓ should resolve autoload-disabled package entries as positive-only without a global package 6ms
+       ✓ should force-include extensions with + pattern after exclusion 7ms
+       ✓ should force-include overrides exclude in package filters 5ms
+       ✓ should force-include multiple resources 6ms
+       ✓ should force-include after specific exclusion 4ms
+       ✓ should handle force-include in manifest patterns 4ms
+       ✓ should force-include themes 4ms
+       ✓ should force-include prompts 4ms
+       ✓ should force-exclude top-level resources 3ms
+       ✓ should force-exclude in package filters 4ms
+       ✓ should dedupe same local package in global and project (project wins) 3ms
+       ✓ should keep both if different packages 4ms
+       ✓ should dedupe SSH and HTTPS URLs for same repo 1ms
+       ✓ should dedupe SSH and HTTPS with refs 1ms
+       ✓ should dedupe SSH URL with ssh:// protocol and git@ format 1ms
+       ✓ should dedupe all supported URL formats for same repo 1ms
+       ✓ should keep different repos separate (HTTPS vs SSH) 1ms
+       ✓ should only load index.ts from subdirectories, not helper modules 5ms
+       ✓ should respect package.json pi.extensions manifest in subdirectories 5ms
+       ✓ should handle mixed top-level files and subdirectories 5ms
+       ✓ should skip subdirectories without index.ts or manifest 4ms
+       ✓ should update npm range packages using the configured spec 6ms
+       ✓ should skip project npm update when installed version matches latest 3ms
+       ✓ should skip npm updates when the installed version is newer than the registry version 3ms
+       ✓ should migrate legacy user npm installs into the managed npm root during update 5ms
+       ✓ should batch npm updates per scope and run git updates in parallel while skipping pinned npm and current packages 43ms
+       ✓ should suggest npm source prefixes for update lookups 2ms
+       ✓ should suggest git source prefixes for update lookups 2ms
+       ✓ should skip installing missing package sources when offline 2ms
+       ✓ should skip refreshing temporary git sources when offline 7ms
+       ✓ should load a new checkout when a pinned temporary git source changes ref 7ms
+       ✓ should not run npm view during resolve for installed unpinned packages 5ms
+       ✓ should reinstall pinned npm packages when installed version does not match 4ms
+       ✓ should not check package updates when offline 1ms
+       ✓ should report updates for installed unpinned npm packages 3ms
+       ✓ should not report npm updates when the installed version is newer than the registry version 3ms
+       ✓ should skip pinned packages when checking for updates 4ms
+       ✓ should use npm view to fetch latest version 2ms
+       ✓ should use npmCommand argv for npm update checks 1ms
+       ✓ should wait for close before resolving captured stdout 2ms
+ ❯ test/experimental-presentation-facets.test.ts (4 tests | 2 failed) 813ms
+     ✓ rejects local plugin paths for Radius servers 13ms
+     × restores plugin package selections for later server generations 44ms
+     × builds conventional plugin entries into the server-owned plugin cache 256ms
+     ✓ builds the example plugin package without a package-owned build script  492ms
+ ❯ test/experimental-remote-runtime.test.ts (26 tests | 24 failed) 910ms
+     × uses PI_SERVER_DIR and PI_SERVER_ID 75ms
+     ✓ rejects a provider without a model 36ms
+     × preserves an existing Session model when the server default changes 37ms
+     × rejects model options when discovery selects an existing server 32ms
+     × rechecks an auto-discovered server after a version mismatch 31ms
+     × serializes concurrent cold activation and retires after both clients leave 31ms
+     × passes client plugin packages to a cold server and restores them for its next generation 31ms
+     × retires a cold server after its only Session attachment disconnects 34ms
+     × runs and discovers multiple logical servers from one directory 40ms
+     × hydrates and mutates server Session services across framed clients 57ms
+     × hydrates and updates the Models service across concurrent framed clients 28ms
+     × loads conventional Session facets from multiple configured plugin packages 41ms
+     × uses the most recently selected model for a new Session 36ms
+     × composes management attachment with Session service hydration 31ms
+     × fences superseded attachment hydration by attachment generation 28ms
+     × observes keyed service instances and fences replacement generations over framed transport 32ms
+     × answers a client prompt through the worker-owned service provider 33ms
+     × replicates the transcript after consecutive prompts 30ms
+     × stops an idle Session worker after its client disconnects 31ms
+     × starts one process per attached session and stops them during shutdown 32ms
+     × server runtime replaces an exited worker on the next attach 31ms
+     × discovers workers after replacing the server 30ms
+     × retires an unclaimed idle worker after replacement demand expires 28ms
+     × restores tracked sessions that are outside the replacement catalog 35ms
+     × reports missing and ambiguous session selections 27ms
+     ✓ rejects a duplicate session ID within one session directory 25ms
+ ❯ test/suite/regressions/2791-fswatch-error-crash.test.ts (1 test | 1 failed) 102ms
+     × process should survive an error event on the theme FSWatcher 101ms
+Launching external editor: C:\Program Files\nodejs\node.exe D:\AI\workspace\pao-dev\PAO\packages\coding-agent\test\fixtures\fake-external-editor.mjs C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-B9Cfhf\capture.json
+Pi will resume when the editor exits.
+Launching external editor: C:\Program Files\nodejs\node.exe D:\AI\workspace\pao-dev\PAO\packages\coding-agent\test\fixtures\fake-external-editor.mjs C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-qTMUUe\capture.json --fail
+Pi will resume when the editor exits.
+Launching external editor: C:\Program Files\nodejs\node.exe D:\AI\workspace\pao-dev\PAO\packages\coding-agent\test\fixtures\fake-external-editor.mjs C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-Z5HBHJ\capture.json --empty
+Pi will resume when the editor exits.
+ ❯ test/external-editor.test.ts (3 tests | 3 failed) 80ms
+     × edits a prompt inside a private temporary directory 30ms
+     × keeps the original content when the editor exits unsuccessfully 30ms
+     × returns empty content when the editor clears the prompt 19ms
+ ❯ test/file-mutation-queue.test.ts (7 tests | 1 failed) 409ms
+     ✓ serializes operations for the same file 41ms
+     ✓ allows different files to proceed in parallel 46ms
+     × uses the same queue for symlink aliases 6ms
+     ✓ preserves both parallel edits on the same file 153ms
+     ✓ shares the queue between edit and write 95ms
+     ✓ keeps write queue locked while an aborted write is still in flight 33ms
+     ✓ keeps edit queue locked while an aborted edit write is still in flight 34ms
+ ❯ test/trust-selector.test.ts (4 tests | 3 failed) 26ms
+     × keeps the saved trusted decision marked while browsing 11ms
+     × selects a trust decision 4ms
+     ✓ labels saved ancestor decisions as inherited 1ms
+     × adds a trust parent option 4ms
+ ❯ test/mcp-command.test.ts (8 tests | 1 failed) 230ms
+     × lists servers with their state, tools, and errors, and fails while anything is wrong 111ms
+     ✓ prints JSON for scripts 92ms
+     ✓ rejects unknown servers and servers without OAuth for login and logout 10ms
+     ✓ adds stdio servers and passes options after the command through 3ms
+     ✓ adds HTTP servers and keeps other content of the file 3ms
+     ✓ rejects invalid add invocations without writing 4ms
+     ✓ adds and removes project servers 4ms
+     ✓ removes global servers 3ms
+ ❯ test/session-selector-path-delete.test.ts (8 tests | 2 failed) 24ms
+     ✓ does not treat Ctrl+Backspace as delete when search query is non-empty 4ms
+     ✓ enters confirmation mode on Ctrl+D even with a non-empty search query 1ms
+     ✓ enters confirmation mode on Ctrl+Backspace when search query is empty 1ms
+     ✓ does not switch scope back to All when All load resolves after toggling back to Current 4ms
+     ✓ does not start redundant All loads when toggling scopes while All is already loading 1ms
+     × threads sessions when parent and child paths use different symlink aliases 4ms
+     ✓ sorts threaded sessions by latest activity in their subtree 2ms
+     × treats the current session as active across symlink aliases 2ms
+ ❯ test/paths.test.ts (22 tests | 3 failed) 17ms
+     ✓ returns the real path for a regular file 3ms
+     × resolves symlinks to their targets 4ms
+     × resolves directory symlinks 2ms
+     ✓ falls back to the raw path when the target does not exist 1ms
+     × falls back to the raw path for a dangling symlink 1ms
+     ✓ keeps cwd-relative names that start with dots 0ms
+     ✓ rejects parent-directory traversals 0ms
+     ✓ expands only home tilde shortcuts 0ms
+     ✓ resolves relative paths against the base directory 0ms
+     ✓ accepts file URLs 1ms
+     ✓ throws for invalid file URLs 1ms
+     ✓ preserves POSIX absolute paths with literal percent sequences 0ms
+     ✓ does not treat Windows file URL pathname strings as native paths 1ms
+     ✓ converts Git Bash, MSYS, Cygwin, and WSL drive paths 0ms
+     ✓ leaves other path forms unchanged 0ms
+     ✓ is applied by normal path handling on Windows 0ms
+     ✓ returns true for bare names 0ms
+     ✓ returns true for relative paths 0ms
+     ✓ returns true for file URLs 0ms
+     ✓ returns false for npm: protocol 0ms
+     ✓ returns false for git: protocol 0ms
+     ✓ returns false for https: protocol 0ms
+ ❯ test/footer-width.test.ts (12 tests | 1 failed) 12ms
+     ✓ does not abbreviate sibling paths that share the home prefix 1ms
+     × abbreviates the home directory and descendants 4ms
+     ✓ keeps all lines within width for wide session names 2ms
+     ✓ keeps stats line within width for wide model and provider names 0ms
+     ✓ shows the physical model a virtual model routed to 0ms
+     ✓ leaves summary and tool usage display to the PAO usage line 0ms
+     ✓ does not restore duplicate usage after an entry is appended 0ms
+     ✓ does not duplicate cache statistics 0ms
+     ✓ omits Kimi subscription cost from the model line 0ms
+     ✓ omits subscription cost from the model line 0ms
+     ✓ does not mark generic OAuth sign-in as a subscription 0ms
+     ✓ keeps the PAO usage status once and does not scan session usage during rendering 1ms
+ ❯ test/session-manager/load-entries.test.ts (13 tests | 1 failed) 13ms
+     ✓ adopts entries verbatim 3ms
+     ✓ keeps the loaded leaf so appends continue the conversation 0ms
+     ✓ never mints an id that collides with a loaded entry 0ms
+     ✓ rebuilds the branch structure rather than a flat chain 1ms
+     ✓ rebuilds labels 0ms
+     ✓ resolves a compaction against the entry it was written against 1ms
+     × creates a header from the options when the entries carry none 4ms
+     ✓ generates a session id when the options carry none 1ms
+     ✓ stays off the filesystem 0ms
+     ✓ starts an empty session when the entries are empty 0ms
+     ✓ takes the session identity from a header among the entries 0ms
+     ✓ migrates entries restored with an older header 0ms
+     ✓ adopts headerless entries as current-version without migrating them 0ms
+ ❯ test/experimental-session-directory.test.ts (3 tests | 1 failed) 7ms
+     × uses the experimental directory under the configured agent directory by default 6ms
+     ✓ resolves an explicit relative directory from the current working directory 0ms
+     ✓ expands a tilde in an explicit directory 0ms
+ ❯ test/interactive-mode-suspend.test.ts (3 tests | 2 failed) 88ms
+     ✓ shows a status message and skips suspend on Windows 22ms
+     × keeps the process alive while suspended and restores the TUI on SIGCONT 40ms
+     × cleans up the temporary handlers if suspension fails 19ms
+ ❯ test/tools.test.ts (85 tests | 4 failed | 2 skipped) 6912ms
+       ✓ should read file contents that fit within limits 29ms
+       ✓ should handle non-existent files 11ms
+       ✓ should truncate files exceeding line limit 18ms
+       ✓ should truncate when byte limit exceeded 15ms
+       ✓ should handle offset parameter 11ms
+       ✓ should handle limit parameter 10ms
+       ✓ should handle offset + limit together 13ms
+       ✓ should show error when offset is beyond file length 12ms
+       ✓ should include truncation details when truncated 17ms
+       ✓ should detect image MIME type from file magic (not extension)  344ms
+       ✓ should read BMP files from disk as PNG image attachments  368ms
+       ✓ should treat files with image extension but non-image content as text 15ms
+       ✓ should write file contents 17ms
+       ✓ should create parent directories 15ms
+       ✓ should replace text in file 30ms
+       ✓ should fail if text not found 14ms
+       ✓ should include ENOENT when the edit target does not exist 7ms
+       ✓ should fail if text appears multiple times 13ms
+       ✓ should replace multiple disjoint regions in one call 27ms
+       ✓ should collapse large unchanged gaps in multi-edit diffs 30ms
+       ✓ should match edits against the original file, not incrementally 32ms
+       ✓ should fail when edits is empty 8ms
+       ✓ should fail when multi-edit regions overlap 14ms
+       ✓ should not partially apply edits when one edit fails 14ms
+       × should include EACCES for read-only files 48ms
+       ✓ should include the original error message for unknown edit access errors 6ms
+       ✓ should include ENOENT in diff preview for missing files 6ms
+       × should include EACCES in diff preview for unreadable files 26ms
+       ✓ should execute simple commands 84ms
+       ✓ should report non-zero exit codes as error results with structured content 280ms
+       ✓ should return up to 1 MiB of output in structured content 272ms
+       ↓ should map signal-killed commands to 128 plus the signal number
+       ↓ should report signal-killed commands as errors while preserving partial output
+       ✓ should reject a null exit code from custom operations 8ms
+       ✓ should respect timeout  1697ms
+       ✓ should include full output path for truncated timeout and abort errors 150ms
+       ✓ should throw error when cwd does not exist 6ms
+       ✓ should handle process spawn errors 13ms
+       ✓ should pass shellPath through to shell resolution 8ms
+       ✓ should send commands over stdin when shell resolution requires it 199ms
+       ✓ should resolve legacy WSL bash.exe to stdin command transport 4ms
+       ✓ should prepend command prefix when configured 76ms
+       ✓ should include output from both prefix and command 74ms
+       ✓ should work without command prefix 71ms
+       ✓ should coalesce streaming updates for chatty output 111ms
+       ✓ should not count a trailing newline as an extra truncated bash output line 90ms
+       ✓ should decode UTF-8 characters split across output chunks 6ms
+       ✓ should expose local bash operations for extension reuse 86ms
+       ✓ should preserve executeBash sanitization when using local bash operations 81ms
+       ✓ should persist full output when truncation happens by line count only 88ms
+       ✓ executeBash should persist full output when truncation happens by line count only 113ms
+       ✓ should include filename when searching a single file 167ms
+       ✓ should respect global limit and include context lines 193ms
+       × should treat flag-like patterns as search text 179ms
+       ✓ should include hidden files that are not gitignored 241ms
+       ✓ should respect .gitignore 192ms
+       ✓ should surface fd glob parse errors 176ms
+       ✓ should treat flag-like patterns as search text 195ms
+       ✓ should list dotfiles and directories 17ms
+     ✓ read uses ctx.cwd when provided 14ms
+     ✓ write uses ctx.cwd when provided 19ms
+     ✓ edit uses ctx.cwd when provided 16ms
+     ✓ grep uses ctx.cwd when provided 196ms
+     ✓ find uses ctx.cwd when provided 209ms
+     ✓ ls uses ctx.cwd when provided 10ms
+     × bash uses ctx.cwd when provided 87ms
+     ✓ should match text with trailing whitespace stripped 17ms
+     ✓ should match fullwidth punctuation in Chinese text 13ms
+     ✓ should match compatibility-equivalent Unicode forms 15ms
+     ✓ should match smart single quotes to ASCII quotes 15ms
+     ✓ should match smart double quotes to ASCII quotes 16ms
+     ✓ should match Unicode dashes to ASCII hyphen 17ms
+     ✓ should match non-breaking space to regular space 15ms
+     ✓ should prefer exact match over fuzzy match 13ms
+     ✓ should still fail when text is not found even with fuzzy matching 11ms
+     ✓ should detect duplicates after fuzzy normalization 10ms
+     ✓ should support fuzzy matching in multi-edit mode 13ms
+     ✓ should preserve the correct occurrence when fuzzy replacement equals a nearby line 11ms
+     ✓ should preserve untouched lines and produce an applicable patch for fuzzy multi-edits 46ms
+     ✓ should match LF oldText against CRLF file content 15ms
+     ✓ should preserve CRLF line endings after edit 14ms
+     ✓ should preserve LF line endings for LF files 15ms
+     ✓ should detect duplicates across CRLF/LF variants 12ms
+     ✓ should preserve UTF-8 BOM after edit 15ms
+     ✓ should preserve CRLF line endings and BOM in multi-edit mode 15ms
+ ✓ test/pao/host-inventory-dispatch.test.ts (5 tests) 27987ms
+     ✓ 无热会话:显式空态;有热会话:登记表带部长行＋盘点行带 pid/轮次/调用/指纹  1891ms
+     ✓ 全局热会话数超 8:仅提示不拒  17567ms
+     ✓ 热会话＋交接文件在:指针进附加系统提示词(与配方提示拼接不覆盖),输出注明指针已附  5138ms
+     ✓ 指纹不一致:派卡输出提示建议重开,但不杀会话、派单照常  2783ms
+     ✓ 无热会话:不指针不提示,派单行为与原先一致  605ms
+ ✓ test/pao/host-lifecycle.test.ts (19 tests) 35437ms
+     ✓ 按脉络隔离，同步等待真实协议结束并拒绝错误身份  2825ms
+     ✓ 取消等待中的任务会杀进程且不会返回成功  1835ms
+     ✓ env 强制 PAO_ROLE=部长＋PAO_DEPT;配方快照以 --append-system-prompt 进人设  1925ms
+     ✓ 无配方:指纹为 null 且不带快照参数;句柄照常建立  2432ms
+     ✓ 同 key 二次拉起返回既有句柄(已有热会话),不双开;大小写/斜杠差异命中同键  2755ms
+     ✓ register 归一:部长条目带标签;worker 侧不填标签归一 null  2381ms
+     ✓ 握手异常 timeout 不报告启动成功，并清除所建进程  2834ms
+     ✓ 握手异常 wrong-id 不报告启动成功，并清除所建进程  3113ms
+     ✓ 握手异常 failed 不报告启动成功，并清除所建进程  2090ms
+     ✓ get_state 握手取得 pi 会话标识;注入的 prompt 经 stdin 抵达子进程  2081ms
+     ✓ N 轮 message_end＋M 次工具调用:盘点行轮次/调用/成本非零,部长账逐轮落行  2192ms
+     ✓ stopAll:树杀全部热会话(进程真死)＋登记表摘除＋句柄清空  2603ms
+     ✓ stopAll 后可再拉起(主控 reload/new 后同进程扩展重注册,宿主不封锁)  5683ms
+ ✓ test/pao/mnemosyne-lifecycle.test.ts (17 tests) 34081ms
+     ✓ 写入状态 { Object (status, bank) } 不得当成功  2069ms
+     ✓ 写入状态 { error: 'write failed' } 不得当成功  2500ms
+     ✓ 写入状态 { status: 'stored' } 不得当成功  2998ms
+     ✓ 普通业务 error 未设 isError：召回与忘却都显式失败，不伪造命中或零删除  3097ms
+     ✓ initialize 握手＋列工具→写入落盘→召回带相关度→忘却清条;作者标识默认 pao  2560ms
+     ✓ 服务器不提供忘却工具 → 能力.忘却=false,忘却调用如实拒绝  2725ms
+     ✓ 关闭后 server 与孙进程都真停(树杀,不靠 stdin 端的自觉)  3033ms
+     ✓ initialize 挂起 → 请求超时,同样降级  3849ms
+     ✓ 工具清单缺写入工具 → 启动失败降级,报错列出实际工具  3254ms
+     ✓ 正常配置 → 三工具＋session_shutdown 停树钩子;工具全链路落到假服务器  2638ms
+     ✓ 控制组:无关进程不受停树影响  4744ms
+ ✓ test/pao/workflow-auto-chain.test.ts (24 tests) 28732ms
+     ✓ 单卡全链:启流即自动 派发→回执→越界干净→验收过→交卷 commit→流已完成  851ms
+     ✓ 串行两节点:A 交付解锁 B,两卡都自动跑完并各自 commit  1249ms
+     ✓ 分叉(同层两节点):一次启流两卡都被自动跑完,各自交付 commit,流已完成  1970ms
+     ✓ 汇合(双上游):C 等 A、B 都交付才解锁跑;此前不被提前派发  2860ms
+     ✓ 汇合失败分支:A 成功 B 失败→C 挂起不跑(失败即停),链停因如实  1489ms
+     ✓ 回执失败:卡如实落失败(带分型依据),下游按失败即停挂起,零 commit  674ms
+     ✓ 回执落卡失败(声明产物不存在):按结果未知落失败,不伪造  728ms
+     ✓ 越界(做了没说):git 真值有而回执没声明,卡落失败,改动不 commit  811ms
+     ✓ 虚报(说了没做):声明已存在但非本卡改动的文件,卡落失败  818ms
+     ✓ 验收未过:链停给 owner,不落失败不交卷,推流可续跑前先由 owner 处理  872ms
+     ✓ 混人话句:验收全过停人工审,不自动交付不交卷  870ms
+     ✓ 人工门节点:交付交卷照常,下游等确认;确认流点头后自动续跑至完成  1967ms
+     ✓ 越界无法核对(基线快照被毁):不落失败,链停留 owner 裁决  693ms
+     ✓ 部门并发上限满:派发被拒链停,卡留待认领零 commit,清名额后续跑可恢复  475ms
+     ✓ worker 返回成功时已经取消：保留回执但不验收交付或提交  705ms
+     ✓ 取消:预中止信号直接抛 AbortError,卡不动零派发  1084ms
+     ✓ 人工门停流触发 toast 叫人；失败停流不叫（§23 toast②）  1801ms
+     ✓ 留 owner 停流（验收未过）也触发 toast 叫人  743ms
+     ✓ 命令面 confirm 与工具面同口径:自动执行配方点头后自动链续跑  1994ms
+     ✓ 命令面启动停在人工门同样触发 toast（与工具面同口径）  1155ms
+     ✓ 同一人工门重复评估只弹一次:去重键落清单,重启（重建模块状态）后仍不重弹  1206ms
+     ✓ 换门/确认后再挂会再弹:门 A 确认后停到门 B 再叫一次,同一门 B 不重弹  2696ms
+     ✓ 留 owner 停流同样去重:同一张在途卡重复评估不重弹,记录键 owner:<节点>:<卡号>  752ms
+ ✓ test/pao/host-fuse.test.ts (6 tests) 16270ms
+     ✓ 超空闲分钟的事件边界核对把闲置会话散场;交接页落盘  3907ms
+     ✓ 未超线的会话不动;另一会话的事件边界顺带核对闲置会话(零定时器)  3212ms
+     ✓ 保险丝核对失败(树杀异常):事件边界吞掉 rejection 记 stderr,不崩进程  3552ms
+     ✓ 提示线与空闲熔断各留一行 JSONL(时间戳/动作/目标/原因)  1610ms
+     ✓ 轮次/调用达标各通知一次,后续边界不重复;进程不散场  2085ms
+     ✓ 无保温文件:不熔断、不通知,句柄计数照记  1900ms
+ ✓ test/pao/fanout-run.test.ts (8 tests) 12756ms
+     ✓ 并发上限真的不超,超限排队且前一个完成立刻补位  1737ms
+     ✓ 单卡 cancel:在跑进程树杀确认,该卡终态取消,其余照常完成;取消后同卡拒绝再派  1443ms
+     ✓ 批次信号中止:先阻新卡(排队卡不再拉起)再树杀在跑进程,全部终态取消  2645ms
+     ✓ 外部 stopAll(主会话退出路径):排队卡不再拉起,在跑进程全停,批次照常收口  1871ms
+     ✓ 批次中止收尾:被认领卡(在跑+排队)磁盘上落「取消」终态且不双写  2716ms
+     ✓ 中止边界刚好成功的卡不被误杀:回执已落,保持进行中待审  1940ms
+ ✓ test/pao/verifier-run.test.ts (22 tests) 13257ms
+     ✓ 验收命令中取消：真实父孙进程停止，后续命令和交付不发生，独立进程存活  2065ms
+     ✓ 跑命令写入落在沙箱副本，真项目零污染；.env 与密钥不进沙箱；有败沙箱按卡保留  398ms
+     ✓ 全过删沙箱，不留残留副本  568ms
+     ✓ node_modules 以目录联接指回真目录（免拷依赖，引用解析可用）  323ms
+     ✓ 纯机械全过 → 自动落已交付：状态/完成时间/审计段/派生验收段齐全  420ms
+     ✓ 混有人话句：机械部分全过也停给主控审，不自动交付  619ms
+     ✓ 存在句未过 → 结论未过，状态不动，结构化结果留 owner  350ms
+     ✓ 安检拦截算未过：删除类命令执行前被拦，不进沙箱  346ms
+     ✓ 纯人话句卡 → 无法机械判，留 owner（人工/审查口径）  307ms
+     ✓ 项目含指向外部的链接 → 跑命令无法判、拒绝自动验收并亮明原因（R16）  409ms
+     ✓ 跑命令读沙箱副本而非真项目：真项目文件被删除后命令仍能看到拷贝时点快照  660ms
+     ✓ 包含 ../../ 越界读被拦：条目安检拦截，读不到项目根外的哨兵内容  430ms
+     ✓ 存在 ../ 越界命中根外文件被拦（旧口径 existsSync 可读到项目根外）  437ms
+     ✓ 反斜杠、盘符、嵌套 .. 变体均拦：条目判失败不崩（fail-closed）  402ms
+     ✓ 项目根内的相对 ..（如 src/../源.txt）不误伤，照常核对  366ms
+     ✓ 超时判 124 且不悬挂；Windows 下孙进程随整棵进程树终止不残留  3795ms
+     ✓ 全过自动交付：工具文本带结论、交付说明与落卡位置  420ms
+     ✓ 未过：工具文本带逐条结构化结果与 owner 处置指引  365ms
+     ✓ 非 owner 调用自动交付被单写者校验拒绝，机械结果照常落卡  359ms
+ ✓ test/pao/delivery-commit.test.ts (14 tests) 14516ms
+     ✓ 已交付卡：按基线差异逐路径 stage 并 commit，提交信息机械生成（卡NNNN 目标 · 已交付 · 机械验收通过）  795ms
+     ✓ 逐路径 add 不裹挟：worker 增改之外的既有脏文件不进提交（R15）  628ms
+     ✓ 幂等：无基线外改动不创建空提交  767ms
+     ✓ 用户认领前已暂存的文件保持暂存，只提交本卡路径（R30）  959ms
+     ✓ 既有暂存文件后来变成 MM，也不冒认成本卡路径（R30 文件级边界）  1115ms
+     ✓ 本卡重命名同时提交旧路径删除和新路径，用户暂存仍保留  1297ms
+     ✓ 读取 git status 失败时拒绝交卷，不能当成无改动幂等（R30）  586ms
+     ✓ 只 commit 不 push：配了远端也不推（远端引用保持为空）  1146ms
+     ✓ 机械验收未过 → 拒绝交卷，不产生提交  671ms
+     ✓ 状态非已交付 → 拒绝交卷（回执≠终态纪律）  461ms
+     ✓ 基线快照不可用 → 拒绝交卷，禁 add -A 不猜  434ms
+     ✓ 正式工具在真实git hook父孙进程运行时取消，批量直接抛出且不提交  3705ms
+     ✓ deliverCards 串行逐卡，单卡被拒不中断其余  1016ms
+     ✓ pao_交卷 工具：卡号数组批量、文本带逐卡结果与未推送提示  933ms
+HEAD is now at 36927f0 Second commit
+ ✓ test/pao/memory-mnemosyne-embed-inject.test.ts (3 tests) 8337ms
+     ✓ 三键齐全:URL/KEY/MODEL 全注入,作者标识照常默认 pao  2678ms
+     ✓ 配置 env 显式给的嵌入键优先:MODEL 不被覆盖,DIM 等非密钥键原样透传  2814ms
+     ✓ 缺嵌入配置(三级链返回 null):不注入 URL/KEY,照常启动  2842ms
+ ✓ test/pao/worker-dispatch-guards.test.ts (16 tests) 9414ms
+     ✓ 树杀失败不会签发成功凭据或删除活进程登记  2353ms
+     ✓ 不同项目同卡号可共存，裸号取消拒歧义，证据不会互相覆盖  4703ms
+     ✓ executeDispatch 注入缺省超时:无配置=86400000;保温配置生效;显式 超时毫秒 优先  646ms
+ ✓ test/pao/host-supervision.test.ts (8 tests) 10494ms
+     ✓ 每累计 N 轮注入一次机械摘要(轮次/调用/成本＋活性＋最近输出);周期反复触发  1133ms
+     ✓ 0/缺省=该级关唤醒;提示线未达标不发通知  2079ms
+     ✓ 盘点视图标出:疑似循环(最近 K 次调用同名)＋到顶(达提示线);无异常标记为「无异常标记」  2694ms
+     ✓ 监督动作审计留痕:部门监督唤醒/worker 监督唤醒/待办各留一行 JSONL  2508ms
+     ✓ 工人监督轮次达标:热部长会话在场 → 快照经注入通道抵达(会话 stdin 可见)  2031ms
+HEAD is now at ff6cf5a v3
+HEAD is now at f2d3181 Rewrite B
+HEAD is now at 7e9e3f4 Second commit
+HEAD is now at 7e9e3f4 Second commit
+ ✓ test/git-update.test.ts (5 tests) 8011ms
+       ✓ should skip reset, clean, and install when already up to date  898ms
+       ✓ should update to latest commit when remote has new commits  1405ms
+       ✓ should handle complete history rewrite  3819ms
+       ✓ should checkout the configured pinned git ref during full and targeted updates  1878ms
+ ✓ test/pao/worker-stream.test.ts (5 tests) 5211ms
+     ✓ 中途时刻 live 已有前段行与 stderr,结束后正本完整、live 保留且补齐  697ms
+     ✓ 半路树杀:live 里已有钱,取消回执形状完整(取消路径对照)  1850ms
+     ✓ 输出到达即刷新 最近输出时间:第二拍输出后时间戳严格前进  684ms
+     ✓ 超时路径:状态=失败、stopReason=timeout、证据与 live 齐全、回执有效  1946ms
+ ✓ test/pao/host-handoff.test.ts (4 tests) 7088ms
+     ✓ 落盘路径与四段结构;同 key 再散场覆盖同文件(旧内容被顶掉)  3517ms
+     ✓ 文件在才指针;指针文本写明「背景核对,不是续跑指令」  3560ms
+ ✓ test/pao/host-tools.test.ts (5 tests) 5714ms
+     ✓ 散场无热会话拒绝;命中热会话的散场落交接页并如实汇报  2072ms
+     ✓ 同 key 再拉起走已有热会话分支(不双开),首条消息经 stdin 抵达假部长  1820ms
+     ✓ 通知面:一轮事件触发提示线/监督快照进通知,下一次 before_agent_start 渲染 section;空闲保险丝在请求边界散场  1817ms
+ ✓ test/experimental-cli-entry.test.ts (3 tests) 3689ms
+     ✓ does not dispatch experimental commands from the stable entrypoint  1073ms
+     ✓ keeps experimental dispatch in the development entrypoint  1281ms
+     ✓ falls back to the stable CLI when experiments are disabled  1334ms
+ ✓ test/model-registry.test.ts (87 tests) 2706ms
+         ✓ command is executed on every provider lookup  391ms
+ ✓ test/stdout-cleanliness.test.ts (2 tests) 2624ms
+     ✓ prints plain --help to stdout when stdout is redirected  1284ms
+     ✓ keeps stdout empty for --mode json --help while routing trusted startup chatter to stderr  1338ms
+ ✓ test/suite/agent-session-mcp.test.ts (44 tests) 3569ms
+     ✓ exposes codemode-only MCP tools through codemode and hides them from the model  345ms
+ ✓ test/pao/worker-dispatch-background.test.ts (9 tests) 3233ms
+     ✓ 真子进程:树杀→登记表清→owner 侧「取消」回执落卡,回复带已终止  3058ms
+ ✓ test/rpc-prompt-response-semantics.test.ts (9 tests) 3258ms
+     ✓ emits one success response when prompt is queued during streaming  358ms
+     ✓ reports steer as handled even when an extension queues another message  595ms
+     ✓ reports follow_up as handled even when an extension queues another message  591ms
+     ✓ returns and clears queued steering and follow-up messages  937ms
+ ✓ test/pao/workflow-control.test.ts (13 tests) 3447ms
+     ✓ 真实 git 内容基线与自足判定包（无模型调用）  838ms
+     ✓ 打回只作废受影响下游，旧轮次与旧卡不推进新轮次  309ms
+     ✓ 回边上限 1 动作 停滞  400ms
+     ✓ 回边上限 1 动作 修完这轮放行  423ms
+     ✓ 回边上限 0 动作 停滞  512ms
+ ✓ test/suite/agent-session-codemode.test.ts (21 tests) 3144ms
+     ✓ limits script memory so runaway allocations fail inside the script  875ms
+ ✓ test/pao/fanout-background.test.ts (6 tests) 2610ms
+     ✓ 受理即在途+1；settle 后在途归零、完成未读=1；注入后完成未读归零  822ms
+     ✓ 后台:true 受理即返回（不等 worker），完成摘要下一轮注入且带 R25 运行态标注  971ms
+ ✓ test/bash-close-hang-windows.test.ts (2 tests) 3324ms
+     ✓ executeBash resolves after the shell exits even if inherited stdio handles stay open  1552ms
+     ✓ bash tool resolves after the shell exits even if inherited stdio handles stay open  1771ms
+ ✓ test/pao/host-ledger.test.ts (3 tests) 2987ms
+     ✓ 两轮 usage → 首行口径注释＋两行数据;列映射与写入器复用  1325ms
+     ✓ 缺 usage 的轮不落账不填零(R07);落账不依赖保温开关  1661ms
+ ✓ test/pao/fanout-baseline.test.ts (6 tests) 2579ms
+     ✓ 认领快照落盘:既有改动计数如实,摘要文本标注基线位置  492ms
+     ✓ 失败→重派同样是新尝试的认领:重落快照,交回执比对有依据  508ms
+     ✓ worker 越界写未声明文件:亮出越界,声明内产物相符,用户既有改动不入账  479ms
+     ✓ worker 只写声明内产物:核查干净  482ms
+     ✓ worker 虚报声明未写产物:亮出虚报,不算相符  476ms
+ ✓ test/pao/worker-cancel.test.ts (3 tests) 2109ms
+     ✓ 取消期间锁未释放;停妥后凭 StopProof 放锁;进程确认真停  1060ms
+     ✓ 取消后同卡新调用被拒;未运行卡的取消返回空凭据  1043ms
+ ✓ test/pao/baseline-snap.test.ts (9 tests) 2499ms
+     ✓ 认领当刻快照落盘:记录既有条目;随后 worker 改动只算基线之外的  390ms
+     ✓ worker 没动现场:比对结果为「无基线外改动」,用户既有改动也不冒领  392ms
+     ✓ 干净工作树认领:基线 0 条,worker 任何改动都会亮出来  402ms
+     ✓ 认领快照含卡号/owner/时间/项目根头信息,可审计  339ms
+     ✓ 中文与空格路径的仓库:快照与比对照常工作(G1-14 路径侧)  421ms
+     ✓ 经工具认领后,工作区 基线/ 出现该卡快照;返回文本说明基线位置  408ms
+ ✓ test/session-manager/file-operations.test.ts (33 tests) 2448ms
+     ✓ opens session files larger than Node's max string length  2258ms
+ ✓ test/pao/worker-stoptree.test.ts (2 tests) 2251ms
+     ✓ stopAll 树杀 worker 及其孙进程;未登记的同名控制进程不受影响  2188ms
+ ✓ test/pao/runtime-fetch.test.ts (3 tests) 1987ms
+   ✓ 正式 ModelRuntime 与内置供应商的 HTTP 重试不能绕过两次硬上限（本地模拟端点）  1880ms
+ ✓ test/pao/blackboard-upstream.test.ts (9 tests) 1735ms
+     ✓ 派单后黑板已首建＋worker 附加系统提示词含黑板指针(相对项目根)  338ms
+     ✓ 已有黑板不覆盖:同伴写入保留,只补指针  342ms
+     ✓ 保温.json「上游并发上限」与派发意愿取小;键缺失＝缺省 2 不变  1036ms
+ ✓ test/session-id-readonly.test.ts (6 tests) 1273ms
+     ✓ does not persist a custom ID for metadata commands  1240ms
+ ✓ test/startup-session-name.test.ts (1 test) 1286ms
+     ✓ sets --name on the selected session before runtime model validation  1285ms
+ ✓ test/pao/baseline-diff.test.ts (25 tests) 1324ms
+     ✓ 运行隔离的 Vitest 夹具，实读文件加载失败和全绿 JSON（不运行项目全量）  1310ms
+ ✓ test/tool-result-images.test.ts (7 tests) 1473ms
+     ✓ resizes oversized images and reports the original dimensions  1191ms
+ ✓ test/pao/worker-tools.test.ts (5 tests) 1308ms
+     ✓ pao_停后台:真停运行中的 worker 并返回已停清单;无进程时如实说  1155ms
+ ✓ test/pao/panorama-page.test.ts (12 tests) 1168ms
+     ✓ worker 行钻取:选 worker → ui.custom 被调且快照取口按 pid 匹配 listActive  1128ms
+ ✓ test/pao/cards-counter.test.ts (9 tests) 1467ms
+     ✓ 同一锁路径互斥：临界区不并发进入  819ms
+     ✓ 跨进程并发：10 进程各发 5 号，共 50 号不重号且连续  594ms
+ ✓ test/extensions-discovery.test.ts (31 tests) 1560ms
+     ✓ discovers direct .ts files in extensions/  1265ms
+ ✓ test/pao/friction-drafts.test.ts (14 tests) 1350ms
+     ✓ 扇出被中途停止：在跑被杀＋排队未拉起的卡逐张记「扇出取消」草稿行  1187ms
+ ✓ test/pao/worker-dispatch.test.ts (17 tests) 1390ms
+     ✓ 真 git 仓库:认领改状态+owner,基线快照文件出现,回执落卡,登记表带部门+派单理由  509ms
+ ✓ test/session-file-invalid.test.ts (1 test) 1443ms
+     ✓ prints a friendly error and preserves non-session file content  1442ms
+ ✓ test/resolve-config-value.test.ts (10 tests) 1173ms
+     ✓ executes shell commands and trims their output  324ms
+     ✓ caches successful and failed commands until explicitly cleared  346ms
+ ✓ test/extensions-runner.test.ts (55 tests) 1327ms
+       ✓ continues past undecided handlers and returns the first yes/no decision  719ms
+ ✓ test/pao/worker-listactive.test.ts (2 tests) 1129ms
+     ✓ spawn 中可见:pid/卡号/命令/执行标识齐全,尾巴切末 50 行且含最新输出  1047ms
+ ✓ test/suite/agent-session-runtime.test.ts (12 tests) 1196ms
+ ✓ test/llama-extension.test.ts (13 tests) 959ms
+     ✓ downloads with byte progress and returns the refreshed catalog  530ms
+ ✓ test/pao/desktop-read-model.test.ts (8 tests) 760ms
+   ✓ 真实 git diff 只读、包含实际改动与未跟踪路径；未提供启动基线时明确边界  519ms
+ ✓ test/suite/agent-session-mcp-oauth.test.ts (6 tests) 993ms
+ ✓ test/pao/baseline-boundary.test.ts (15 tests) 808ms
+     ✓ 缺省取最新回执的产物路径:声明与真值相符输出干净,用户既有改动不入账  401ms
+     ✓ 显式给产物路径可覆盖回执:虚报如实亮出  395ms
+ ✓ test/powershell-tool.test.ts (2 tests) 762ms
+     ✓ executes PowerShell commands with UTF-8 output  759ms
+ ✓ test/pao/parent-lifecycle.test.ts (1 test) 792ms
+   ✓ 真实 Windows 父进程强杀后受管孩子与孙进程停止写入  791ms
+ ✓ test/pao/worker-inventory.test.ts (4 tests) 721ms
+     ✓ git status 差异摘要:改动+新增文件可见;非 git 目录如实报不可用  391ms
+ ✓ test/clipboard-command.test.ts (4 tests) 652ms
+ ✓ test/extensions-input-event.test.ts (9 tests) 683ms
+     ✓ returns continue when no handlers, undefined return, or explicit continue  560ms
+ ✓ test/pao/gbrain-lifecycle.test.ts (14 tests) 765ms
+     ✓ initialize 挂起 → 请求超时,同样失败(不无限等)  418ms
+ ✓ test/suite/regressions/extension-factory-cache.test.ts (4 tests) 729ms
+     ✓ caches extension modules for cached same-cwd loads but reruns factories  685ms
+ ✓ test/mcp-extension.test.ts (24 tests | 1 skipped) 654ms
+ ✓ test/pao/workflow-tools.test.ts (24 tests) 586ms
+ ✓ test/auth-storage.test.ts (27 tests | 2 skipped) 662ms
+ ✓ test/interactive-tui.test.ts (15 tests) 662ms
+ ✓ test/pao/card-handoff.test.ts (7 tests) 476ms
+     ✓ 基线可用的活卡：改动清单进页；交回执后进未决事项；整页只读不落盘  409ms
+ ✓ test/pao/memory-resident.test.ts (25 tests) 650ms
+     ✓ 主控:registerMemory 建的管理器被 resident 复用——召回段与常驻段同轮注入  558ms
+ ✓ test/pao/precompaction-lifecycle.test.ts (12 tests) 626ms
+ ✓ test/pao/cards-tools.test.ts (9 tests) 441ms
+ ✓ test/sdk-stream-options.test.ts (11 tests) 510ms
+[?2026h[?2026l[?25l ✓ test/pao/exc-run.test.ts (6 tests) 554ms
+ ✓ test/experimental-client-tui.test.ts (3 tests) 565ms
+     ✓ opens a new Session directly and exercises the full lifecycle only for a new Session  547ms
+ ✓ test/image-processing.test.ts (11 tests) 435ms
+ ✓ test/virtual-models.test.ts (17 tests) 305ms
+ ✓ test/footer-data-provider.test.ts (8 tests) 581ms
+     ✓ updates the cached branch when the reftable directory changes  533ms
+ ✓ test/pao/knowledge-maintenance.test.ts (7 tests) 491ms
+     ✓ 临界区互斥：他方持锁时入库在锁上排队，持锁释放后才完成  375ms
+ ✓ test/tool-renderer-examples.test.ts (3 tests) 563ms
+     ✓ keeps the system prompt unchanged for the 'built-in tool renderer' example  456ms
+ ✓ test/agent-session-concurrent.test.ts (7 tests) 530ms
+ ✓ test/pao/workflow-driver.test.ts (18 tests) 443ms
+ ✓ test/pao/workflow-host-bridge.test.ts (3 tests) 355ms
+ ✓ test/experimental-radius-relay.test.ts (7 tests) 439ms
+ ✓ test/pao/fanout-tools.test.ts (3 tests) 334ms
+     ✓ 注册 pao_扇出,执行后返回聚合摘要(中文文本 + details);卡逐张认领并落回执  332ms
+ ✓ test/mcp-oauth-refresh.test.ts (5 tests) 441ms
+ ✓ test/suite/regressions/9068-user-bash-fail-closed.test.ts (5 tests) 437ms
+ ✓ test/suite/agent-session-boundaries.test.ts (29 tests) 346ms
+ ✓ test/pao/delivery-wakeup.test.ts (9 tests) 298ms
+ ✓ test/suite/agent-session-compaction.test.ts (29 tests) 324ms
+ ✓ test/agent-session-retry.test.ts (6 tests) 415ms
+ ✓ test/pao/loadout-role.test.ts (8 tests) 187ms
+{"type":"pao_worker_budget_exhausted","field":"cost","requests":0,"toolCalls":0}
+ ✓ test/default-tools-setting.test.ts (8 tests) 338ms
+{"type":"pao_worker_budget_exhausted","field":"cost","requests":0,"toolCalls":0}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":0}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":1,"toolCalls":0}
+{"type":"pao_worker_budget_exhausted","field":"提醒轮","requests":0,"toolCalls":1}
+ ✓ test/suite/agent-session-retry-events.test.ts (15 tests) 318ms
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":1}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":1}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":0}
+ ✓ test/pao/worker-budget.test.ts (12 tests) 400ms
+ ✓ test/system-theme.test.ts (8 tests) 196ms
+ ✓ test/pao/knowledge-repair.test.ts (10 tests) 297ms
+ ✓ test/suite/regressions/3302-find-path-glob.test.ts (4 tests) 248ms
+ ✓ test/pao/workflow-templates.test.ts (4 tests) 243ms
+ ✓ test/sdk-openrouter-attribution.test.ts (13 tests) 235ms
+ ✓ test/suite/virtual-models.test.ts (13 tests) 239ms
+ ✓ test/agent-session-dynamic-tools.test.ts (4 tests) 249ms
+ ✓ test/block-images.test.ts (9 tests) 225ms
+ ✓ test/suite/agent-session-queue.test.ts (15 tests) 205ms
+ ✓ test/pao/knowledge-auto-route.test.ts (21 tests) 202ms
+ ✓ test/suite/agent-session-model-extension.test.ts (18 tests) 205ms
+ ✓ test/suite/agent-session-prompt.test.ts (17 tests) 229ms
+ ✓ test/pao/knowledge-inspect.test.ts (6 tests) 230ms
+ ✓ test/interactive-mode-status.test.ts (35 tests) 219ms
+ ✓ test/models-store.test.ts (5 tests | 1 skipped) 205ms
+ ✓ test/agent-session-dynamic-provider.test.ts (5 tests) 222ms
+ ✓ test/pao/runtime-control.test.ts (5 tests) 186ms
+ ✓ test/settings-manager.test.ts (51 tests) 183ms
+ ✓ test/test-harness.test.ts (16 tests) 209ms
+ ✓ test/suite/agent-session-bash-persistence.test.ts (11 tests) 219ms
+ ✓ test/bug-report.test.ts (3 tests) 203ms
+ ✓ test/suite/regressions/2860-replaced-session-context.test.ts (3 tests) 162ms
+ ✓ test/model-catalog-protocol.test.ts (1 test) 166ms
+ ✓ test/pao/friction-m2-batch1.test.ts (11 tests) 209ms
+ ✓ test/suite/regressions/7153-scoped-models-refresh.test.ts (2 tests) 191ms
+ ✓ test/model-runtime-cloudflare-compat.test.ts (2 tests) 128ms
+ ✓ test/model-resolver.test.ts (51 tests) 59ms
+ ✓ test/suite/regressions/7209-model-selector-filter-resets-selection.test.ts (2 tests) 186ms
+ ✓ test/model-runtime-credential-sync.test.ts (10 tests) 135ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts (11 tests) 168ms
+ ✓ test/agent-session-auto-compaction-queue.test.ts (6 tests) 159ms
+ ✓ test/pao/worker-bridge-settlement.test.ts (2 tests) 188ms
+ ✓ test/output-guard-shared.test.ts (1 test) 130ms
+ ✓ test/system-prompt-updates.test.ts (8 tests) 133ms
+ ✓ test/tool-execution-component.test.ts (39 tests) 106ms
+ ✓ test/rpc-client-process-exit.test.ts (1 test) 149ms
+ ✓ test/pao/dept-tools.test.ts (12 tests) 136ms
+ ✓ test/suite/regressions/7301-stalled-availability-refresh.test.ts (3 tests) 174ms
+ ✓ test/agent-session-runtime-events.test.ts (4 tests) 163ms
+ ✓ test/suite/regressions/3303-find-nested-gitignore.test.ts (2 tests) 131ms
+ ✓ test/model-selector.test.ts (3 tests) 135ms
+ ✓ test/suite/regressions/5868-rpc-unknown-command-id.test.ts (1 test) 153ms
+ ✓ test/pao/receipt-checks.test.ts (13 tests) 148ms
+ ✓ test/syntax-highlight.test.ts (8 tests) 107ms
+ ✓ test/pao/worker-usage-display.test.ts (13 tests) 106ms
+ ✓ test/pao/cards-statemachine.test.ts (13 tests) 187ms
+ ✓ test/suite/agent-session-compaction-model-overrides.test.ts (8 tests) 143ms
+ ✓ test/pao/project-list.test.ts (11 tests) 160ms
+ ✓ test/model-runtime-auth-options.test.ts (11 tests) 108ms
+Installing ./packages/local-package...
+Installing C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-package-commands-1791086561600-9cr1q81va7b\local-package/...
+Removing C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-package-commands-1791086561600-9cr1q81va7b\local-package/...
+ ✓ test/pao/routing-tiers.test.ts (10 tests) 131ms
+Updating npm:fake-package...
+Installing C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-package-commands-1791086561818-q5uwqh3kq5\local-package...
+ ✓ test/suite/regressions/7027-credential-refresh-hang.test.ts (7 tests) 126ms
+ ✓ test/suite/regressions/3217-scoped-model-order.test.ts (2 tests) 132ms
+ ✓ test/pao/loadout-tool-output.test.ts (3 tests) 113ms
+ ✓ test/suite/regressions/3592-no-builtin-tools-keeps-extension-tools.test.ts (3 tests) 125ms
+ ✓ test/model-runtime-modify-models-compat.test.ts (6 tests) 103ms
+ ❯ test/package-command-paths.test.ts (33 tests | 2 failed) 1786ms
+     ✓ should persist global relative local package paths relative to settings.json 17ms
+     ✓ should remove local packages using a path with a trailing slash 15ms
+     ✓ skips untrusted project package settings 11ms
+     ✓ uses remembered project trust for list 10ms
+     ✓ overrides remembered trust for list with --no-approve 6ms
+     ✓ approves project trust for list with --approve 7ms
+     ✓ uses default project trust for list 14ms
+     ✓ uses project_trust extensions for package commands 10ms
+     ✓ does not prompt or ask extensions for project trust during update 14ms
+     ✓ uses saved project trust during update 112ms
+     ✓ lets trust.json override default project trust 12ms
+     ✓ blocks local package changes when project is untrusted 7ms
+     ✓ allows local package install to initialize fresh project settings 6ms
+     ✓ shows install subcommand help 4ms
+     ✓ refreshes only model catalogs with update --models 4ms
+     ✓ rejects update --models combined with another update target 3ms
+     × cycles project package overrides in config local mode 12ms
+     ✓ toggles built-in extensions in config global mode 11ms
+     ✓ cycles project built-in extension overrides in config local mode 7ms
+     ✓ shows a friendly error for unknown install options 3ms
+     ✓ shows a friendly error for missing install source 3ms
+     ✓ allows explicit self-update checks when automatic version checks are disabled 7ms
+     ✓ retries a transient self-update version check 4ms
+     ✓ updates installer-managed Pi through a staged immutable release 152ms
+     ✓ rejects a concurrent managed update 16ms
+     ✓ rejects forced managed reinstalls 13ms
+     ✓ keeps the managed release active when its update fails 114ms
+     ✓ keeps npm self-updates non-managed when the managed environment is inherited 244ms
+     ✓ uses the current package name when the update check omits packageName 240ms
+     ✓ installs the active package name from the update check during self-update 297ms
+     × prints a pnpm metadata hint when self-update fails 97ms
+     ✓ fails self-update when renamed npm package installation fails  305ms
+     ✓ suggests the configured source when update input omits the npm prefix 7ms
+ ✓ test/builtin-tool-strict-mode.test.ts (7 tests) 116ms
+ ✓ test/suite/regressions/1717-2113-agent-session-event-settlement.test.ts (2 tests) 99ms
+ ✓ test/suite/agent-session-tool-orchestration.test.ts (3 tests) 103ms
+ ✓ test/suite/regressions/9789-context-handler-system-messages.test.ts (6 tests) 116ms
+ ✓ test/pao/collab-tools.test.ts (12 tests) 127ms
+ ✓ test/suite/regressions/6647-compaction-retries-transient-stream-drop.test.ts (5 tests) 113ms
+ ✓ test/edit-tool-no-full-redraw.test.ts (3 tests) 144ms
+ ✓ test/sdk-skills.test.ts (3 tests) 116ms
+ ✓ test/theme-controller.test.ts (9 tests) 77ms
+ ✓ test/documentation.test.ts (1 test) 98ms
+ ✓ test/suite/regressions/6949-unavailable-scoped-model.test.ts (4 tests) 101ms
+ ✓ test/scoped-models-selector.test.ts (4 tests) 106ms
+ ✓ test/jev-router-example.test.ts (2 tests) 110ms
+ ✓ test/pao/cards-cardfile.test.ts (16 tests) 136ms
+ ✓ test/model-runtime-images.test.ts (7 tests) 102ms
+ ✓ test/pao/routing-model-command.test.ts (14 tests) 56ms
+ ✓ test/suite/regressions/9340-9777-auto-compaction-cancellation.test.ts (6 tests) 115ms
+ ✓ test/suite/regressions/2753-reload-stale-resource-settings.test.ts (1 test) 75ms
+ ✓ test/suite/regressions/7829-invalid-settings-warning.test.ts (1 test) 104ms
+ ✓ test/image-process.test.ts (5 tests) 103ms
+ ✓ test/pao/knowledge-ingest.test.ts (12 tests) 115ms
+ ✓ test/radius.test.ts (6 tests) 89ms
+ ✓ test/pao/m2-02-collab-gaps.test.ts (13 tests) 116ms
+ ✓ test/suite/regressions/5943-session-start-notify.test.ts (7 tests) 99ms
+ ✓ test/config-value-migration.test.ts (4 tests) 100ms
+ ✓ test/suite/regressions/6162-extension-active-tools-next-turn.test.ts (3 tests) 75ms
+ ✓ test/pao/patrol-drop.test.ts (6 tests) 107ms
+ ✓ test/credential-print.test.ts (5 tests) 112ms
+ ✓ test/pao/knowledge-patrol-chain.test.ts (3 tests) 102ms
+ ✓ test/pao/worker-run.test.ts (11 tests) 2500ms
+     ✓ 正式回执必须是 JSON 且产物存在；退出码 0 不替代完成证据  389ms
+     ✓ 超时触发的树杀失败:run 返回失败回执,证据落盘,摘要指向停止确认失败  1173ms
+ ✓ test/pao/cards-receipts.test.ts (6 tests) 98ms
+ ✓ test/pao/card-templates.test.ts (13 tests) 85ms
+ ✓ test/pao/knowledge-tools.test.ts (12 tests) 117ms
+ ✓ test/pao/workflow-save.test.ts (18 tests) 96ms
+ ✓ test/pao/patrol-hook.test.ts (5 tests) 125ms
+ ✓ test/suite/regressions/2835-tools-allowlist-filters-extension-tools.test.ts (2 tests) 91ms
+ ✓ test/suite/regressions/2781-skill-collision-precedence.test.ts (4 tests) 91ms
+ ✓ test/suite/regressions/7290-json-stream-linear.test.ts (1 test) 99ms
+ ✓ test/agent-session-stats.test.ts (9 tests) 76ms
+ ✓ test/pao/dep-cycle-guard.test.ts (5 tests) 119ms
+ ✓ test/pao/exc-receipts.test.ts (5 tests) 114ms
+ ✓ test/suite/regressions/6363-agent-settled-event.test.ts (3 tests) 85ms
+ ✓ test/pao/firstrun.test.ts (9 tests) 97ms
+ ✓ test/suite/regressions/8261-subagent-project-trust.test.ts (2 tests) 87ms
+ ✓ test/nested-tool-calls.test.ts (6 tests) 69ms
+ ✓ test/suite/regressions/5217-compaction-reason.test.ts (3 tests) 83ms
+ ✓ test/suite/agent-session-tool-result-images.test.ts (1 test) 41ms
+ ✓ test/pao/knowledge-cache.test.ts (6 tests) 98ms
+ ✓ test/suite/regressions/5661-uppercase-header-values.test.ts (1 test) 58ms
+ ✓ test/suite/lax-message-content.test.ts (6 tests) 76ms
+ ✓ test/pao/knowledge-search.test.ts (12 tests) 119ms
+ ✓ test/pao/card-metrics.test.ts (12 tests) 86ms
+ ✓ test/pao/desktop-editor.test.ts (3 tests) 56ms
+ ✓ test/pao/workflow-recipe.test.ts (16 tests) 60ms
+ ✓ test/suite/regressions/8537-custom-message-tool-result-ordering.test.ts (3 tests) 73ms
+ ✓ test/pao/wiring-smoke.test.ts (6 tests) 75ms
+ ✓ test/auth-check.test.ts (10 tests) 56ms
+ ✓ test/pao/knowledge-retire.test.ts (8 tests) 72ms
+ ✓ test/http-dispatcher.test.ts (5 tests) 53ms
+ ✓ test/settings-selector.test.ts (4 tests) 61ms
+ ✓ test/export-jsonl-share.test.ts (1 test) 51ms
+ ✓ test/suite/regressions/3686-session-name-event.test.ts (3 tests) 61ms
+ ✓ test/pao/host-handoff-gate.test.ts (10 tests) 46ms
+ ✓ test/suite/regressions/8964-extension-provider-streaming.test.ts (2 tests) 57ms
+ ✓ test/suite/regressions/6019-explicit-provider-retry-message.test.ts (2 tests) 52ms
+ ✓ test/remote-catalog-provider.test.ts (8 tests) 53ms
+ ✓ test/model-runtime-classifiers.test.ts (1 test) 62ms
+ ✓ test/pao/dispatch-workflow-skills.test.ts (5 tests) 63ms
+ ✓ test/suite/regressions/7269-cli-end-of-options.test.ts (3 tests) 57ms
+ ✓ test/suite/regressions/5109-exclude-tools.test.ts (2 tests) 52ms
+ ✓ test/suite/regressions/8724-in-memory-fork-active-tool.test.ts (1 test) 47ms
+ ✓ test/suite/regressions/5596-missing-theme-export.test.ts (1 test) 50ms
+ ✓ test/pao/knowledge-outbound.test.ts (9 tests) 83ms
+ ✓ test/suite/regressions/6999-models-json-hot-reload.test.ts (1 test) 46ms
+ ✓ test/session-info-modified-timestamp.test.ts (1 test) 35ms
+ ✓ test/suite/regressions/9178-tree-during-compaction.test.ts (2 tests) 51ms
+ ✓ test/suite/regressions/5996-session-name-newlines.test.ts (2 tests) 43ms
+ ✓ test/suite/regressions/8328-zero-usage-auto-compaction.test.ts (2 tests) 50ms
+ ✓ test/pao/panel-view.test.ts (10 tests) 54ms
+ ✓ test/suite/regressions/3317-network-connection-lost-retry.test.ts (1 test) 47ms
+ ✓ test/suite/regressions/2023-queued-slash-command-followup.test.ts (1 test) 42ms
+ ✓ test/pao/healthcheck-cache-probe.test.ts (19 tests) 49ms
+ ✓ test/skills.test.ts (28 tests) 52ms
+ ✓ test/compaction.test.ts (28 tests | 2 skipped) 42ms
+ ✓ test/pao/ingest-scope.test.ts (4 tests) 55ms
+ ✓ test/suite/regressions/7443-model-command-cached-match.test.ts (2 tests) 50ms
+ ✓ test/pao/notify-toast.test.ts (5 tests) 50ms
+ ✓ test/suite/regressions/6768-copilot-compaction-base-url.test.ts (1 test) 37ms
+ ✓ test/suite/regressions/9540-extension-loader-lazy.test.ts (1 test) 6ms
+ ✓ test/suite/regressions/6904-dns-transport-retry.test.ts (1 test) 42ms
+ ✓ test/suite/regressions/7253-manual-compact-during-response.test.ts (1 test) 41ms
+ ✓ test/suite/regressions/7925-toolcall-start-metadata.test.ts (1 test) 42ms
+ ✓ test/suite/regressions/5208-late-bash-output.test.ts (1 test) 28ms
+ ✓ test/theme-style.test.ts (6 tests) 35ms
+ ✓ test/suite/regressions/8935-parallel-preflight-abort.test.ts (1 test) 39ms
+ ✓ test/suite/regressions/7911-json-stream-usage.test.ts (1 test) 32ms
+ ✓ test/suite/regressions/tree-during-streaming.test.ts (1 test) 32ms
+ ✓ test/pao/knowledge-gate.test.ts (6 tests) 38ms
+ ✓ test/suite/regressions/pre-prompt-compaction-no-continue.test.ts (1 test) 38ms
+ ✓ test/suite/regressions/7187-malformed-package-manifest.test.ts (1 test) 38ms
+ ✓ test/user-message.test.ts (4 tests) 32ms
+ ✓ test/cache-warmer.test.ts (9 tests) 31ms
+ ✓ test/suite/regressions/3982-message-end-cost-override.test.ts (1 test) 34ms
+ ✓ test/suite/regressions/5998-blocked-tool-terminate.test.ts (1 test) 35ms
+ ✓ test/pao/dept-recipe.test.ts (6 tests) 38ms
+ ✓ test/thinking-selector.test.ts (2 tests) 30ms
+ ✓ test/suite/regressions/7048-compaction-truncated-summary.test.ts (1 test) 32ms
+ ✓ test/assistant-message.test.ts (12 tests) 32ms
+ ✓ test/pao/preflight.test.ts (6 tests) 36ms
+ ✓ test/oauth-selector.test.ts (6 tests) 33ms
+ ✓ test/suite/regressions/7150-rpc-prompt-during-compaction.test.ts (1 test) 35ms
+ ✓ test/prompt-templates.test.ts (93 tests) 33ms
+ ✓ test/suite/regressions/7193-event-bus-lifecycle.test.ts (1 test) 36ms
+ ✓ test/suite/regressions/3688-tree-cancel-compacting.test.ts (1 test) 30ms
+ ✓ test/pao/memory-vendor.test.ts (11 tests) 42ms
+ ✓ test/session-manager/tree-traversal.test.ts (31 tests) 30ms
+ ✓ test/experimental-agent-controller.test.ts (3 tests) 31ms
+ ✓ test/compaction-extensions-example.test.ts (3 tests) 22ms
+ ✓ test/tools-manager.test.ts (8 tests) 27ms
+ ✓ test/codemode-renderer.test.ts (4 tests) 33ms
+ ✓ test/version-check.test.ts (10 tests) 28ms
+ ✓ test/branch-summary-extensions.test.ts (1 test) 30ms
+ ✓ test/settings-manager-bug.test.ts (4 tests) 25ms
+ ✓ test/resource-loader-theme.test.ts (3 tests) 34ms
+ ✓ test/experimental-transcript-provider.test.ts (1 test) 22ms
+ ✓ test/pao/runtime-wiring.test.ts (2 tests) 27ms
+ ✓ test/collapsible-message-components.test.ts (3 tests) 26ms
+ ✓ test/mermaid.test.ts (8 tests) 20ms
+ ✓ test/experimental-server-profile.test.ts (5 tests) 30ms
+ ✓ test/management-http.test.ts (5 tests) 24ms
+ ✓ test/pao/collab-review.test.ts (19 tests) 36ms
+ ✓ test/status-indicator.test.ts (5 tests) 26ms
+ ✓ test/clipboard.test.ts (31 tests) 23ms
+ ✓ test/tree-selector.test.ts (18 tests) 23ms
+ ✓ test/pao/workflow-review.test.ts (3 tests) 25ms
+ ✓ test/suite/regressions/6260-inline-extension-naming.test.ts (4 tests) 24ms
+ ✓ test/git-merge-and-resolve-extension.test.ts (9 tests) 30ms
+ ✓ test/pao/status-command.test.ts (9 tests) 26ms
+ ✓ test/truncate-to-width.test.ts (6 tests) 23ms
+ ✓ test/suite/regressions/6324-branch-summary-ambient-auth.test.ts (1 test) 25ms
+ ✓ test/session-manager/custom-session-id.test.ts (12 tests) 17ms
+ ✓ test/pao/panel-settings.test.ts (7 tests) 27ms
+ ✓ test/trust-manager.test.ts (2 tests) 26ms
+ ✓ test/pao/todo-boundary.test.ts (4 tests | 3 skipped) 27ms
+ ✓ test/pao/knowledge-embed-env.test.ts (11 tests) 26ms
+ ✓ test/pao/desktop-maintenance.test.ts (2 tests) 15ms
+ ✓ test/pao/tier-editor-config.test.ts (8 tests) 25ms
+ ✓ test/keybindings-migration.test.ts (3 tests) 12ms
+ ✓ test/suite/regressions/7497-session-discovery-symlink.test.ts (3 tests | 1 skipped) 22ms
+ ✓ test/pao/usage-ledger.test.ts (16 tests) 27ms
+ ✓ test/pao/worker-session-bridge.test.ts (2 tests) 17ms
+ ✓ test/suite/regressions/8337-utf8-bom-parsing.test.ts (1 test) 19ms
+ ✓ test/interactive-mode-tree-navigation.test.ts (5 tests) 19ms
+ ✓ test/session-selector-rename.test.ts (3 tests) 17ms
+ ✓ test/scrollbar-theme.test.ts (5 tests) 23ms
+ ✓ test/experimental-session-worker-manager.test.ts (9 tests) 19ms
+ ✓ test/pao/host-config.test.ts (5 tests) 36ms
+ ✓ test/pao/panorama-worker-live.test.ts (8 tests) 14ms
+ ✓ test/pao/healthcheck.test.ts (13 tests) 35ms
+ ✓ test/clipboard-image-bmp-conversion.test.ts (2 tests) 15ms
+ ✓ test/pao/shared-json.test.ts (8 tests) 39ms
+ ✓ test/image-resize-callers.test.ts (4 tests) 23ms
+ ✓ test/pao/ui-banner.test.ts (8 tests) 14ms
+ ✓ test/pao/usage-native-ledger.test.ts (9 tests) 19ms
+ ✓ test/package-manager-ssh.test.ts (8 tests) 24ms
+ ✓ test/fork-update-notification.test.ts (2 tests) 18ms
+ ✓ test/theme-export.test.ts (3 tests) 22ms
+ ✓ test/theme-picker.test.ts (1 test) 30ms
+ ✓ test/experimental-plugin-reload.test.ts (1 test) 33ms
+ ✓ test/compaction-summary-reasoning.test.ts (14 tests) 12ms
+ ✓ test/session-share.test.ts (1 test) 19ms
+ ✓ test/session-context-edit.test.ts (18 tests) 21ms
+ ✓ test/pao/app.test.ts (2 tests) 19ms
+ ✓ test/suite/regressions/5433-extension-oauth-prompt-input.test.ts (5 tests) 22ms
+ ✓ test/clipboard-image.test.ts (24 tests) 17ms
+ ✓ test/interactive-mode-compaction.test.ts (6 tests) 19ms
+ ✓ test/experimental-session-worker-lifecycle.test.ts (12 tests) 12ms
+ ✓ test/format-resume-command.test.ts (8 tests) 20ms
+ ✓ test/edit-tool-legacy-input.test.ts (8 tests) 14ms
+ ✓ test/session-cwd.test.ts (3 tests) 17ms
+ ✓ test/settings-manager-compaction.test.ts (56 tests) 14ms
+ ✓ test/path-utils.test.ts (13 tests) 19ms
+ ✓ test/pao/skills-loadout.test.ts (3 tests) 13ms
+ ❯ test/resource-loader.test.ts (50 tests | 1 failed) 1283ms
+       ✓ should initialize with empty results before reload 6ms
+       ✓ should not treat a project manifest as the owner of a project extension  670ms
+       ✓ should warn about host dependencies in an extension package manifest 16ms
+       ✓ should fail when an extension package manifest cannot be parsed 10ms
+       ✓ should discover skills from agentDir 13ms
+       ✓ should ignore extra markdown files in auto-discovered skill dirs 11ms
+       ✓ should discover prompts from agentDir 8ms
+       ✓ should report invalid prompt frontmatter while loading valid siblings 11ms
+       ✓ should prefer project resources over user on name collisions 23ms
+       × should load symlinked user and project extensions once 5ms
+       ✓ should load user extensions before trust and reuse them after trust resolves 29ms
+       ✓ should keep both extensions loaded when command names collide 64ms
+       ✓ should honor overrides for auto-discovered resources 12ms
+       ✓ should discover AGENTS.md context files 7ms
+       ✓ should prefer AGENTS.override.md within each directory while preserving ancestor layering 7ms
+       ✓ should ignore context file candidates that are directories 8ms
+       ✓ should skip context file discovery when noContextFiles is true 6ms
+       ✓ should discover SYSTEM.md from cwd/.pi 6ms
+       ✓ should skip project resources that require trust when project is not trusted 13ms
+       ✓ should discover APPEND_SYSTEM.md 6ms
+       ✓ exposes discovered project SYSTEM.md as the system prompt source 5ms
+       ✓ exposes discovered global SYSTEM.md as the system prompt source 4ms
+       ✓ does not expose literal system prompt text as a source 4ms
+       ✓ exposes file-backed system prompt options as a source 4ms
+       ✓ exposes discovered APPEND_SYSTEM.md as an append system prompt source 5ms
+       ✓ does not expose literal append system prompt text as a source 4ms
+       ✓ only exposes file-backed append system prompt options as sources 5ms
+       ✓ should load skills and prompts with extension metadata 9ms
+       ✓ should load extension resources returned as file URLs 8ms
+       ✓ should keep package metadata for skills, prompts, and themes 28ms
+       ✓ should skip skill discovery when noSkills is true 5ms
+       ✓ should still load additional skill paths when noSkills is true 6ms
+       ✓ should apply skillsOverride 4ms
+       ✓ should apply systemPromptOverride 4ms
+       ✓ should detect tool conflicts between extensions 27ms
+       ✓ should prefer explicit CLI extensions over discovered extensions when commands and tools conflict 50ms
+       ✓ should leave out replaceable extensions whose names another extension registers 45ms
+       ✓ should skip built-in extensions disabled in settings 7ms
+       ✓ should load built-in extensions after file extensions with and without trust resolution 22ms
+       ✓ should disable built-in extensions with noExtensions unless loaded with -e builtin:<name> 5ms
+       ✓ should apply project built-in extension overrides after trust resolves 13ms
+       ✓ should skip the main repo's duplicate when the worktree root has its own context 13ms
+       ✓ should still inherit the main repo's context when the worktree root has none 10ms
+       ✓ should only skip the same filename, not a differently named context file 11ms
+       ✓ should NOT skip the container's context in a bare layout (proj/.bare + proj/main) 9ms
+       ✓ should keep loading ancestors above the main repo 13ms
+       ✓ should NOT skip anything for a sibling worktree (main repo is not an ancestor) 10ms
+       ✓ should NOT skip the superproject's context from inside a submodule 8ms
+       ✓ should keep climbing past an ordinary repo root 7ms
+       ✓ should climb normally when the gitdir: target does not exist 5ms
+ ✓ test/session-manager/labels.test.ts (9 tests) 11ms
+ ✓ test/frontmatter.test.ts (8 tests) 12ms
+ ✓ test/system-prompt.test.ts (16 tests) 11ms
+ ✓ test/suite/regressions/3616-settings-inmemory-reload.test.ts (3 tests) 14ms
+ ✓ test/suite/regressions/8237-node-sea-extension-loading.test.ts (1 test) 16ms
+ ✓ test/args.test.ts (87 tests) 11ms
+ ✓ test/pao/memory-session.test.ts (12 tests) 11ms
+ ✓ test/plan-mode-utils.test.ts (33 tests) 13ms
+ ✓ test/bash-execution-width.test.ts (2 tests) 10ms
+ ✓ test/experimental-cli-command.test.ts (31 tests) 13ms
+ ✓ test/pao/patrol-shell-guard.test.ts (29 tests) 11ms
+ ✓ test/suite/regressions/4167-thinking-toggle-pending-tool-render.test.ts (2 tests) 13ms
+ ✓ test/package-distribution.test.ts (2 tests) 3ms
+ ✓ test/pao/precompaction-adapter.test.ts (5 tests) 13ms
+ ✓ test/suite/regressions/5080-signal-shutdown-extension-cleanup.test.ts (5 tests) 16ms
+ ✓ test/suite/regressions/8611-thinking-toggle-pending-bash-output.test.ts (1 test) 11ms
+ ✓ test/settings-diagnostics.test.ts (3 tests) 11ms
+ ✓ test/theme-detection.test.ts (5 tests) 10ms
+ ✓ test/custom-editor-history-keybindings.test.ts (1 test) 10ms
+ ✓ test/experimental-slash-commands.test.ts (3 tests) 9ms
+ ✓ test/tool-search.test.ts (9 tests) 10ms
+ ✓ test/first-time-setup.test.ts (9 tests) 10ms
+ ✓ test/session-manager/save-entry.test.ts (1 test) 7ms
+ ✓ test/plan-mode-extension.test.ts (4 tests) 9ms
+ ✓ test/pao/cards-deps-failures.test.ts (9 tests) 6ms
+ ✓ test/pao/verifier-parse.test.ts (15 tests) 10ms
+ ✓ test/themed-text.test.ts (1 test) 10ms
+ ✓ test/interactive-mode-assistant-diagnostics.test.ts (2 tests) 10ms
+ ✓ test/session-manager/build-context.test.ts (16 tests) 8ms
+ ✓ test/pao/loadout-tiers-config.test.ts (7 tests) 7ms
+done
+ ✓ test/print-mode.test.ts (3 tests) 7ms
+ ✓ test/pao/section-names.test.ts (3 tests) 7ms
+ ✓ test/pao/command-router-isolation.test.ts (2 tests) 6ms
+ ✓ test/git-ssh-url.test.ts (10 tests) 7ms
+ ✓ test/first-time-setup-fork.test.ts (1 test) 5ms
+ ✓ test/max-thinking.test.ts (2 tests) 8ms
+ ✓ test/pao/ui-panel-renderer.test.ts (7 tests) 7ms
+ ✓ test/model-catalog-refresh.test.ts (3 tests) 6ms
+ ✓ test/pao/context-inspection.test.ts (4 tests) 7ms
+ ✓ test/pao/output-pruning.test.ts (6 tests) 7ms
+ ✓ test/pao/usage-rollup.test.ts (12 tests) 8ms
+ ✓ test/custom-message.test.ts (1 test) 7ms
+ ✓ test/pao/precompaction.test.ts (9 tests) 8ms
+ ✓ test/ansi-utils.test.ts (5 tests) 7ms
+ ✓ test/suite/regressions/5303-bash-output-truncation.test.ts (2 tests) 15ms
+ ✓ test/session-selector-search.test.ts (9 tests) 5ms
+ ✓ test/suite/regressions/8423-extension-factory-failure.test.ts (2 tests) 6ms
+ ✓ test/pao/worker-receipt.test.ts (10 tests) 6ms
+ ✓ test/runtime-credentials.test.ts (5 tests) 6ms
+ ✓ test/interactive-mode-startup-input.test.ts (3 tests) 5ms
+ ✓ test/cache-stats.test.ts (11 tests) 5ms
+ ✓ test/input-transform-streaming-example.test.ts (6 tests) 6ms
+ ✓ test/experimental-cli-resolution.test.ts (4 tests) 6ms
+ ✓ test/suite/regressions/8989-fork-compaction-label-boundary.test.ts (1 test) 6ms
+ ✓ test/interactive-mode-clone-command.test.ts (2 tests) 5ms
+ ✓ test/tool-system-prompt-contributions.test.ts (10 tests) 6ms
+ ✓ test/interactive-mode-import-command.test.ts (6 tests) 7ms
+ ✓ test/clipboard-paste-file-paths.test.ts (6 tests) 6ms
+ ✓ test/rpc-jsonl.test.ts (4 tests) 6ms
+ ✓ test/crash-log.test.ts (5 tests) 5ms
+ ✓ test/pao/cards-render.test.ts (7 tests) 6ms
+ ✓ test/rpc-client-clear-queue.test.ts (1 test) 5ms
+ ✓ test/pao/memory-compaction-state.test.ts (1 test) 4ms
+ ✓ test/pao/fanout-plan.test.ts (6 tests) 5ms
+ ✓ test/export-html-xss.test.ts (9 tests) 5ms
+ ✓ test/suite/regressions/6104-find-root-relativization.test.ts (11 tests) 5ms
+ ✓ test/experimental-server-lifecycle.test.ts (3 tests) 7ms
+ ✓ test/restore-sandbox-env.test.ts (3 tests) 6ms
+ ✓ test/pao/loadout-resume.test.ts (6 tests) 5ms
+ ✓ test/branch-summarization.test.ts (4 tests) 5ms
+ ✓ test/keybindings.test.ts (5 tests) 4ms
+ ✓ test/suite/regressions/5724-sigterm-signal-exit.test.ts (1 test) 4ms
+ ✓ test/interactive-mode-anthropic-warning.test.ts (4 tests) 5ms
+ ✓ test/pao/host-events-wire.test.ts (7 tests) 6ms
+ ✓ test/rpc-client-clone.test.ts (1 test) 4ms
+ ✓ test/pao/ui-glyphs.test.ts (11 tests) 5ms
+ ✓ test/suite/regressions/6596-taskkill-enoent.test.ts (1 test) 4ms
+ ✓ test/clipboard-image-native-errors.test.ts (1 test) 4ms
+ ✓ test/pao/shared-time.test.ts (5 tests) 4ms
+ ✓ test/interactive-mode-bug-report-hint.test.ts (4 tests) 4ms
+ ✓ test/pao/worker-sdk-entry.test.ts (1 test) 3ms
+ ✓ test/initial-message.test.ts (3 tests) 6ms
+ ✓ test/mcp-oauth-store.test.ts (3 tests) 4ms
+ ✓ test/export-html-whitespace.test.ts (3 tests) 4ms
+ ✓ test/pao/patrol-draft.test.ts (5 tests) 4ms
+ ✓ test/suite/regressions/startup-session-rebind-duplicate-subscription.test.ts (1 test) 3ms
+ ✓ test/trigger-compact-extension.test.ts (1 test) 3ms
+ ✓ test/experimental.test.ts (5 tests) 4ms
+ ✓ test/changelog.test.ts (2 tests) 3ms
+ ✓ test/session-manager/migration.test.ts (2 tests) 8ms
+ ✓ test/compaction-serialization.test.ts (3 tests) 3ms
+ ✓ test/suite/regressions/7731-tui-method-wrapping.test.ts (2 tests) 3ms
+ ✓ test/suite/regressions/7572-provider-retry-settings-merge.test.ts (1 test) 3ms
+ ✓ test/codemode-worker-config.test.ts (3 tests) 3ms
+ ✓ test/compaction-nested-calls.test.ts (1 test) 2ms
+ ✓ test/chat-viewport.test.ts (1 test) 3ms
+ ✓ test/export-html-skill-block.test.ts (4 tests) 3ms
+ ✓ test/pi-user-agent.test.ts (1 test) 3ms
+ ↓ test/agent-session-branching.test.ts (3 tests | 3 skipped)
+ ↓ test/agent-session-compaction.test.ts (5 tests | 5 skipped)
+ ↓ test/agent-session-tree-navigation.test.ts (10 tests | 10 skipped)
+ ↓ test/experimental-internal-process.test.ts (2 tests | 2 skipped)
+ ↓ test/compaction-extensions.test.ts (8 tests | 8 skipped)
+ ↓ test/rpc.test.ts (18 tests | 18 skipped)
+ ↓ test/pao/mcp-config.test.ts (3 tests | 3 skipped)
+
+ Test Files  19 failed | 426 passed | 7 skipped (452)
+      Tests  62 failed | 3857 passed | 61 skipped (3980)
+   Start at  12:00:38
+   Duration  182.29s (transform 34.54s, setup 0ms, import 275.17s, tests 369.51s, environment 36ms)
+
+JSON report written to C:/Windows/Temp/pao-baseline-O5p4Zz/vitest.json
+(node:35068) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+'C:\Program' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���
+���������ļ���
+'C:\Program' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���
+���������ļ���
+'C:\Program' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���
+���������ļ���
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+PAO 宿主:部长会话停止失败(pid 36720):树杀失败(测试注入)
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+From C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\git-update-test-1791086506197-0eof36866qtp\remote
+   2f3faef..36927f0  main       -> origin/main
+From C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\git-update-test-1791086507603-pi85fslsjq\remote
+   4deba46..ff6cf5a  main       -> origin/main
+From C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\git-update-test-1791086507603-pi85fslsjq\remote
+ + ff6cf5a...f2d3181 main       -> origin/main  (forced update)
+From C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\git-update-test-1791086511423-pxuzk5vhf7\remote
+ * tag               v2         -> FETCH_HEAD
+From C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\git-update-test-1791086511423-pxuzk5vhf7\remote
+ * tag               v2         -> FETCH_HEAD
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 62 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-update respects configured npmCommand
+AssertionError: expected undefined to deeply equal { Object (command, args, ...) }
+
+- Expected:
+{
+  "args": [
+    "--prefix",
+    "C:\\Windows\\Temp\\pao-baseline-O5p4Zz\\tmp\\pi-prefix-JgRv5v",
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--min-release-age=0",
+    "@earendil-works/pi-coding-agent",
+  ],
+  "command": "npm",
+  "display": "npm --prefix C:\\Windows\\Temp\\pao-baseline-O5p4Zz\\tmp\\pi-prefix-JgRv5v install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent",
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:257:19
+    255|   const command = getSelfUpdateCommand("@earendil-works/pi-coding-agen…
+    256|
+    257|   expect(command).toEqual({
+       |                   ^
+    258|    command: "npm",
+    259|    args: [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-updates bun global installs from bun pm bin
+AssertionError: expected undefined to deeply equal { command: 'bun', …(2) }
+
+- Expected:
+{
+  "args": [
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--minimum-release-age=0",
+    "@earendil-works/pi-coding-agent",
+  ],
+  "command": "bun",
+  "display": "bun install -g --ignore-scripts --minimum-release-age=0 @earendil-works/pi-coding-agent",
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:315:19
+    313|
+    314|   expect(detectInstallMethod()).toBe("bun");
+    315|   expect(command).toEqual({
+       |                   ^
+    316|    command: "bun",
+    317|    args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-updates renamed pnpm global installs by removing the old package first
+AssertionError: expected undefined to deeply equal { command: 'pnpm', …(3) }
+
+- Expected:
+{
+  "args": [
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--config.minimumReleaseAge=0",
+    "@new-scope/pi",
+  ],
+  "command": "pnpm",
+  "display": "pnpm remove -g @mariozechner/pi-coding-agent && pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @new-scope/pi",
+  "steps": [
+    {
+      "args": [
+        "remove",
+        "-g",
+        "@mariozechner/pi-coding-agent",
+      ],
+      "command": "pnpm",
+      "display": "pnpm remove -g @mariozechner/pi-coding-agent",
+    },
+    {
+      "args": [
+        "install",
+        "-g",
+        "--ignore-scripts",
+        "--config.minimumReleaseAge=0",
+        "@new-scope/pi",
+      ],
+      "command": "pnpm",
+      "display": "pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @new-scope/pi",
+    },
+  ],
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:328:19
+    326|
+    327|   expect(detectInstallMethod()).toBe("pnpm");
+    328|   expect(command).toEqual({
+       |                   ^
+    329|    command: "pnpm",
+    330|    args: ["install", "-g", "--ignore-scripts", "--config.minimumReleas…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-updates pnpm v11 global installs resolved through the store
+AssertionError: expected undefined to deeply equal { command: 'pnpm', …(2) }
+
+- Expected:
+{
+  "args": [
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--config.minimumReleaseAge=0",
+    "@earendil-works/pi-coding-agent",
+  ],
+  "command": "pnpm",
+  "display": "pnpm install -g --ignore-scripts --config.minimumReleaseAge=0 @earendil-works/pi-coding-agent",
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:384:19
+    382|
+    383|   expect(detectInstallMethod()).toBe("pnpm");
+    384|   expect(command).toEqual({
+       |                   ^
+    385|    command: "pnpm",
+    386|    args: ["install", "-g", "--ignore-scripts", "--config.minimumReleas…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-updates renamed yarn global installs by removing the old package first
+AssertionError: expected undefined to deeply equal { command: 'yarn', …(3) }
+
+- Expected:
+{
+  "args": [
+    "global",
+    "add",
+    "--ignore-scripts",
+    "@new-scope/pi",
+  ],
+  "command": "yarn",
+  "display": "yarn global remove @mariozechner/pi-coding-agent && yarn global add --ignore-scripts @new-scope/pi",
+  "steps": [
+    {
+      "args": [
+        "global",
+        "remove",
+        "@mariozechner/pi-coding-agent",
+      ],
+      "command": "yarn",
+      "display": "yarn global remove @mariozechner/pi-coding-agent",
+    },
+    {
+      "args": [
+        "global",
+        "add",
+        "--ignore-scripts",
+        "@new-scope/pi",
+      ],
+      "command": "yarn",
+      "display": "yarn global add --ignore-scripts @new-scope/pi",
+    },
+  ],
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:397:19
+    395|
+    396|   expect(detectInstallMethod()).toBe("yarn");
+    397|   expect(command).toEqual({
+       |                   ^
+    398|    command: "yarn",
+    399|    args: ["global", "add", "--ignore-scripts", "@new-scope/pi"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > self-updates renamed bun global installs by removing the old package first
+AssertionError: expected undefined to deeply equal { command: 'bun', …(3) }
+
+- Expected:
+{
+  "args": [
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--minimum-release-age=0",
+    "@new-scope/pi",
+  ],
+  "command": "bun",
+  "display": "bun uninstall -g @mariozechner/pi-coding-agent && bun install -g --ignore-scripts --minimum-release-age=0 @new-scope/pi",
+  "steps": [
+    {
+      "args": [
+        "uninstall",
+        "-g",
+        "@mariozechner/pi-coding-agent",
+      ],
+      "command": "bun",
+      "display": "bun uninstall -g @mariozechner/pi-coding-agent",
+    },
+    {
+      "args": [
+        "install",
+        "-g",
+        "--ignore-scripts",
+        "--minimum-release-age=0",
+        "@new-scope/pi",
+      ],
+      "command": "bun",
+      "display": "bun install -g --ignore-scripts --minimum-release-age=0 @new-scope/pi",
+    },
+  ],
+}
+
++ Received:
+undefined
+
+ ❯ test/config.test.ts:422:19
+    420|
+    421|   expect(detectInstallMethod()).toBe("bun");
+    422|   expect(command).toEqual({
+       |                   ^
+    423|    command: "bun",
+    424|    args: ["install", "-g", "--ignore-scripts", "--minimum-release-age=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/62]⎯
+
+ FAIL  test/config.test.ts > detectInstallMethod > does not self-update when npm install path is not writable
+AssertionError: expected { Object (command, args, ...) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "args": [
+    "--prefix",
+    "C:\\Windows\\Temp\\pao-baseline-O5p4Zz\\tmp\\pi-prefix-IZoILe",
+    "install",
+    "-g",
+    "--ignore-scripts",
+    "--min-release-age=0",
+    "@earendil-works/pi-coding-agent",
+  ],
+  "command": "npm",
+  "display": "npm --prefix C:\\Windows\\Temp\\pao-baseline-O5p4Zz\\tmp\\pi-prefix-IZoILe install -g --ignore-scripts --min-release-age=0 @earendil-works/pi-coding-agent",
+}
+
+ ❯ test/config.test.ts:446:67
+    444|   chmodSync(packageDir, 0o500);
+    445|
+    446|   expect(getSelfUpdateCommand("@earendil-works/pi-coding-agent")).toBe…
+       |                                                                   ^
+    447|   expect(getSelfUpdateUnavailableInstruction("@earendil-works/pi-codin…
+    448|    "the install path is not writable",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/62]⎯
+
+ FAIL  test/experimental-presentation-facets.test.ts > server-selected presentation facets > restores plugin package selections for later server generations
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "\\tmp\\pi-presentation-profile-dJ5Fji\\first-plugin",
+-   "\\tmp\\pi-presentation-profile-dJ5Fji\\second-plugin",
++   "D:\\tmp\\pi-presentation-profile-dJ5Fji\\first-plugin",
++   "D:\\tmp\\pi-presentation-profile-dJ5Fji\\second-plugin",
+  ]
+
+ ❯ test/experimental-presentation-facets.test.ts:47:84
+     45|   const serverId = randomUUID();
+     46|   const packagePaths = [join(directory, "first-plugin"), join(director…
+     47|   await expect(restoreServerPluginPackageProfile(directory, serverId, …
+       |                                                                                    ^
+     48|   await expect(restoreServerPluginPackageProfile(directory, serverId))…
+     49|   await expect(restoreServerPluginPackageProfile(directory, serverId, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/62]⎯
+
+ FAIL  test/experimental-presentation-facets.test.ts > server-selected presentation facets > builds conventional plugin entries into the server-owned plugin cache
+AssertionError: expected '\tmp\pi-presentation-package-iUDMRs\p…' to match /\/plugin-builds\/d35adb…/plugin-builds\
+
+- Expected:
+/\/plugin-builds\/d35adb48-71a5-4ead-9eef-e773130bf08e\/pi-example-plugin-[a-f0-9]{12}\/chord-facets\.json$/u
+
++ Received:
+"\\tmp\\pi-presentation-package-iUDMRs\\plugin-builds\\d35adb48-71a5-4ead-9eef-e773130bf08e\\pi-example-plugin-5ec26f6ebb14\\chord-facets.json"
+
+ ❯ test/experimental-presentation-facets.test.ts:79:31
+     77|   const first = await plugin.build();
+     78|   expect(first).toHaveLength(1);
+     79|   expect(plugin.manifestPath).toMatch(
+       |                               ^
+     80|    new RegExp(`/plugin-builds/${serverId}/pi-example-plugin-[a-f0-9]{1…
+     81|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > uses PI_SERVER_DIR and PI_SERVER_ID
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:91:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > preserves an existing Session model when the server default changes
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:128:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > rejects model options when discovery selects an existing server
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:147:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > rechecks an auto-discovered server after a version mismatch
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:154:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > serializes concurrent cold activation and retires after both clients leave
+Error: Unix transport is not supported on Windows
+ ❯ discoverUnixServers ../client/src/unix.ts:38:42
+     36| /** Discover reachable local servers by probing server-addressed Unix …
+     37| export async function discoverUnixServers(options: DiscoverUnixServers…
+     38|  if (process.platform === "win32") throw new Error("Unix transport is …
+       |                                          ^
+     39|  const directory = options.directory;
+     40|  const timeoutMs = options.timeoutMs ?? DEFAULT_DISCOVERY_TIMEOUT_MS;
+ ❯ openClientRuntime src/experimental/client-runtime.ts:79:19
+ ❯ runClient src/experimental/client.ts:22:24
+ ❯ test/experimental-remote-runtime.test.ts:174:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > passes client plugin packages to a cold server and restores them for its next generation
+Error: Unix transport is not supported on Windows
+ ❯ discoverUnixServers ../client/src/unix.ts:38:42
+     36| /** Discover reachable local servers by probing server-addressed Unix …
+     37| export async function discoverUnixServers(options: DiscoverUnixServers…
+     38|  if (process.platform === "win32") throw new Error("Unix transport is …
+       |                                          ^
+     39|  const directory = options.directory;
+     40|  const timeoutMs = options.timeoutMs ?? DEFAULT_DISCOVERY_TIMEOUT_MS;
+ ❯ openClientRuntime src/experimental/client-runtime.ts:79:19
+ ❯ test/experimental-remote-runtime.test.ts:204:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > retires a cold server after its only Session attachment disconnects
+AssertionError: promise rejected "Error: Unix transport is not supported on…" instead of resolving
+ ❯ test/experimental-remote-runtime.test.ts:241:92
+    239|   vi.stubEnv("PI_SERVER_ID", serverId);
+    240|
+    241|   await expect(runClient({ command: "client", sessionId: "demo-1", ...…
+       |                                                                                            ^
+    242|    kind: "attached",
+    243|    serverId,
+
+Caused by: Error: Unix transport is not supported on Windows
+ ❯ discoverUnixServers ../client/src/unix.ts:38:42
+ ❯ openClientRuntime src/experimental/client-runtime.ts:79:19
+ ❯ runClient src/experimental/client.ts:22:24
+ ❯ test/experimental-remote-runtime.test.ts:241:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > runs and discovers multiple logical servers from one directory
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:255:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > hydrates and mutates server Session services across framed clients
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:286:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > hydrates and updates the Models service across concurrent framed clients
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:347:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > loads conventional Session facets from multiple configured plugin packages
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:403:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > uses the most recently selected model for a new Session
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:436:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > composes management attachment with Session service hydration
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:460:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > fences superseded attachment hydration by attachment generation
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:481:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > observes keyed service instances and fences replacement generations over framed transport
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:549:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > answers a client prompt through the worker-owned service provider
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:603:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > replicates the transcript after consecutive prompts
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:621:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > stops an idle Session worker after its client disconnects
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:650:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > starts one process per attached session and stops them during shutdown
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ makeServer test/experimental-remote-runtime.test.ts:49:18
+ ❯ test/experimental-remote-runtime.test.ts:662:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > server runtime replaces an exited worker on the next attach
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:678:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > discovers workers after replacing the server
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:695:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > retires an unclaimed idle worker after replacement demand expires
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:728:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > restores tracked sessions that are outside the replacement catalog
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:748:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/62]⎯
+
+ FAIL  test/experimental-remote-runtime.test.ts > experimental durable server composition > reports missing and ambiguous session selections
+Error: Unix socket directory requires a POSIX user ID
+ ❯ ensurePrivateServerDirectory src/experimental/server.ts:59:50
+     57|
+     58| export async function ensurePrivateServerDirectory(directory: string):…
+     59|  if (typeof process.getuid !== "function") throw new Error("Unix socke…
+       |                                                  ^
+     60|  await mkdir(directory, { recursive: true, mode: 0o700 });
+     61|  const stats = await lstat(directory);
+ ❯ startServer src/experimental/server.ts:511:9
+ ❯ test/experimental-remote-runtime.test.ts:772:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/62]⎯
+
+ FAIL  test/experimental-session-directory.test.ts > experimental server session directory > uses the experimental directory under the configured agent directory by default
+AssertionError: expected 'C:\Windows\Temp\pao-baseline-O5p4Zz\h…' to be '/tmp/pi-agent-config/experimental/ses…' // Object.is equality
+
+Expected: "/tmp/pi-agent-config/experimental/sessions"
+Received: "C:\Windows\Temp\pao-baseline-O5p4Zz\home\.pi\agent\experimental\sessions"
+
+ ❯ test/experimental-session-directory.test.ts:12:37
+     10|   vi.stubEnv("PI_CODING_AGENT_DIR", "/tmp/pi-agent-config");
+     11|
+     12|   expect(resolveSessionDirectory()).toBe("/tmp/pi-agent-config/experim…
+       |                                     ^
+     13|  });
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/62]⎯
+
+ FAIL  test/external-editor.test.ts > editInExternalEditor > edits a prompt inside a private temporary directory
+Error: ENOENT: no such file or directory, open 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-B9Cfhf\capture.json'
+ ❯ runExternalEditor test/external-editor.test.ts:28:30
+     26|    content: "original",
+     27|   });
+     28|   const capture = JSON.parse(readFileSync(capturePath, "utf-8")) as Ed…
+       |                              ^
+     29|   return { result, capture };
+     30|  } finally {
+ ❯ test/external-editor.test.ts:37:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/62]⎯
+
+ FAIL  test/external-editor.test.ts > editInExternalEditor > keeps the original content when the editor exits unsuccessfully
+Error: ENOENT: no such file or directory, open 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-qTMUUe\capture.json'
+ ❯ runExternalEditor test/external-editor.test.ts:28:30
+     26|    content: "original",
+     27|   });
+     28|   const capture = JSON.parse(readFileSync(capturePath, "utf-8")) as Ed…
+       |                              ^
+     29|   return { result, capture };
+     30|  } finally {
+ ❯ test/external-editor.test.ts:53:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/62]⎯
+
+ FAIL  test/external-editor.test.ts > editInExternalEditor > returns empty content when the editor clears the prompt
+Error: ENOENT: no such file or directory, open 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-external-editor-test-Z5HBHJ\capture.json'
+ ❯ runExternalEditor test/external-editor.test.ts:28:30
+     26|    content: "original",
+     27|   });
+     28|   const capture = JSON.parse(readFileSync(capturePath, "utf-8")) as Ed…
+       |                              ^
+     29|   return { result, capture };
+     30|  } finally {
+ ❯ test/external-editor.test.ts:59:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/62]⎯
+
+ FAIL  test/file-mutation-queue.test.ts > withFileMutationQueue > uses the same queue for symlink aliases
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-file-mutation-queue-vyARLQ\target.txt' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-file-mutation-queue-vyARLQ\alias.txt'
+ ❯ test/file-mutation-queue.test.ts:82:3
+     80|   const symlinkPath = join(dir, "alias.txt");
+     81|   await writeFile(targetPath, "hello\n", "utf8");
+     82|   await symlink(targetPath, symlinkPath);
+       |   ^
+     83|
+     84|   const order: string[] = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/62]⎯
+
+ FAIL  test/footer-width.test.ts > formatCwdForFooter > abbreviates the home directory and descendants
+AssertionError: expected '~\project' to be '~/project' // Object.is equality
+
+Expected: "~/project"
+Received: "~\project"
+
+ ❯ test/footer-width.test.ts:116:66
+    114|  it("abbreviates the home directory and descendants", () => {
+    115|   expect(formatCwdForFooter("/home/user", "/home/user")).toBe("~");
+    116|   expect(formatCwdForFooter("/home/user/project", "/home/user")).toBe(…
+       |                                                                  ^
+    117|  });
+    118| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/62]⎯
+
+ FAIL  test/interactive-mode-suspend.test.ts > InteractiveMode.handleCtrlZ > keeps the process alive while suspended and restores the TUI on SIGCONT
+TypeError: this.showStatus is not a function
+ ❯ Object.handleCtrlZ src/modes/interactive/interactive-mode.ts:4358:9
+    4356|  private handleCtrlZ(): void {
+    4357|   if (process.platform === "win32") {
+    4358|    this.showStatus("Suspend to background is not supported on Windows"…
+       |         ^
+    4359|    return;
+    4360|   }
+ ❯ callHandleCtrlZ test/interactive-mode-suspend.test.ts:21:84
+ ❯ test/interactive-mode-suspend.test.ts:97:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/62]⎯
+
+ FAIL  test/interactive-mode-suspend.test.ts > InteractiveMode.handleCtrlZ > cleans up the temporary handlers if suspension fails
+AssertionError: expected a thrown error to be Error: suspend failed
+
+- Expected
++ Received
+
+- Error {
+-   "message": "suspend failed",
++ TypeError {
++   "message": "this.showStatus is not a function",
+  }
+
+ ❯ test/interactive-mode-suspend.test.ts:141:42
+    139|   });
+    140|
+    141|   expect(() => callHandleCtrlZ(context)).toThrow(suspendError);
+       |                                          ^
+    142|   expect(ui.stop).toHaveBeenCalledTimes(1);
+    143|   expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/62]⎯
+
+ FAIL  test/mcp-command.test.ts > pi mcp > lists servers with their state, tools, and errors, and fails while anything is wrong
+AssertionError: expected 'fixture: connected, 1 tool (codemode,…' to contain 'broken: failed (codemode, global)\n  …'
+
+- Expected
++ Received
+
++ fixture: connected, 1 tool (codemode, global)
++   C:\Program Files\nodejs\node.exe D:\AI\workspace\pao-dev\PAO\packages\mcp\test\fixtures\stdio-server.mjs
++   tools: echo
+  broken: failed (codemode, global)
+    pi-test-missing-mcp-server
+-   spawn pi-test-missing-mcp-server ENOENT
++   MCP connection closed
++   'pi-test-missing-mcp-server' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���
++   ���������ļ���
++ parked: disabled (codemode, global)
++   C:\Program Files\nodejs\node.exe D:\AI\workspace\pao-dev\PAO\packages\mcp\test\fixtures\stdio-server.mjs
++ config error: C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-mcp-command-eAJtNn\mcp.json: server "bad" needs either "command" (stdio) or "url" (streamable HTTP)
+
+ ❯ test/mcp-command.test.ts:45:18
+     43|   expect(output).toContain("fixture: connected, 1 tool (codemode, glob…
+     44|   expect(output).toContain("  tools: echo");
+     45|   expect(output).toContain(
+       |                  ^
+     46|    "broken: failed (codemode, global)\n  pi-test-missing-mcp-server\n …
+     47|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/62]⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > cycles project package overrides in config local mode
+AssertionError: expected [ { source: 'npm:pi-tools', …(2) } ] to deeply equal [ { source: 'npm:pi-tools', …(2) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "autoload": false,
+      "extensions": [
+-       "-extensions/bar.ts",
++       "-extensions\\bar.ts",
+      ],
+      "source": "npm:pi-tools",
+    },
+  ]
+
+ ❯ test/package-command-paths.test.ts:516:57
+    514|
+    515|   selector.getResourceList().handleInput(" ");
+    516|   expect(settingsManager.getProjectSettings().packages).toEqual([
+       |                                                         ^
+    517|    { source: "npm:pi-tools", autoload: false, extensions: ["-extension…
+    518|   ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/62]⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > prints a pnpm metadata hint when self-update fails
+AssertionError: expected 'error: pao cannot self-update this in…' to contain 'exited with code 23'
+
+- Expected
++ Received
+
+- exited with code 23
++ error: pao cannot self-update this installation.
++ This installation is not managed by a global pnpm install. Update it with the package manager, wrapper, or source checkout that provides it.
++
++ Location of pao executable: D:\AI\workspace\pao-dev\PAO\node_modules\vitest\dist\workers\forks.js
+
+ ❯ test/package-command-paths.test.ts:949:19
+    947|    const stderr = errorSpy.mock.calls.map(([message]) => String(messag…
+    948|    expect(stdout).not.toContain(`Updated ${APP_NAME}`);
+    949|    expect(stderr).toContain("exited with code 23");
+       |                   ^
+    950|    expect(stderr).toContain("If pnpm reports missing package versions"…
+    951|    expect(stderr).toContain(`Run \`pnpm store prune\` and retry \`${AP…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/62]⎯
+
+ FAIL  test/package-manager.test.ts > DefaultPackageManager > resolve > should resolve symlinked user and project resources once
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pm-test-1791086444798-xbl4uz5byyn\shared-resources\extensions' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pm-test-1791086444798-xbl4uz5byyn\agent\extensions'
+ ❯ test/package-manager.test.ts:246:5
+    244|     mkdirSync(join(agentDir), { recursive: true });
+    245|     mkdirSync(join(tempDir, ".pi"), { recursive: true });
+    246|     symlinkSync(sharedExtensionsDir, join(agentDir, "extensions"), "di…
+       |     ^
+    247|     symlinkSync(sharedSkillsDir, join(agentDir, "skills"), "dir");
+    248|     symlinkSync(sharedPromptsDir, join(agentDir, "prompts"), "dir");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/62]⎯
+
+ FAIL  test/paths.test.ts > canonicalizePath > resolves symlinks to their targets
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-1Ddz04\target.txt' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-1Ddz04\link.txt'
+ ❯ test/paths.test.ts:42:3
+     40|   const link = join(dir, "link.txt");
+     41|   writeFileSync(target, "hello");
+     42|   symlinkSync(target, link);
+       |   ^
+     43|   expect(canonicalizePath(link)).toBe(realpathSync(target));
+     44|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/62]⎯
+
+ FAIL  test/paths.test.ts > canonicalizePath > resolves directory symlinks
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-RD3mdP\target-dir' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-RD3mdP\link-dir'
+ ❯ test/paths.test.ts:51:3
+     49|   const linkDir = join(dir, "link-dir");
+     50|   mkdirSync(targetDir);
+     51|   symlinkSync(targetDir, linkDir, "dir");
+       |   ^
+     52|   expect(canonicalizePath(linkDir)).toBe(realpathSync(targetDir));
+     53|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/62]⎯
+
+ FAIL  test/paths.test.ts > canonicalizePath > falls back to the raw path for a dangling symlink
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-tZNQwq\target.txt' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-paths-tZNQwq\link.txt'
+ ❯ test/paths.test.ts:66:3
+     64|   const link = join(dir, "link.txt");
+     65|   // Create a symlink whose target does not exist.
+     66|   symlinkSync(target, link);
+       |   ^
+     67|   // realpathSync would throw, so canonicalizePath returns the link pa…
+     68|   expect(canonicalizePath(link)).toBe(link);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/62]⎯
+
+ FAIL  test/resource-loader.test.ts > DefaultResourceLoader > reload > should load symlinked user and project extensions once
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\rl-test-1791086605379-prr3u2hncek\shared-extensions' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\rl-test-1791086605379-prr3u2hncek\agent\extensions'
+ ❯ test/resource-loader.test.ts:258:4
+    256|    mkdirSync(agentDir, { recursive: true });
+    257|    mkdirSync(join(cwd, ".pi"), { recursive: true });
+    258|    symlinkSync(sharedExtDir, join(agentDir, "extensions"), "dir");
+       |    ^
+    259|    symlinkSync(sharedExtDir, join(cwd, ".pi", "extensions"), "dir");
+    260|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/62]⎯
+
+ FAIL  test/sdk-session-manager.test.ts > createAgentSession session manager defaults > uses agentDir for the default persisted session path
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/sdk-session-manager.test.ts:44:61
+     42|
+     43|   expect(sessionDir).toBe(expectedSessionDir);
+     44|   expect(sessionFile?.startsWith(`${expectedSessionDir}/`)).toBe(true);
+       |                                                             ^
+     45|
+     46|   session.dispose();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/62]⎯
+
+ FAIL  test/sdk-session-manager.test.ts > createAgentSession session manager defaults > derives cwd from an explicit sessionManager when cwd is omitted
+AssertionError: expected 'You are an expert coding assistant op…' to contain '<cwd>\nC:\Windows\Temp\pao-baseline-O…'
+
+- Expected
++ Received
+
+- <cwd>
+- C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-sdk-session-test-1791086443691-a77wtqitkt5\session-project
++ You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.
++
++ <tools>
++ - read: Read file contents
++ - bash: Execute bash commands (ls, grep, find, etc.)
++ - edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call
++ - write: Create or overwrite files
++
++ In addition to the tools above, you may have access to other custom tools depending on the project.
++ </tools>
++
++ <rules>
++ - Use bash for file operations like ls, rg, find
++ - Use read to examine files instead of cat or sed.
++ - You can inspect PI_* environment variables for current model and session details.
++ - Use edit for precise changes (edits[].oldText must match exactly)
++ - When changing multiple separate locations in one file, use one edit call with multiple entries in edits[] instead of multiple edit calls
++ - Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits. Merge nearby changes into one edit.
++ - Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions.
++ - Use write only for new files or complete rewrites.
++ - Be concise in your responses
++ - Show file paths clearly when working with files
++ </rules>
++
++ <docs>
++ Pi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):
++ - Main documentation: D:\AI\workspace\pao-dev\PAO\packages\coding-agent\README.md
++ - Additional docs: D:\AI\workspace\pao-dev\PAO\packages\coding-agent\docs
++ - Examples: D:\AI\workspace\pao-dev\PAO\packages\coding-agent\examples (extensions, custom tools, SDK)
++ - When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory
++ - When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)
++ - When working on pi topics, read the docs and examples, and follow .md cross-references before implementing
++ - Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)
++ </docs>
++
++ <cwd>
++ C:/Windows/Temp/pao-baseline-O5p4Zz/tmp/pi-sdk-session-test-1791086443691-a77wtqitkt5/session-project
+  </cwd>
+
+ ❯ test/sdk-session-manager.test.ts:81:32
+     79|
+     80|   expect(session.sessionManager).toBe(sessionManager);
+     81|   expect(session.systemPrompt).toContain(`<cwd>\n${sessionCwd}\n</cwd>…
+       |                                ^
+     82|
+     83|   const bashTool = session.agent.state.tools.find((tool) => tool.name …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/62]⎯
+
+ FAIL  test/session-selector-path-delete.test.ts > session selector path/delete interactions > threads sessions when parent and child paths use different symlink aliases
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-session-selector-iOjomN\real\sessions' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-session-selector-iOjomN\alias-a\sessions'
+ ❯ createSymlinkedSessionPaths test/session-selector-path-delete.test.ts:70:2
+     68|  const aliasASessions = join(aliasADir, "sessions");
+     69|  const aliasBSessions = join(aliasBDir, "sessions");
+     70|  symlinkSync(sharedDir, aliasASessions);
+       |  ^
+     71|  symlinkSync(sharedDir, aliasBSessions);
+     72|
+ ❯ test/session-selector-path-delete.test.ts:254:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/62]⎯
+
+ FAIL  test/session-selector-path-delete.test.ts > session selector path/delete interactions > treats the current session as active across symlink aliases
+Error: EPERM: operation not permitted, symlink 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-session-selector-e0ofBR\real\sessions' -> 'C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\pi-session-selector-e0ofBR\alias-a\sessions'
+ ❯ createSymlinkedSessionPaths test/session-selector-path-delete.test.ts:70:2
+     68|  const aliasASessions = join(aliasADir, "sessions");
+     69|  const aliasBSessions = join(aliasBDir, "sessions");
+     70|  symlinkSync(sharedDir, aliasASessions);
+       |  ^
+     71|  symlinkSync(sharedDir, aliasBSessions);
+     72|
+ ❯ test/session-selector-path-delete.test.ts:329:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/62]⎯
+
+ FAIL  test/tools.test.ts > Coding Agent Tools > edit tool > should include EACCES for read-only files
+AssertionError: expected [Function] to throw error including 'Could not edit file: C:\Windows\Temp\…' but got 'Could not edit file: C:\Windows\Temp\…'
+
+Expected: "Could not edit file: C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\coding-agent-test-1791086454321\edit-readonly.txt. Error code: EACCES."
+Received: "Could not edit file: C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\coding-agent-test-1791086454321\edit-readonly.txt. Error code: EPERM."
+
+ ❯ test/tools.test.ts:445:4
+    443|      edits: [{ oldText: "hello", newText: "world" }],
+    444|     }),
+    445|    ).rejects.toThrow(`Could not edit file: ${testFile}. Error code: EA…
+       |    ^
+    446|   });
+    447|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/62]⎯
+
+ FAIL  test/tools.test.ts > Coding Agent Tools > edit tool > should include EACCES in diff preview for unreadable files
+AssertionError: expected { diff: '-1 hello\n+1 world', …(1) } to deeply equal { Object (error) }
+
+- Expected
++ Received
+
+  {
+-   "error": "Could not edit file: C:\\Windows\\Temp\\pao-baseline-O5p4Zz\\tmp\\coding-agent-test-1791086454381\\unreadable-preview.txt. Error code: EACCES.",
++   "diff": "-1 hello
++ +1 world",
++   "firstChangedLine": 1,
+  }
+
+ ❯ test/tools.test.ts:481:19
+    479|    const result = await computeEditsDiff(unreadableFile, [{ oldText: "…
+    480|
+    481|    expect(result).toEqual({ error: `Could not edit file: ${unreadableF…
+       |                   ^
+    482|   });
+    483|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/62]⎯
+
+ FAIL  test/tools.test.ts > Coding Agent Tools > grep tool > should treat flag-like patterns as search text
+Error: rg: regex parse error:
+    (?:--pre=C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\coding-agent-test-1791086458285\payload.sh)
+                       ^^
+error: unrecognized escape sequence
+ ❯ src/core/tools/grep.ts:253:29
+    251|        if (!killedDueToLimit && code !== 0 && code !== 1) {
+    252|         const errorMsg = stderr.trim() || `ripgrep exited with code ${…
+    253|         settle(() => reject(new Error(errorMsg)));
+       |                             ^
+    254|         return;
+    255|        }
+ ❯ settle src/core/tools/grep.ts:113:7
+ ❯ ChildProcess.<anonymous> src/core/tools/grep.ts:253:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/62]⎯
+
+ FAIL  test/tools.test.ts > tool cwd resolution > bash uses ctx.cwd when provided
+AssertionError: expected '/tmp/coding-agent-cwd-test-1791086459…' to contain 'C:\Windows\Temp\pao-baseline-O5p4Zz\t…'
+
+- Expected
++ Received
+
+- C:\Windows\Temp\pao-baseline-O5p4Zz\tmp\coding-agent-cwd-test-1791086459750
++ /tmp/coding-agent-cwd-test-1791086459750
++
+
+ ❯ test/tools.test.ts:1096:18
+    1094|   );
+    1095|   const output = getTextOutput(result);
+    1096|   expect(output).toContain(testDir);
+       |                  ^
+    1097|  });
+    1098| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/62]⎯
+
+ FAIL  test/trust-selector.test.ts > TrustSelectorComponent > keeps the saved trusted decision marked while browsing
+AssertionError: expected '─────────────────────────────────────…' to contain 'Saved decision: trusted (/project)'
+
+- Expected
++ Received
+
+- Saved decision: trusted (/project)
++ ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
++
++  Project trust                                                                                                          
++  /project                                                                                                               
++
++  Saved decision: trusted (inherited from /project)                                                                      
++  Current session: trusted                                                                                               
++
++  →   Trust                                                                                                              
++      Trust parent folder (D:\)                                                                                          
++      Do not trust                                                                                                       
++
++  ↑↓ navigate  enter save  escape/ctrl+c cancel                                                                          
++
++ ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+ ❯ test/trust-selector.test.ts:27:18
+     25|
+     26|   let output = stripAnsi(selector.render(120).join("\n"));
+     27|   expect(output).toContain("Saved decision: trusted (/project)");
+       |                  ^
+     28|   expect(output).toContain("Current session: trusted");
+     29|   expect(output).toContain("→ ✓ Trust");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/62]⎯
+
+ FAIL  test/trust-selector.test.ts > TrustSelectorComponent > selects a trust decision
+AssertionError: expected "vi.fn()" to be called with arguments: [ { trusted: true, …(1) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -2,10 +2,10 @@
+    {
+      "trusted": true,
+      "updates": [
+        {
+          "decision": true,
+-         "path": "/project",
++         "path": "D:\\project",
+        },
+      ],
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ test/trust-selector.test.ts:50:20
+     48|   selector.handleInput("\n");
+     49|
+     50|   expect(onSelect).toHaveBeenCalledWith({ trusted: true, updates: [{ p…
+       |                    ^
+     51|  });
+     52|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/62]⎯
+
+ FAIL  test/trust-selector.test.ts > TrustSelectorComponent > adds a trust parent option
+AssertionError: expected '─────────────────────────────────────…' to contain '✓ Trust parent folder (/parent)'
+
+- Expected
++ Received
+
+- ✓ Trust parent folder (/parent)
++ ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
++
++  Project trust                                                                                                          
++  /parent/project                                                                                                        
++
++  Saved decision: trusted (inherited from /parent)                                                                       
++  Current session: trusted                                                                                               
++
++  →   Trust                                                                                                              
++      Trust parent folder (D:\parent)                                                                                    
++      Do not trust                                                                                                       
++
++  ↑↓ navigate  enter save  escape/ctrl+c cancel                                                                          
++
++ ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+ ❯ test/trust-selector.test.ts:79:18
+     77|   const output = stripAnsi(selector.render(120).join("\n"));
+     78|   expect(output).toContain("Saved decision: trusted (inherited from /p…
+     79|   expect(output).toContain("✓ Trust parent folder (/parent)");
+       |                  ^
+     80|
+     81|   selector.handleInput("\n");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/62]⎯
+
+ FAIL  test/session-manager/load-entries.test.ts > SessionManager.inMemory with preloaded entries > creates a header from the options when the entries carry none
+AssertionError: expected 'D:\project' to be '/project' // Object.is equality
+
+Expected: "/project"
+Received: "D:\project"
+
+ ❯ test/session-manager/load-entries.test.ts:103:36
+    101|   expect(session.getSessionId()).toBe("restored-session");
+    102|   expect(session.getHeader()!.id).toBe("restored-session");
+    103|   expect(session.getHeader()!.cwd).toBe("/project");
+       |                                    ^
+    104|  });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/62]⎯
+
+ FAIL  test/suite/regressions/2791-fswatch-error-crash.test.ts > issue #2791 fs.watch error event crashes process > process should survive an error event on the theme FSWatcher
+AssertionError: Child crashed (exit 1). stderr: node:internal/modules/esm/load:193
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'd:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)
+    at defaultLoadSync (node:internal/modules/esm/load:146:3)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)
+    at #loadSync (node:internal/modules/esm/loader:834:53)
+    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+    at afterResolve (node:internal/modules/esm/loader:607:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v24.18.0: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/suite/regressions/2791-fswatch-error-crash.test.ts:104:82
+    102|   }
+    103|
+    104|   expect(exitCode, `Child crashed (exit ${exitCode}). stderr: ${stderr…
+       |                                                                                  ^
+    105|  });
+    106| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/62]⎯
+

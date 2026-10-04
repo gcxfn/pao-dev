@@ -1,0 +1,302 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+PAO 宿主:部长会话停止失败(pid 29776):树杀失败(测试注入)
+··········x·xxx···x·xxxxxx·xxxxx··x·x
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 空闲熔断(唯一熔断线):先落短交接→树杀→登记表摘除 > 超空闲分钟的事件边界核对把闲置会话散场;交接页落盘
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-fuse.test.ts:110:24
+    108|   参数: [fixture.脚本, String(rounds)],
+    109|  });
+    110|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    111|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    112|  return result;
+ ❯ test/pao/host-fuse.test.ts:118:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 空闲熔断(唯一熔断线):先落短交接→树杀→登记表摘除 > 未超线的会话不动;另一会话的事件边界顺带核对闲置会话(零定时器)
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-fuse.test.ts:110:24
+    108|   参数: [fixture.脚本, String(rounds)],
+    109|  });
+    110|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    111|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    112|  return result;
+ ❯ test/pao/host-fuse.test.ts:131:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 空闲熔断(唯一熔断线):先落短交接→树杀→登记表摘除 > 保险丝核对失败(树杀异常):事件边界吞掉 rejection 记 stderr,不崩进程
+Error: 拉起失败:Error: 部长 RPC 握手超时；停止失败，保留登记待处理：Error: 树杀失败(测试注入)
+ ❯ test/pao/host-fuse.test.ts:158:25
+    156|   hosts.push(host);
+    157|   const result = await host.拉起({ 部门: "前端", 项目根, 命令: process.execPath, …
+    158|   if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                         ^
+    159|   // 第二个会话供注入:注入只刷新自己的最近事件时间,前端保持闲置可熔断
+    160|   const b = await host.拉起({ 部门: "后端", 项目根, 命令: process.execPath, 参数: […
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 监督动作审计留痕(催办/熔断可查证):$PAO_HOME/部门/审查/监督审计.jsonl > 提示线与空闲熔断各留一行 JSONL(时间戳/动作/目标/原因)
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-fuse.test.ts:110:24
+    108|   参数: [fixture.脚本, String(rounds)],
+    109|  });
+    110|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    111|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    112|  return result;
+ ❯ test/pao/host-fuse.test.ts:186:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 提示线(200/2000 口径的一次性通知):只提示不杀 > 轮次/调用达标各通知一次,后续边界不重复;进程不散场
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-fuse.test.ts:110:24
+    108|   参数: [fixture.脚本, String(rounds)],
+    109|  });
+    110|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    111|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    112|  return result;
+ ❯ test/pao/host-fuse.test.ts:209:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 缺保温.json=不保温(功能缺省关) > 无保温文件:不熔断、不通知,句柄计数照记
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-fuse.test.ts:110:24
+    108|   参数: [fixture.脚本, String(rounds)],
+    109|  });
+    110|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    111|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    112|  return result;
+ ❯ test/pao/host-fuse.test.ts:223:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  test/pao/host-inventory-dispatch.test.ts > pao_盘点:部长会话行(pid/轮次/调用/指纹/活性)与全局热会话观测 > 无热会话:显式空态;有热会话:登记表带部长行＋盘点行带 pid/轮次/调用/指纹
+AssertionError: expected '只读盘点(截至 2026-10-03 18:45:44,不写文件不清锁不重…' to contain '部长会话 1 个'
+
+- Expected
++ Received
+
+- 部长会话 1 个
++ 只读盘点(截至 2026-10-03 18:45:44,不写文件不清锁不重跑):
++ - 未完卡:无
++ - 后台进程 1 个(部门/派单理由供上级审查):
++   · pid=24048 部长会话〔前端〕已退出(无卡会话,详见下方部长会话行)
++ - 部长会话:无热会话
++ - git:git 状态不可用
++   原因:fatal: not a git repository (or any of the parent directories): .git
++
+
+ ❯ test/pao/host-inventory-dispatch.test.ts:190:16
+    188|   const tool = captured.tools.find((t) => t.name === "pao_盘点")!;
+    189|   const text = textOf(await tool.execute("t", { 工作区: tempDir("inv") },…
+    190|   expect(text).toContain("部长会话 1 个");
+       |                ^
+    191|   expect(text).toContain("前端@");
+    192|   expect(text).toContain(host.盘点视图()[0].项目名);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  test/pao/host-inventory-dispatch.test.ts > pao_盘点:部长会话行(pid/轮次/调用/指纹/活性)与全局热会话观测 > 全局热会话数超 8:仅提示不拒
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/host-inventory-dispatch.test.ts:208:18
+    206|    mkdirSync(项目根, { recursive: true });
+    207|    const 拉起 = await host.拉起({ 部门: `部门${i}`, 项目根, 命令: process.execPath,…
+    208|    expect(拉起.ok).toBe(true);
+       |                  ^
+    209|   }
+    210|   expect(await waitUntil(() => host.盘点视图().length === 9)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  test/pao/host-inventory-dispatch.test.ts > pao_派单:命中热部长会话时附交接页指针,指纹不一致仅提示 > 热会话＋交接文件在:指针进附加系统提示词(与配方提示拼接不覆盖),输出注明指针已附
+AssertionError: expected '已派出:卡0001(派单理由:单卡派发;owner 走认领状态机:主控)。…' to contain '已把交接页指针附进派卡信封'
+
+- Expected
++ Received
+
+- 已把交接页指针附进派卡信封
++ 已派出:卡0001(派单理由:单卡派发;owner 走认领状态机:主控)。本工具调用到此返回,不等 worker。
++ 结果(终态/摘要/认领基线/回执落卡)后台跑完后,下一轮以 pao 派卡通知 注入送达(伴 toast);被拒派/失败同样通知。期间可继续干别的。
++ 查询:pao_盘点 看在跑进程;/pao queue 看卡状态。
++ 监督:worker 静默(缺省 30 分钟无输出)会提醒你,提醒带 live 输出路径——继续等＝不用做任何事;终止＝调 pao_终止卡。
+
+ ❯ test/pao/host-inventory-dispatch.test.ts:243:35
+    241|
+    242|   const result = await tool.execute("t", { 卡号, 理由: "单卡派发" }, undefined…
+    243|   expect(result.content[0]?.text).toContain("已把交接页指针附进派卡信封");
+       |                                   ^
+    244|   await face.等后台(); // B 档:指针注入发生在后台链的 run 里
+    245|   const 提示词 = runner.runs[0]?.附加系统提示词 ?? [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  test/pao/host-inventory-dispatch.test.ts > pao_派单:命中热部长会话时附交接页指针,指纹不一致仅提示 > 指纹不一致:派卡输出提示建议重开,但不杀会话、派单照常
+AssertionError: expected '已派出:卡0001(派单理由:配方变更后的派发;owner 走认领状态机:…' to contain '配方已变更'
+
+- Expected
++ Received
+
+- 配方已变更
++ 已派出:卡0001(派单理由:配方变更后的派发;owner 走认领状态机:主控)。本工具调用到此返回,不等 worker。
++ 结果(终态/摘要/认领基线/回执落卡)后台跑完后,下一轮以 pao 派卡通知 注入送达(伴 toast);被拒派/失败同样通知。期间可继续干别的。
++ 查询:pao_盘点 看在跑进程;/pao queue 看卡状态。
++ 监督:worker 静默(缺省 30 分钟无输出)会提醒你,提醒带 live 输出路径——继续等＝不用做任何事;终止＝调 pao_终止卡。
+
+ ❯ test/pao/host-inventory-dispatch.test.ts:275:35
+    273|
+    274|   const result = await tool.execute("t", { 卡号, 理由: "配方变更后的派发" }, undef…
+    275|   expect(result.content[0]?.text).toContain("配方已变更");
+       |                                   ^
+    276|   expect(result.content[0]?.text).toContain("建议重开");
+    277|   await face.等后台();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  test/pao/host-supervision.test.ts > 部门级监督唤醒(部长被主控监督,挂 usage 事件边界) > 每累计 N 轮注入一次机械摘要(轮次/调用/成本＋活性＋最近输出);周期反复触发
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-supervision.test.ts:105:24
+    103|   参数: [fixture.脚本, String(rounds), String(toolCalls), toolName, fixtur…
+    104|  });
+    105|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    106|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    107|  return result;
+ ❯ test/pao/host-supervision.test.ts:113:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  test/pao/host-supervision.test.ts > 部门级监督唤醒(部长被主控监督,挂 usage 事件边界) > 0/缺省=该级关唤醒;提示线未达标不发通知
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-supervision.test.ts:105:24
+    103|   参数: [fixture.脚本, String(rounds), String(toolCalls), toolName, fixtur…
+    104|  });
+    105|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    106|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    107|  return result;
+ ❯ test/pao/host-supervision.test.ts:125:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  test/pao/host-supervision.test.ts > 活性三判据(只标不杀,零新增探针) > 盘点视图标出:疑似循环(最近 K 次调用同名)＋到顶(达提示线);无异常标记为「无异常标记」
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-supervision.test.ts:105:24
+    103|   参数: [fixture.脚本, String(rounds), String(toolCalls), toolName, fixtur…
+    104|  });
+    105|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    106|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    107|  return result;
+ ❯ test/pao/host-supervision.test.ts:133:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  test/pao/host-supervision.test.ts > worker 监督注入面(R05:计数→向热部长会话注入或落待办标记) > 监督动作审计留痕:部门监督唤醒/worker 监督唤醒/待办各留一行 JSONL
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-supervision.test.ts:105:24
+    103|   参数: [fixture.脚本, String(rounds), String(toolCalls), toolName, fixtur…
+    104|  });
+    105|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    106|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    107|  return result;
+ ❯ test/pao/host-supervision.test.ts:160:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  test/pao/host-supervision.test.ts > worker 监督注入面(R05:计数→向热部长会话注入或落待办标记) > 工人监督轮次达标:热部长会话在场 → 快照经注入通道抵达(会话 stdin 可见)
+Error: 拉起失败:Error: 部长 RPC 握手超时
+ ❯ 拉起 test/pao/host-supervision.test.ts:105:24
+    103|   参数: [fixture.脚本, String(rounds), String(toolCalls), toolName, fixtur…
+    104|  });
+    105|  if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+       |                        ^
+    106|  await waitUntil(() => (fixture.host.热会话(部门, fixture.项目根)?.累计.轮次 ?? 0)…
+    107|  return result;
+ ❯ test/pao/host-supervision.test.ts:190:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  test/pao/host-tools.test.ts > 宿主接线:pao_拉起部长/pao_散场部长 > 散场无热会话拒绝;命中热会话的散场落交接页并如实汇报
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/host-tools.test.ts:142:21
+    140|    参数: ["-e", FAKE_MINISTER, ""],
+    141|   });
+    142|   expect(raised.ok).toBe(true);
+       |                     ^
+    143|   const record = (await 散场.execute("t2", { 部门: "后端", 项目根: dir, 原因: "测试…
+    144|   expect(record.isError).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+ FAIL  test/pao/host-tools.test.ts > 宿主接线:pao_拉起部长/pao_散场部长 > 同 key 再拉起走已有热会话分支(不双开),首条消息经 stdin 抵达假部长
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/host-tools.test.ts:160:21
+    158|    参数: ["-e", FAKE_MINISTER, dump],
+    159|   });
+    160|   expect(raised.ok).toBe(true);
+       |                     ^
+    161|
+    162|   const mock = mockPi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/18]⎯
+
+ FAIL  test/pao/host-tools.test.ts > 宿主接线:pao_拉起部长/pao_散场部长 > 通知面:一轮事件触发提示线/监督快照进通知,下一次 before_agent_start 渲染 section;空闲保险丝在请求边界散场
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/host-tools.test.ts:261:21
+    259|    参数: ["-e", FAKE_MINISTER, ""],
+    260|   });
+    261|   expect(raised.ok).toBe(true);
+       |                     ^
+    262|   // 假部长回一轮 message_end → 事件边界触发提示线(轮次 1≥1)与部门监督快照进通知
+    263|   expect(await waitUntil(() => host.热会话("后端", dir)?.累计.轮次 === 1)).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/18]⎯
+
+
+ Test Files  4 failed | 1 passed (5)
+      Tests  18 failed | 19 passed (37)
+   Start at  02:45:36
+   Duration  38.18s (transform 1.24s, setup 0ms, import 2.63s, tests 135.76s, environment 0ms)
+

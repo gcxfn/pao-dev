@@ -1,0 +1,216 @@
+diff --git a/packages/coding-agent/src/pao/workflow/distill.ts b/packages/coding-agent/src/pao/workflow/distill.ts
+index 2b7241abe..01819ea93 100644
+--- a/packages/coding-agent/src/pao/workflow/distill.ts
++++ b/packages/coding-agent/src/pao/workflow/distill.ts
+@@ -31,6 +31,8 @@ interface DistilledNode {
+ 	档位?: CardTier;
+ 	预算?: CardBudget;
+ 	优先级?: CardPriority;
++	/** 节点说明：可选、给人读——审草稿时人工加,蒸馏不从卡面猜 */
++	说明?: string;
+ 	depends_on: string[];
+ 	人工确认: boolean;
+ }
+@@ -76,6 +78,7 @@ export function emitRecipeMarkdown(input: {
+ 		if (node.档位) lines.push(`    档位: ${node.档位}`);
+ 		if (node.预算) lines.push(`    预算: ${JSON.stringify(node.预算)}`);
+ 		if (node.优先级) lines.push(`    优先级: ${node.优先级}`);
++		if (node.说明 !== undefined) lines.push(`    说明: ${yamlString(node.说明)}`);
+ 		lines.push(`    depends_on: ${yamlStringArray(node.depends_on)}`);
+ 		lines.push(`    人工确认: ${node.人工确认}`);
+ 	}
+diff --git a/packages/coding-agent/src/pao/workflow/recipe.ts b/packages/coding-agent/src/pao/workflow/recipe.ts
+index a7b693470..a76cd8de8 100644
+--- a/packages/coding-agent/src/pao/workflow/recipe.ts
++++ b/packages/coding-agent/src/pao/workflow/recipe.ts
+@@ -56,6 +56,8 @@ export interface RecipeNode {
+ 	 * 派到本节点卡时由派发收口层（resolveDispatchParameters）自动挂载;缺文件拒派（fail-closed）。
+ 	 */
+ 	技能?: string[];
++	/** 节点说明：只给人读（为什么这步这么干）,不参与依赖、派发目标或机械验收,也不代入参数 */
++	说明?: string;
+ 	depends_on: string[];
+ 	/** 人工确认标记：交付后停流等用户点头才放行下游（§11.1 决定 2） */
+ 	人工确认: boolean;
+@@ -241,6 +243,11 @@ export function parseRecipe(content: string, filePath: string): WorkflowRecipe {
+ 		}
+ 		const 输入 = optionalStringArray(node, "输入", where, problems);
+ 		const 技能 = optionalStringArray(node, "技能", where, problems);
++		// 节点「说明」：可选、给人读——只要是字符串就收（空串也是明确写了）,非字符串点名拒绝
++		const 说明 = node.说明;
++		if (说明 !== undefined && typeof 说明 !== "string") {
++			problems.push(`${where} 字段「说明」须为字符串（可选,给人读的节点说明）`);
++		}
+ 		const depends_on = optionalStringArray(node, "depends_on", where, problems) ?? [];
+ 		const 人工确认 = node.人工确认;
+ 		if (人工确认 !== undefined && typeof 人工确认 !== "boolean") {
+@@ -272,6 +279,7 @@ export function parseRecipe(content: string, filePath: string): WorkflowRecipe {
+ 			预算,
+ 			优先级: 优先级 as CardPriority | undefined,
+ 			技能,
++			说明: typeof 说明 === "string" ? 说明 : undefined,
+ 			depends_on,
+ 			人工确认: 人工确认 === true,
+ 		});
+diff --git a/packages/coding-agent/src/pao/workflow/review.ts b/packages/coding-agent/src/pao/workflow/review.ts
+index 26d4f44bc..d958bba32 100644
+--- a/packages/coding-agent/src/pao/workflow/review.ts
++++ b/packages/coding-agent/src/pao/workflow/review.ts
+@@ -15,6 +15,8 @@ export const WORKFLOW_REVIEW_SECTION = "pao-workflow-review";
+ 
+ export interface ReviewNodeRow {
+ 	节点: string;
++	/** 配方节点说明（给人读,缺省无） */
++	说明?: string;
+ 	卡号?: number;
+ 	/** 卡现读状态（未落卡节点无卡） */
+ 	卡状态?: CardStatus;
+@@ -84,6 +86,7 @@ export function buildReviewReport(recipe: WorkflowRecipe, cardsDir: string, mani
+ 		if (!card) {
+ 			return {
+ 				节点: name,
++				说明: node.说明,
+ 				尝试: 0,
+ 				派发次数: 0,
+ 				打回: 0,
+@@ -103,6 +106,7 @@ export function buildReviewReport(recipe: WorkflowRecipe, cardsDir: string, mani
+ 		];
+ 		return {
+ 			节点: name,
++			说明: node.说明,
+ 			卡号: card.卡号,
+ 			卡状态: card.frontmatter.状态,
+ 			尝试: card.frontmatter.尝试,
+@@ -148,6 +152,8 @@ export function renderReviewReport(report: ReviewReport): string {
+ 			row.人工确认 ? `人工门${row.已确认 ? `已确认 ${row.已确认}` : "未确认"}` : "",
+ 		].filter(Boolean);
+ 		lines.push(parts.join(" | "));
++		// 节点说明全文照登（续行缩进对齐,给人读不截断）
++		if (row.说明 !== undefined) lines.push(`  说明:${row.说明.split("\n").join("\n    ")}`);
+ 		if (row.末次成功摘要) lines.push(`  末次成功摘要:${row.末次成功摘要.split("\n")[0]}`);
+ 		if (row.产物.length > 0) lines.push(`  产物:${row.产物.join("、")}`);
+ 		const budget = budgetLine(row);
+diff --git a/packages/coding-agent/test/pao/workflow-recipe.test.ts b/packages/coding-agent/test/pao/workflow-recipe.test.ts
+index 304f15a84..00ecf9d26 100644
+--- a/packages/coding-agent/test/pao/workflow-recipe.test.ts
++++ b/packages/coding-agent/test/pao/workflow-recipe.test.ts
+@@ -285,3 +285,69 @@ describe("坏配方被拒（结构化错误）", () => {
+ 		expect(() => parseRecipe("就是一段正文", "某目录/某流.md")).toThrowError(WorkflowRecipeError);
+ 	});
+ });
++
++describe("节点「说明」可选字段（给人读,不参与机械执行）", () => {
++	const 带说明 = (说明行: string) =>
++		`---
++名字: 说明流
++节点:
++  - 名字: 侦察
++    部门: 核心机制
++    目标: 侦察
++    验收: 落盘
++${说明行}---
++正文
++`;
++
++	test("中文/换行/引号/空字符串照收,缺省 undefined（空串不视为缺失）", () => {
++		const cases: Array<[string, string | undefined]> = [
++			['    说明: "为什么这步在前：先摸清库再动手"\n', "为什么这步在前：先摸清库再动手"],
++			['    说明: "第一行\\n第二行（含换行）"\n', "第一行\n第二行（含换行）"],
++			['    说明: "带\\"引号\\" 与反斜杠\\\\"\n', '带"引号" 与反斜杠\\'],
++			['    说明: ""\n', ""],
++			["", undefined],
++		];
++		for (const [说明行, expected] of cases) {
++			writeRecipe("说明流", 带说明(说明行));
++			const recipe = loadRecipe(paoHome, "说明流");
++			expect(recipe.节点[0].说明).toBe(expected);
++			rmSync(recipePath(paoHome, "说明流"));
++		}
++	});
++
++	test("非字符串（数字/数组/null）→ RECIPE_FIELD,problems 点名字段「说明」", () => {
++		for (const 说明行 of ["    说明: 42\n", "    说明: [a, b]\n", "    说明:\n"]) {
++			writeRecipe("说明流", 带说明(说明行));
++			try {
++				loadRecipe(paoHome, "说明流");
++				expect.unreachable("非字符串说明应拒");
++			} catch (error) {
++				const err = error as WorkflowRecipeError;
++				expect(err.code).toBe("RECIPE_FIELD");
++				expect((err.details.problems as string[]).some((p) => p.includes("说明") && p.includes("字符串"))).toBe(
++					true,
++				);
++			}
++			rmSync(recipePath(paoHome, "说明流"));
++		}
++	});
++
++	test("说明里的 {参数} 不占位不校验（不参与派发目标）", () => {
++		writeRecipe(
++			"说明流",
++			`---
++名字: 说明流
++节点:
++  - 名字: 侦察
++    部门: 核心机制
++    目标: 侦察
++    验收: 落盘
++    说明: "这步吃 {仓库} 的语境（说明给人读,不是模板）"
++---
++正文
++`,
++		);
++		const recipe = loadRecipe(paoHome, "说明流");
++		expect(recipe.占位符).toEqual([]);
++	});
++});
+diff --git a/packages/coding-agent/test/pao/workflow-save.test.ts b/packages/coding-agent/test/pao/workflow-save.test.ts
+index 149d3fb59..366f809c8 100644
+--- a/packages/coding-agent/test/pao/workflow-save.test.ts
++++ b/packages/coding-agent/test/pao/workflow-save.test.ts
+@@ -378,3 +378,45 @@ describe("蒸馏增强（十八批,§11.6）", () => {
+ 		expect(distillRecipe(cardsDir, "无技能流", "t").content).not.toContain("技能:");
+ 	});
+ });
++
++describe("节点「说明」字段（给人读,经发射器序列化）", () => {
++	function emitWith说明(说明: string): string {
++		return emitRecipeMarkdown({
++			名字: "说明往返流",
++			自动执行: false,
++			参数: [],
++			节点: [{ 名字: "甲", 目标: "a", 部门: "前端", 验收: "包含: a", 说明, depends_on: [], 人工确认: false }],
++			说明: "正文",
++		});
++	}
++
++	it("中文/换行/引号/空串:发射→解析逐字往返,再发射内容逐字一致", () => {
++		const values = [
++			"为什么这步在前：先摸清库再动手",
++			"第一行\n第二行（含换行）",
++			'带"引号" 与反斜杠\\ 及冒号: 破折号-',
++			"",
++		];
++		for (const value of values) {
++			const content = emitWith说明(value);
++			const recipe = parseRecipe(content, join("工作流", "说明往返流.md"));
++			expect(recipe.节点[0].说明).toBe(value); // 往返逐字
++			expect(emitWith说明(value)).toBe(content); // 再发射逐字一致
++		}
++	});
++
++	it("缺省:不发射节点「说明:」行,解析回 undefined;蒸馏草稿不从卡面猜说明", () => {
++		const content = emitRecipeMarkdown({
++			名字: "无说明流",
++			自动执行: false,
++			参数: [],
++			节点: [{ 名字: "甲", 目标: "a", 部门: "前端", 验收: "包含: a", depends_on: [], 人工确认: false }],
++			说明: "正文",
++		});
++		expect(content).not.toMatch(/^ {4}说明: /m);
++		expect(parseRecipe(content, join("工作流", "无说明流.md")).节点[0].说明).toBeUndefined();
++		const cardsDir = makeDir();
++		card(cardsDir, 1, "侦察", { 目标: "a", 部门: "前端", 验收: "包含: a" });
++		expect(distillRecipe(cardsDir, "蒸馏无说明流", "t").content).not.toMatch(/^ {4}说明: /m);
++	});
++});

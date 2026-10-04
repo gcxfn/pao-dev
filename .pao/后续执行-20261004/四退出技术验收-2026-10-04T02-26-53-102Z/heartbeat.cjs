@@ -1,0 +1,1 @@
+const fs=require('node:fs'); const file=process.argv[2]; let n=0; const tick=()=>fs.writeFileSync(file,JSON.stringify({pid:process.pid,n:++n,time:Date.now()}));tick();setInterval(tick,100);
