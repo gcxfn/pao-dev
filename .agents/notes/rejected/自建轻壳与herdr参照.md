@@ -16,7 +16,7 @@
 
 ## 取代方案
 
-fork pi-gui（github.com/minghinmatthewlam/pi-gui）为壳母体；终端与桌面＝两个运行时、共用一个文件系统（PAO_HOME＋~/.pi＋同一 fork 构建产物）、单实例互斥（运行时锁，worker 子进程豁免）。详见 `plans/未完成/2026-10-02-M3桌面壳.md` 选型节与 M3-01。
+fork pi-gui（github.com/minghinmatthewlam/pi-gui）为壳母体；终端与桌面＝两个运行时、共用一个文件系统（PAO_HOME＋~/.pi＋同一 fork 构建产物）、单实例互斥（运行时锁，worker 子进程豁免）。详见 `plans/未完成/存档-收编-2026-10-04/2026-10-02-M3桌面壳.md` 选型节与 M3-01。
 
 ## 风险知情
 
