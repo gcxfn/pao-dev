@@ -1,0 +1,46 @@
+== T12修 发行验证命令实录（F10 补 R24-P2-2 正本）2026-10-06 ==
+背景：CP37 首轮发行验证（T12续-发行验证-20261006.log）只记结果、未记命令原文与 PATH 实录，
+本实录补齐为可复现正本。执行环境：Windows 10.0.26200 x64，Git Bash（MSYS）。
+受限 PATH 构造：env PATH="/c/Windows/System32:/c/Windows"（MSYS 自动转 Windows 形式；
+即剥除 npm-global 全局 pao/pi 垫片与开发仓，仅留 System32+Windows）。
+node 绝对路径：C:\Program Files\nodejs\node.exe
+electron 原件：D:/AI/workspace/pao-dev/desktop/node_modules/electron/dist/electron.exe
+asar 原件：D:/AI/workspace/pao-dev/desktop/apps/desktop/release/win-unpacked/resources/app.asar
+（2026-10-05 打包，内核 1.0.2；win-unpacked 隔离副本已删，D1/D2 用 desktop 仓内原件）
+安装态 cli.js：D:/AI/workspace/临时文件夹/整体重构-20261005/T12-发行验证/cli-install/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js
+（.bin/pao 垫片已核，指向同包 dist/bundle/cli.js）
+
+== C2 等价：受限 PATH 下安装态 CLI 启动（cwd=D:/AI/workspace/临时文件夹/整体重构-20261005/T12-发行验证） ==
+
+$ env PATH="/c/Windows/System32:/c/Windows" "/c/Program Files/nodejs/node" -e "console.log(process.env.PATH)"
+C:\Windows\System32;C:\Windows
+EXIT=0
+
+$ env PATH="/c/Windows/System32:/c/Windows" /c/Windows/System32/where.exe pao
+信息: 用提供的模式无法找到文件。
+EXIT=1
+
+$ env PATH="/c/Windows/System32:/c/Windows" /c/Windows/System32/where.exe pi
+信息: 用提供的模式无法找到文件。
+EXIT=1
+
+$ env PATH="/c/Windows/System32:/c/Windows" "/c/Program Files/nodejs/node" "D:/AI/workspace/临时文件夹/整体重构-20261005/T12-发行验证/cli-install/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js" --version
+1.0.2
+EXIT=0
+
+[判读] 受限 PATH 实测全文＝C:\Windows\System32;C:\Windows；where pao/pi 在该 PATH 下
+均找不到（EXIT=1）＝全局垫片确被屏蔽；安装态 cli.js --version 输出 1.0.2，EXIT=0。
+
+== D1/D2 等价：ELECTRON_RUN_AS_NODE 下 electron.exe 直读 asar（PATH 同上受限） ==
+
+$ env PATH="/c/Windows/System32:/c/Windows" ELECTRON_RUN_AS_NODE=1 "D:/AI/workspace/pao-dev/desktop/node_modules/electron/dist/electron.exe" -e "const fs=require('fs'); console.log(fs.existsSync('D:/AI/workspace/pao-dev/desktop/apps/desktop/release/win-unpacked/resources/app.asar/node_modules/@earendil-works/pi-coding-agent/dist/pao/index.js'))"
+true
+EXIT=0
+
+$ env PATH="/c/Windows/System32:/c/Windows" ELECTRON_RUN_AS_NODE=1 "D:/AI/workspace/pao-dev/desktop/node_modules/electron/dist/electron.exe" "D:/AI/workspace/pao-dev/desktop/apps/desktop/release/win-unpacked/resources/app.asar/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js" --version
+1.0.2
+EXIT=0
+
+[判读] D1＝打包 asar 内核入口（dist/pao/index.js）existsSync true；D2＝electron 直跑
+asar 内 dist/bundle/cli.js --version 输出 1.0.2，均 EXIT=0。asar 内路径经 readdir 实勘：
+app.asar/node_modules/@earendil-works/pi-coding-agent/dist/{pao/index.js, bundle/cli.js}。

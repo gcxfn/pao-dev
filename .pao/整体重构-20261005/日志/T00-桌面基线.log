@@ -1,0 +1,955 @@
+
+> pi-gui@1.0.1 test:baseline D:\AI\workspace\pao-dev\桌面端
+> pnpm test:guards && pnpm --filter @pi-gui/catalogs test && pnpm --filter @pi-gui/pi-sdk-driver test && pnpm --filter @pi-gui/extension-ui test && pnpm test:extension-examples && pnpm test:release-helpers && pnpm test:desktop-unit
+
+
+> pi-gui@1.0.1 test:guards D:\AI\workspace\pao-dev\桌面端
+> node --test scripts/ci-guards.test.mjs scripts/check-renderer-boundary.test.mjs scripts/check-workspace-typechecks.test.mjs scripts/format-guard.test.mjs scripts/check-ci-results.test.mjs scripts/typed-lint.test.mjs scripts/test-entrypoints.test.mjs scripts/marketing-assets.test.mjs scripts/state-owner-boundary.test.mjs scripts/ipc-main-frame-boundary.test.mjs scripts/check-contract-authority.test.mjs scripts/contract-resolution.test.mjs scripts/check-host-boundary.test.mjs .github/scripts/summarize-playwright-trend.test.mjs scripts/check-timeline-owner.test.mjs scripts/workflow-action-policy.test.mjs
+
+✔ groups failures by spec file without merging unrelated surfaces (8.963ms)
+✔ all required jobs must succeed (2.2596ms)
+✔ missing, malformed, or unexpected results fail closed (0.2545ms)
+✔ CLI exit status reflects the result and rejects invalid JSON (610.8208ms)
+✔ workflow aggregate covers every job and cannot ignore unsuccessful checks (25.8723ms)
+✔ CI runs the canonical baseline unconditionally (17.3727ms)
+✔ all Core shards are required and retain independent reports (615.2906ms)
+✔ rejects ambient contract substitute @pi-gui/session-driver (5.3967ms)
+✔ rejects ambient contract substitute @pi-gui/session-driver/runtime-types (0.8503ms)
+✔ rejects ambient contract substitute @pi-gui/catalogs (0.3645ms)
+✔ rejects ambient contract substitute @pi-gui/* (0.2786ms)
+✔ rejects ambient contract substitute @* (0.4323ms)
+✔ rejects ambient contract substitute * (0.3171ms)
+✔ rejects module augmentation as another owned contract path (1.1696ms)
+✔ accepts canonical definitions, imports, and unrelated external declarations (2.4721ms)
+✔ repository guard rejects an untracked vendor declaration and accepts its replacement (257.4595ms)
+✔ host rejects import { value } from "../src/ui"; (33.3433ms)
+✔ host rejects import type { View } from "@renderer/ui"; (13.191ms)
+✔ host rejects type View = import("../src/ui").View; (18.1521ms)
+✔ host rejects void import("../src/ui"); (19.7039ms)
+✔ host rejects renderer dependency through a neutral-looking helper (15.9003ms)
+✔ host rejects test fixture dependencies (16.1685ms)
+✔ host accepts contracts and Node APIs (15.0913ms)
+✔ catalogs cannot import the Pi adapter even from an unused source file (19.9208ms)
+✔ package source cannot reach the desktop host (19.4004ms)
+✖ rejects import fs from "node:fs"; (25.8839ms)
+✖ rejects import "fs/promises"; (16.0526ms)
+✖ rejects import { ipcRenderer } from "electron"; (12.6413ms)
+✖ rejects import "@earendil-works/pi-coding-agent"; (14.4728ms)
+✖ rejects import "@earendil-works/pi-agent-core"; (9.0494ms)
+✖ rejects import "../electron/service.js"; (13.8307ms)
+✖ rejects import "@main/service"; (11.917ms)
+✖ rejects export * from "@main/service"; (14.5937ms)
+✖ rejects import { type Contract, service } from "@main/service"; (11.8083ms)
+✖ rejects import { type Contract } from "@main/service"; (14.644ms)
+✖ rejects export { type Contract } from "@main/service"; (16.5436ms)
+✖ rejects void import("@main/service"); (9.3396ms)
+✖ rejects require("@main/service"); (15.6208ms)
+✖ rejects import service = require("@main/service"); (18.7407ms)
+✖ rejects const target = "@main/service"; void import(target); (8.69ms)
+✖ rejects import "./missing.js"; (7.6966ms)
+✖ rejects import.meta.glob("../electron/*.ts", { eager: true }); (8.5193ms)
+✔ checks Vite worker imports without treating their constructors as global workers (20.7708ms)
+✖ follows aliased workspace re-exports and .js source resolution (19.8501ms)
+✔ allows explicit type-only imports, pure helpers, cycles and browser assets (15.5403ms)
+✖ inline types retain runtime edges under verbatimModuleSyntax (61.347ms)
+✖ checks Worker URL entries and their transitive dependencies (26.5234ms)
+✖ checks SharedWorker URL entries and their transitive dependencies (22.5736ms)
+✖ checks window.Worker URL entries and their transitive dependencies (20.084ms)
+✖ checks globalThis.SharedWorker URL entries and their transitive dependencies (21.5483ms)
+✖ checks self.Worker URL entries and their transitive dependencies (17.3907ms)
+✔ rejects uncheckable worker entry: new Worker(new URL(target, import.meta.url)); (10.6156ms)
+✔ rejects uncheckable worker entry: new SharedWorker(target); (11.6669ms)
+✔ rejects uncheckable worker entry: new Worker("./worker.js"); (8.2831ms)
+✔ rejects uncheckable worker entry: new Worker(new URL("./worker.ts", document.baseURI)); (14.1668ms)
+✔ rejects runtime imports backed only by local declarations (12.544ms)
+✔ checks resolved package identity even behind an npm alias (16.9641ms)
+✔ allows ordinary external browser packages (21.8359ms)
+✖ rejects contract implementation dependency: import type { Contract } from "../electron/service"; (15.7533ms)
+✖ rejects contract implementation dependency: export type { Contract } from "@main/service"; (14.3466ms)
+✖ rejects contract implementation dependency: type Contract = import("../electron/service").Contract; (11.4109ms)
+✖ rejects contract implementation dependency: import "../src/index"; (9.8704ms)
+✖ rejects contract implementation dependency: import fs from "node:fs"; (11.8924ms)
+✔ checks unused contracts and permits pure contract reuse (12.8985ms)
+✖ rejects host-only extension-ui runtime import: import { createChordServerConnection } from "@pi-gui/extension-ui/transport"; (11.5639ms)
+✖ rejects host-only extension-ui runtime import: import { parseDesktopHostAction } from "@pi-gui/extension-ui/browser"; (11.7678ms)
+✖ rejects host-only extension-ui runtime import: export * from "@pi-gui/extension-ui/browser"; (8.3985ms)
+✖ rejects host-only extension-ui runtime import: void import("@pi-gui/extension-ui/transport"); (11.8002ms)
+✖ rejects host-only extension-ui runtime import: import { type DesktopHostAction } from "@pi-gui/extension-ui/browser"; (10.5837ms)
+✖ rejects host-only extension-ui runtime import: import "../../../packages/extension-ui/src/transport.ts"; (9.0231ms)
+✔ allows type-only imports from host-only extension-ui entry points (7.7215ms)
+✔ timeline consumers cannot bypass the viewport owner (14.7403ms)
+✔ actual timeline consumers respect the owner (86.1924ms)
+✖ pnpm discovery catches a new workspace without a typecheck command (674.2805ms)
+✔ the real lint config rejects shortcuts across source and script scopes (11796.4441ms)
+✔ CI rejects a focused Playwright test but discovers an ordinary test (2255.7217ms)
+✖ SDK driver implements canonical SessionDriver and cannot omit tree operations (3140.8361ms)
+✔ desktop runtime resolves its catalog backend without TypeScript aliases (3.9971ms)
+✔ format check rejects bad formatting and autofix is stable (1119.4693ms)
+✔ source release/build directories remain format checked while outputs are ignored (715.5928ms)
+✔ the IPC guard rejects raw handlers and hand-copied frame checks (2.375ms)
+✔ main-frame IPC is registered only through the helper (26.6077ms)
+✔ every published marketing asset has one runnable producer and live consumers (21.4181ms)
+✔ product build excludes media rendering and marketing commands are explicit (1.2232ms)
+✔ marketing commands delegate to scripts owned by their producer workspace (2.7502ms)
+✔ marketing producers support staged proof and pass credentials only explicitly (4.0962ms)
+✔ failed media generation preserves the published file and partial evidence (274.2037ms)
+✔ the state-owner guard rejects the former whole-store shortcut (2.2249ms)
+✔ desktop state owners expose only their bounded operation ports (5.1871ms)
+✔ the state-owner guard rejects durable review and checkpoint state outside its owners (0.4317ms)
+✔ reviewed marks, checkpoint storage and atomic writes stay in their owner modules (90.7877ms)
+✔ root e2e delegates to the built, isolated desktop core lane (15.0414ms)
+✔ root Playwright entrypoint preserves desktop safeguards and rejects focused tests (3388.2441ms)
+✔ desktop tests use one public Electron helper entrypoint (97.6277ms)
+✖ the public Electron helper loads through Playwright and the marketing script loader (1092.2925ms)
+✔ Core shards cover each discovered test exactly once and default to one worker in CI (8245.0271ms)
+✔ every desktop spec has a known lane and lane commands cannot mix suites (11.282ms)
+✔ requested live runs fail before build when auth configuration is missing (279.8283ms)
+✔ each workspace and desktop execution context rejects unsafe values and unhandled promises (14690.4696ms)
+✔ every discovered workspace has all required typed lint rules (294.8799ms)
+✖ a new workspace cannot silently receive only syntax lint (289.7158ms)
+✔ source release/build directories are linted while generated output stays ignored (210.4449ms)
+✔ compiler bypass comments fail but explained expected errors remain allowed (6.305ms)
+✔ isAction matches the action name and ignores the ref (2.2505ms)
+✔ the repository workflows match the Node 24 action policy (83.782ms)
+✔ valid seven-action corpus passes (5.8619ms)
+✔ stale Node 20 majors fail (5.4134ms)
+✔ setup-node v5 is not an allowed major (6.9755ms)
+✔ download-artifact must pair with upload-artifact v7 as v8 (5.8999ms)
+✔ unknown remote actions fail closed (4.7423ms)
+✔ SHA refs are not accepted (5.3779ms)
+✔ setup-node must keep application Node 22 (5.3579ms)
+✔ jobs that install pnpm must cache pnpm and jobs that do not must omit cache (10.6526ms)
+✔ runtime shims are rejected (5.5047ms)
+ℹ tests 114
+ℹ suites 0
+ℹ pass 75
+ℹ fail 39
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16859.9208
+
+✖ failing tests:
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import fs from "node:fs"; (25.8839ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "fs/promises"; (16.0526ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'fs/promises'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'fs/promises'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import { ipcRenderer } from "electron"; (12.6413ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'electron'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency 'electron'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "@earendil-works/pi-coding-agent"; (14.4728ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency '@earendil-works/pi-coding-agent'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency '@earendil-works/pi-coding-agent'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "@earendil-works/pi-agent-core"; (9.0494ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency '@earendil-works/pi-agent-core'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime dependency '@earendil-works/pi-agent-core'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "../electron/service.js"; (13.8307ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "@main/service"; (11.917ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects export * from "@main/service"; (14.5937ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import { type Contract, service } from "@main/service"; (11.8083ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import { type Contract } from "@main/service"; (14.644ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement import type to erase this runtime edge."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement import type to erase this runtime edge.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects export { type Contract } from "@main/service"; (16.5436ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement export type to erase this runtime edge."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement export type to erase this runtime edge.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects void import("@main/service"); (9.3396ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects require("@main/service"); (15.6208ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import service = require("@main/service"); (18.7407ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use the preload API instead.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects const target = "@main/service"; void import(target); (8.69ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  'apps\\desktop\\src\\index.ts:1: Computed module loading cannot be checked; use a literal import.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\src\\index.ts:1: Computed module loading cannot be checked; use a literal import.',
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import "./missing.js"; (7.6966ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Cannot resolve './missing.js'; the renderer dependency graph must be checkable."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Cannot resolve './missing.js'; the renderer dependency graph must be checkable.",
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:53:3
+✖ rejects import.meta.glob("../electron/*.ts", { eager: true }); (8.5193ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1:/. Input:
+  
+  'apps\\desktop\\src\\index.ts:1: import.meta.glob cannot be checked; use literal imports.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:56:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\src\\index.ts:1: import.meta.glob cannot be checked; use literal imports.',
+    expected: /src\/index.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:71:1
+✖ follows aliased workspace re-exports and .js source resolution (19.8501ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/runtime.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\runtime.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:77:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\runtime.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/runtime.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:95:1
+✖ inline types retain runtime edges under verbatimModuleSyntax (61.347ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/typed.ts:1: Renderer reaches main/. Input:
+  
+  "packages\\shared\\typed.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement import type to erase this runtime edge."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:108:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\typed.ts:1: Renderer reaches main/preload implementation 'apps\\desktop\\electron\\service.ts'. Use a whole-statement import type to erase this runtime edge.",
+    expected: /packages\/shared\/typed.ts:1: Renderer reaches main/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:121:3
+✖ checks Worker URL entries and their transitive dependencies (26.5234ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/worker.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/worker.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:121:3
+✖ checks SharedWorker URL entries and their transitive dependencies (22.5736ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/worker.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/worker.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:121:3
+✖ checks window.Worker URL entries and their transitive dependencies (20.084ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/worker.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/worker.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:121:3
+✖ checks globalThis.SharedWorker URL entries and their transitive dependencies (21.5483ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/worker.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/worker.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:121:3
+✖ checks self.Worker URL entries and their transitive dependencies (17.3907ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/shared\/worker.ts:1: Forbidden/. Input:
+  
+  "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "packages\\shared\\worker.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /packages\/shared\/worker.ts:1: Forbidden/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:198:3
+✖ rejects contract implementation dependency: import type { Contract } from "../electron/service"; (15.7533ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contracts\/api.ts:1:/. Input:
+  
+  'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:203:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.',
+    expected: /contracts\/api.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:198:3
+✖ rejects contract implementation dependency: export type { Contract } from "@main/service"; (14.3466ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contracts\/api.ts:1:/. Input:
+  
+  'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:203:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.',
+    expected: /contracts\/api.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:198:3
+✖ rejects contract implementation dependency: type Contract = import("../electron/service").Contract; (11.4109ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contracts\/api.ts:1:/. Input:
+  
+  'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:203:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.',
+    expected: /contracts\/api.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:198:3
+✖ rejects contract implementation dependency: import "../src/index"; (9.8704ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contracts\/api.ts:1:/. Input:
+  
+  'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:203:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'apps\\desktop\\contracts\\api.ts:1: Desktop contracts cannot depend on renderer or host implementation.',
+    expected: /contracts\/api.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:198:3
+✖ rejects contract implementation dependency: import fs from "node:fs"; (11.8924ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /contracts\/api.ts:1:/. Input:
+  
+  "apps\\desktop\\contracts\\api.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:203:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\contracts\\api.ts:1: Forbidden renderer runtime dependency 'node:fs'. Use the preload API instead.",
+    expected: /contracts\/api.ts:1:/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: import { createChordServerConnection } from "@pi-gui/extension-ui/transport"; (11.5639ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/transport'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/transport'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: import { parseDesktopHostAction } from "@pi-gui/extension-ui/browser"; (11.7678ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: export * from "@pi-gui/extension-ui/browser"; (8.3985ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: void import("@pi-gui/extension-ui/transport"); (11.8002ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/transport'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/transport'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: import { type DesktopHostAction } from "@pi-gui/extension-ui/browser"; (10.5837ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import '@pi-gui/extension-ui/browser'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-renderer-boundary.test.mjs:223:3
+✖ rejects host-only extension-ui runtime import: import "../../../packages/extension-ui/src/transport.ts"; (9.0231ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /src\/index.ts:1: Forbidden renderer runtime import/. Input:
+  
+  "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import of 'packages\\extension-ui\\src\\transport.ts' through '../../../packages/extension-ui/src/transport.ts'. Use an explicit type-only import."
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-renderer-boundary.test.mjs:228:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "apps\\desktop\\src\\index.ts:1: Forbidden renderer runtime import of 'packages\\extension-ui\\src\\transport.ts' through '../../../packages/extension-ui/src/transport.ts'. Use an explicit type-only import.",
+    expected: /src\/index.ts:1: Forbidden renderer runtime import/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\check-workspace-typechecks.test.mjs:8:1
+✖ pnpm discovery catches a new workspace without a typecheck command (674.2805ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /modules\/new-workspace\/package.json: missing scripts.typecheck/. Input:
+  
+  'modules\\new-workspace/package.json: missing scripts.typecheck. Add a typecheck command so this workspace participates in CI.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/check-workspace-typechecks.test.mjs:22:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'modules\\new-workspace/package.json: missing scripts.typecheck. Add a typecheck command so this workspace participates in CI.',
+    expected: /modules\/new-workspace\/package.json: missing scripts.typecheck/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts\contract-resolution.test.mjs:10:1
+✖ SDK driver implements canonical SessionDriver and cannot omit tree operations (3140.8361ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'D:\\AI\\workspace\\pao-dev\\桌面端\\packages\\pi-sdk-driver\\src\\contract-proof.ts'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/contract-resolution.test.mjs:40:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'D:\\AI\\workspace\\pao-dev\\桌面端\\packages\\pi-sdk-driver\\src\\contract-proof.ts',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts\test-entrypoints.test.mjs:93:1
+✖ the public Electron helper loads through Playwright and the marketing script loader (1092.2925ms)
+  AssertionError [ERR_ASSERTION]: Listing tests:
+  Total: 0 tests in 0 files
+  
+  Error: No tests found.
+  Make sure that arguments are regular expressions matching test files.
+  You may need to escape symbols like "$" or "*" and quote the arguments.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/test-entrypoints.test.mjs:107:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts\typed-lint.test.mjs:160:1
+✖ a new workspace cannot silently receive only syntax lint (289.7158ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /packages\/new-feature: add a typed project/. Input:
+  
+  'packages\\new-feature: add a typed project in eslint.config.mjs; missing no-floating-promises, no-misused-promises, no-unsafe-argument, no-unsafe-assignment, no-unsafe-call, no-unsafe-member-access, no-unsafe-return.'
+  
+      at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/scripts/typed-lint.test.mjs:171:10)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'packages\\new-feature: add a typed project in eslint.config.mjs; missing no-floating-promises, no-misused-promises, no-unsafe-argument, no-unsafe-assignment, no-unsafe-call, no-unsafe-member-access, no-unsafe-return.',
+    expected: /packages\/new-feature: add a typed project/,
+    operator: 'match',
+    diff: 'simple'
+  }
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+
+real	0m18.287s
+user	0m0.076s
+sys	0m0.186s

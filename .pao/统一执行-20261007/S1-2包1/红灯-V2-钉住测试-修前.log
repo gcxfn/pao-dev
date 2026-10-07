@@ -1,0 +1,81 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[31mx[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/card-process-stop.test.ts[2m > [22mrunCardProcess：取消语义与树杀失败的优先级[2m > [22m取消时 AbortError 优先于树杀失败（stopError 不掩盖取消语义，挂 cause＋留日志不丢）
+[31m[1mAssertionError[22m: expected undefined to be Error: 模拟：PowerShell 树杀超时失败 // Object.is equality[39m
+
+[32m- Expected:[39m
+Error {
+  "message": "模拟：PowerShell 树杀超时失败",
+}
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m test/pao/card-process-stop.test.ts:[2m80:28[22m[39m
+    [90m 78|[39m    )[33m;[39m
+    [90m 79|[39m    [34mexpect[39m(captured)[33m.[39m[34mtoMatchObject[39m({ name[33m:[39m [32m"AbortError"[39m })[33m;[39m
+    [90m 80|[39m    [34mexpect[39m(captured[33m?.[39mcause)[33m.[39m[34mtoBe[39m(stopError)[33m;[39m
+    [90m   |[39m                            [31m^[39m
+    [90m 81|[39m    [34mexpect[39m(warnSpy)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m 82|[39m   } [35mfinally[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/card-process-stop.test.ts[2m > [22mverifyCard：跑命令条目遇停止链失败的降级[2m > [22m降级说明保留错误尾部：长报文里真实原因（在 1000+ 字符之后）不被截断丢掉
+[31m[1mAssertionError[22m: expected '验收命令停止链失败：Command failed: powershell.…' to contain 'Tree member still alive: 4242'[39m
+
+Expected: [32m"Tree member still alive: 4242"[39m
+Received: [31m"验收命令停止链失败：Command failed: powershell.exe -NoProfile -Command <脚本回显>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"[39m
+
+[36m [2m❯[22m test/pao/card-process-stop.test.ts:[2m131:30[22m[39m
+    [90m129|[39m
+    [90m130|[39m   [34mexpect[39m(result[33m.[39m条目结果[[34m0[39m][33m?.[39m结果)[33m.[39m[34mtoBe[39m([32m"无法判"[39m)[33m;[39m
+    [90m131|[39m   [34mexpect[39m(result[33m.[39m条目结果[[34m0[39m][33m?.[39m说明)[33m.[39m[34mtoContain[39m(real)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m132|[39m  }[33m,[39m [34m20000[39m)[33m;[39m
+    [90m133|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m杀阶段总预算封顶：两次尝试超时之和不超 90 秒（重试不放大最坏时延）
+[31m[1mAssertionError[22m: expected 120000 to be less than or equal to 90000[39m
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m68:51[22m[39m
+    [90m 66|[39m   const timeouts = execFileMock.mock.calls.map((call) => (call[2] as {…
+    [90m 67|[39m   [34mexpect[39m(timeouts)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m 68|[39m   expect(timeouts.reduce((sum, t) => sum + t, 0)).toBeLessThanOrEqual(…
+    [90m   |[39m                                                   [31m^[39m
+    [90m 69|[39m  })[33m;[39m
+    [90m 70|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m死中游＋活深层：二跳把首跳存活成员列为附加根续杀（空选不假报树已灭）
+[31m[1mAssertionError[22m: expected '-Command' to match /\b4244\b/[39m
+
+[32m- Expected:[39m
+/\b4244\b/
+
+[31m+ Received:[39m
+"-Command"
+
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m83:23[22m[39m
+    [90m 81|[39m   [35mawait[39m [34mexpect[39m([34mkillTree[39m([34m4242[39m))[33m.[39mresolves[33m.[39m[34mtoContain[39m([32m"taskkill"[39m)[33m;[39m
+    [90m 82|[39m   const retryScript = String((execFileMock.mock.calls[1]?.[1] as strin…
+    [90m 83|[39m   [34mexpect[39m(retryScript)[33m.[39m[34mtoMatch[39m([36m/\b4244\b/[39m)[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m 84|[39m  })[33m;[39m
+    [90m 85|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m 06:21:47
+[2m   Duration [22m 1.97s[2m (transform 135ms, setup 0ms, import 309ms, tests 1.39s, environment 0ms)[22m
+

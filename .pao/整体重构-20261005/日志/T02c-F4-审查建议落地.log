@@ -1,0 +1,18 @@
+=== T02c-F4 审查建议落地 ===
+日期: 2026-10-06
+范围: packages/coding-agent（仅 5 条审查建议,无行为逻辑改动）
+
+1. R6-1 删零消费字段: workflow/dispatch-context.ts WorkflowDispatchContext 删 flow/node/instance/round（全仓仅 dispatch-core 读 .skills,锁后重核丢弃返回值;fanout/worker/auto 仅作回调直传）,类型缩为 { skills: string[] },两处构造点同步;类型名不变
+2. R6-2 去类型洗白: test/pao/dispatch-workflow-check.test.ts dispatch() helper 参数 check: unknown + as never 改为 (card: ParsedCard) => WorkflowDispatchContext | undefined（类型自 dispatch-context 导入）
+3. R5-P3③ 注释转中文: workflow/auto.ts 停止分支两条英文注释译为中文,原意不变
+4. R5-P3② 补用例: 新增『实例身份不匹配拒绝启动』,独立构造 实例≠ 场景（改写 v2 身份标记实例段）,断言拒绝且卡不被认领,不依赖与轮次用例同 OR 分支
+5. R5-P3① 钉现状: dispatch-context.ts v1 缺 PAO_HOME return undefined 处加中文注释（v1 语义去留随 T05 定案）;测试新增『v1 卡缺 PAO_HOME 不拒派』钉住 fail-open 现状,行为未改
+
+=== 定向测试 ===
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+=== 受影响测试（skills/guards/auto-chain/templates）===
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m50 passed[39m[22m[90m (50)[39m
+=== tsc（R5 同款,包级 tsconfig.build.json）===
+包级 tsc: 零错误

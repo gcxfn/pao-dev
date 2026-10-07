@@ -1,0 +1,154 @@
+
+=== 复跑R3 2026-10-06 10:23:33 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts --output=/d/AI/workspace/pao-dev/桌面端/apps/desktop/test-results/重跑R3 apps/desktop/tests/core/turn-changes-card.spec.ts apps/desktop/tests/core/review-scopes.spec.ts apps/desktop/tests/core/workspace-file-lines.spec.ts
+
+Running 10 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\review-scopes.spec.ts:68:5 › Uncommitted preserves staged and unstaged changes that cancel each other (29.4s)
+  ok  2 apps\desktop\tests\core\review-scopes.spec.ts:101:5 › Uncommitted keeps a reviewed mark through stage and unstage until the file changes (25.2s)
+  ok  3 apps\desktop\tests\core\review-scopes.spec.ts:136:5 › Branch compares committed revisions and reports a missing base explicitly (37.4s)
+  ok  4 apps\desktop\tests\core\review-scopes.spec.ts:180:5 › an outdated comparison cannot mark or stage newer working content (21.2s)
+  ok  5 apps\desktop\tests\core\review-scopes.spec.ts:217:5 › binary, oversized, and conflicted files show incomplete review coverage (17.6s)
+  x   6 apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout (45.2s)
+  ok  7 apps\desktop\tests\core\review-scopes.spec.ts:316:5 › an existing task without captures shows Last turn as unavailable (20.3s)
+  x   8 apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage (49.3s)
+  x   9 apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff (17.9s)
+  x  10 apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external (51.9s)
+
+
+  1) apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('menu', { name: 'Review options', exact: true }).locator('[role="menuitemradio"][data-option-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-user-data-qH1foP\\worktrees\\review-checkout-root\\wt-98abf5"]')[22m
+
+
+       at helpers\electron-app.ts:1836
+
+      1834 | export async function chooseReviewCheckout(window: Page, checkoutId: string): Promise<void> {
+      1835 |   const menu = await openReviewOptions(window);
+    > 1836 |   await menu.locator(`[role="menuitemradio"][data-option-id="${checkoutId}"]`).click();
+           |                                                                                ^
+      1837 | }
+      1838 |
+      1839 | /** The resolved comparison shown at the top of the Review "…" menu; press Escape to close. */
+        at chooseReviewCheckout (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\helpers\electron-app.ts:1836:80)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\review-scopes.spec.ts:291:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R3\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"source 1999"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      388 |     await lastRow.locator(".diff-panel__file-name").focus();
+      389 |     await window.keyboard.press("Enter");
+    > 390 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      391 |       "source 1999",
+      392 |     );
+      393 |     await expect(lastRow).toBeInViewport();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\review-scopes.spec.ts:390:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R3\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"line two"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      139 |       panel.locator('.diff-panel__file--selected[data-file-path="src/nested/f.txt"]'),
+      140 |     ).toBeVisible();
+    > 141 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      142 |       "line two",
+      143 |     );
+      144 |
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\turn-changes-card.spec.ts:141:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R3\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.timeline-item--assistant').getByRole('button', { name: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-qF1Hxa\\file-line-workspace/src/app.ts:3', exact: true })[22m
+
+
+      170 |       "marker-3",
+      171 |     );
+    > 172 |     await fileButton(assistant, `${workspacePath}/src/app.ts:3`).click();
+          |                                                                  ^
+      173 |     await expect(window.locator('[data-testid="file-line-mark"][data-line="3"]')).toBeVisible();
+      174 |
+      175 |     await fileButton(assistant, "notes").click();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workspace-file-lines.spec.ts:172:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-workspace-file-lines--982f5-and-web-links-stay-external\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R3\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R3\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+    apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+    apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+    apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+  6 passed (5.3m)
+复跑R3_EXIT=1

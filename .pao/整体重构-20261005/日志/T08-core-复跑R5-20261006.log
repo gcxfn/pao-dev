@@ -1,0 +1,180 @@
+
+=== 复跑R5 2026-10-06 10:34:09 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts --output=/d/AI/workspace/pao-dev/桌面端/apps/desktop/test-results/重跑R5 apps/desktop/tests/core/worktrees.spec.ts apps/desktop/tests/core/reopen-state.spec.ts apps/desktop/tests/core/session-lease.spec.ts apps/desktop/tests/core/settings-appearance.spec.ts apps/desktop/tests/core/sidebar-folder-collapse.spec.ts
+
+Running 12 tests using 1 worker
+
+  x   1 apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates (40.5s)
+[31mWorker teardown timeout of 60000ms exceeded.[39m
+
+[31mFailed worker ran 1 test:[39m
+apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates
+  x   2 apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds (9.9s)
+  ok  3 apps\desktop\tests\core\session-lease.spec.ts:88:5 › quitting releases the session lease of every open thread (2.9s)
+  ok  4 apps\desktop\tests\core\settings-appearance.spec.ts:21:5 › toggles and restores window transparency (9.9s)
+  ok  5 apps\desktop\tests\core\settings-appearance.spec.ts:72:5 › selects and restores theme presets (11.8s)
+  x   6 apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it (1.0m)
+  x   7 apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart (19.4s)
+  ok  8 apps\desktop\tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI (9.2s)
+  x   9 apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile (4.4s)
+  ok 10 apps\desktop\tests\core\worktrees.spec.ts:232:5 › shows a worktree icon in the sidebar without a local text badge (23.3s)
+  ok 11 apps\desktop\tests\core\worktrees.spec.ts:284:5 › keeps orphaned worktree workspaces visible after removing the root workspace (11.2s)
+  ok 12 apps\desktop\tests\core\worktrees.spec.ts:336:5 › a git worktree the user opens is its own folder and nests the worktrees made from it (14.8s)
+
+
+  1) apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [test quit] before-quit
+    Debugger ending on ws://127.0.0.1:61014/1efb4b01-de77-4ece-a3a7-a6216f34391b
+    For help, see: https://nodejs.org/en/docs/inspector
+
+       at helpers\electron-app.ts:359
+
+      357 |         appProcess.kill("SIGKILL");
+      358 |       }
+    > 359 |       throw new Error(
+          |             ^
+      360 |         [
+      361 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      362 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\helpers\electron-app.ts:359:13)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\reopen-state.spec.ts:158:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R5\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m27048[39m
+    Received: [31m31592[39m
+
+      61 |     const [leasePath] = await findLeaseFiles(agentDir);
+      62 |     const firstPid = first.electronApp.process().pid;
+    > 63 |     expect(await leaseHolderPid(leasePath)).toBe(firstPid);
+         |                                             ^
+      64 |
+      65 |     // Once the holder quits its lease is dead, so the thread opens here and
+      66 |     // this process takes the lease over.
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\session-lease.spec.ts:63:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R5\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R5\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-uxGtwO\\collapse-alpha"]').locator('.session-row__title')
+    Timeout: 5000ms
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "Alpha planning",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-uxGtwO\\collapse-alpha"]').locator('.session-row__title')[22m
+    [2m    9 × locator resolved to 0 elements[22m
+
+
+      33 |     const group = window.locator(`.workspace-group[data-workspace-id="${workspaceId}"]`);
+      34 |     const folderRow = group.locator(".workspace-row__select");
+    > 35 |     await expect(group.locator(".session-row__title")).toHaveText(["Alpha planning"]);
+         |                                                        ^
+      36 |     await expect(folderRow).toHaveAttribute("aria-expanded", "true");
+      37 |     const selectedBefore = (await getDesktopState(window)).selectedSessionId;
+      38 |
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:35:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R5\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"worktree"[39m
+    Received: [31m"primary"[39m
+
+      135 |       await addWorkspaceViaIpc(window, legacyWorktree);
+      136 |       const legacyWorkspace = await waitForWorkspaceByPath(window, canonicalLegacyWorktree);
+    > 137 |       expect(legacyWorkspace.kind).toBe("worktree");
+          |                                    ^
+      138 |
+      139 |       await window
+      140 |         .getByRole("button", { name: `Workspace actions for ${rootWorkspace.name}` })
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\worktrees.spec.ts:137:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R5\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R5\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+    apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+    apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+    apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+    apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+  7 passed (4.7m)
+  1 error was not a part of any test, see above for details
+复跑R5_EXIT=1

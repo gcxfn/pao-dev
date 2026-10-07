@@ -1,0 +1,23 @@
+P2 定向测试（PAO/packages/coding-agent）
+
+命令:
+  $root = (git rev-parse --show-toplevel).Trim()
+  node "$root/node_modules/vitest/dist/cli.js" --run test/pao/knowledge-crystallize.test.ts test/pao/knowledge-ingest.test.ts test/pao/memory-resident.test.ts test/pao/workflow-review.test.ts
+
+覆盖:
+  knowledge-crystallize.test.ts  三借鉴①结晶判定/写入决策树/渲染（新建）
+  knowledge-ingest.test.ts       三借鉴③验证出处标记行落位、不带出处为 null、复验覆盖不增行
+  memory-resident.test.ts        三借鉴②L1 ≤30 行修剪＋零行为＋渲染修剪注；前缀缓存静态段逐字节不变
+  workflow-review.test.ts        结晶候选进复盘报告、无候选显式判定未结晶
+
+输出:
+   RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+   ··························································
+
+    Test Files  4 passed (4)
+         Tests  58 passed (58)
+      Start at  17:23:17
+      Duration  2.68s (transform 2.20s, setup 0ms, import 1.25s, tests 2.31s, environment 0ms)
+
+结论: 58/58 通过，0 失败。
