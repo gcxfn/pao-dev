@@ -1,0 +1,38 @@
+S9-内核补遗 清零对照（2026-10-08）
+范围：packages/coding-agent/src/pao/desktop/index.ts（S9-内核包漏扫的唯一活跃协议路径文件）
+对照正本：../S9-内核包/证据/旧名grep-清零-最终.txt（其 A 类曾把本文件 ：97 误归「kept 内码面」，实为桌面↔内核活跃协议路径）
+
+== 修前（48f094832 终态）desktop/index.ts 表内协议中文键 ==
+  :78  entry.控制.实例 === params.实例          （读侧 D5 保留｜params 侧应迁 instance）
+  :81  entry.名字 === params.节点               （读侧 D5 保留｜params 侧应迁 node）
+  :82  params.名字/params.卡目录/params.轮次    （应迁 name/cards_dir/round）
+  :84  params.动作 !== "恢复"                   （键 action＋值 resume，§2.8/§4.1）
+  :85  params.动作/params.原owner               （action/prev_owner）
+  :87-99 trusted() 返回：名字/卡目录/实例/节点/轮次/原owner/动作/理由/结果/引用/目标/失败轴
+        （12 键；→ name/cards_dir/instance/node/round/prev_owner/action/reason/result/references/target/failure_axis；
+          与 /pao flow control JSON 协议＝nodeControlTool schema（tools.ts:439-458 Check 校验）一字不差；
+          与桌面两链发送键一致：pi-sdk-driver extensions/pao/index.ts:144-160（axis→failure_axis 映射）、
+          apps/desktop flow-control-query.ts:218-230、flow-desktop.ts service.control params）
+  :127-128 editor 返回 会话/项目                （→ session/project；EditorState 类型随内核派生，
+        桌面 extensions 层收口门随新 dist 重建时同步消费键）
+  :222  save JSON {名字,内容,覆盖}              （→ {name,content,overwrite}＝pao_write_recipe schema，Check 严校验）
+  :309  start JSON {名字,参数,卡目录}           （→ {name,params,cards_dir}＝pao_start_flow schema，Check 严校验）
+
+== 修后 desktop/index.ts 行首中文键残留（grep 口径1）==
+  :131 忙碌 / :132 对话 / :133 当前模型   —— 判留：定名表未覆盖的编辑器视图字段，
+        桌面 flow-desktop.ts 以中文键消费（:214/:816/:834），随 extensions 层收口门统一裁定，不单侧迁。
+
+== 修后 desktop/index.ts 保留面中文读点（判留，非协议键）==
+  会话标识/项目根/控制/节点/部长会话/工作流/卡目录/实例/轮次/名字/路径/档位/名：
+  均为 D5 实例清单持久面、D6 配置面、§3.4/§10 读模型读侧；写侧映射已由 S9-内核包收口（tools.ts:472/533 注释锚点）。
+  parameters.项目（:267）＝配方占位符名（D5 保留面），桌面 flow-desktop.ts:753 同判保留，两侧一致。
+
+== 全仓同类速记键扫描结论（口径1 全量 1890 行，按面归类）==
+  判迁（本补遗）：desktop/index.ts trusted()/editor/save/start —— 14 行首键＋行内若干（唯一活跃协议漏点）。
+  判留：D5 配方/实例/卡内容 DSL 持久面（workflow/recipe|driver|control|distill|templates、worker/dispatch-core 落卡、
+        patrol 落卡、desktop/canvas 投影读侧）；D6 配置/运行数据面（routing/config 档位、memory/session 记忆面）；
+        §10 信封复合面（desktop/read-model|view-envelope、status/results|pending|workflow-instances——桌面同以中文键消费，
+        收口门统一裁定）；五跨仓保留面（FanoutFinalState 计数面/DispatchParams.接管/archive_flag/体检探针内码
+        healthcheck/probes|cache-probe/gbrain 上游原文 memory/gbrain）；UI 文案与注释；migration/migrate.ts 迁移映射表；
+        内码视图（host/*、dept/*、cards 审计渲染、context、friction、usage、knowledge types）。
+  测试面同步：test/pao/desktop-read-model.test.ts :275-360 请求键＋值＋trusted 期望输出随迁（其余测试无此协议键构造点）。

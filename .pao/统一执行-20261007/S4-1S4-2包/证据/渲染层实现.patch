@@ -1,0 +1,452 @@
+diff --git a/apps/desktop/src/app/App.tsx b/apps/desktop/src/app/App.tsx
+index 0e58e57..87d1e53 100644
+--- a/apps/desktop/src/app/App.tsx
++++ b/apps/desktop/src/app/App.tsx
+@@ -132,6 +132,9 @@ function AppShell({ desktop }: { readonly desktop: DesktopAppSession }) {
+     readonly request: DiffPanelFileRequest;
+   } | null>(null);
+   const [scheduledEditor, setScheduledEditor] = useState<ScheduledEditorState | null>(null);
++  /** sidebar 工作流入口信号（S4-2）：每次点击自增；画布按「当前会话是否绑定」分流——
++   *  已绑定进单工作流嵌入视图，未绑定进完整中心。不持久化，重启回到完整中心。 */
++  const [workflowEntryNonce, setWorkflowEntryNonce] = useState(0);
+   const api = window.piApp;
+ 
+   useEffect(() => {
+@@ -311,7 +314,11 @@ function AppShell({ desktop }: { readonly desktop: DesktopAppSession }) {
+   const viewport = useTimelineViewport({
+     sessionKey: selectedSessionKey,
+     rows: timelineRows,
+-    active: snapshot?.activeView === "threads" && Boolean(selectedSession),
++    // 画布内嵌主控面板与 threads 共用同一视口实例：active 一并纳入 canvas（S4-1⑥，
++    // W bug6）——否则画布内新消息不跟随、上翻历史被抢滚动。
++    active:
++      (snapshot?.activeView === "threads" || snapshot?.activeView === "canvas") &&
++      Boolean(selectedSession),
+     transcriptReady: !isTranscriptLoading && !transcriptFailed,
+     paneRef: timelinePaneRef,
+   });
+@@ -1129,7 +1136,10 @@ function AppShell({ desktop }: { readonly desktop: DesktopAppSession }) {
+               workspaceId ?? selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id,
+             )
+           }
+-          onSetActiveView={setActiveView}
++          onSetActiveView={(view) => {
++            if (view === "canvas") setWorkflowEntryNonce((value) => value + 1);
++            setActiveView(view);
++          }}
+           onOpenSettings={openSettings}
+           onArchiveSession={threadMenu.archive}
+           onSelectSession={handleSelectSession}
+@@ -1229,6 +1239,7 @@ function AppShell({ desktop }: { readonly desktop: DesktopAppSession }) {
+               onSelectSession={handleSelectSession}
+               embeddedChat={sessionConversation}
+               chatTarget={workbenchTarget ?? undefined}
++              workflowEntryNonce={workflowEntryNonce}
+             />
+           ) : snapshot.activeView === "new-thread" ? (
+             rootWorkspaceOptions.length > 0 ? (
+diff --git a/apps/desktop/src/features/canvas/canvas-page.tsx b/apps/desktop/src/features/canvas/canvas-page.tsx
+index 2e276dd..32ec36d 100644
+--- a/apps/desktop/src/features/canvas/canvas-page.tsx
++++ b/apps/desktop/src/features/canvas/canvas-page.tsx
+@@ -1,6 +1,7 @@
+ import { useCallback, useEffect, useRef, useState } from "react";
+ import type { ReactNode } from "react";
+ import type { WorkflowTabRecord, WorkspaceSessionTarget } from "../../../contracts/desktop-state";
++import { workflowTabForSession } from "../../../contracts/desktop-state";
+ import { WorkflowTabs } from "./workflow-tabs";
+ import { EmbeddedChat } from "../conversation/embedded-chat";
+ import { Group, Panel, Separator } from "react-resizable-panels";
+@@ -79,6 +80,12 @@ export interface CanvasPageViewProps {
+   readonly canInstallTemplate?: boolean;
+   /** 删除配方（S3-3）：父层负责离开守卫、内核确认与成功后的刷新/关标签。 */
+   readonly onDeleteRecipe?: (name: string) => void;
++  /** 「在新标签中打开」显式入口（S4-1⑤）：配方库行右键；不传则菜单项不显示。 */
++  readonly onOpenInNewTab?: (name: string) => void;
++  /** S4-2 单工作流嵌入视图：隐藏左侧工作流库（标签栏由不传 tabs 隐藏）。 */
++  readonly hideLibrary?: boolean;
++  /** 「返回工作流中心」退出嵌入视图；仅在嵌入视图时传入。 */
++  readonly onExitSingleView?: () => void;
+   readonly tabs?: ReactNode;
+   readonly recipeEditor?: ReactNode;
+   readonly canSelect?: (selection: CanvasSelection) => boolean;
+@@ -116,6 +123,7 @@ export function CanvasPage({
+   chatTarget,
+   onCreateController,
+   onOpenSessionThread,
++  workflowEntryNonce,
+ }: {
+   readonly api: PiDesktopApi;
+   /** 标签所属项目；不能借用当前随机选中的普通会话。 */
+@@ -131,6 +139,11 @@ export function CanvasPage({
+   readonly onCreateController?: (title: string, tabId?: string) => Promise<WorkflowWizardIdentity>;
+   /** 节点→会话跳转；App 在全部工作区里解析会话标识。 */
+   readonly onOpenSessionThread?: (sessionId: string) => boolean;
++  /**
++   * sidebar 工作流入口信号（S4-2）：每次点击自增。当前会话已绑定标签时消费该信号
++   * 进入单工作流嵌入视图；未绑定为 no-op（完整中心是缺省形态）。
++   */
++  readonly workflowEntryNonce?: number;
+ }) {
+   const [result, setResult] = useState<CanvasResult | undefined>();
+   const [loadError, setLoadError] = useState<string | undefined>();
+@@ -144,17 +157,15 @@ export function CanvasPage({
+   /** 编辑器上报的「有未保存内容或未落盘」（editorUnsaved 口径，与徽章同源）；
+    *  离开守卫、标签圆点、activeTab 同步让位都用这一个值。 */
+   const [dirty, setDirty] = useState(false);
+-  const [controllers, setControllers] = useState<Record<string, WorkflowWizardIdentity>>({});
+   const [controllerBusy, setControllerBusy] = useState(false);
+   const activeTab = workflowTabs.find(
+     (tab) => tab.id === activeWorkflowTabId && tab.workspaceId === workspaceId,
+   );
+   const projectTabs = workflowTabs.filter((tab) => tab.workspaceId === workspaceId);
+-  const controllerKey = JSON.stringify([project, selection?.kind, selection?.name]);
++  // S4-1③：主控身份只从标签绑定派生（单源）。曾有 controllers 内存回退——controller 被归档/
++  // 删除对账剥离后它仍供身份，导致「建立主控会话」保持禁用、保存用失效会话，无法重建；已删。
+   const identity =
+-    activeTab?.controller && project
+-      ? { sessionId: activeTab.controller.sessionId, project }
+-      : controllers[controllerKey];
++    activeTab?.controller && project ? { sessionId: activeTab.controller.sessionId, project } : undefined;
+   const [tabBusy, setTabBusy] = useState(false);
+   const tabSelectionRef = useRef({ workflowTabs, activeTab, onUpdateTabs, tabBusy });
+   tabSelectionRef.current = { workflowTabs, activeTab, onUpdateTabs, tabBusy };
+@@ -209,7 +220,9 @@ export function CanvasPage({
+       setTabBusy(false);
+     }
+   };
+-  const openSelection = (next: CanvasSelection) => {
++  /** 选中新工作流/运行记录：默认去重（edit 同配方/同实例路径复用既有标签）；
++   *  forceNewTab＝「在新标签中打开」显式入口（S4-1⑤），同配方多标签各自独立。 */
++  const openSelection = (next: CanvasSelection, forceNewTab = false) => {
+     if (!workspaceId || !onUpdateTabs) {
+       setSelection(next);
+       return;
+@@ -217,15 +230,17 @@ export function CanvasPage({
+     // 标签表取 ref 最新值：本函数会经守卫挂起后执行（requestAction 闭包），彼时 props
+     // 可能滞后于刚落地的整表写入（如保存改名），闭包捕获的旧表会整表覆掉新名。
+     const currentTabs = tabSelectionRef.current.workflowTabs;
+-    const existing = currentTabs.find(
+-      (tab) =>
+-        tab.workspaceId === workspaceId &&
+-        (next.kind === "recipe"
+-          ? tab.recipeName === next.name && tab.mode === "edit"
+-          : next.path
+-            ? tab.instancePath === next.path
+-            : tab.instanceName === next.name),
+-    );
++    const existing = forceNewTab
++      ? undefined
++      : currentTabs.find(
++          (tab) =>
++            tab.workspaceId === workspaceId &&
++            (next.kind === "recipe"
++              ? tab.recipeName === next.name && tab.mode === "edit"
++              : next.path
++                ? tab.instancePath === next.path
++                : tab.instanceName === next.name),
++        );
+     const tab: WorkflowTabRecord = existing ?? {
+       id: crypto.randomUUID(),
+       workspaceId,
+@@ -289,6 +304,46 @@ export function CanvasPage({
+     } else action();
+   };
+ 
++  /** 底部主控面板的渲染条件：身份在、活动标签绑有主控、全局当前会话就是这个主控
++   *  （寄生激活模型：激活＝改写全局选择，画布内显示的必是标签主控）。 */
++  const chatLive = Boolean(
++    identity &&
++      activeTab?.controller &&
++      chatTarget?.workspaceId === activeTab.controller.workspaceId &&
++      chatTarget.sessionId === identity.sessionId,
++  );
++  /** S4-2 单工作流嵌入视图：sidebar 入口且主控面板在位时隐藏标签栏与工作流库；
++   *  「返回工作流中心」退出。嵌入态随画布卸载重置，重启/其他入口恢复完整中心。 */
++  const [embedded, setEmbedded] = useState(false);
++  const singleView = embedded && chatLive;
++  const lastEntryNonceRef = useRef(0);
++  useEffect(() => {
++    if (!workflowEntryNonce || workflowEntryNonce === lastEntryNonceRef.current) return;
++    lastEntryNonceRef.current = workflowEntryNonce;
++    if (!workspaceId || !onUpdateTabs) return;
++    // 反查索引（S4-1②）：当前会话绑定到哪个标签。未绑定＝完整中心，不动。
++    const bound = chatTarget ? workflowTabForSession(workflowTabs, chatTarget) : undefined;
++    if (!bound || bound.workspaceId !== workspaceId) return;
++    if (activeTab?.id === bound.id) {
++      setEmbedded(true);
++      return;
++    }
++    // 绑定标签不是活动标签：经离开守卫（未保存内容仍受保护）切回绑定标签再进嵌入视图；
++    // 守卫取消＝留在完整中心，不强行切换。
++    requestAction(() => {
++      void changeTabs(tabSelectionRef.current.workflowTabs, bound.id).then(() =>
++        setEmbedded(true),
++      );
++    });
++  }, [
++    workflowEntryNonce,
++    chatTarget,
++    workflowTabs,
++    activeTab?.id,
++    workspaceId,
++    onUpdateTabs,
++  ]);
++
+   const refresh = useCallback(() => {
+     setLoading(true);
+     Promise.all([api.getCanvas(), api.getWorkflowCatalog()])
+@@ -333,14 +388,14 @@ export function CanvasPage({
+       };
+       setSelection({ kind: "recipe", name });
+       if (workspaceId && onUpdateTabs) {
++        // S4-1 唯一性：新标签不继承旧标签的 controller——同一会话不得绑两个标签，
++        // 各标签需要主控时各自「建立主控会话」。
+         const tab: WorkflowTabRecord = {
+           id: crypto.randomUUID(),
+           workspaceId,
+           title: name,
+           recipeName: name,
+           mode: "edit",
+-          // 同一标签页里新建配方复用已建立的主控（工作流标签契约；向导 onStarted 同款先例）。
+-          ...(activeTab?.controller ? { controller: activeTab.controller } : {}),
+         };
+         setNewEntries((current) => ({ ...current, [tab.id]: entry }));
+         // 同上：整表写基于 ref 最新表，避免守卫保存改名后被旧闭包表覆写（P3-1）。
+@@ -516,6 +571,7 @@ export function CanvasPage({
+                   }
+                   const instance = instances[0];
+                   if (!instance) return;
++                  // S4-1 唯一性：运行标签不继承编辑标签的 controller（同会话不绑两标签）。
+                   const tab: WorkflowTabRecord = {
+                     id: crypto.randomUUID(),
+                     workspaceId,
+@@ -523,7 +579,6 @@ export function CanvasPage({
+                     instanceName: instance.name,
+                     instancePath: instance.path,
+                     mode: "runtime",
+-                    ...(activeTab?.controller ? { controller: activeTab.controller } : {}),
+                   };
+                   await changeTabs([...workflowTabs, tab], tab.id);
+                 })
+@@ -563,6 +618,9 @@ export function CanvasPage({
+           activeTab={activeTab}
+           canInstallTemplate={!!identity && !controllerBusy}
+           onDeleteRecipe={deleteRecipe}
++          onOpenInNewTab={(name) => requestAction(() => openSelection({ kind: "recipe", name }, true))}
++          hideLibrary={singleView}
++          onExitSingleView={singleView ? () => setEmbedded(false) : undefined}
+           onInstallTemplate={(templateId, name) =>
+             requestAction(() => {
+               if (!identity) {
+@@ -583,7 +641,7 @@ export function CanvasPage({
+             })
+           }
+           tabs={
+-            workspaceId && onUpdateTabs ? (
++            !singleView && workspaceId && onUpdateTabs ? (
+               <WorkflowTabs
+                 tabs={projectTabs}
+                 activeId={activeTab?.id}
+@@ -658,11 +716,6 @@ export function CanvasPage({
+                 onSelectedElementIdChange={updateSelectedElement}
+                 onDirtyChange={setDirty}
+                 onSaved={(name) => {
+-                  if (identity)
+-                    setControllers((current) => ({
+-                      ...current,
+-                      [JSON.stringify([project, "recipe", name])]: identity,
+-                    }));
+                   setDirty(false);
+                   // 只删本次保存的骨架（属主标签或同名槽），别的标签的骨架不动。
+                   setNewEntries((current) => {
+@@ -717,10 +770,8 @@ export function CanvasPage({
+               ? () => {
+                   if (controllerBusy || identity) return;
+                   setControllerBusy(true);
++                  // 创建即同批绑定到活动标签（主进程同次状态发布），身份随后由标签绑定派生。
+                   void onCreateController(`${selection.name} · 主控`, activeTab?.id)
+-                    .then((created) => {
+-                      setControllers((current) => ({ ...current, [controllerKey]: created }));
+-                    })
+                     .catch((error: unknown) =>
+                       setLoadError(error instanceof Error ? error.message : String(error)),
+                     )
+@@ -743,14 +794,11 @@ export function CanvasPage({
+           }
+         />
+       </Panel>
+-      {identity &&
+-      activeTab?.controller &&
+-      chatTarget?.workspaceId === activeTab.controller.workspaceId &&
+-      chatTarget.sessionId === identity.sessionId ? (
++      {chatLive ? (
+         <>
+           <Separator className="workflow-chat-separator" />
+           <Panel id="workflow-surface-chat" defaultSize="30%" minSize="100px">
+-            <EmbeddedChat key={identity.sessionId}>{embeddedChat}</EmbeddedChat>
++            <EmbeddedChat key={identity!.sessionId}>{embeddedChat}</EmbeddedChat>
+           </Panel>
+         </>
+       ) : null}
+@@ -765,6 +813,9 @@ export function CanvasPageView({
+   onInstallTemplate,
+   canInstallTemplate,
+   onDeleteRecipe,
++  onOpenInNewTab,
++  hideLibrary,
++  onExitSingleView,
+   tabs,
+   recipeEditor,
+   canSelect,
+@@ -814,6 +865,16 @@ export function CanvasPageView({
+           </p>
+         </div>
+         <div className="view-header__actions">
++          {onExitSingleView ? (
++            <button
++              className="button"
++              data-testid="canvas-exit-single-view"
++              type="button"
++              onClick={onExitSingleView}
++            >
++              返回工作流中心
++            </button>
++          ) : null}
+           {onNewRecipe ? (
+             <button
+               className="button"
+@@ -883,9 +944,9 @@ export function CanvasPageView({
+             </p>
+           ) : null}
+           <div
+-            className={`canvas-layout${libraryCollapsed ? " canvas-layout--library-collapsed" : ""}`}
++            className={`canvas-layout${libraryCollapsed ? " canvas-layout--library-collapsed" : ""}${hideLibrary ? " canvas-layout--no-library" : ""}`}
+           >
+-            {libraryCollapsed ? (
++            {hideLibrary ? null : libraryCollapsed ? (
+               <button
+                 type="button"
+                 className="button canvas-library-expand"
+@@ -903,6 +964,7 @@ export function CanvasPageView({
+                 canInstallTemplate={canInstallTemplate}
+                 onInstallTemplate={onInstallTemplate ?? (() => {})}
+                 onDeleteRecipe={onDeleteRecipe}
++                onOpenInNewTab={onOpenInNewTab}
+                 selection={activeSelection}
+                 onSelect={select}
+                 onCollapse={() => setLibraryCollapsed(true)}
+diff --git a/apps/desktop/src/features/canvas/canvas-surface.tsx b/apps/desktop/src/features/canvas/canvas-surface.tsx
+index 01d120d..144426f 100644
+--- a/apps/desktop/src/features/canvas/canvas-surface.tsx
++++ b/apps/desktop/src/features/canvas/canvas-surface.tsx
+@@ -15,6 +15,7 @@ export function CanvasSurface({
+   onSelectSession,
+   embeddedChat,
+   chatTarget,
++  workflowEntryNonce,
+ }: {
+   readonly api: PiDesktopApi;
+   readonly snapshot: DesktopAppState;
+@@ -22,6 +23,8 @@ export function CanvasSurface({
+   readonly onSelectSession: (target: WorkspaceSessionTarget) => void;
+   readonly embeddedChat?: ReactNode;
+   readonly chatTarget?: WorkspaceSessionTarget;
++  /** sidebar 工作流入口信号（S4-2），透传给画布页做绑定分流。 */
++  readonly workflowEntryNonce?: number;
+ }) {
+   const workspace = getSelectedWorkspace(snapshot);
+   return (
+@@ -38,6 +41,7 @@ export function CanvasSurface({
+           ? { workspaceId: snapshot.selectedWorkspaceId, sessionId: snapshot.selectedSessionId }
+           : undefined)
+       }
++      workflowEntryNonce={workflowEntryNonce}
+       onUpdateTabs={async (workflowTabs, activeWorkflowTabId) => {
+         const state = await api.setWorkflowTabs({ workflowTabs, activeWorkflowTabId });
+         if (state.lastError) throw new Error(state.lastError);
+diff --git a/apps/desktop/src/features/canvas/recipe-library.tsx b/apps/desktop/src/features/canvas/recipe-library.tsx
+index 2a905c9..bd1ef68 100644
+--- a/apps/desktop/src/features/canvas/recipe-library.tsx
++++ b/apps/desktop/src/features/canvas/recipe-library.tsx
+@@ -20,17 +20,21 @@ import type { CanvasSelection } from "./canvas-page";
+ export type RecipeLibraryFilter = "all" | "mine" | "templates" | "recent";
+ 
+ /**
+- * 配方库行右键菜单（S3-3 删除链接线）：「删除工作流」交父层处理——守卫链（requestAction）、
+- * 确认弹窗（内核 ui.confirm，含 .bak 与冻结运行记录说明）与关闭标签都在父层接线。
++ * 配方库行右键菜单：「删除工作流」交父层处理——守卫链（requestAction）、确认弹窗（内核
++ * ui.confirm，含 .bak 与冻结运行记录说明）与关闭标签都在父层接线；「在新标签中打开」
++ * （S4-1⑤）走同标签表整表写，同配方多标签各自独立（不共享主控）。
+  */
+ export function RecipeRowContextMenu({
+   name,
+   onRemove,
+   onClose,
++  onOpenInNewTab,
+ }: {
+   readonly name: string;
+   readonly onRemove: () => void;
+   readonly onClose: () => void;
++  /** 提供时显示「在新标签中打开」；未提供（如受控组件测试）不显示。 */
++  readonly onOpenInNewTab?: (name: string) => void;
+ }) {
+   return (
+     <div
+@@ -46,6 +50,18 @@ export function RecipeRowContextMenu({
+         }
+       }}
+     >
++      {onOpenInNewTab ? (
++        <button
++          type="button"
++          role="menuitem"
++          onClick={() => {
++            onOpenInNewTab(name);
++            onClose();
++          }}
++        >
++          在新标签中打开
++        </button>
++      ) : null}
+       <button
+         type="button"
+         role="menuitem"
+@@ -82,6 +98,8 @@ export interface RecipeLibraryProps {
+   readonly onInstallTemplate: (templateId: string, templateName?: string) => void;
+   /** 删除配方（S3-3）；父层负责守卫、确认与成功后的刷新/关标签。 */
+   readonly onDeleteRecipe?: (name: string) => void;
++  /** 「在新标签中打开」（S4-1⑤）；父层负责守卫与标签表写入。 */
++  readonly onOpenInNewTab?: (name: string) => void;
+   readonly onCollapse?: () => void;
+   /** 主控会话已建立＝true；false 时模板安装禁用并提示。 */
+   readonly canInstallTemplate?: boolean;
+@@ -100,6 +118,7 @@ export function RecipeLibrary({
+   onSelect,
+   onInstallTemplate,
+   onDeleteRecipe,
++  onOpenInNewTab,
+   onCollapse,
+   canInstallTemplate = true,
+   busy = false,
+@@ -379,6 +398,7 @@ export function RecipeLibrary({
+           <RecipeRowContextMenu
+             name={rowMenu.name}
+             onRemove={() => (onDeleteRecipe ?? (() => {}))(rowMenu.name)}
++            onOpenInNewTab={onOpenInNewTab}
+             onClose={() => setRowMenu(null)}
+           />
+         </div>
+diff --git a/apps/desktop/src/styles/canvas.css b/apps/desktop/src/styles/canvas.css
+index c4839c3..6203844 100644
+--- a/apps/desktop/src/styles/canvas.css
++++ b/apps/desktop/src/styles/canvas.css
+@@ -100,6 +100,8 @@
+   align-items: stretch;
+ }
+ .canvas-layout--library-collapsed { grid-template-columns: 48px minmax(0, 1fr) minmax(220px, 300px); }
++/* S4-2 单工作流嵌入视图：无工作流库时画布占满左列。 */
++.canvas-layout--no-library { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); }
+ .canvas-library-heading { display: flex; align-items: center; justify-content: space-between; }
+ .canvas-library-expand { align-self: start; writing-mode: vertical-rl; }
+ .recipe-library__filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }

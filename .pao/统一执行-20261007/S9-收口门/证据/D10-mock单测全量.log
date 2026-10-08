@@ -1,0 +1,112 @@
+
+> pi-gui@1.0.1 test D:\AI\workspace\pao-dev\desktop
+> pnpm build:shared && pnpm -r --if-present test
+
+
+> pi-gui@1.0.1 build:shared D:\AI\workspace\pao-dev\desktop
+> pnpm --filter @pi-gui/session-driver build && pnpm --filter @pi-gui/catalogs build && pnpm --filter @pi-gui/extension-ui build && pnpm --filter @pi-gui/pi-sdk-driver build
+
+
+> @pi-gui/session-driver@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\session-driver
+> tsc -p tsconfig.json
+
+
+> @pi-gui/catalogs@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\catalogs
+> tsc -p tsconfig.json
+
+
+> @pi-gui/extension-ui@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\extension-ui
+> tsc -p tsconfig.json && node scripts/build-browser.mjs
+
+
+> @pi-gui/pi-sdk-driver@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\pi-sdk-driver
+> tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+
+Scope: 7 of 8 workspace projects
+packages/extension-ui test$ pnpm run build && node --test "test/**/*.test.mts"
+packages/extension-ui test: > @pi-gui/extension-ui@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\extension-ui
+packages/extension-ui test: > tsc -p tsconfig.json && node scripts/build-browser.mjs
+packages/extension-ui test: ✔ openView accepts the canvas and workboard views only (1.028ms)
+packages/extension-ui test: ✔ openView rejects unknown views, missing fields, and extra keys (0.2882ms)
+packages/extension-ui test: ✔ terminal registration is optional and desktop discovery replays the same closure (0.9944ms)
+packages/extension-ui test: ✔ host actions reject foreign target identities and non-JSON values (0.6902ms)
+packages/extension-ui test: ✔ buffers updates before the snapshot response and before consumer activation (9.0342ms)
+packages/extension-ui test: ✔ cancellation reaches backend methods and closing one connection preserves the provider (1.782ms)
+packages/extension-ui test: ✔ disconnect rejects an unfinished hydration before disposing its binding (0.4199ms)
+packages/extension-ui test: ✔ closing a tab rejects its waiter without cancelling accepted backend work (1.0328ms)
+packages/extension-ui test: ✔ invalid JSON requests fail closed and malformed codec snapshots abort the client (1.5688ms)
+packages/extension-ui test: ✔ oversized hydration closes the underlying endpoint subscription (3.0494ms)
+packages/extension-ui test: ✔ a separately bundled author frontend consumes the independently bundled frame bridge (78.8596ms)
+packages/extension-ui test: ℹ tests 11
+packages/extension-ui test: ℹ suites 0
+packages/extension-ui test: ℹ pass 11
+packages/extension-ui test: ℹ fail 0
+packages/extension-ui test: ℹ cancelled 0
+packages/extension-ui test: ℹ skipped 0
+packages/extension-ui test: ℹ todo 0
+packages/extension-ui test: ℹ duration_ms 291.554
+packages/extension-ui test: Done
+packages/catalogs test$ tsc -p tsconfig.json && node --test "test/**/*.test.mts"
+packages/catalogs test: ✔ writes new content and creates missing directories (10.821ms)
+packages/catalogs test: ✔ leaves only the target file behind, no lingering temp files (9.1406ms)
+packages/catalogs test: ✖ concurrent writes never collide or leave a partial file; result is one of the inputs (45.946ms)
+packages/catalogs test: ✔ same-path stores serialize concurrent workspace, session, and worktree mutations (102.927ms)
+packages/catalogs test: ✔ new stores reload an externally replaced catalog and preserve it on mutation (10.3802ms)
+packages/catalogs test: ✔ an interrupted temp write leaves the last committed catalog readable (6.0131ms)
+packages/catalogs test: ▶ invalid catalog data rejects reads and writes without dropping any saved records
+packages/catalogs test:   ✔ future version (3.4077ms)
+packages/catalogs test:   ✔ null document (3.9267ms)
+packages/catalogs test:   ✔ array document (3.378ms)
+packages/catalogs test:   ✔ missing v2 collection (3.032ms)
+packages/catalogs test:   ✔ wrong collection shape (4.0305ms)
+packages/catalogs test:   ✔ null workspace among valid records (5.6896ms)
+packages/catalogs test:   ✔ workspace timestamp (2.7482ms)
+packages/catalogs test:   ✔ workspace sort order (2.8887ms)
+packages/catalogs test:   ✔ workspace pinned (2.8403ms)
+packages/catalogs test:   ✔ session reference (3.325ms)
+packages/catalogs test:   ✔ session workspace mismatch (2.9866ms)
+packages/catalogs test:   ✔ session status (2.5199ms)
+packages/catalogs test:   ✔ session optional field (3.174ms)
+packages/catalogs test:   ✔ worktree kind (2.3108ms)
+packages/catalogs test:   ✔ worktree status (2.9641ms)
+packages/catalogs test:   ✔ worktree optional field (2.6671ms)
+packages/catalogs test:   ✔ file map array (2.3061ms)
+packages/catalogs test:   ✔ file map value (2.9238ms)
+packages/catalogs test:   ✔ legacy malformed collection (3.6308ms)
+packages/catalogs test: ✔ invalid catalog data rejects reads and writes without dropping any saved records (63.0051ms)
+packages/catalogs test: ✔ legacy catalogs retain records and upgrade only when a mutation succeeds (7.6ms)
+packages/catalogs test: ✔ a failed load can be retried after the original catalog is repaired (3.3103ms)
+packages/catalogs test: ✔ session writes that change nothing leave the catalog file alone (12.7868ms)
+packages/catalogs test: ℹ tests 29
+packages/catalogs test: ℹ suites 0
+packages/catalogs test: ℹ pass 28
+packages/catalogs test: ℹ fail 1
+packages/catalogs test: ℹ cancelled 0
+packages/catalogs test: ℹ skipped 0
+packages/catalogs test: ℹ todo 0
+packages/catalogs test: ℹ duration_ms 389.3755
+packages/catalogs test: ✖ failing tests:
+packages/catalogs test: test at test\atomic-write.test.mts:36:7
+packages/catalogs test: ✖ concurrent writes never collide or leave a partial file; result is one of the inputs (45.946ms)
+packages/catalogs test:   Error: EPERM: operation not permitted, rename 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-X4c6LW\catalog.json.13240.8.7bc0d5c271ad.tmp' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-X4c6LW\catalog.json'
+packages/catalogs test:       at async rename (node:internal/fs/promises:785:10)
+packages/catalogs test:       at async writeFileAtomic (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/dist/node/atomic-write.js:36:9)
+packages/catalogs test:       at async Promise.all (index 0)
+packages/catalogs test:       at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:41:5
+packages/catalogs test:       at async withTempDir (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:11:5)
+packages/catalogs test:       at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:37:3)
+packages/catalogs test:       at async Test.run (node:internal/test_runner/test:1332:7)
+packages/catalogs test:       at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+packages/catalogs test:       at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:36:1 {
+packages/catalogs test:     errno: -4048,
+packages/catalogs test:     code: 'EPERM',
+packages/catalogs test:     syscall: 'rename',
+packages/catalogs test:     path: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-X4c6LW\\catalog.json.13240.8.7bc0d5c271ad.tmp',
+packages/catalogs test:     dest: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-X4c6LW\\catalog.json'
+packages/catalogs test:   }
+packages/catalogs test: Failed
+D:\AI\workspace\pao-dev\desktop\packages\catalogs:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @pi-gui/catalogs@0.0.0 test: `tsc -p tsconfig.json && node --test "test/**/*.test.mts"`
+Exit status 1
+ ELIFECYCLE  Test failed. See above for more details.
+MOCKTEST_EXIT=1

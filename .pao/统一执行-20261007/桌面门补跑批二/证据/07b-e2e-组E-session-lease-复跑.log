@@ -1,0 +1,42 @@
+
+Running 2 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds (9.1s)
+  ok 2 apps\desktop\tests\core\session-lease.spec.ts:88:5 › quitting releases the session lease of every open thread (2.9s)
+
+
+  1) apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m8896[39m
+    Received: [31m11656[39m
+
+      61 |     const [leasePath] = await findLeaseFiles(agentDir);
+      62 |     const firstPid = first.electronApp.process().pid;
+    > 63 |     expect(await leaseHolderPid(leasePath)).toBe(firstPid);
+         |                                             ^
+      64 |
+      65 |     // Once the holder quits its lease is dead, so the thread opens here and
+      66 |     // this process takes the lease over.
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\session-lease.spec.ts:63:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+  1 passed (13.7s)

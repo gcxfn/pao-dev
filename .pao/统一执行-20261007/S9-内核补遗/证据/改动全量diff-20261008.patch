@@ -1,0 +1,164 @@
+diff --git a/packages/coding-agent/src/pao/desktop/index.ts b/packages/coding-agent/src/pao/desktop/index.ts
+index 46641643c..f81c2a678 100644
+--- a/packages/coding-agent/src/pao/desktop/index.ts
++++ b/packages/coding-agent/src/pao/desktop/index.ts
+@@ -75,27 +75,29 @@ export async function runDesktopFlowCommand(
+ 	signal?: AbortSignal,
+ ): Promise<void> {
+ 	const trusted = () => {
+-		const matches = readDesktopFlows(project).工作流.filter((entry) => entry.控制.实例 === params.实例);
++		// 桌面侧请求键（S9-桌面包 57e1ec4 起）与 /pao flow control JSON 协议（nodeControlTool schema）均为英文键；
++		// 读侧 flow.控制/节点 等中文键是 D5 保留的实例清单持久面，不随迁。
++		const matches = readDesktopFlows(project).工作流.filter((entry) => entry.控制.实例 === params.instance);
+ 		if (matches.length !== 1) throw new Error("实例不在当前项目唯一发现，拒绝外部卡目录");
+ 		const flow = matches[0].控制;
+-		const node = flow.节点.find((entry) => entry.名字 === params.节点);
+-		if (params.名字 !== flow.工作流 || params.卡目录 !== flow.卡目录 || !node || params.轮次 !== node.轮次)
++		const node = flow.节点.find((entry) => entry.名字 === params.node);
++		if (params.name !== flow.工作流 || params.cards_dir !== flow.卡目录 || !node || params.round !== node.轮次)
+ 			throw new Error("实例/卡目录/节点/轮次已变化，请刷新");
+-		if (params.动作 !== "恢复" && flow.owner !== sessionId) throw new Error("请跳转原 owner 会话处理");
+-		if (params.动作 === "恢复" && params.原owner !== flow.owner) throw new Error("原 owner 已变化，请刷新");
++		if (params.action !== "resume" && flow.owner !== sessionId) throw new Error("请跳转原 owner 会话处理");
++		if (params.action === "resume" && params.prev_owner !== flow.owner) throw new Error("原 owner 已变化，请刷新");
+ 		return {
+-			名字: flow.工作流,
+-			卡目录: flow.卡目录,
+-			实例: flow.实例,
+-			节点: node.名字,
+-			轮次: node.轮次,
+-			原owner: flow.owner,
+-			动作: params.动作,
+-			理由: params.理由,
+-			结果: params.结果,
+-			引用: params.引用,
+-			目标: params.目标,
+-			失败轴: params.失败轴,
++			name: flow.工作流,
++			cards_dir: flow.卡目录,
++			instance: flow.实例,
++			node: node.名字,
++			round: node.轮次,
++			prev_owner: flow.owner,
++			action: params.action,
++			reason: params.reason,
++			result: params.result,
++			references: params.references,
++			target: params.target,
++			failure_axis: params.failure_axis,
+ 		};
+ 	};
+ 	const current = await controlOwner(sessionId, project, signal, trusted);
+@@ -124,8 +126,8 @@ export function readDesktopEditor(sessionId: string, project: string) {
+ 		});
+ 	return {
+ 		catalog: readDesktopRecipeCatalog(resolvePaoHome()),
+-		会话: sessionId,
+-		项目: project,
++		session: sessionId,
++		project: project,
+ 		忙碌: !current.ctx.isIdle(),
+ 		对话: redactContext(messages),
+ 		当前模型: current.ctx.model ? `${current.ctx.model.provider}/${current.ctx.model.id}` : "未知",
+@@ -219,7 +221,7 @@ export async function saveDesktopRecipe(
+ 	if (!flow) throw new Error("原 owner 没有工作流入口");
+ 	await flow.run(
+ 		current.pi,
+-		`save ${JSON.stringify({ 名字: recipe.名字, 内容: text, 覆盖: revision !== null })}`,
++		`save ${JSON.stringify({ name: recipe.名字, content: text, overwrite: revision !== null })}`,
+ 		current.ctx,
+ 	);
+ }
+@@ -306,7 +308,7 @@ export async function startDesktopWorkflow(
+ 		const cardsDir = join(project, ".pao", `工作流-${recipe.名字}-${randomUUID()}`, "卡");
+ 		await flow.run(
+ 			current.pi,
+-			`start ${JSON.stringify({ 名字: recipe.名字, 参数: parameters, 卡目录: cardsDir })}`,
++			`start ${JSON.stringify({ name: recipe.名字, params: parameters, cards_dir: cardsDir })}`,
+ 			current.ctx,
+ 		);
+ 	} catch (error) {
+diff --git a/packages/coding-agent/test/pao/desktop-read-model.test.ts b/packages/coding-agent/test/pao/desktop-read-model.test.ts
+index 4ed74f70f..a15f80257 100644
+--- a/packages/coding-agent/test/pao/desktop-read-model.test.ts
++++ b/packages/coding-agent/test/pao/desktop-read-model.test.ts
+@@ -272,9 +272,21 @@ it("桌面控制拒绝外项目路径、其他owner部长，确认后切会话
+ 			written();
+ 		},
+ 	});
+-	const params = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查", 轮次: 1, 动作: "确认" };
++	const params = {
++		name: recipe.名字,
++		cards_dir: options.cardsDir,
++		instance: flow.实例,
++		node: "审查",
++		round: 1,
++		action: "confirm",
++	};
+ 	await expect(
+-		runDesktopFlowCommand(id, f.root, { ...params, 卡目录: fixture().bridge.会话目录, 动作: "恢复", 原owner: id }),
++		runDesktopFlowCommand(id, f.root, {
++			...params,
++			cards_dir: fixture().bridge.会话目录,
++			action: "resume",
++			prev_owner: id,
++		}),
+ 	).rejects.toThrow("卡目录");
+ 	afterConfirm = () => {
+ 		id = "switched";
+@@ -319,22 +331,22 @@ it("跨进程控制消息内核终审：非owner确认、旧轮次、恢复原ow
+ 	};
+ 	const origin = makeSession("origin-owner");
+ 	const _outsider = makeSession("final-owner");
+-	const base = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查" };
++	const base = { name: recipe.名字, cards_dir: options.cardsDir, instance: flow.实例, node: "审查" };
+ 	// 非 owner 会话提交确认：trusted 终审拒绝，不进入命令执行。
+ 	await expect(
+-		runDesktopFlowCommand("final-owner", f.root, { ...base, 轮次: flow.节点[0]!.轮次, 动作: "确认" }),
++		runDesktopFlowCommand("final-owner", f.root, { ...base, round: flow.节点[0]!.轮次, action: "confirm" }),
+ 	).rejects.toThrow("请跳转原 owner 会话处理");
+ 	// owner 会话但轮次过期（跨进程消息的请求关联在内核侧的最后一道）。
+-	await expect(runDesktopFlowCommand("origin-owner", f.root, { ...base, 轮次: 999, 动作: "确认" })).rejects.toThrow(
+-		"实例/卡目录/节点/轮次已变化，请刷新",
+-	);
++	await expect(
++		runDesktopFlowCommand("origin-owner", f.root, { ...base, round: 999, action: "confirm" }),
++	).rejects.toThrow("实例/卡目录/节点/轮次已变化，请刷新");
+ 	// 恢复允许任何已注册会话发起，但原owner必须与磁盘现值一致。
+ 	await expect(
+ 		runDesktopFlowCommand("final-owner", f.root, {
+ 			...base,
+-			轮次: flow.节点[0]!.轮次,
+-			动作: "恢复",
+-			原owner: "someone-else",
++			round: flow.节点[0]!.轮次,
++			action: "resume",
++			prev_owner: "someone-else",
+ 		}),
+ 	).rejects.toThrow("原 owner 已变化，请刷新");
+ 	// 合规请求：trusted 放行，磁盘真值原样进入 flow control 命令。
+@@ -347,16 +359,16 @@ it("跨进程控制消息内核终审：非owner确认、旧轮次、恢复原ow
+ 			seen.push(args);
+ 		},
+ 	});
+-	await runDesktopFlowCommand("origin-owner", f.root, { ...base, 轮次: flow.节点[0]!.轮次, 动作: "确认" });
++	await runDesktopFlowCommand("origin-owner", f.root, { ...base, round: flow.节点[0]!.轮次, action: "confirm" });
+ 	expect(seen).toHaveLength(1);
+ 	expect(JSON.parse(seen[0]!.slice("control ".length))).toEqual({
+-		名字: recipe.名字,
+-		卡目录: options.cardsDir,
+-		实例: flow.实例,
+-		节点: "审查",
+-		轮次: flow.节点[0]!.轮次,
+-		原owner: "origin-owner",
+-		动作: "确认",
++		name: recipe.名字,
++		cards_dir: options.cardsDir,
++		instance: flow.实例,
++		node: "审查",
++		round: flow.节点[0]!.轮次,
++		prev_owner: "origin-owner",
++		action: "confirm",
+ 	});
+ });
+ 

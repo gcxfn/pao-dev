@@ -1,0 +1,37 @@
+diff --git a/packages/coding-agent/package.json b/packages/coding-agent/package.json
+index 31d634bfb..c79f01712 100644
+--- a/packages/coding-agent/package.json
++++ b/packages/coding-agent/package.json
+@@ -29,6 +29,10 @@
+ 			"types": "./dist/pao/desktop/index.d.ts",
+ 			"import": "./dist/pao/desktop/index.js"
+ 		},
++		"./pao/todo": {
++			"types": "./dist/pao/todo/summary.d.ts",
++			"import": "./dist/pao/todo/summary.js"
++		},
+ 		"./client": {
+ 			"source": "./src/client/index.ts"
+ 		},
+diff --git a/packages/coding-agent/scripts/gate-boundary.mjs b/packages/coding-agent/scripts/gate-boundary.mjs
+index 267658967..2133cd799 100644
+--- a/packages/coding-agent/scripts/gate-boundary.mjs
++++ b/packages/coding-agent/scripts/gate-boundary.mjs
+@@ -3,7 +3,7 @@
+ // B2 dist/bundle/cli.js 文本无 electron/react require
+ // B3 桌面宿主闭包（electron/**）不 import CLI 入口（bundle/cli、src/cli.ts、cli/args），不 spawn 全局 pao/pi
+ // B4 pi-sdk-driver 源闭包同 B3
+-// B5 内核公开导出闭包（src/pao/index.ts、src/pao/desktop/index.ts）不 import CLI 入口（cli.ts/main.ts）
++// B5 内核公开导出闭包（src/pao/index.ts、src/pao/desktop/index.ts、src/pao/todo/summary.ts）不 import CLI 入口（cli.ts/main.ts）
+ // B6 package.json exports 表不含 cli 目标
+ // 用法：自 packages/coding-agent 运行 `node scripts/gate-boundary.mjs` 或 `npm run check:gates`（纯静态，无构建要求）
+ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+@@ -98,7 +98,7 @@ checkHostClosure("B3", path.join(desktopApp, "electron"), [".ts", ".mts"]);
+ checkHostClosure("B4", driverSrc, [".ts", ".mts"]);
+ 
+ // B5 内核公开导出闭包不 import CLI 入口
+-for (const entry of ["pao/index.ts", "pao/desktop/index.ts"]) {
++for (const entry of ["pao/index.ts", "pao/desktop/index.ts", "pao/todo/summary.ts"]) {
+   const { edges } = walkClosure([path.join(kernelSrc, entry)]);
+   const hits = edges.filter((e) => /(^|[\\/])(cli|main)\.ts$/.test(e.resolved ?? ""));
+   if (hits.length) fail(`B5(${entry})`, `内核公开导出闭包引 CLI 入口: ${hits.map((e) => `${path.relative(kernelSrc, e.from)} -> ${e.resolved}`).join("; ")}`);

@@ -1,0 +1,123 @@
+src\pao\worker\dispatch-core.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    143 143 │   	const located = locateDispatchCard(input.cardsDir, input.卡号);
+    144 144 │   	if (located.frontmatter.状态 !== "进行中") return undefined;
+    145     │ - → const·receipts·=·located.回执.filter(
+    146     │ - → → (r)·=>·r.尝试号·===·located.frontmatter.尝试·&&·!r.留档标记,
+    147     │ - → );
+        145 │ + → const·receipts·=·located.回执.filter((r)·=>·r.尝试号·===·located.frontmatter.尝试·&&·!r.留档标记);
+    148 146 │   	if (receipts.length > 0) {
+    149 147 │   		const last = receipts[receipts.length - 1];
+  
+
+src\pao\worker\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    175 175 │   			"任务黑板(M2-03):认领成功即在工作区首建 黑板.md(幂等)并给 worker 注入指针——同伴中间结论与便条页,便签先挂链接再散写,归档即冻结。" +
+    176 176 │   			"认领纪律与扇出同源:待认领→进行中(尝试 +1,无主则 owner=派单者:主控写「主控」,部长写 PAO_DEPT 值),认领即落基线快照;进行中/已终态卡不拉起(派单即时回执直接给拒派原因,不等派卡通知)。" +
+    177     │ - → → → → `监督与裁决(B·档):worker·静默(保温.json「worker·静默分钟」,缺省·${DEFAULT_WORKER_SILENCE_MINUTES},0=关)会收到静默提醒,提醒带·live·输出路径与输出尾——`·+
+    178     │ - → → → → "继续等＝不用做任何事(有输出后计时自动重置);确认卡死须终止＝调·pao_终止卡(只终止本会话派出的运行中·worker)。"·+
+    179     │ - → → → → "机械超时缺省·24·小时,只兜「静默叫了人但无人应答」的底,不是主判决。"·+
+    180     │ - → → → → //·S5·包4·四写法③④:只许/禁止清单＋派完即停写进派单提示词(主控/部长共面)
+    181     │ - → → → → OWNER_DISPATCH_DISCIPLINES,
+        177 │ + → → → `监督与裁决(B·档):worker·静默(保温.json「worker·静默分钟」,缺省·${DEFAULT_WORKER_SILENCE_MINUTES},0=关)会收到静默提醒,提醒带·live·输出路径与输出尾——`·+
+        178 │ + → → → "继续等＝不用做任何事(有输出后计时自动重置);确认卡死须终止＝调·pao_终止卡(只终止本会话派出的运行中·worker)。"·+
+        179 │ + → → → "机械超时缺省·24·小时,只兜「静默叫了人但无人应答」的底,不是主判决。"·+
+        180 │ + → → → //·S5·包4·四写法③④:只许/禁止清单＋派完即停写进派单提示词(主控/部长共面)
+        181 │ + → → → OWNER_DISPATCH_DISCIPLINES,
+    182 182 │   		parameters: DispatchParams,
+    183 183 │   		execute: async (_toolCallId, params: DispatchParamsShape, _signal, _onUpdate, ctx) => {
+    ······· │ 
+    199 199 │   				if (!permission.允许) return error(`派单未执行:${permission.原因}`);
+    200 200 │   
+    201     │ - → → → → → //·已终态/进行中卡同步拒派(2026-10-05·修):即时回执直接给拒派原因——原先即时
+    202     │ - → → → → → //·回执说「已派出」,拒派原因要等下一轮派卡通知才可见;后台链路·claimCard·仍
+    203     │ - → → → → → //·fail-closed·把关(同一拒因文案),这里只是把判定提前到同步面。
+    204     │ - → → → → → //·S5·包3:拒因带同号去重信息(既有回执结果/结果未知先查现场);带·接管·时
+    205     │ - → → → → → //·放行进后台链做接管三查(回执去重/活进程/状态机),不在同步面重复判。
+    206     │ - → → → → → if·(!params.接管)·{
+    207     │ - → → → → → → const·refusal·=·claimRefusalDetail(located);
+    208     │ - → → → → → → if·(refusal)·return·error(`派单未执行:${refusal}。`);
+    209     │ - → → → → → }
+        201 │ + → → → → //·已终态/进行中卡同步拒派(2026-10-05·修):即时回执直接给拒派原因——原先即时
+        202 │ + → → → → //·回执说「已派出」,拒派原因要等下一轮派卡通知才可见;后台链路·claimCard·仍
+        203 │ + → → → → //·fail-closed·把关(同一拒因文案),这里只是把判定提前到同步面。
+        204 │ + → → → → //·S5·包3:拒因带同号去重信息(既有回执结果/结果未知先查现场);带·接管·时
+        205 │ + → → → → //·放行进后台链做接管三查(回执去重/活进程/状态机),不在同步面重复判。
+        206 │ + → → → → if·(!params.接管)·{
+        207 │ + → → → → → const·refusal·=·claimRefusalDetail(located);
+        208 │ + → → → → → if·(refusal)·return·error(`派单未执行:${refusal}。`);
+        209 │ + → → → → }
+    210 210 │   
+    211 211 │   				// M2-01 宿主接线(定案10/定案9):派到同部门＋同项目且登记表有热部长会话时,
+  
+
+test\pao\s5p3-lease-retry.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      9   9 │   import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+     10  10 │   import type { ParsedCard } from "../../src/pao/cards/types.ts";
+     11     │ - import·{·readDesktopProject·}·from·"../../src/pao/desktop/read-model.ts";
+     12     │ - import·{·readDesktopWorkerActivity,·registerDesktopOwner·}·from·"../../src/pao/desktop/owners.ts";
+         11 │ + import·{·readDesktopWorkerActivity,·registerDesktopOwner·}·from·"../../src/pao/desktop/owners.ts";
+         12 │ + import·{·readDesktopProject·}·from·"../../src/pao/desktop/read-model.ts";
+     13  13 │   import { buildClaimLease, claimRefusalDetail, executeDispatch } from "../../src/pao/worker/dispatch-core.ts";
+     14  14 │   import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
+  
+
+test\pao\s5p3-lease-retry.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     77  77 │   }
+     78  78 │   
+     79     │ - function·dispatch(
+     80     │ - → cardsDir:·string,
+     81     │ - → 卡号:·string·|·number,
+     82     │ - → runner:·StubRunner,
+     83     │ - → extra?:·{·接管?:·boolean·},
+     84     │ - )·{
+         79 │ + function·dispatch(cardsDir:·string,·卡号:·string·|·number,·runner:·StubRunner,·extra?:·{·接管?:·boolean·})·{
+     85  80 │   	return executeDispatch(
+     86  81 │   		{ cardsDir, 卡号: String(卡号), 操作者: "主控", 时间: "2026-10-07 10:05", ...(extra ?? {}) },
+  
+
+test\pao\s5p4-roles-supervision.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      6   6 │   import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+      7   7 │   import { createCard, readCard } from "../../src/pao/cards/index.ts";
+      8     │ - import·{·formatFanoutSummary·}·from·"../../src/pao/fanout/execute.ts";
+      9     │ - import·type·{·FanoutCardResult,·FanoutSummary·}·from·"../../src/pao/fanout/execute.ts";
+          8 │ + import·type·{·FanoutCardResult,·FanoutSummary·}·from·"../../src/pao/fanout/execute.ts";
+          9 │ + import·{·formatFanoutSummary·}·from·"../../src/pao/fanout/execute.ts";
+     10  10 │   import {
+     11  11 │   	buildWorkerPrompt,
+  
+
+Checked 10 files in 126ms. No fixes applied.
+Found 5 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
