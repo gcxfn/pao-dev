@@ -1,0 +1,1605 @@
+=== L8 桌面道 core e2e 单命令整批 ===
+date: 2026-10-08 14:33:40
+desktop HEAD: 37f115e7b7d06de9d1688ed7604a2c8f62135e9a
+PAO HEAD: e6b87efe420a0ecc2bd972cb77259a4a2de54a8e
+env: PAO_HOME=/d/tmp-l8e2e-8FzjaW PI_OFFLINE=1 PI_NO_LOCAL_LLM=1 PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background（车道脚本自带）
+command: pnpm --dir apps/desktop run test:e2e:core
+
+
+> @pi-gui/desktop@1.0.1 test:e2e:core D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm build && cross-env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core
+
+
+> @pi-gui/desktop@1.0.1 build D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm run build:deps && pnpm run build:notification-helper && electron-vite build
+
+
+> @pi-gui/desktop@1.0.1 build:deps D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm --dir ../.. --filter @pi-gui/session-driver --filter @pi-gui/pi-sdk-driver --filter @pi-gui/extension-ui --filter @pi-gui/catalogs run build
+
+Scope: 4 of 8 workspace projects
+packages/session-driver build$ tsc -p tsconfig.json
+packages/extension-ui build$ tsc -p tsconfig.json && node scripts/build-browser.mjs
+packages/session-driver build: Done
+packages/extension-ui build: Done
+packages/catalogs build$ tsc -p tsconfig.json
+packages/catalogs build: Done
+packages/pi-sdk-driver build$ tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+packages/pi-sdk-driver build: Done
+
+> @pi-gui/desktop@1.0.1 build:notification-helper D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/build-notification-status-helper.mjs
+
+Skipping notification status helper build outside macOS.
+[36mvite v6.4.1 [32mbuilding SSR bundle for production...[36m[39m
+transforming...
+[32m✓[39m 111 modules transformed.
+rendering chunks...
+[2mout/main/[22m[36mmain.js  [39m[1m[33m1,115.86 kB[39m[22m
+[32m✓ built in 854ms[39m
+[36mvite v6.4.1 [32mbuilding SSR bundle for production...[36m[39m
+transforming...
+[32m✓[39m 3 modules transformed.
+rendering chunks...
+[2mout/preload/[22m[36mpreload.js  [39m[1m[2m29.36 kB[22m[1m[22m
+[32m✓ built in 26ms[39m
+[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 679 modules transformed.
+rendering chunks...
+[2mout/renderer/[22m[32mindex.html                 [39m[1m[2m    0.48 kB[22m[1m[22m
+[2mout/renderer/[22m[35massets/index-Bdlz0xMV.css  [39m[1m[2m  234.30 kB[22m[1m[22m
+[2mout/renderer/[22m[36massets/wasm-DDgzZJey.js    [39m[1m[33m  622.45 kB[39m[22m
+[2mout/renderer/[22m[36massets/index-CVNBj8HI.js   [39m[1m[33m4,216.98 kB[39m[22m
+[32m✓ built in 3.04s[39m
+
+Running 329 tests using 1 worker
+
+  -    1 apps\desktop\tests\core\app-lifecycle.spec.ts:53:9 › macOS last-window lifecycle › quits after the last window closes in background test mode
+  -    2 apps\desktop\tests\core\app-lifecycle.spec.ts:53:9 › macOS last-window lifecycle › quits after the last window closes in foreground test mode
+  -    3 apps\desktop\tests\core\app-lifecycle.spec.ts:74:9 › macOS last-window lifecycle › retains normal behavior when PI_APP_TEST_MODE is unset
+  -    4 apps\desktop\tests\core\app-lifecycle.spec.ts:74:9 › macOS last-window lifecycle › retains normal behavior when PI_APP_TEST_MODE is empty
+  -    5 apps\desktop\tests\core\app-lifecycle.spec.ts:74:9 › macOS last-window lifecycle › retains normal behavior when PI_APP_TEST_MODE is invalid
+  ok   6 apps\desktop\tests\core\archive.spec.ts:10:5 › archives a hovered thread into a restorable sidebar section (30.1s)
+  ok   7 apps\desktop\tests\core\attach-image.spec.ts:14:5 › attaches an image from a stubbed picker result and shows the attachment chip (16.9s)
+  x    8 apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions (254ms)
+  ok   9 apps\desktop\tests\core\changed-files.spec.ts:77:5 › shows Git status as unavailable without losing reviewed files (18.3s)
+  ok  10 apps\desktop\tests\core\close-focused-surface.spec.ts:43:5 › Ctrl or Cmd+W closes the focused Files, Review, or Terminal surface (26.1s)
+  ok  11 apps\desktop\tests\core\close-focused-surface.spec.ts:100:5 › Ctrl or Cmd+W in the chat leaves the side panel open (16.0s)
+  ok  12 apps\desktop\tests\core\command-palette.spec.ts:26:5 › Cmd/Ctrl+K finds chats and actions, Cmd/Ctrl+P opens files (16.2s)
+  ok  13 apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface (14.2s)
+  x   14 apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing (20.0s)
+  ok  15 apps\desktop\tests\core\composer-draft-flush.spec.ts:120:5 › keeps a draft typed just before quitting (17.3s)
+  ok  16 apps\desktop\tests\core\composer-draft-flush.spec.ts:134:5 › keeps a draft typed just before closing the last window (15.1s)
+  ok  17 apps\desktop\tests\core\composer-draft-flush.spec.ts:150:5 › keeps a draft when the window is closed while quit is saving drafts (16.2s)
+  ok  18 apps\desktop\tests\core\composer-draft-flush.spec.ts:169:5 › keeps an edit React has not committed yet when quitting (13.0s)
+  ok  19 apps\desktop\tests\core\composer-draft-flush.spec.ts:185:5 › keeps a draft when the thread is archived by shortcut straight after typing (25.2s)
+  ok  20 apps\desktop\tests\core\composer-draft-flush.spec.ts:214:5 › keeps the drafts of every window when quitting straight after typing (28.3s)
+  ok  21 apps\desktop\tests\core\composer-draft-flush.spec.ts:314:5 › keeps a draft when an extension card button opens another thread straight after typing (19.1s)
+  ok  22 apps\desktop\tests\core\composer-draft-flush.spec.ts:335:5 › keeps a draft when an extension view opens another thread straight after typing (24.2s)
+  ok  23 apps\desktop\tests\core\composer-draft-sync.spec.ts:19:5 › ignores stale persisted draft acknowledgements while typing (9.1s)
+  ok  24 apps\desktop\tests\core\composer-draft-sync.spec.ts:81:5 › adopts a persisted draft when no local edit is pending (8.1s)
+  ok  25 apps\desktop\tests\core\composer-draft-sync.spec.ts:120:5 › does not resurrect a cleared draft while an older write is in flight (9.1s)
+  ok  26 apps\desktop\tests\core\composer-draft-sync.spec.ts:206:5 › preserves a composer draft across a fast session switch (18.2s)
+  ok  27 apps\desktop\tests\core\composer-draft-sync.spec.ts:239:5 › applies explicit editor text replacements from the session host (8.2s)
+  ok  28 apps\desktop\tests\core\composer-draft-sync.spec.ts:278:7 › keeps a queued draft targeted at the session displayed at dispatch (16.1s)
+  ok  29 apps\desktop\tests\core\composer-draft-sync.spec.ts:278:7 › keeps a queued command targeted at the session displayed at dispatch (16.3s)
+  ok  30 apps\desktop\tests\core\composer-draft-sync.spec.ts:356:5 › Cmd/Ctrl+number keeps a draft typed just before switching on its own thread (14.1s)
+  ok  31 apps\desktop\tests\core\composer-drag-drop.spec.ts:17:5 › existing thread highlights and accepts dropped images and files (8.1s)
+  ok  32 apps\desktop\tests\core\composer-drag-drop.spec.ts:53:5 › new thread reuses drag-drop attachments and carries them into the transcript (7.2s)
+  ok  33 apps\desktop\tests\core\composer-drag-drop.spec.ts:111:5 › attach controls add mixed attachments in both composer flows (12.1s)
+  ok  34 apps\desktop\tests\core\composer-image-limits.spec.ts:28:5 › rejects oversized drag-drop, picker, and forged IPC images with a composer error (26.3s)
+  ok  35 apps\desktop\tests\core\composer-image-limits.spec.ts:124:5 › relaunch skips oversized saved images without halting startup (12.4s)
+  ok  36 apps\desktop\tests\core\composer-image-limits.spec.ts:192:5 › relaunch skips oversize-pixel saved images without rewriting the attachment file (11.1s)
+  x   37 apps\desktop\tests\core\composer-image-limits.spec.ts:269:5 › legacy migration skips oversize-pixel images before the composer map (12.1s)
+  ok  38 apps\desktop\tests\core\composer-image-limits.spec.ts:345:5 › startThread rejects oversize-pixel images without clearing the new-thread draft (5.0s)
+  ok  39 apps\desktop\tests\core\context-rail.spec.ts:15:5 › turn timing markers render without a prompt rail (10.3s)
+  ok  40 apps\desktop\tests\core\custom-endpoints.spec.ts:101:5 › custom endpoint detection preserves focus moved to manual model entry (10.1s)
+  ok  41 apps\desktop\tests\core\custom-endpoints.spec.ts:145:5 › settings lets the user add, edit, and delete an OpenAI-compatible custom endpoint (18.2s)
+  ok  42 apps\desktop\tests\core\custom-endpoints.spec.ts:247:5 › custom endpoints keep legacy managed entries separate from built-in overrides (8.1s)
+  ok  43 apps\desktop\tests\core\custom-endpoints.spec.ts:356:5 › custom endpoint dialog blocks colliding provider IDs and invalid base URLs (11.9s)
+  x   44 apps\desktop\tests\core\custom-endpoints.spec.ts:407:5 › custom endpoint dialog supports a long-list keyboard flow with sticky actions (6.0s)
+  x   45 apps\desktop\tests\core\extension-card-actions.spec.ts:86:5 › card buttons run through main: a keyed card updates in place, and non-extension commands are refused (32.2s)
+  ok  46 apps\desktop\tests\core\extension-cards.spec.ts:120:5 › extension cards appear live beside a streaming reply, survive relaunch once, and open files (30.7s)
+  ok  47 apps\desktop\tests\core\extension-command-attachments.spec.ts:26:5 › a typed extension command keeps attachments and adds no message to the thread (13.0s)
+  x   48 apps\desktop\tests\core\extension-command-compatibility.spec.ts:47:5 › fails fast for unsupported handoff-like commands and learns terminal-only status (36.6s)
+  ok  49 apps\desktop\tests\core\extension-command-compatibility.spec.ts:142:5 › persists learned terminal-only command compatibility across relaunch (13.2s)
+  ok  50 apps\desktop\tests\core\extension-continuation.spec.ts:85:5 › keeps no-tool continuation replies separate and completes only after settlement (13.0s)
+  ok  51 apps\desktop\tests\core\extension-custom-messages.spec.ts:121:5 › extension custom messages show like terminal pi, live and after relaunch (17.3s)
+  x   52 apps\desktop\tests\core\extension-dock-reload.spec.ts:44:5 › resets dock expansion on /reload and extension enable or disable transitions (40.8s)
+  x   53 apps\desktop\tests\core\extension-dock-reload.spec.ts:95:5 › refreshes runtime with new extension output and keeps the dock collapsed after rebuild (39.1s)
+  ok  54 apps\desktop\tests\core\extension-dock.spec.ts:72:5 › renders a single collapsed dock inside the composer surface and expands to one text body (7.3s)
+  ok  55 apps\desktop\tests\core\extension-dock.spec.ts:160:5 › uses literal fallback summaries for status-only and widget-only extension ui (13.1s)
+  ok  56 apps\desktop\tests\core\extension-dock.spec.ts:208:5 › does not spam the transcript when an extension updates its widget repeatedly (8.1s)
+  ok  57 apps\desktop\tests\core\extension-draft-actions.spec.ts:17:5 › Stop remains available while an extension saves the running task's protected draft (20.1s)
+  x   58 apps\desktop\tests\core\extension-examples.spec.ts:36:5 › the actual Test Runs example streams real processes, retains closed-tab work and isolates tasks (19.1s)
+  -   59 apps\desktop\tests\core\extension-examples.spec.ts:169:5 › the actual PR Review example records a Pi review, opens files, prepares a draft and rejects stale fixes
+  ok  60 apps\desktop\tests\core\extension-flags.spec.ts:49:5 › new threads start with the chosen extension flags, remembered per workspace and after relaunch (30.2s)
+  ok  61 apps\desktop\tests\core\extension-flags.spec.ts:125:5 › a session an extension starts in place keeps the thread's flags (9.9s)
+  -   62 apps\desktop\tests\core\extension-github-view.spec.ts:93:5 › the GitHub example reads gh only when opened, opens links and drafts a fix
+  -   63 apps\desktop\tests\core\extension-github-view.spec.ts:148:5 › without gh the GitHub example says how to get it
+  ok  64 apps\desktop\tests\core\extension-notices.spec.ts:36:5 › extension notify shows toasts above the composer that expire, and only errors stay in the transcript (14.0s)
+  ok  65 apps\desktop\tests\core\extension-notices.spec.ts:78:5 › warning and error notices raise an OS notification when the thread is not in view; info does not (8.1s)
+  ok  66 apps\desktop\tests\core\extension-pinned-cards.spec.ts:110:5 › a pinned card stays above the composer through updates, hiding, compaction and restart (49.1s)
+  ok  67 apps\desktop\tests\core\extension-provider-models.spec.ts:73:5 › models registered by an extension appear in settings (5.0s)
+  ok  68 apps\desktop\tests\core\extension-provider-models.spec.ts:109:5 › project extension models stay scoped to the workspace that registers them (21.4s)
+  ok  69 apps\desktop\tests\core\extension-tool-labels.spec.ts:85:5 › an extension tool's row shows the label it registered, live and after restart (16.3s)
+  x   70 apps\desktop\tests\core\extension-trace-view.spec.ts:86:5 › the Trace example shows a live waterfall of the reply's model calls and tools with context (19.1s)
+  x   71 apps\desktop\tests\core\extension-usage-view.spec.ts:93:5 › the Usage example totals real pi sessions for the folder and explains what fills context (13ms)
+  ok  72 apps\desktop\tests\core\extension-usage-view.spec.ts:275:5 › the Usage example adds a card after each reply with its time, cost and context (8.2s)
+  ok  73 apps\desktop\tests\core\extension-usage-view.spec.ts:355:5 › the Usage example writes one card for a reply pi retried (8.1s)
+  x   74 apps\desktop\tests\core\extension-view-links.spec.ts:65:5 › an extension view opens https links and threads beside its own (25.5s)
+  x   75 apps\desktop\tests\core\extension-view-security.spec.ts:18:5 › custom frontend exchanges Chord state while its opaque frame cannot access preload, parent, network or navigation (18.7s)
+  x   76 apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend (21.5s)
+  x   77 apps\desktop\tests\core\extension-view-security.spec.ts:140:5 › two real windows share one task backend while their frame connections remain isolated (25.2s)
+  x   78 apps\desktop\tests\core\extensions-dialogs.spec.ts:141:5 › renders extension dialogs in the Electron surface and routes responses back to the session (24.0s)
+  ok  79 apps\desktop\tests\core\extensions-dialogs.spec.ts:231:5 › loads a dialog-prompting third-party package without blocking session startup (8.1s)
+  x   80 apps\desktop\tests\core\extensions-session-isolation.spec.ts:26:5 › keeps extension widgets, status, and title scoped to the active session (18.4s)
+  ok  81 apps\desktop\tests\core\extensions.spec.ts:196:5 › labels local package extensions by package root instead of index entrypoints (8.1s)
+  ok  82 apps\desktop\tests\core\extensions.spec.ts:231:5 › shows extensions above files in @ mentions and enables disabled extensions from the composer (5.2s)
+  ok  83 apps\desktop\tests\core\extensions.spec.ts:337:5 › inserts npm package extension mentions without source prefixes or pinned versions (3.3s)
+  ok  84 apps\desktop\tests\core\extensions.spec.ts:383:5 › preserves scoped npm package names in extension mentions (4.3s)
+  ok  85 apps\desktop\tests\core\extensions.spec.ts:428:5 › inserts git package extension mentions from the resolved package root (3.2s)
+  ok  86 apps\desktop\tests\core\extensions.spec.ts:474:5 › manages extensions and prefers runtime commands over colliding host actions (26.0s)
+  ok  87 apps\desktop\tests\core\extensions.spec.ts:581:5 › degrades terminal-only custom extension ui without sending stray messages (4.2s)
+  ok  88 apps\desktop\tests\core\extensions.spec.ts:613:5 › keeps a single subscription path when an extension creates a child session and prefills the draft (4.0s)
+  ok  89 apps\desktop\tests\core\extensions.spec.ts:651:5 › switches pi-gui tools off app-wide and keeps them off after a restart (11.8s)
+  ok  90 apps\desktop\tests\core\extensions.spec.ts:711:5 › lists pi's add-ons as Built into pi and switches them in pi's extensions setting (10.0s)
+  ok  91 apps\desktop\tests\core\external-change-sync.spec.ts:24:5 › reflects an external append to the selected session's JSONL on window focus (7.2s)
+  ok  92 apps\desktop\tests\core\external-change-sync.spec.ts:98:5 › surfaces a CLI-created session on window focus (8.1s)
+  ok  93 apps\desktop\tests\core\external-links.spec.ts:32:5 › opens markdown web links externally without leaving the current session (10.9s)
+  ok  94 apps\desktop\tests\core\external-links.spec.ts:68:5 › refuses non-web markdown links from message content (7.9s)
+  ok  95 apps\desktop\tests\core\fork-from-message.spec.ts:14:5 › forks a thread from an assistant response into a new sidebar session (16.8s)
+  ok  96 apps\desktop\tests\core\hydrate-recovery.spec.ts:44:5 › recovers from a rejected first state hydrate without rewriting persisted UI state (15.7s)
+  ok  97 apps\desktop\tests\core\hydrate-recovery.spec.ts:92:5 › keeps the shell usable when only the selected transcript hydrate rejects (13.7s)
+  ok  98 apps\desktop\tests\core\hydrate-recovery.spec.ts:126:5 › uncaught renderer errors show a recoverable fallback instead of a blank window (6.6s)
+  ok  99 apps\desktop\tests\core\integrated-terminal.spec.ts:21:5 › opens task terminals with persistent output and independent shell tabs (35.4s)
+  ok 100 apps\desktop\tests\core\integrated-terminal.spec.ts:111:5 › persists the integrated terminal shell setting (5.1s)
+  ok 101 apps\desktop\tests\core\integrated-terminal.spec.ts:137:5 › pastes clipboard text into the integrated terminal once (17.0s)
+  x  102 apps\desktop\tests\core\integrated-terminal.spec.ts:178:5 › writes an oversized terminal paste in chunks instead of dropping it (1.3m)
+  ok 103 apps\desktop\tests\core\kanban-board.spec.ts:243:5 › 看板五列、搜索筛选、详情回执、刷新读盘、坏卡显异常 (33.4s)
+  ok 104 apps\desktop\tests\core\kanban-board.spec.ts:398:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 (15.2s)
+  ok 105 apps\desktop\tests\core\kanban-board.spec.ts:441:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 (21.3s)
+  ok 106 apps\desktop\tests\core\kanban-board.spec.ts:569:5 › 工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情 (11.6s)
+  ok 107 apps\desktop\tests\core\kanban-board.spec.ts:624:5 › 混合权限批量取消逐卡准确：一张成功一张失败带原因，操作后重读磁盘换列 (15.6s)
+  ok 108 apps\desktop\tests\core\kanban-board.spec.ts:669:5 › 拖放反馈：拖到已交付列被拒点名验收链，拖到取消列真实执行 (11.4s)
+  ok 109 apps\desktop\tests\core\kanban-board.spec.ts:725:5 › 右键菜单：入口动作同受合法操作约束，取消直接执行并重读换列 (14.2s)
+  ok 110 apps\desktop\tests\core\kanban-board.spec.ts:762:5 › 租约真实值：旧代行不覆盖新代呈现，被接管如实亮出 (14.1s)
+  ok 111 apps\desktop\tests\core\login-prompt.spec.ts:75:5 › resolves the login prompt from the modal input (3.5s)
+  ok 112 apps\desktop\tests\core\login-prompt.spec.ts:102:5 › rejects the login prompt when cancelled (3.4s)
+  ok 113 apps\desktop\tests\core\mcp-settings.spec.ts:31:5 › adds, switches and removes an MCP server from Settings, editing mcp.json in place (31.6s)
+  x  114 apps\desktop\tests\core\mcp-settings.spec.ts:194:5 › rejects a server Settings cannot run and leaves mcp.json alone (10.8s)
+  ok 115 apps\desktop\tests\core\mentions-diff.spec.ts:14:5 › shows workspace file mentions from the composer and inserts the selected file (13.0s)
+  ok 116 apps\desktop\tests\core\mentions-diff.spec.ts:71:5 › toggles the diff panel from the keyboard shortcut and renders changed files on the right (18.2s)
+  ok 117 apps\desktop\tests\core\message-markdown.spec.ts:44:5 › renders markdown formatting in assistant responses (14.3s)
+  ok 118 apps\desktop\tests\core\message-markdown.spec.ts:121:5 › keeps compact GFM tables content-sized and scrolls wide tables locally (13.1s)
+  ok 119 apps\desktop\tests\core\message-wrapping.spec.ts:71:5 › wraps long markdown content inside transcript message bubbles (10.4s)
+  x  120 apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments (21.8s)
+  ok 121 apps\desktop\tests\core\model-scope-toggle.spec.ts:19:5 › switches between app-global and per-repo model scope while worktrees inherit root repo settings (1.1m)
+  ok 122 apps\desktop\tests\core\multi-window.spec.ts:265:5 › selects an empty workspace from the sidebar row (8.8s)
+  ok 123 apps\desktop\tests\core\multi-window.spec.ts:295:5 › opens multiple app windows with independent workspace and thread selection (37.0s)
+  ok 124 apps\desktop\tests\core\multi-window.spec.ts:357:5 › keeps each window selection when a background window changes transparency (17.0s)
+  ok 125 apps\desktop\tests\core\multi-window.spec.ts:404:5 › projects sender state emissions from the in-flight selection (14.0s)
+  ok 126 apps\desktop\tests\core\multi-window.spec.ts:430:5 › keeps sender dialog actions scoped without blocking another window (18.9s)
+  ok 127 apps\desktop\tests\core\multi-window.spec.ts:516:5 › keeps a background window composer draft when another window changes selection (22.4s)
+  ok 128 apps\desktop\tests\core\multi-window.spec.ts:556:5 › opens independent terminals for the same thread in separate windows (28.2s)
+  ok 129 apps\desktop\tests\core\multi-window.spec.ts:599:5 › applies editor text sync to the window showing the target session (18.8s)
+  ok 130 apps\desktop\tests\core\multi-window.spec.ts:647:5 › cancels pending dialogs when the last visible same-session window closes (17.7s)
+  ok 131 apps\desktop\tests\core\multi-window.spec.ts:715:5 › mirrors composer draft updates when the same thread is open twice (10.8s)
+  ok 132 apps\desktop\tests\core\navigation.spec.ts:14:5 › persists workspace, selected session, and draft across app restart (15.3s)
+  ok 133 apps\desktop\tests\core\navigation.spec.ts:82:5 › navigates across folders and sessions through the sidebar (26.7s)
+  ok 134 apps\desktop\tests\core\navigation.spec.ts:144:5 › switching sessions republishes the selected transcript (17.8s)
+  ok 135 apps\desktop\tests\core\new-thread-auto-title.spec.ts:22:5 › auto-titles a brand-new local thread after showing the placeholder first (4.1s)
+  ok 136 apps\desktop\tests\core\new-thread-auto-title.spec.ts:56:5 › auto-titles a brand-new worktree thread after showing the placeholder first (12.9s)
+  ok 137 apps\desktop\tests\core\new-thread-auto-title.spec.ts:102:5 › switching away does not cancel a pending auto-title (14.5s)
+  x  138 apps\desktop\tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result (22.0s)
+  x  139 apps\desktop\tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop (21.9s)
+  ok 140 apps\desktop\tests\core\new-thread-auto-title.spec.ts:235:5 › later sends do not retrigger auto-title generation (6.5s)
+  ok 141 apps\desktop\tests\core\new-thread-auto-title.spec.ts:275:5 › reopen heals a stale placeholder catalog title after auto-title finished (12.4s)
+  ok 142 apps\desktop\tests\core\new-thread-composer.spec.ts:16:5 › new thread reuses composer behaviors for slash commands, image previews, and branding (10.4s)
+  ok 143 apps\desktop\tests\core\new-thread-composer.spec.ts:98:5 › new thread hides the onboarding notice after picking a thread model (14.1s)
+  ok 144 apps\desktop\tests\core\new-thread-composer.spec.ts:154:5 › new thread routes disabled-model recovery to settings models (10.8s)
+  ok 145 apps\desktop\tests\core\new-thread-composer.spec.ts:208:5 › refreshing after a provider becomes available auto-enables that provider's models (9.9s)
+  ok 146 apps\desktop\tests\core\new-thread-composer.spec.ts:267:5 › settings do not show stale enabled-model pills when no providers are connected (8.8s)
+  ok 147 apps\desktop\tests\core\new-thread-composer.spec.ts:310:5 › new thread starts once when Enter is pressed twice before it opens (10.4s)
+  ok 148 apps\desktop\tests\core\new-thread-draft.spec.ts:11:5 › opening New thread flushes the current conversation draft before navigation (18.1s)
+  ok 149 apps\desktop\tests\core\notification-onboarding.spec.ts:25:5 › requests notification permission when the user switches away from a running session (13.6s)
+  ok 150 apps\desktop\tests\core\notification-onboarding.spec.ts:65:5 › requests notification permission when the user leaves the threads surface (8.7s)
+  ok 151 apps\desktop\tests\core\notification-onboarding.spec.ts:94:5 › requests notification permission after a backgrounded session later flips to running (11.0s)
+  ok 152 apps\desktop\tests\core\notification-onboarding.spec.ts:126:5 › does not request notification permission when all notification categories are disabled (20.7s)
+  ok 153 apps\desktop\tests\core\notification-onboarding.spec.ts:164:5 › does not request notification permission twice after macOS decides during this launch (18.3s)
+  ok 154 apps\desktop\tests\core\notification-onboarding.spec.ts:205:5 › does not request notification permission again after macOS already decided (16.1s)
+  ok 155 apps\desktop\tests\core\notification-onboarding.spec.ts:236:5 › does not request notification permission on launch before any work is backgrounded (3.8s)
+  ok 156 apps\desktop\tests\core\notification-settings.spec.ts:14:5 › shows not enabled yet and enables via Ask macOS (10.8s)
+  ok 157 apps\desktop\tests\core\notification-settings.spec.ts:49:5 › shows turned off and opens System Settings when macOS notifications are denied (10.7s)
+  ok 158 apps\desktop\tests\core\notifications.spec.ts:22:5 › does not log a notification or blue dot for a focused selected session completion (5.7s)
+  ok 159 apps\desktop\tests\core\notifications.spec.ts:59:5 › logs a completion notification and blue dot for a focused different session (6.9s)
+  ok 160 apps\desktop\tests\core\notifications.spec.ts:108:5 › logs a completion notification and blue dot for a selected session after the window is hidden (5.8s)
+  ok 161 apps\desktop\tests\core\notifications.spec.ts:151:5 › logs a failure notification and preserves failed status with an unread update (6.9s)
+  ok 162 apps\desktop\tests\core\notifications.spec.ts:203:5 › logs an attention-needed notification and blue dot for a focused different session (7.2s)
+  ok 163 apps\desktop\tests\core\open-folder.spec.ts:16:5 › adds a workspace from the empty state button using a stubbed folder selection (8.8s)
+  -  164 apps\desktop\tests\core\open-folder.spec.ts:49:5 › exposes File > Open Folder… with Command+O and reuses the same open-folder action
+  ok 165 apps\desktop\tests\core\orchestration-runtime-tools.spec.ts:67:5 › create_child_thread returns after a slow worker starts, before its turn completes (11.4s)
+  ok 166 apps\desktop\tests\core\orchestration-runtime-tools.spec.ts:156:5 › create_child_thread surfaces deterministic initial-prompt delivery failures (10.9s)
+  ok 167 apps\desktop\tests\core\parallel-runs.spec.ts:77:5 › runs two sessions in parallel without sidebar status bleed (9.8s)
+  ok 168 apps\desktop\tests\core\persistence.spec.ts:21:5 › clears mixed attachment chips on submit after paste and file attach (11.4s)
+  ok 169 apps\desktop\tests\core\persistence.spec.ts:53:5 › persists attachments separately from ui state and restores the current draft (16.4s)
+  ok 170 apps\desktop\tests\core\persistence.spec.ts:158:5 › recovers persisted ui state from the backup when ui-state.json is corrupt (15.1s)
+  ok 171 apps\desktop\tests\core\persistence.spec.ts:210:5 › rejects malformed nested state without overwriting it and resumes after repair (20.9s)
+  ok 172 apps\desktop\tests\core\persistence.spec.ts:358:5 › preserves durable ui state when one startup workspace is unavailable (17.6s)
+  ok 173 apps\desktop\tests\core\persistence.spec.ts:579:5 › migrates legacy inline attachment persistence and drops legacy inline transcripts (14.3s)
+  ok 174 apps\desktop\tests\core\provider-settings.spec.ts:16:5 › settings lets the user save an API key for a built-in provider (12.8s)
+  ok 175 apps\desktop\tests\core\provider-settings.spec.ts:79:5 › settings shows environment-configured providers as managed externally (6.9s)
+  ok 176 apps\desktop\tests\core\provider-settings.spec.ts:118:5 › settings keeps models.json provider overrides in the external-config state (6.6s)
+  ok 177 apps\desktop\tests\core\provider-settings.spec.ts:182:5 › opening the first workspace from the empty state hydrates provider and model settings without refresh (12.4s)
+  ok 178 apps\desktop\tests\core\provider-settings.spec.ts:244:5 › providers flags the default model's provider when it is not connected (10.8s)
+  ok 179 apps\desktop\tests\core\queued-messages.spec.ts:111:5 › shows queued messages while running and preserves attachments through inline edit (15.5s)
+  ok 180 apps\desktop\tests\core\queued-messages.spec.ts:220:5 › delineates queued follow-ups and submitted steers in the timeline (14.4s)
+  ok 181 apps\desktop\tests\core\queued-messages.spec.ts:331:5 › queued edit and cancel keep their original session when navigation is already queued (20.8s)
+  ok 182 apps\desktop\tests\core\queued-messages.spec.ts:408:5 › an unsaved keystroke does not overwrite a queued edit or its cancel (14.6s)
+  ok 183 apps\desktop\tests\core\queued-messages.spec.ts:500:5 › keeps a queued message with a huge unbroken token wrapped and the composer usable (11.6s)
+  ok 184 apps\desktop\tests\core\real-auth-contract.spec.ts:11:5 › default desktop launches keep real-auth mode disabled and seed fake auth in a temp agent dir (3.0s)
+  ok 185 apps\desktop\tests\core\real-auth-contract.spec.ts:52:5 › Core rejects an explicit real-auth source before opening it (9ms)
+  x  186 apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates (43.2s)
+[31mWorker teardown timeout of 60000ms exceeded.[39m
+
+[31mFailed worker ran 47 tests, last 10 tests were:[39m
+apps\desktop\tests\core\provider-settings.spec.ts:182:5 › opening the first workspace from the empty state hydrates provider and model settings without refresh
+apps\desktop\tests\core\provider-settings.spec.ts:244:5 › providers flags the default model's provider when it is not connected
+apps\desktop\tests\core\queued-messages.spec.ts:111:5 › shows queued messages while running and preserves attachments through inline edit
+apps\desktop\tests\core\queued-messages.spec.ts:220:5 › delineates queued follow-ups and submitted steers in the timeline
+apps\desktop\tests\core\queued-messages.spec.ts:331:5 › queued edit and cancel keep their original session when navigation is already queued
+apps\desktop\tests\core\queued-messages.spec.ts:408:5 › an unsaved keystroke does not overwrite a queued edit or its cancel
+apps\desktop\tests\core\queued-messages.spec.ts:500:5 › keeps a queued message with a huge unbroken token wrapped and the composer usable
+apps\desktop\tests\core\real-auth-contract.spec.ts:11:5 › default desktop launches keep real-auth mode disabled and seed fake auth in a temp agent dir
+apps\desktop\tests\core\real-auth-contract.spec.ts:52:5 › Core rejects an explicit real-auth source before opening it
+apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates
+  ok 187 apps\desktop\tests\core\review-auto-refresh.spec.ts:16:5 › Review picks up outside edits when the window regains focus, without blanking (16.4s)
+  x  188 apps\desktop\tests\core\review-layout.spec.ts:22:5 › Review shows the diff beside a filterable file tree with Staged and Unstaged scopes (24.9s)
+  ok 189 apps\desktop\tests\core\review-scopes.spec.ts:68:5 › Uncommitted preserves staged and unstaged changes that cancel each other (35.0s)
+  ok 190 apps\desktop\tests\core\review-scopes.spec.ts:101:5 › Uncommitted keeps a reviewed mark through stage and unstage until the file changes (28.2s)
+  ok 191 apps\desktop\tests\core\review-scopes.spec.ts:136:5 › Branch compares committed revisions and reports a missing base explicitly (40.7s)
+  ok 192 apps\desktop\tests\core\review-scopes.spec.ts:180:5 › an outdated comparison cannot mark or stage newer working content (22.2s)
+  ok 193 apps\desktop\tests\core\review-scopes.spec.ts:217:5 › binary, oversized, and conflicted files show incomplete review coverage (21.3s)
+  x  194 apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout (48.8s)
+  ok 195 apps\desktop\tests\core\review-scopes.spec.ts:316:5 › an existing task without captures shows Last turn as unavailable (22.3s)
+  x  196 apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage (1.0m)
+  ok 197 apps\desktop\tests\core\review-turns.spec.ts:92:5 › Last turn captures actual tool edits and a response pins its own saved comparison (51.9s)
+  ok 198 apps\desktop\tests\core\review-ux.spec.ts:74:5 › syntax-highlights known languages and leaves unknown extensions plain (21.6s)
+  ok 199 apps\desktop\tests\core\review-ux.spec.ts:115:5 › reviewed marks survive relaunch and apply only to the reviewed file revision (34.3s)
+  ok 200 apps\desktop\tests\core\review-ux.spec.ts:195:5 › a new file at a renamed file's old path can be marked reviewed (18.5s)
+  ok 201 apps\desktop\tests\core\review-ux.spec.ts:217:5 › Files mode shows a file browser and reader instead of the changes reviewer (23.8s)
+  ok 202 apps\desktop\tests\core\review-ux.spec.ts:262:5 › view-in-changes button on a write tool row opens the diff panel without toggling expand (15.4s)
+  ok 203 apps\desktop\tests\core\review-ux.spec.ts:314:5 › highlighting follows the theme when light or dark changes (15.3s)
+  ok 204 apps\desktop\tests\core\saved-data-validation.spec.ts:15:7 › invalid saved attachments remain intact and report a startup diagnostic (11.7s)
+  ok 205 apps\desktop\tests\core\saved-data-validation.spec.ts:15:7 › invalid saved attachments remain intact during legacy migration and report a startup diagnostic (11.6s)
+  ok 206 apps\desktop\tests\core\saved-data-validation.spec.ts:59:5 › invalid catalog reports recovery trouble without pruning attachments across restart (5.9s)
+  ok 207 apps\desktop\tests\core\saved-data-validation.spec.ts:99:5 › invalid providers show an error and cannot falsely save an endpoint (13.0s)
+  ok 208 apps\desktop\tests\core\scheduled-task-runtime-tools.spec.ts:22:5 › create_scheduled_task tool writes the same catalog the list UI reads (10.8s)
+  ok 209 apps\desktop\tests\core\scheduled-tasks.spec.ts:16:5 › manual create, tabs, pause, and restart keep scheduled tasks (25.6s)
+  ok 210 apps\desktop\tests\core\scheduled-tasks.spec.ts:68:5 › create with pi prefills the interview draft and does not send (11.5s)
+  ok 211 apps\desktop\tests\core\scheduled-tasks.spec.ts:94:5 › firing a due existing-thread task labels the user bubble and shows a chip (9.0s)
+  ok 212 apps\desktop\tests\core\scheduled-tasks.spec.ts:152:5 › a scheduled run can use the scheduled-task tools while it is still running (9.8s)
+  ok 213 apps\desktop\tests\core\scheduled-tasks.spec.ts:234:5 › a second active bind to the same thread is rejected (9.8s)
+  ok 214 apps\desktop\tests\core\scheduled-tasks.spec.ts:277:5 › past once create is rejected and title-only edit keeps timezone and nextRunAt (16.7s)
+  ok 215 apps\desktop\tests\core\schema-skew-notice.spec.ts:13:5 › shows a version-skew notice for a session written by a newer pi, dismissible per session (19.7s)
+  ok 216 apps\desktop\tests\core\schema-skew-notice.spec.ts:76:5 › does not show the version-skew notice for a current-version session (8.3s)
+  x  217 apps\desktop\tests\core\secondary-surface-inset.spec.ts:26:5 › Back to app lines up with New thread below the window buttons (34.5s)
+  x  218 apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds (10.3s)
+  ok 219 apps\desktop\tests\core\session-lease.spec.ts:88:5 › quitting releases the session lease of every open thread (4.2s)
+  ok 220 apps\desktop\tests\core\settings-appearance.spec.ts:21:5 › toggles and restores window transparency (11.9s)
+  ok 221 apps\desktop\tests\core\settings-appearance.spec.ts:72:5 › selects and restores theme presets (13.7s)
+  x  222 apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it (1.0m)
+  x  223 apps\desktop\tests\core\settings-general.spec.ts:15:5 › ignores persisted multiple app instance opt-in and hides the setting (0ms)
+  -  224 apps\desktop\tests\core\settings-general.spec.ts:71:5 › settings nav search filters sections, opens the first match and clears on Escape
+  x  225 apps\desktop\tests\core\side-panel-picker.spec.ts:11:5 › one icon and keyboard shortcuts toggle the selected workspace tool (0ms)
+  x  226 apps\desktop\tests\core\side-panel-tab-shortcuts.spec.ts:16:5 › Control or Alt with 1-9 selects side panel tabs while Cmd or Ctrl keeps switching threads (0ms)
+  x  227 apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart (0ms)
+  x  228 apps\desktop\tests\core\sidebar-layout.spec.ts:10:5 › folder rows start a new thread in that folder (0ms)
+  -  229 apps\desktop\tests\core\sidebar-layout.spec.ts:46:5 › the sidebar can be dragged wider, remembers its width and resets on double-click
+  x  230 apps\desktop\tests\core\sidebar-ordering.spec.ts:13:5 › sidebar thread order is stable after creation and does not flicker (0ms)
+  -  231 apps\desktop\tests\core\sidebar-ordering.spec.ts:85:5 › pinned sidebar threads stay above history, persist across relaunch, and unpin into normal ordering
+  -  232 apps\desktop\tests\core\sidebar-ordering.spec.ts:154:5 › pinned sidebar threads can be reordered and repinned threads return to the top
+  x  233 apps\desktop\tests\core\sidebar-recency.spec.ts:23:5 › caps each time bucket at five and hides workspace headers (0ms)
+  -  234 apps\desktop\tests\core\sidebar-recency.spec.ts:60:5 › does not bump Today when a thread is opened
+  -  235 apps\desktop\tests\core\sidebar-recency.spec.ts:91:5 › bumps a sent thread to the top of Today
+  -  236 apps\desktop\tests\core\sidebar-recency.spec.ts:130:5 › selects pinned threads first with 1-9 and paints badges while the modifier is held
+  -  237 apps\desktop\tests\core\sidebar-recency.spec.ts:214:5 › groups seeded Last 7 Days, Last 30 Days, and Older threads
+  -  238 apps\desktop\tests\core\sidebar-recency.spec.ts:333:5 › caps a long Last 7 Days bucket and sorts the folder by last send
+  x  239 apps\desktop\tests\core\sidebar-toggle.spec.ts:119:5 › toggles and persists the primary sidebar from the button and keyboard shortcut (0ms)
+  -  240 apps\desktop\tests\core\sidebar-toggle.spec.ts:227:5 › keeps collapsed sidebar out of narrow windows and reopens from the button
+  x  241 apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data (0ms)
+  -  242 apps\desktop\tests\core\skills-settings.spec.ts:78:5 › skills and extensions live inside settings as one tabbed page
+  -  243 apps\desktop\tests\core\skills-settings.spec.ts:140:5 › matches skill slash commands by skill name aliases
+  x  244 apps\desktop\tests\core\slash-command-attachments.spec.ts:14:5 › a typed slash command keeps composer attachments across thread switch and restart (0ms)
+  x  245 apps\desktop\tests\core\smoke.spec.ts:15:5 › adds a workspace to an empty launched app (0ms)
+  -  246 apps\desktop\tests\core\smoke.spec.ts:33:5 › boots an existing workspace and starts a new thread through the real UI
+  -  247 apps\desktop\tests\core\smoke.spec.ts:81:5 › aligns workspace names with session titles in the sidebar gutter
+  x  248 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (stop: Keep this prompt pending until Stop) (0ms)
+  -  249 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: Keep this prompt pending until Stop)
+  -  250 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: /tmp/notes.md summarise this file)
+  x  251 apps\desktop\tests\core\streaming-publish.spec.ts:114:5 › coalesces token publishes without losing stick-to-bottom or wheel unpin (0ms)
+  x  252 apps\desktop\tests\core\terminal-diff-layout.spec.ts:10:5 › Review and Terminal share one side workspace while the composer stays available (0ms)
+  x  253 apps\desktop\tests\core\thread-menu.spec.ts:28:5 › right-click thread menu supports rename, archive/restore, mark read, and copy id (0ms)
+  -  254 apps\desktop\tests\core\thread-menu.spec.ts:170:5 › header and right-click menus match, show shortcuts, and Shift chords rename and archive
+  x  255 apps\desktop\tests\core\thread-switcher.spec.ts:26:5 › Ctrl-Tab switches threads in most-recently-used order and keeps it across restart (0ms)
+  x  256 apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths (0ms)
+  -  257 apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript
+  x  258 apps\desktop\tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread (0ms)
+  -  259 apps\desktop\tests\core\timeline-pinning.spec.ts:362:5 › restores bottom pinning after leaving and returning to the thread surface
+  -  260 apps\desktop\tests\core\timeline-pinning.spec.ts:414:5 › restores the true bottom when reopening a virtualized thread with oversized late rows
+  -  261 apps\desktop\tests\core\timeline-pinning.spec.ts:475:5 › keeps a virtualized thread off-bottom after switching sessions
+  -  262 apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions
+  -  263 apps\desktop\tests\core\timeline-pinning.spec.ts:601:5 › lands a reopened bottom-pinned thread without a smooth scroll from the top
+  -  264 apps\desktop\tests\core\timeline-pinning.spec.ts:662:5 › keeps a reopened virtualized long transcript stable
+  -  265 apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom
+  -  266 apps\desktop\tests\core\timeline-pinning.spec.ts:853:5 › keeps transcript pinning semantics while assistant deltas stream into the same row
+  -  267 apps\desktop\tests\core\timeline-pinning.spec.ts:926:5 › lands an opened thread at the bottom without a smooth scroll from the top
+  x  268 apps\desktop\tests\core\timeline-viewport.spec.ts:16:5 › long messages stay windowed and wheel scrolling preserves the visible row during streaming (0ms)
+  -  269 apps\desktop\tests\core\timeline-viewport.spec.ts:66:5 › clicks and downward wheel at the bottom do not stop following; search uses the same viewport
+  -  270 apps\desktop\tests\core\timeline-viewport.spec.ts:118:5 › streaming inside a tall measured code row never substitutes estimated geometry
+  -  271 apps\desktop\tests\core\timeline-viewport.spec.ts:187:5 › a layout clamp after user intent expires does not resume following
+  -  272 apps\desktop\tests\core\timeline-viewport.spec.ts:224:5 › typing within a fixed-height multiline draft never shifts the chat
+  -  273 apps\desktop\tests\core\timeline-viewport.spec.ts:255:5 › small upward wheel input escapes bottom while typing and streaming overlap
+  x  274 apps\desktop\tests\core\todo-table.spec.ts:152:5 › TodoWrite tool calls render a task checklist table, live and after restart (0ms)
+  x  275 apps\desktop\tests\core\tool-output-images.spec.ts:26:5 › shows images a tool returned in its row, not their base64 text (0ms)
+  x  276 apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message (0ms)
+  -  277 apps\desktop\tests\core\transcript-annotations.spec.ts:239:5 › a multi-line drag that runs past the text still adds its lines
+  x  278 apps\desktop\tests\core\transcript-staleness.spec.ts:17:5 › shows messages appended to the pi session file by an external writer after relaunch (0ms)
+  x  279 apps\desktop\tests\core\tree-command.spec.ts:18:5 › opens /tree from the composer, navigates branches, and blocks it on the new-thread surface (0ms)
+  -  280 apps\desktop\tests\core\tree-command.spec.ts:114:5 › restores focus to a remaining extension dialog after the tree modal closes
+  -  281 apps\desktop\tests\core\tree-command.spec.ts:171:5 › renders tool results with compact previews in the tree modal
+  -  282 apps\desktop\tests\core\tree-command.spec.ts:205:5 › opens /tree on a long branched session whose deepest path passes 500 entries
+  x  283 apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff (0ms)
+  x  284 apps\desktop\tests\core\unread-state.spec.ts:19:5 › selecting an unread thread persists read state through the latest known activity (0ms)
+  x  285 apps\desktop\tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser (0ms)
+  -  286 apps\desktop\tests\core\workbench-tabs.spec.ts:187:5 › restores each task's tabs and draft through Settings, switching, and restart
+  -  287 apps\desktop\tests\core\workbench-tabs.spec.ts:250:5 › an invalid or orphaned task layout does not block other saved UI state
+  -  288 apps\desktop\tests\core\workbench-tabs.spec.ts:315:5 › assistant file links keep the opened document with their originating task
+  -  289 apps\desktop\tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell
+  -  290 apps\desktop\tests\core\workbench-tabs.spec.ts:380:5 › two windows keep independent live tool selections for the same task
+  -  291 apps\desktop\tests\core\workbench-tabs.spec.ts:408:5 › keeps one resizable width across tools, chooser, tasks, and restart
+  -  292 apps\desktop\tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog
+  x  293 apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:19:5 › bug5 复验：切普通会话再切回画布，主控面板恢复且会话回到标签主控 (0ms)
+  -  294 apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:66:5 › bug5 复验：跨项目往返后，标签主控面板恢复且两会话不串
+  x  295 apps\desktop\tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 (0ms)
+  -  296 apps\desktop\tests\core\workflow-canvas.spec.ts:103:5 › 导航、关闭窗口和退出程序均保留取消后的画布
+  -  297 apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 节点改名：Esc 放弃、回车与失焦提交，重名保留原名
+  -  298 apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件
+  -  299 apps\desktop\tests\core\workflow-canvas.spec.ts:245:5 › 连线模式建连与拖拽同判定：非法浮层、Esc 取消、审核回边右键直达 Inspector
+  -  300 apps\desktop\tests\core\workflow-canvas.spec.ts:337:5 › 拖动和连线保存后刷新保持相同图
+  -  301 apps\desktop\tests\core\workflow-canvas.spec.ts:453:5 › 审核节点回边可以添加、编辑并真实保存
+  -  302 apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件
+  -  303 apps\desktop\tests\core\workflow-canvas.spec.ts:595:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写
+  -  304 apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅
+  -  305 apps\desktop\tests\core\workflow-canvas.spec.ts:727:5 › 保存后退出程序重开：坐标与连线一致，配方内容一致
+  -  306 apps\desktop\tests\core\workflow-canvas.spec.ts:876:5 › 删除工作流：确认弹窗含 .bak 说明，取消无副作用、标签不变
+  -  307 apps\desktop\tests\core\workflow-canvas.spec.ts:915:5 › 删除工作流：确认后 .bak 保留、冻结实例可读、对应标签关闭
+  x  308 apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (0ms)
+  -  309 apps\desktop\tests\core\workflow-control.spec.ts:102:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求）
+  -  310 apps\desktop\tests\core\workflow-control.spec.ts:171:5 › 向导内管理档位（S9-2）：新增直写档位.json＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认
+  -  311 apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写
+  x  312 apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 (0ms)
+  -  313 apps\desktop\tests\core\workflow-instance.spec.ts:229:5 › 同名配方的两个历史实例按路径分别打开冻结图
+  -  314 apps\desktop\tests\core\workflow-instance.spec.ts:379:5 › S6-D1 执行中节点与入边动画＋实例失败可见＋未记录显示未知
+  -  315 apps\desktop\tests\core\workflow-instance.spec.ts:426:5 › S6-D1 运行图刷新不重置视口（坐标保持）
+  x  316 apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） (0ms)
+  -  317 apps\desktop\tests\core\workflow-single-view.spec.ts:91:5 › 画布内时间线处于 active：布局落定并接管滚动（S4-1⑥）
+  -  318 apps\desktop\tests\core\workflow-single-view.spec.ts:111:5 › sidebar 分流：已绑定进单工作流嵌入视图，未绑定进完整中心，可回中心（S4-2）
+  x  319 apps\desktop\tests\core\workflow-tabs.spec.ts:7:5 › 工作流标签重开后保留独立主控，切换和关闭保护修改 (0ms)
+  -  320 apps\desktop\tests\core\workflow-tabs.spec.ts:116:5 › 主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③）
+  x  321 apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external (0ms)
+  x  322 apps\desktop\tests\core\workspace-files.spec.ts:36:5 › Files workbench puts the explorer to the right of an open file pane (0ms)
+  -  323 apps\desktop\tests\core\workspace-files.spec.ts:95:5 › Files explorer drops the previous workspace tree after a folder switch
+  x  324 apps\desktop\tests\core\workspace-menu.spec.ts:12:5 › supports workspace rename and remove from the sidebar menu (0ms)
+  x  325 apps\desktop\tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI (0ms)
+  -  326 apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile
+  -  327 apps\desktop\tests\core\worktrees.spec.ts:232:5 › shows a worktree icon in the sidebar without a local text badge
+  -  328 apps\desktop\tests\core\worktrees.spec.ts:284:5 › keeps orphaned worktree workspaces visible after removing the root workspace
+  -  329 apps\desktop\tests\core\worktrees.spec.ts:336:5 › a git worktree the user opens is its own folder and nests the worktrees made from it
+
+
+  1) apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions 
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-zgwxeK\changed-file-path\ leading	"quoted" -> destination
+    .txt '
+
+      25 |   await initGitRepo(workspacePath);
+      26 |   await commitAllInGitRepo(workspacePath, "init");
+    > 27 |   await writeFile(join(workspacePath, filePath), "exact path contents\n", "utf8");
+         |   ^
+      28 |   await writeFile(join(workspacePath, displayCollisionPath), "distinct path contents\n", "utf8");
+      29 |
+      30 |   const harness = await launchDesktop(userDataDir, {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\changed-files.spec.ts:27:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-changed-files-preserv-b98e9-ough-diff-and-stage-actions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-changed-files-preserv-b98e9-ough-diff-and-stage-actions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('send')
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('send')[22m
+    [2m    9 × locator resolved to <button disabled type="button" data-testid="send" aria-label="Send message" class="button button--primary button--cta-icon">…</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      239 |
+      240 |     await window.getByTestId("composer").fill("make the arrow visible");
+    > 241 |     await expect(sendButton).toBeEnabled();
+          |                              ^
+      242 |     await expect
+      243 |       .poll(async () => {
+      244 |         const styles = await sendButton.evaluate((button) => {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\composer-controls.spec.ts:241:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\composer-image-limits.spec.ts:269:5 › legacy migration skips oversize-pixel images before the composer map 
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pi-gui-user-data-PP8p9Y\attachments\C%3A%5CUsers%5CASUS%5CAppData%5CLocal%5CTemp%5Cpi-gui-workspace-OXoi2F%5Ccomposer-image-legacy-pixels%3A01a11a3f-7e4c-74c1-8377-f88498f95221.json'
+
+      334 |     );
+      335 |     await expect(window.getByRole("button", { name: "View wide.png" })).toHaveCount(0);
+    > 336 |     const migrated = JSON.parse(await readFile(attachmentPath, "utf8")) as Array<{
+          |                                 ^
+      337 |       readonly id: string;
+      338 |     }>;
+      339 |     expect(migrated.map((attachment) => attachment.id)).toEqual(["tiny"]);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\composer-image-limits.spec.ts:336:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-image-limits-1da4e-ges-before-the-composer-map\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-image-limits-1da4e-ges-before-the-composer-map\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-image-limits-1da4e-ges-before-the-composer-map\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-composer-image-limits-1da4e-ges-before-the-composer-map\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\custom-endpoints.spec.ts:407:5 › custom endpoint dialog supports a long-list keyboard flow with sticky actions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 600,[39m
+    [32m-   "width": 900,[39m
+    [31m+   "height": 564,[39m
+    [31m+   "width": 886,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      437 |       BrowserWindow.getAllWindows()[0]?.setSize(900, 600);
+      438 |     });
+    > 439 |     await expect
+          |     ^
+      440 |       .poll(() =>
+      441 |         window.evaluate(() => ({
+      442 |           height: globalThis.window.innerHeight,
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\custom-endpoints.spec.ts:439:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-custom-endpoints-cust-cdb1b-rd-flow-with-sticky-actions\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-custom-endpoints-cust-cdb1b-rd-flow-with-sticky-actions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-custom-endpoints-cust-cdb1b-rd-flow-with-sticky-actions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\core\extension-card-actions.spec.ts:86:5 › card buttons run through main: a keyed card updates in place, and non-extension commands are refused 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('extension-card')
+    Expected substring: [32m"CI [7mfail[27med on main"[39m
+    Received string:    [31m"CI [7mpass[27med on main[7munit-tests · 42 passedPassed[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('extension-card')[22m
+    [2m    9 × locator resolved to <section data-card-key="ci-main" data-testid="extension-card" aria-label="CI passed on main" class="turn-changes extension-card extension-card--success">…</section>[22m
+    [2m      - unexpected value "CI passed on mainunit-tests · 42 passedPassed"[22m
+
+
+      186 |     await composer.press("Enter");
+      187 |     await expect(card).toHaveCount(1);
+    > 188 |     await expect(card).toContainText("CI failed on main");
+          |                        ^
+      189 |     await waitForTimelineLayout(window);
+      190 |     await card.getByRole("button", { name: /Open failing line/ }).click();
+      191 |     await expect(window.getByTestId("file-workbench")).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-card-actions.spec.ts:188:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-card-action-599ab-ension-commands-are-refused\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-card-action-599ab-ension-commands-are-refused\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-card-action-599ab-ension-commands-are-refused\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-card-action-599ab-ension-commands-are-refused\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) apps\desktop\tests\core\extension-command-compatibility.spec.ts:47:5 › fails fast for unsupported handoff-like commands and learns terminal-only status 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Extensions', exact: true })[22m
+
+
+      127 |     await expect(window.getByTestId("extension-notices")).toContainText("Safe command ran");
+      128 |
+    > 129 |     await window.getByRole("button", { name: "Extensions", exact: true }).click();
+          |                                                                           ^
+      130 |     await expect(window.getByTestId("extensions-surface")).toBeVisible();
+      131 |     await window
+      132 |       .getByTestId("extensions-list")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-command-compatibility.spec.ts:129:75
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-command-com-ad55a-learns-terminal-only-status\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-command-com-ad55a-learns-terminal-only-status\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-command-com-ad55a-learns-terminal-only-status\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) apps\desktop\tests\core\extension-dock-reload.spec.ts:44:5 › resets dock expansion on /reload and extension enable or disable transitions 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Extensions', exact: true })[22m
+
+
+      71 |     await expect(dockBody).toHaveCount(0);
+      72 |
+    > 73 |     await window.getByRole("button", { name: "Extensions", exact: true }).click();
+         |                                                                           ^
+      74 |     const extensionCard = window
+      75 |       .getByTestId("extensions-list")
+      76 |       .getByRole("button", { name: /reload-dock-extension/i });
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-dock-reload.spec.ts:73:75
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-dock-reload-e3e96-able-or-disable-transitions\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-dock-reload-e3e96-able-or-disable-transitions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-dock-reload-e3e96-able-or-disable-transitions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) apps\desktop\tests\core\extension-dock-reload.spec.ts:95:5 › refreshes runtime with new extension output and keeps the dock collapsed after rebuild 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Extensions', exact: true })[22m
+
+
+      121 |       refreshedExtensionSource,
+      122 |     );
+    > 123 |     await window.getByRole("button", { name: "Extensions", exact: true }).click();
+          |                                                                           ^
+      124 |     await window.getByRole("button", { name: "Refresh", exact: true }).click();
+      125 |     await window.getByRole("button", { name: "Back to app", exact: true }).click();
+      126 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-dock-reload.spec.ts:123:75
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-dock-reload-ac2ea-ock-collapsed-after-rebuild\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-dock-reload-ac2ea-ock-collapsed-after-rebuild\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-dock-reload-ac2ea-ock-collapsed-after-rebuild\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) apps\desktop\tests\core\extension-examples.spec.ts:36:5 › the actual Test Runs example streams real processes, retains closed-tab work and isolates tasks 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="extension-view-frame"]').contentFrame().getByRole('heading', { name: 'Passing fixture · Command completed · exit 0', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().getByRole('heading', { name: 'Passing fixture · Command completed · exit 0', exact: true })[22m
+
+
+      66 |         exact: true,
+      67 |       }),
+    > 68 |     ).toBeVisible();
+         |       ^
+      69 |     await expect(frame.getByLabel("Test output", { exact: true })).toContainText("# pass 2");
+      70 |     await frame.getByLabel("Test suite", { exact: true }).selectOption("failing");
+      71 |     await frame.getByRole("button", { name: "Run suite", exact: true }).click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-examples.spec.ts:68:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-examples-th-eea43-tab-work-and-isolates-tasks\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-examples-th-eea43-tab-work-and-isolates-tasks\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-examples-th-eea43-tab-work-and-isolates-tasks\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) apps\desktop\tests\core\extension-trace-view.spec.ts:86:5 › the Trace example shows a live waterfall of the reply's model calls and tools with context 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[data-testid="extension-view-frame"]').contentFrame().getByTestId('trace-detail').getByTestId('trace-args')
+    Expected substring: [32m"\"path\": \"notes.txt\""[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().getByTestId('trace-detail').getByTestId('trace-args')[22m
+
+
+      175 |     const detail = frame.getByTestId("trace-detail");
+      176 |     await rows.nth(3).click();
+    > 177 |     await expect(detail.getByTestId("trace-args")).toContainText('"path": "notes.txt"');
+          |                                                    ^
+      178 |     await expect(detail.getByTestId("trace-result")).toContainText("hello from the notes file");
+      179 |     await rows.nth(5).click();
+      180 |     await expect(detail.getByTestId("trace-detail-context")).toHaveText("12k of 200k · 6%");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-trace-view.spec.ts:177:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-trace-view--7aef7-alls-and-tools-with-context\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-trace-view--7aef7-alls-and-tools-with-context\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-trace-view--7aef7-alls-and-tools-with-context\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) apps\desktop\tests\core\extension-usage-view.spec.ts:93:5 › the Usage example totals real pi sessions for the folder and explains what fills context 
+
+    Error: Cannot find package '@earendil-works/pi-coding-agent' imported from D:\AI\workspace\pao-dev\desktop\examples\desktop-extensions\usage\test\seed-sessions.ts
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-usage-view--b2fb6-explains-what-fills-context\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-usage-view--b2fb6-explains-what-fills-context\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) apps\desktop\tests\core\extension-view-links.spec.ts:65:5 › an extension view opens https links and threads beside its own 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "https://github.com/minghinmatthewlam/pi-gui/pull/220",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      108 |
+      109 |     await frame.getByRole("button", { name: "Open pull request" }).click();
+    > 110 |     await expect
+          |     ^
+      111 |       .poll(openedLinks)
+      112 |       .toEqual(["https://github.com/minghinmatthewlam/pi-gui/pull/220"]);
+      113 |     await frame.getByRole("button", { name: "Open plain link" }).click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-view-links.spec.ts:110:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-links--88775--and-threads-beside-its-own\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-links--88775--and-threads-beside-its-own\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-view-links--88775--and-threads-beside-its-own\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) apps\desktop\tests\core\extension-view-security.spec.ts:18:5 › custom frontend exchanges Chord state while its opaque frame cannot access preload, parent, network or navigation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().getByRole('button', { name: 'Increment', exact: true })
+    Expected: [32m"1"[39m
+    Received: [31m""[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().getByRole('button', { name: 'Increment', exact: true })[22m
+    [2m    9 × locator resolved to <button id="increment">Increment</button>[22m
+    [2m      - unexpected value "null"[22m
+
+
+      54 |     const increment = frame.getByRole("button", { name: "Increment", exact: true });
+      55 |     await increment.click();
+    > 56 |     await expect(increment).toHaveAttribute("data-clicks", "1");
+         |                             ^
+      57 |     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+      58 |     await frame.getByRole("button", { name: "Try network", exact: true }).click();
+      59 |     await expect(frame.locator("#network-result")).toHaveText("Network blocked");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-view-security.spec.ts:56:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3660e-arent-network-or-navigation\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3660e-arent-network-or-navigation\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-view-securi-3660e-arent-network-or-navigation\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  14) apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+    Expected: [32m"Count [7m1[27m · activations 1"[39m
+    Received: [31m"Count [7m0[27m · activations 1"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')[22m
+    [2m    9 × locator resolved to <output id="counter">Count 0 · activations 1</output>[22m
+    [2m      - unexpected value "Count 0 · activations 1"[22m
+
+
+      132 |     await expectExtensionViewReady(window);
+      133 |     await frame.getByRole("button", { name: "Increment", exact: true }).click();
+    > 134 |     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+          |                                             ^
+      135 |   } finally {
+      136 |     await harness.close();
+      137 |   }
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-view-security.spec.ts:134:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  15) apps\desktop\tests\core\extension-view-security.spec.ts:140:5 › two real windows share one task backend while their frame connections remain isolated 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+    Expected: [32m"Count [7m2[27m · activations 1"[39m
+    Received: [31m"Count [7m1[27m · activations 1"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')[22m
+    [2m    9 × locator resolved to <output id="counter">Count 1 · activations 1</output>[22m
+    [2m      - unexpected value "Count 1 · activations 1"[22m
+
+
+      194 |     await expect.poll(() => harness.electronApp.windows().length).toBe(1);
+      195 |     await secondFrame.getByRole("button", { name: "Increment", exact: true }).click();
+    > 196 |     await expect(secondFrame.locator("#counter")).toHaveText("Count 2 · activations 1");
+          |                                                   ^
+      197 |     const closedSender = await second.evaluate(async (connectionId) => {
+      198 |       try {
+      199 |         await globalThis.window.piApp.sendExtensionViewMessage({
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extension-view-security.spec.ts:196:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-76fed-connections-remain-isolated\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-76fed-connections-remain-isolated\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extension-view-securi-76fed-connections-remain-isolated\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  16) apps\desktop\tests\core\extensions-dialogs.spec.ts:141:5 › renders extension dialogs in the Electron surface and routes responses back to the session 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('extension-notices')
+    Expected substring: [32m"Editor lines [7m2[27m"[39m
+    Received string:    [31m"Editor lines [7m1[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('extension-notices')[22m
+    [2m    3 × locator resolved to <div role="status" class="extension-notices" data-testid="extension-notices">…</div>[22m
+    [2m      - unexpected value "Selected BetaInput typed valueAborted input closedEditor lines 1"[22m
+    [2m    3 × locator resolved to <div role="status" class="extension-notices" data-testid="extension-notices">…</div>[22m
+    [2m      - unexpected value "Input typed valueAborted input closedEditor lines 1"[22m
+    [2m    3 × locator resolved to <div role="status" class="extension-notices" data-testid="extension-notices">…</div>[22m
+    [2m      - unexpected value "Editor lines 1"[22m
+
+
+      223 |     await dialog.getByRole("button", { name: "Submit", exact: true }).click();
+      224 |     await expect(dialog).toHaveCount(0);
+    > 225 |     await expect(window.getByTestId("extension-notices")).toContainText("Editor lines 2");
+          |                                                           ^
+      226 |   } finally {
+      227 |     await harness.close();
+      228 |   }
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extensions-dialogs.spec.ts:225:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extensions-dialogs-re-35f52-sponses-back-to-the-session\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extensions-dialogs-re-35f52-sponses-back-to-the-session\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extensions-dialogs-re-35f52-sponses-back-to-the-session\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  17) apps\desktop\tests\core\extensions-session-isolation.spec.ts:26:5 › keeps extension widgets, status, and title scoped to the active session 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.chat-header__title')
+    Expected: [32m"[7mMarked by exten[27msion"[39m
+    Received: [31m"[7mSes[27msion[7m A[27m"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.chat-header__title')[22m
+    [2m    9 × locator resolved to <h1 title="Session A" class="chat-header__title">Session A</h1>[22m
+    [2m      - unexpected value "Session A"[22m
+
+
+      45 |     await composer.press("Enter");
+      46 |
+    > 47 |     await expect(window.locator(".chat-header__title")).toHaveText("Marked by extension");
+         |                                                         ^
+      48 |     await expect(window.getByTestId("extension-dock-summary")).toHaveText("Session marked");
+      49 |     await window.getByTestId("extension-dock-toggle").click();
+      50 |     await expect(window.getByTestId("extension-dock-body")).toContainText("Marked widget");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\extensions-session-isolation.spec.ts:47:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extensions-session-is-e56a2-coped-to-the-active-session\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extensions-session-is-e56a2-coped-to-the-active-session\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-extensions-session-is-e56a2-coped-to-the-active-session\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  18) apps\desktop\tests\core\integrated-terminal.spec.ts:178:5 › writes an oversized terminal paste in chunks instead of dropping it 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"PI_TERMINAL_RECEIVER_DONE"[39m
+    Received string:    [31m"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ENDMARKER^D "[39m
+    Timeout: 60000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 60000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    5 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ENDMARKER "[22m
+    [2m    58 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m       - unexpected value "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ENDMARKER^D "[22m
+
+
+      234 |     await window.keyboard.press("Control+D");
+      235 |     // The done line prints only after xterm has drawn the echo ahead of it.
+    > 236 |     await expect(terminal.locator(".xterm-rows")).toContainText(receiverDone, { timeout: 60_000 });
+          |                                                   ^
+      237 |     expect(await readFile(payloadPath, "utf8")).toBe(payload);
+      238 |   } finally {
+      239 |     await harness.close();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\integrated-terminal.spec.ts:236:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-integrated-terminal-w-e8093-unks-instead-of-dropping-it\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-integrated-terminal-w-e8093-unks-instead-of-dropping-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-integrated-terminal-w-e8093-unks-instead-of-dropping-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  19) apps\desktop\tests\core\mcp-settings.spec.ts:194:5 › rejects a server Settings cannot run and leaves mcp.json alone 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('settings-surface').getByTestId('mcp-servers-empty')
+    Expected substring: [32m"[7mC:\\Users\\ASUS[27m\\AppData\\Local\\Temp\\pi-gui-user-data-s9rFGM\\agent\\mcp.json"[39m
+    Received string:    [31m"[7mNo MCP servers yet. Servers come from ~[27m\\AppData\\Local\\Temp\\pi-gui-user-data-s9rFGM\\agent\\mcp.json[7m, which pi in the terminal uses too. Connection status and sign-in show in threads: type /mcp.[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('settings-surface').getByTestId('mcp-servers-empty')[22m
+    [2m    7 × locator resolved to <div class="settings-row" data-testid="mcp-servers-empty">…</div>[22m
+    [2m      - unexpected value "No MCP servers yet. Servers come from ~\AppData\Local\Temp\pi-gui-user-data-s9rFGM\agent\mcp.json, which pi in the terminal uses too. Connection status and sign-in show in threads: type /mcp."[22m
+
+
+      210 |     const surface = window.getByTestId("settings-surface");
+      211 |     // The copy names the file this app really uses, here the test's own agent directory.
+    > 212 |     await expect(surface.getByTestId("mcp-servers-empty")).toContainText(mcpPath);
+          |                                                            ^
+      213 |     await expect(surface).toContainText(`Saved to ${mcpPath}.`);
+      214 |     await expect(surface.getByTestId("mcp-servers-empty")).toContainText("/mcp");
+      215 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\mcp-settings.spec.ts:212:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-mcp-settings-rejects--9d48d-n-and-leaves-mcp-json-alone\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-mcp-settings-rejects--9d48d-n-and-leaves-mcp-json-alone\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-mcp-settings-rejects--9d48d-n-and-leaves-mcp-json-alone\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  20) apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.composer__bar').locator('.model-selector__badge').nth(1)
+    Expected: [32m"[7mh[27migh"[39m
+    Received: [31m"[7mH[27migh"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.composer__bar').locator('.model-selector__badge').nth(1)[22m
+    [2m    9 × locator resolved to <button type="button" class="model-selector__badge">High</button>[22m
+    [2m      - unexpected value "High"[22m
+
+
+      50 |     await thinkingBadge.click();
+      51 |     await footer.getByRole("button", { name: new RegExp(`^${nextThinking}`) }).click();
+    > 52 |     await expect(thinkingBadge).toHaveText(nextThinking.toLowerCase());
+         |                                 ^
+      53 |     await expect(composer).toHaveValue(prompt);
+      54 |     await expect(attachment).toHaveCount(1);
+      55 |     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\model-change-keeps-draft.spec.ts:52:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  21) apps\desktop\tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.chat-header__title')
+    Expected: [32m"Manual title wins"[39m
+    Received: [31m"New thread"[39m
+    Timeout:  15000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 15000ms[22m
+    [2m  - waiting for locator('.chat-header__title')[22m
+    [2m    18 × locator resolved to <h1 title="New thread" class="chat-header__title">New thread</h1>[22m
+    [2m       - unexpected value "New thread"[22m
+
+
+      165 |     await composer.press("Enter");
+      166 |
+    > 167 |     await expect(window.locator(".chat-header__title")).toHaveText("Manual title wins", {
+          |                                                         ^
+      168 |       timeout: 15_000,
+      169 |     });
+      170 |     await expect(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\new-thread-auto-title.spec.ts:167:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-new-thread-auto-title-b7bad-a-delayed-auto-title-result\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-new-thread-auto-title-b7bad-a-delayed-auto-title-result\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-new-thread-auto-title-b7bad-a-delayed-auto-title-result\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  22) apps\desktop\tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.chat-header__title')
+    Expected: [32m"Manual title wins"[39m
+    Received: [31m"New thread"[39m
+    Timeout:  15000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 15000ms[22m
+    [2m  - waiting for locator('.chat-header__title')[22m
+    [2m    18 × locator resolved to <h1 title="New thread" class="chat-header__title">New thread</h1>[22m
+    [2m       - unexpected value "New thread"[22m
+
+
+      222 |     await composer.press("Enter");
+      223 |
+    > 224 |     await expect(window.locator(".chat-header__title")).toHaveText("Manual title wins", {
+          |                                                         ^
+      225 |       timeout: 15_000,
+      226 |     });
+      227 |     await expect(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\new-thread-auto-title.spec.ts:224:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-new-thread-auto-title-c0af4-the-run-is-aborted-via-Stop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-new-thread-auto-title-c0af4-the-run-is-aborted-via-Stop\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-new-thread-auto-title-c0af4-the-run-is-aborted-via-Stop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  23) apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [test quit] before-quit
+    Debugger ending on ws://127.0.0.1:57678/37e30427-ae4a-42e1-ae6e-801204b7bc98
+    For help, see: https://nodejs.org/en/docs/inspector
+
+       at helpers\electron-app.ts:359
+
+      357 |         appProcess.kill("SIGKILL");
+      358 |       }
+    > 359 |       throw new Error(
+          |             ^
+      360 |         [
+      361 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      362 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:359:13)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\reopen-state.spec.ts:158:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  24) apps\desktop\tests\core\review-layout.spec.ts:22:5 › Review shows the diff beside a filterable file tree with Staged and Unstaged scopes 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true }).locator('.diff-line--added .diff-line__content')
+    Timeout: 5000ms
+    [32m- Expected  - 5[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "one",[39m
+    [32m-   "two",[39m
+    [32m-   "three",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true }).locator('.diff-line--added .diff-line__content')[22m
+    [2m    8 × locator resolved to 0 elements[22m
+
+
+      67 |     await expect(tree.locator(".diff-panel__file")).toHaveCount(1);
+      68 |     await tree.getByRole("button", { name: "todo.txt", exact: true }).click();
+    > 69 |     await expect(diff.locator(".diff-line--added .diff-line__content")).toHaveText([
+         |                                                                         ^
+      70 |       "one",
+      71 |       "two",
+      72 |       "three",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\review-layout.spec.ts:69:73
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-layout-Review--5f72e--Staged-and-Unstaged-scopes\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-layout-Review--5f72e--Staged-and-Unstaged-scopes\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-layout-Review--5f72e--Staged-and-Unstaged-scopes\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  25) apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('menu', { name: 'Review options', exact: true }).locator('[role="menuitemradio"][data-option-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-user-data-BXUrDk\\worktrees\\review-checkout-root\\wt-b8c7ea"]')[22m
+
+
+       at helpers\electron-app.ts:1836
+
+      1834 | export async function chooseReviewCheckout(window: Page, checkoutId: string): Promise<void> {
+      1835 |   const menu = await openReviewOptions(window);
+    > 1836 |   await menu.locator(`[role="menuitemradio"][data-option-id="${checkoutId}"]`).click();
+           |                                                                                ^
+      1837 | }
+      1838 |
+      1839 | /** The resolved comparison shown at the top of the Review "…" menu; press Escape to close. */
+        at chooseReviewCheckout (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:1836:80)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\review-scopes.spec.ts:291:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  26) apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"source 1999"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      388 |     await lastRow.locator(".diff-panel__file-name").focus();
+      389 |     await window.keyboard.press("Enter");
+    > 390 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      391 |       "source 1999",
+      392 |     );
+      393 |     await expect(lastRow).toBeInViewport();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\review-scopes.spec.ts:390:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  27) apps\desktop\tests\core\secondary-surface-inset.spec.ts:26:5 › Back to app lines up with New thread below the window buttons 
+
+    Error: Settings height
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeCloseTo[2m([22m[32mexpected[39m[2m, [22mprecision[2m)[22m
+
+    Expected: [32m32.66667175292969[39m
+    Received: [31m32[39m
+
+    Expected precision:    0
+    Expected difference: < [32m0.5[39m
+    Received difference:   [31m0.6666717529296875[39m
+
+      46 |       const backToApp = await layoutOf(window, ".secondary-surface__back", "Back to app");
+      47 |       expect.soft(backToApp.top, `${view} top`).toBeCloseTo(newThread.top, 0);
+    > 48 |       expect.soft(backToApp.height, `${view} height`).toBeCloseTo(newThread.height, 0);
+         |                                                       ^
+      49 |       expect.soft(backToApp.labelCenter, `${view} label`).toBeCloseTo(newThread.labelCenter, 0);
+      50 |       await back.click();
+      51 |       await expect(window.locator(".sidebar__new")).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\secondary-surface-inset.spec.ts:48:55
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Skills', exact: true })[22m
+
+
+      40 |
+      41 |     for (const view of ["Settings", "Skills", "Extensions"] as const) {
+    > 42 |       await window.getByRole("button", { name: view, exact: true }).click();
+         |                                                                     ^
+      43 |       const back = window.getByRole("button", { name: "Back to app", exact: true });
+      44 |       await expect(back).toBeVisible();
+      45 |       await window.screenshot({ path: testInfo.outputPath(`${view.toLowerCase()}.png`) });
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\secondary-surface-inset.spec.ts:42:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-secondary-surface-ins-b8bf9-ad-below-the-window-buttons\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: apps\desktop\test-results\core-secondary-surface-ins-b8bf9-ad-below-the-window-buttons\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-secondary-surface-ins-b8bf9-ad-below-the-window-buttons\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-secondary-surface-ins-b8bf9-ad-below-the-window-buttons\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  28) apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m34432[39m
+    Received: [31m26516[39m
+
+      61 |     const [leasePath] = await findLeaseFiles(agentDir);
+      62 |     const firstPid = first.electronApp.process().pid;
+    > 63 |     expect(await leaseHolderPid(leasePath)).toBe(firstPid);
+         |                                             ^
+      64 |
+      65 |     // Once the holder quits its lease is dead, so the thread opens here and
+      66 |     // this process takes the lease over.
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\session-lease.spec.ts:63:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  29) apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  30) apps\desktop\tests\core\settings-general.spec.ts:15:5 › ignores persisted multiple app instance opt-in and hides the setting 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  31) apps\desktop\tests\core\side-panel-picker.spec.ts:11:5 › one icon and keyboard shortcuts toggle the selected workspace tool 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  32) apps\desktop\tests\core\side-panel-tab-shortcuts.spec.ts:16:5 › Control or Alt with 1-9 selects side panel tabs while Cmd or Ctrl keeps switching threads 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  33) apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  34) apps\desktop\tests\core\sidebar-layout.spec.ts:10:5 › folder rows start a new thread in that folder 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  35) apps\desktop\tests\core\sidebar-ordering.spec.ts:13:5 › sidebar thread order is stable after creation and does not flicker 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  36) apps\desktop\tests\core\sidebar-recency.spec.ts:23:5 › caps each time bucket at five and hides workspace headers 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  37) apps\desktop\tests\core\sidebar-toggle.spec.ts:119:5 › toggles and persists the primary sidebar from the button and keyboard shortcut 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  38) apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  39) apps\desktop\tests\core\slash-command-attachments.spec.ts:14:5 › a typed slash command keeps composer attachments across thread switch and restart 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  40) apps\desktop\tests\core\smoke.spec.ts:15:5 › adds a workspace to an empty launched app ───────
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  41) apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (stop: Keep this prompt pending until Stop) 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  42) apps\desktop\tests\core\streaming-publish.spec.ts:114:5 › coalesces token publishes without losing stick-to-bottom or wheel unpin 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  43) apps\desktop\tests\core\terminal-diff-layout.spec.ts:10:5 › Review and Terminal share one side workspace while the composer stays available 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  44) apps\desktop\tests\core\thread-menu.spec.ts:28:5 › right-click thread menu supports rename, archive/restore, mark read, and copy id 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  45) apps\desktop\tests\core\thread-switcher.spec.ts:26:5 › Ctrl-Tab switches threads in most-recently-used order and keeps it across restart 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  46) apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  47) apps\desktop\tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  48) apps\desktop\tests\core\timeline-viewport.spec.ts:16:5 › long messages stay windowed and wheel scrolling preserves the visible row during streaming 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  49) apps\desktop\tests\core\todo-table.spec.ts:152:5 › TodoWrite tool calls render a task checklist table, live and after restart 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  50) apps\desktop\tests\core\tool-output-images.spec.ts:26:5 › shows images a tool returned in its row, not their base64 text 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  51) apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  52) apps\desktop\tests\core\transcript-staleness.spec.ts:17:5 › shows messages appended to the pi session file by an external writer after relaunch 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  53) apps\desktop\tests\core\tree-command.spec.ts:18:5 › opens /tree from the composer, navigates branches, and blocks it on the new-thread surface 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  54) apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  55) apps\desktop\tests\core\unread-state.spec.ts:19:5 › selecting an unread thread persists read state through the latest known activity 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  56) apps\desktop\tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  57) apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:19:5 › bug5 复验：切普通会话再切回画布，主控面板恢复且会话回到标签主控 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  58) apps\desktop\tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 ────────────────────
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  59) apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ──────────
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  60) apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 ───
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  61) apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  62) apps\desktop\tests\core\workflow-tabs.spec.ts:7:5 › 工作流标签重开后保留独立主控，切换和关闭保护修改 ─────────────────
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  63) apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  64) apps\desktop\tests\core\workspace-files.spec.ts:36:5 › Files workbench puts the explorer to the right of an open file pane 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  65) apps\desktop\tests\core\workspace-menu.spec.ts:12:5 › supports workspace rename and remove from the sidebar menu 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  66) apps\desktop\tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  66 failed
+    apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions 
+    apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+    apps\desktop\tests\core\composer-image-limits.spec.ts:269:5 › legacy migration skips oversize-pixel images before the composer map 
+    apps\desktop\tests\core\custom-endpoints.spec.ts:407:5 › custom endpoint dialog supports a long-list keyboard flow with sticky actions 
+    apps\desktop\tests\core\extension-card-actions.spec.ts:86:5 › card buttons run through main: a keyed card updates in place, and non-extension commands are refused 
+    apps\desktop\tests\core\extension-command-compatibility.spec.ts:47:5 › fails fast for unsupported handoff-like commands and learns terminal-only status 
+    apps\desktop\tests\core\extension-dock-reload.spec.ts:44:5 › resets dock expansion on /reload and extension enable or disable transitions 
+    apps\desktop\tests\core\extension-dock-reload.spec.ts:95:5 › refreshes runtime with new extension output and keeps the dock collapsed after rebuild 
+    apps\desktop\tests\core\extension-examples.spec.ts:36:5 › the actual Test Runs example streams real processes, retains closed-tab work and isolates tasks 
+    apps\desktop\tests\core\extension-trace-view.spec.ts:86:5 › the Trace example shows a live waterfall of the reply's model calls and tools with context 
+    apps\desktop\tests\core\extension-usage-view.spec.ts:93:5 › the Usage example totals real pi sessions for the folder and explains what fills context 
+    apps\desktop\tests\core\extension-view-links.spec.ts:65:5 › an extension view opens https links and threads beside its own 
+    apps\desktop\tests\core\extension-view-security.spec.ts:18:5 › custom frontend exchanges Chord state while its opaque frame cannot access preload, parent, network or navigation 
+    apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend 
+    apps\desktop\tests\core\extension-view-security.spec.ts:140:5 › two real windows share one task backend while their frame connections remain isolated 
+    apps\desktop\tests\core\extensions-dialogs.spec.ts:141:5 › renders extension dialogs in the Electron surface and routes responses back to the session 
+    apps\desktop\tests\core\extensions-session-isolation.spec.ts:26:5 › keeps extension widgets, status, and title scoped to the active session 
+    apps\desktop\tests\core\integrated-terminal.spec.ts:178:5 › writes an oversized terminal paste in chunks instead of dropping it 
+    apps\desktop\tests\core\mcp-settings.spec.ts:194:5 › rejects a server Settings cannot run and leaves mcp.json alone 
+    apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments 
+    apps\desktop\tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result 
+    apps\desktop\tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop 
+    apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+    apps\desktop\tests\core\review-layout.spec.ts:22:5 › Review shows the diff beside a filterable file tree with Staged and Unstaged scopes 
+    apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+    apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+    apps\desktop\tests\core\secondary-surface-inset.spec.ts:26:5 › Back to app lines up with New thread below the window buttons 
+    apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+    apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+    apps\desktop\tests\core\settings-general.spec.ts:15:5 › ignores persisted multiple app instance opt-in and hides the setting 
+    apps\desktop\tests\core\side-panel-picker.spec.ts:11:5 › one icon and keyboard shortcuts toggle the selected workspace tool 
+    apps\desktop\tests\core\side-panel-tab-shortcuts.spec.ts:16:5 › Control or Alt with 1-9 selects side panel tabs while Cmd or Ctrl keeps switching threads 
+    apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+    apps\desktop\tests\core\sidebar-layout.spec.ts:10:5 › folder rows start a new thread in that folder 
+    apps\desktop\tests\core\sidebar-ordering.spec.ts:13:5 › sidebar thread order is stable after creation and does not flicker 
+    apps\desktop\tests\core\sidebar-recency.spec.ts:23:5 › caps each time bucket at five and hides workspace headers 
+    apps\desktop\tests\core\sidebar-toggle.spec.ts:119:5 › toggles and persists the primary sidebar from the button and keyboard shortcut 
+    apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+    apps\desktop\tests\core\slash-command-attachments.spec.ts:14:5 › a typed slash command keeps composer attachments across thread switch and restart 
+    apps\desktop\tests\core\smoke.spec.ts:15:5 › adds a workspace to an empty launched app ─────────
+    apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (stop: Keep this prompt pending until Stop) 
+    apps\desktop\tests\core\streaming-publish.spec.ts:114:5 › coalesces token publishes without losing stick-to-bottom or wheel unpin 
+    apps\desktop\tests\core\terminal-diff-layout.spec.ts:10:5 › Review and Terminal share one side workspace while the composer stays available 
+    apps\desktop\tests\core\thread-menu.spec.ts:28:5 › right-click thread menu supports rename, archive/restore, mark read, and copy id 
+    apps\desktop\tests\core\thread-switcher.spec.ts:26:5 › Ctrl-Tab switches threads in most-recently-used order and keeps it across restart 
+    apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+    apps\desktop\tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread 
+    apps\desktop\tests\core\timeline-viewport.spec.ts:16:5 › long messages stay windowed and wheel scrolling preserves the visible row during streaming 
+    apps\desktop\tests\core\todo-table.spec.ts:152:5 › TodoWrite tool calls render a task checklist table, live and after restart 
+    apps\desktop\tests\core\tool-output-images.spec.ts:26:5 › shows images a tool returned in its row, not their base64 text 
+    apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+    apps\desktop\tests\core\transcript-staleness.spec.ts:17:5 › shows messages appended to the pi session file by an external writer after relaunch 
+    apps\desktop\tests\core\tree-command.spec.ts:18:5 › opens /tree from the composer, navigates branches, and blocks it on the new-thread surface 
+    apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+    apps\desktop\tests\core\unread-state.spec.ts:19:5 › selecting an unread thread persists read state through the latest known activity 
+    apps\desktop\tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser 
+    apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:19:5 › bug5 复验：切普通会话再切回画布，主控面板恢复且会话回到标签主控 
+    apps\desktop\tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 ──────────────────────
+    apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ────────────
+    apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 ─────
+    apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） 
+    apps\desktop\tests\core\workflow-tabs.spec.ts:7:5 › 工作流标签重开后保留独立主控，切换和关闭保护修改 ───────────────────
+    apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+    apps\desktop\tests\core\workspace-files.spec.ts:36:5 › Files workbench puts the explorer to the right of an open file pane 
+    apps\desktop\tests\core\workspace-menu.spec.ts:12:5 › supports workspace rename and remove from the sidebar menu 
+    apps\desktop\tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI 
+  9 skipped
+  70 did not run
+  184 passed (1.0h)
+  1 error was not a part of any test, see above for details
+ ELIFECYCLE  Command failed with exit code 1.
+
+[退出码] E2E_CORE_BATCH_EXIT=1（补记：r1 包装进程被宿主回收未及自写；退出码 1 依据本 log 倒数第二行 ELIFECYCLE 原文「Command failed with exit code 1」逐字在案）
