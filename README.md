@@ -5,6 +5,18 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 > 本仓是**开发现场**，不是日常使用现场。正式运行数据（PAO_HOME）在独立目录
 > `D:\AI\workspace\pao`，测试一律使用隔离 PAO_HOME，勿混用。
 
+## 正式使用入口
+
+日常使用不依赖本仓源码与全局 CLI，直接运行桌面发行物：
+
+- 可执行文件：`desktop/apps/desktop/release/win-unpacked/PAO.exe`（exe 由
+  `desktop/` 下 `pnpm run package:win:dir` 打出；需要安装版时改跑
+  `pnpm run package:win` 重打）。
+- 首次设置：在应用设置中将 PAO_HOME 指向 `D:\AI\workspace\pao`（设置经
+  app-store 持久化，无需 shell 环境变量）。
+- 模型凭证：用户级 `~/.pi/agent/auth.json`（zai-coding-cn OAuth），CLI 与
+  桌面共用，随用户目录走、不随仓库分发。
+
 ## 仓库结构
 
 | 目录 | 内容 | 说明文档 |
