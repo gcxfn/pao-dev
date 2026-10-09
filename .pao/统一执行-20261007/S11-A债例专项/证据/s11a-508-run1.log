@@ -1,0 +1,45 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件
+[1A[2K  1) apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件 ────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('canvas-open-master-session')
+    Expected substring: [32m"主控会话[7m已建立[27m"[39m
+    Received string:    [31m"[7m建立[27m主控会话"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-open-master-session')[22m
+    [2m    9 × locator resolved to <button type="button" class="button" data-testid="canvas-open-master-session">建立主控会话</button>[22m
+    [2m      - unexpected value "建立主控会话"[22m
+
+
+      544 |     // 主控会话按标签页绑定（工作流标签契约）：同标签内新建配方复用已建立的主控，
+      545 |     // 按钮保持「已建立＋禁用」，不再按配方重复建立。
+    > 546 |     await expect(page.getByTestId("canvas-open-master-session")).toContainText("主控会话已建立");
+          |                                                                  ^
+      547 |     await expect(page.getByTestId("canvas-open-master-session")).toBeDisabled();
+      548 |     await page
+      549 |       .getByTestId("recipe-canvas-editor")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:546:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────
+EXIT=1

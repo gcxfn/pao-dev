@@ -1,0 +1,28 @@
+S11-D 桌面半 门汇总（2026-10-09，桌面仓 HEAD 20a65cbde4de2391df5de351a15853d4c0fd8509 树净开工）
+
+[tsc 分 config]
+apps/desktop tsconfig.electron.json --noEmit  -> TSC_ELECTRON_EXIT=0（证据/tsc-electron.log）
+apps/desktop tsconfig.json          --noEmit  -> TSC_MAIN_EXIT=0（证据/tsc-main.log）
+
+[定向单文件（playwright 单车道，一次一文件）]
+tests/unit/canvas-node-detail.spec.ts  EXIT=0  16 passed（证据/单测-canvas-node-detail.log）
+tests/unit/canvas.spec.ts              EXIT=0  48 passed（证据/单测-canvas.log）
+tests/unit/workboard.spec.ts           EXIT=0  11 passed（证据/单测-workboard.log）
+tests/unit/workflow-wizard.spec.ts     EXIT=0  29 passed（证据/单测-workflow-wizard.log；gate 形状首跑 1 红已修，红轮同 log 留痕）
+tests/unit/kanban-query.spec.ts        EXIT=0   7 passed（证据/单测-kanban-query.log）
+tests/unit/kanban-ops.spec.ts          EXIT=0   3 passed（证据/单测-kanban-ops.log）
+tests/unit/flow-control-query.spec.ts  EXIT=0   8 passed（证据/单测-flow-control-query.log）
+
+[隔离口径复验（临时 PAO_HOME=mktemp＋PI_OFFLINE=1＋PI_NO_LOCAL_LLM=1，跑完即删）]
+tests/unit/workboard.spec.ts           EXIT=0  11 passed（证据/单测-workboard-隔离口径.log）
+tests/unit/workflow-wizard.spec.ts     EXIT=0  29 passed（证据/单测-workflow-wizard-隔离口径.log）
+
+[足迹检查]
+eslint 改动 8 文件：4 错＝canvas-query.ts:634/637 PaoDesktopCard frontmatter 宽型，
+HEAD 对照同报（证据/eslint-HEAD对照.log）→ 非本批引入，批次未触碰该段。
+prettier：bridge-common/kanban-query 两处自有漂移 --write 修净（LF 归一复验 DIFF=0）；
+workboard-query/workflow-wizard-bridge 的 collectSection/editing 长行为 HEAD 既有欠账未动；
+工作树 CRLF 全量红＝盘点§六 autocrlf 另案，本批不碰。
+
+[内存纪律]
+跑前查 FreePhysicalMemory：开工 8.0GB、测试前 5.9GB，均高于 3GB 门槛；全程单文件串跑。

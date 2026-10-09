@@ -1,0 +1,49 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart
+[1A[2K  1) apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-11AUHF\\collapse-alpha"]').locator('.session-row__title')
+    Timeout: 5000ms
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "Alpha planning",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-11AUHF\\collapse-alpha"]').locator('.session-row__title')[22m
+    [2m    9 × locator resolved to 0 elements[22m
+
+
+      33 |     const group = window.locator(`.workspace-group[data-workspace-id="${workspaceId}"]`);
+      34 |     const folderRow = group.locator(".workspace-row__select");
+    > 35 |     await expect(group.locator(".session-row__title")).toHaveText(["Alpha planning"]);
+         |                                                        ^
+      36 |     await expect(folderRow).toHaveAttribute("aria-expanded", "true");
+      37 |     const selectedBefore = (await getDesktopState(window)).selectedSessionId;
+      38 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:35:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+REPRO 01-sidebar-folder-collapse EXIT=1
