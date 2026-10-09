@@ -1,0 +1,33 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 apps\desktop\tests\unit\timeline-turn-changes.spec.ts:38:5 › each turn's card follows that turn's last rows and precedes the next prompt (3ms)
+  x  2 apps\desktop\tests\unit\timeline-turn-changes.spec.ts:71:5 › tree summaries report per-file line counts, renames and binary files (113ms)
+  ok 3 apps\desktop\tests\unit\timeline-turn-changes.spec.ts:94:5 › a turn's card stays above an extension message posted after it (3ms)
+  ok 4 apps\desktop\tests\unit\timeline-turn-changes.spec.ts:112:5 › an extension card after a turn keeps the turn's changes above it (1ms)
+
+
+  1) apps\desktop\tests\unit\timeline-turn-changes.spec.ts:71:5 › tree summaries report per-file line counts, renames and binary files 
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pi-gui-turn-summary-klELP4\tab	name.txt'
+
+      81 |   await rename(join(repo, "moved.txt"), join(repo, "renamed.txt"));
+      82 |   await writeFile(join(repo, "image.bin"), Buffer.from([0, 1, 2, 0]));
+    > 83 |   await writeFile(join(repo, "tab\tname.txt"), "x\n");
+         |   ^
+      84 |   await git("add", "-A");
+      85 |   const after = (await git("write-tree")).stdout.trim();
+      86 |   expect(await summarizeGitTreeChanges(repo, before, after)).toEqual([
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\timeline-turn-changes.spec.ts:83:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-timeline-turn-changes-b73fd-ts-renames-and-binary-files\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-timeline-turn-changes-b73fd-ts-renames-and-binary-files\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\timeline-turn-changes.spec.ts:71:5 › tree summaries report per-file line counts, renames and binary files 
+  3 passed (1.7s)

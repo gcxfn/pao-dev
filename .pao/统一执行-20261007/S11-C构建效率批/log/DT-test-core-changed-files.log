@@ -1,0 +1,44 @@
+
+> @pi-gui/desktop@1.0.1 test:core:changed-files D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm build:if-stale && cross-env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/changed-files.spec.ts
+
+
+> @pi-gui/desktop@1.0.1 build:if-stale D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/build-if-stale.mjs
+
+[build-if-stale] up-to-date, skipping build
+
+Running 2 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions (216ms)
+  ok 2 apps\desktop\tests\core\changed-files.spec.ts:77:5 › shows Git status as unavailable without losing reviewed files (18.4s)
+
+
+  1) apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions 
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-8jnTwL\changed-file-path\ leading	"quoted" -> destination
+    .txt '
+
+      25 |   await initGitRepo(workspacePath);
+      26 |   await commitAllInGitRepo(workspacePath, "init");
+    > 27 |   await writeFile(join(workspacePath, filePath), "exact path contents\n", "utf8");
+         |   ^
+      28 |   await writeFile(join(workspacePath, displayCollisionPath), "distinct path contents\n", "utf8");
+      29 |
+      30 |   const harness = await launchDesktop(userDataDir, {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\changed-files.spec.ts:27:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-changed-files-preserv-b98e9-ough-diff-and-stage-actions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-changed-files-preserv-b98e9-ough-diff-and-stage-actions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\changed-files.spec.ts:19:5 › preserves an exact changed-file path through diff and stage actions 
+  1 passed (20.2s)
+D:\AI\workspace\pao-dev\desktop\apps\desktop:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @pi-gui/desktop@1.0.1 test:core:changed-files: `pnpm build:if-stale && cross-env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/changed-files.spec.ts`
+Exit status 1
