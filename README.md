@@ -12,8 +12,7 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 - 可执行文件：`desktop/apps/desktop/release/win-unpacked/PAO.exe`（exe 由
   `desktop/` 下 `pnpm run package:win:dir` 打出；需要安装版时改跑
   `pnpm run package:win` 重打）。
-- 首次设置：在应用设置中将 PAO_HOME 指向 `D:\AI\workspace\pao`（设置经
-  app-store 持久化，无需 shell 环境变量）。
+- 新安装默认数据目录和覆盖优先级见[架构 §27.3](plans/v2-ARCHITECTURE.md#273-内核--cli--桌面宿主关系2026-10-05-用户定案2026-10-06-已实施)。本机现有现场截至 2026-10-20 仍为 `D:\AI\workspace\pao`，已保存设置继续生效，本轮不迁移正式数据。
 - 模型凭证：用户级 `~/.pi/agent/auth.json`（zai-coding-cn OAuth），CLI 与
   桌面共用，随用户目录走、不随仓库分发。
 
@@ -24,15 +23,15 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 | `PAO/` | pi fork 与 PAO 内核（独立 Git 仓） | `PAO/AGENTS.md` |
 | `desktop/` | 内嵌内核的桌面应用 pi-gui（独立 Git 仓，monorepo） | `desktop/AGENTS.md`、`desktop/CONTRIBUTING.md` |
 | `plans/` | 需求、架构与实施计划正本 | `plans/v2-ARCHITECTURE.md`、`plans/v2-REQUIREMENTS.md` |
-| `.pao/` | 任务卡、运行留档与验收产物 | `.pao/整体重构-20261005/`（当前重构总册） |
+| `.pao/` | 任务卡、运行留档与验收产物 | 按目录名日期取最新一批（当前最新为 `harness完善-20261017/`）；**批次进度看该目录 `执行记录.md` 的「批次 X」小节，计划 §10 状态表是正本** |
 | `AGENTS.md` | 本仓执行约束（规则正本，先读再改） | — |
 
 内核负责会话与业务能力；CLI 与桌面是平级宿主，只负责装配入口、终端/窗口交互与生命周期。桌面发行物内嵌内核，不依赖全局 CLI，也不依赖本仓绝对路径。
 
 ## 首次开发
 
-前置：Node 20+ 与 pnpm（corepack）。两个子仓各自独立安装依赖（以下 install 命令为各仓标准入口，
-本轮未实际执行验证；desktop 侧依赖细节见 `desktop/CONTRIBUTING.md`）：
+前置：Node 22.19.0+ 与 pnpm（corepack）。PAO 内核要求 Node 22.19.0 或更高版本；使用同一版本可以避免桌面打包和内核检查时出现环境差异。两个子仓各自独立安装依赖（以下 install 命令为各仓标准入口，
+2026-10-06 未实际执行验证；desktop 侧依赖细节见 `desktop/CONTRIBUTING.md`）：
 
 ```bash
 pnpm --dir PAO install
@@ -41,7 +40,7 @@ pnpm --dir desktop install
 
 ## 开发与检查命令
 
-以下命令均为本仓实际使用的检查入口（标注「已验证」的命令于 2026-10-06 在迁移后的目录上实际执行通过）：
+以下命令均为本仓实际使用的检查入口（最近一次复核 2026-10-17，复核范围见 `.pao/harness完善-20261017/` 各批交付记录；标「已验证」的命令曾在该复核日或注明日期实际执行通过）：
 
 ```bash
 # PAO 内核（cwd 任意，命令内已含路径）
@@ -56,14 +55,37 @@ pnpm --dir apps/desktop run typecheck          # renderer + electron 类型门�
 pnpm --dir apps/desktop run build              # 完整应用构建（2026-10-06 迁移后已验证，exit 0）
 pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts \
   apps/desktop/tests/unit/<spec>               # 单元抽样（已验证，8/8 过）
-pnpm test                                      # 真实 Electron core 车道（重，按需）
+pnpm test:baseline                             # 桌面基线检查（不启动真实 Electron）
+pnpm e2e                                       # 真实 Electron core 车道：会真的弹出 Electron 窗口（重，按需）
 ```
+
+`pnpm e2e` 会启动真实窗口。无人值守、不希望弹窗，或只是验证代码没坏时，改跑 `pnpm test:baseline`（纯 Node 与单元层，不启窗口）；代价是失去真窗口内的证据，这类缺口须在对应批次留档里如实登记为未验。
 
 PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临时目录> PI_OFFLINE=1 PI_NO_LOCAL_LLM=1`。
 
 ## 文档导航
 
+### Harness 完善与工作台迭代（2026-10-17 起）
+
+| 要查什么 | 入口 |
+|---|---|
+| 任务安排与当前状态 | [执行计划 §10](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#10-分批实施与依赖) |
+| 右上悬浮框、独立侧栏与辅助对话 | [归档任务书](plans/已完成/2026-10-19-右上悬浮框与独立侧栏任务书.md)、[交付报告](.pao/harness完善-20261017/悬浮框与独立侧栏-20261019/交付报告.md)；状态仍看执行计划 §10 |
+| 实施经过与验证证据 | [执行记录](.pao/harness完善-20261017/执行记录.md) |
+| 10 月 20 日摩擦修复验收 | [本轮记录](.pao/摩擦修复-20261020/实施与验收记录.md)；任务状态看执行计划 §10.7 |
+| 验收覆盖与未验项 | [T01–T25 覆盖表](.pao/harness完善-20261017/F批-全链离线验证/T01-T25-覆盖表.md) |
+| 打包后的应用验证 | [发行验证总报告](.pao/harness完善-20261017/H批-解包发行验证/T24-解包发行总报告.md) |
+| 关键遗留与后续处理 | [本轮续办任务](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#101-2026-10-18-续办任务) |
+| 下一会话接手入口 | [交接文档](.pao/harness完善-20261017/交接-新会话-20261018.md) |
+
+批次状态只在执行计划 §10 维护；各报告保留对应运行轮次的事实与限制，不把旧结果当成最新验证。
+
+### 其他项目文档
+
+- 运维、删除预演与人工交付：[操作说明](PAO/packages/coding-agent/docs/pao-operations.md)。
+- 主控与部长后台交接、15/30分钟监督配置：[分层监督说明](PAO/docs/pao-supervision.md)。
 - 执行约束：`AGENTS.md`（本仓）、`PAO/AGENTS.md`、`desktop/AGENTS.md`。
-- 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界）、`plans/v2-REQUIREMENTS.md`。
+- 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界、§28 部门目录与唯一受理入口、§29 上下文恢复与总预算门禁）、`plans/v2-REQUIREMENTS.md`。
 - 整体重构（2026-10-06 完成）：计划归档 `plans/已完成/2026-10-05-整体模块化重构总计划.md`，执行留档与交付结论在 `.pao/整体重构-20261005/`。
 - 内核模块清单与上游差异归因：`.pao/整体重构-20261005/现状与基线.md`。
+- 通用工作台与内核可靠性（2026-10-14 起）：计划 `plans/未完成/2026-10-14-通用工作台与内核可靠性实施总计划.md`，执行证据与验收结论在 `.pao/通用工作台实施-20261014/`（`验收/阶段1…阶段7` 七份，`基线/` 四份）。工作流的默认界面是**步骤卡工作台**（`desktop/apps/desktop/src/features/workflow-cards/`），画布已冻结在 `desktop/archive/canvas-frozen-20261014/`。
