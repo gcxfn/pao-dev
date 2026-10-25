@@ -74,6 +74,12 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 分别维护公共契约和实际控制逻辑。逐轮的`r*-prepare/launch/start`脚本及`*-runtime-snapshot/`
 属于历史留档，不能作为新轮维护入口，也不能为更新入口而修改历史冻结件。
 
+零模型最终装配检查为该目录的`test_final_assembly.py`：显式提供
+`PAO_FINAL_ASSEMBLY_SOURCES`（prepare来源清单）和`PAO_HARBOR_PYTHON`（已有Linux Harbor解释器），
+然后执行`python -m unittest -v test_final_assembly`。缺少前置会明确跳过，跳过不能算验收通过。
+测试依赖已有`bwrap`和`setpriv`；Windows经WSL以root启动安装测试进程，在本轮挂载目录内
+实际切换root/agent身份，不修改宿主账户或网络设置。系统依赖安装明确模拟，不证明实际OS隔离或模型流程成功。
+
 ## 文档导航
 
 ### Harness 完善与工作台迭代（2026-10-17 起）
