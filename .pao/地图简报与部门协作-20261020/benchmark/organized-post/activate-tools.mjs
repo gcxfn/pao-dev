@@ -5,6 +5,7 @@ const minister = [
   'pao_minister_save_node_map',
   'pao_minister_submit_cards',
   'pao_minister_review_worker',
+  'pao_minister_rework_cards',
   'pao_breakdown_done',
   'pao_submit_decision',
   'pao_request_ruling',

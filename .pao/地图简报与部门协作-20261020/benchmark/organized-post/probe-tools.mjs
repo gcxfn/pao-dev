@@ -34,7 +34,8 @@ const runtime = await createAgentSessionRuntime(async ({ sessionManager, session
 try {
   await runtime.session.bindExtensions({ mode: 'json', onError: (error) => { throw new Error(JSON.stringify(error)); } });
   const active = runtime.session.getActiveToolNames();
-  const required = role === 'minister' ? ['pao_minister_submit_cards', 'pao_breakdown_done', 'pao_submit_decision']
+  const required = role === 'minister'
+    ? ['pao_minister_submit_cards', 'pao_minister_rework_cards', 'pao_breakdown_done', 'pao_submit_decision']
     : role === 'worker' ? ['read', 'bash', 'edit', 'write'] : ['pao_start_flow', 'pao_query_flow', 'pao_push_flow'];
   assert(required.every((name) => active.includes(name)), JSON.stringify({ role, active, required }));
   if (role === 'worker') assert(!active.includes('pao_start_flow') && !active.includes('pao_minister_submit_cards'));

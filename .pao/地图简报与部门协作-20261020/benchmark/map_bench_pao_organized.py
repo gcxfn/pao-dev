@@ -36,7 +36,8 @@ class OrganizedPAOAgent(PAOAgent):
         result = await self.exec_as_agent(environment, command=(
             '"$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/setup.mjs '
             + shlex.quote(self._REMOTE_SOURCE_DIR)
-            + ' /tmp/benchmark-organization/kit.json /tmp/harbor-pao-home /tmp/harbor-pi-agent /logs/agent/organization'))
+            + ' /tmp/benchmark-organization/kit.json /tmp/harbor-pao-home /tmp/harbor-pi-agent '
+            + '/logs/agent/organization /app /tmp/benchmark-model-binding.json'))
         if result.return_code != 0:
             raise RuntimeError('组织初始化失败，不启动模型：' + str(result.return_code))
 
