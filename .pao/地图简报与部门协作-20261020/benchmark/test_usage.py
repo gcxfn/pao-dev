@@ -26,19 +26,77 @@ class UsageTest(unittest.TestCase):
 
     def file(self, name, session, events):
         path = Path(self.temp.name) / name
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('\n'.join(json.dumps(e) for e in [{'type': 'session', 'id': session}, *events]), encoding='utf-8')
         return path
 
     def test_all_roles_and_copied_files_deduplicate(self):
-        roles = ['主控', '侦察', '规划', '部门', 'worker', '审核', '重试']
-        files = [self.file(f'{i}.jsonl', role, [assistant('same-entry-id')]) for i, role in enumerate(roles)]
-        files.append(self.file('renamed-copy.jsonl', 'worker', [assistant('same-entry-id')]))
+        files = [
+            self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-entry')]),
+            self.file('worker-sessions/部长会话/one/minister.jsonl', 'minister',
+                      [assistant('minister-entry')]),
+            self.file('worker-sessions/worker会话/worker.jsonl', 'worker', [assistant('worker-entry')]),
+            self.file('worker-sessions/worker会话/worker-copy.jsonl', 'worker',
+                      [assistant('worker-entry')]),
+        ]
         result = aggregate(files)
-        self.assertEqual(result['events'], len(roles))
-        self.assertEqual(result['input'], 13 * len(roles))
-        self.assertEqual(result['cache_write'], len(roles))
-        self.assertAlmostEqual(result['cost'], .7)
+        self.assertEqual(result['events'], 3)
+        self.assertEqual(result['input'], 13 * 3)
+        self.assertEqual(result['cache_write'], 3)
+        self.assertEqual(result['cost_status'], 'unknown')
+        self.assertEqual(result['role_session_counts'], {'main': 1, 'minister': 1, 'worker': 1, 'other': 0})
         self.assertTrue(result['complete'])
+
+    def test_same_session_in_incompatible_role_paths_is_an_error(self):
+        result = aggregate([
+            self.file('worker-sessions/部长会话/one/session.jsonl', 'shared', [assistant('event')]),
+            self.file('worker-sessions/worker会话/session.jsonl', 'shared', [assistant('event')]),
+        ])
+        self.assertTrue(any('多个角色路径' in error for error in result['errors']))
+        self.assertFalse(result['complete'])
+
+    def test_paths_separate_roles_and_archive_copy_does_not_count_as_new_session(self):
+        current = self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-event')])
+        minister = self.file('worker-sessions/部长会话/minister/minister.jsonl', 'minister',
+                              [assistant('minister-event')])
+        worker = self.file('worker-sessions/worker会话/worker.jsonl', 'worker',
+                           [assistant('worker-event')])
+        copied = self.file('worker-sessions/worker.jsonl', 'worker', [assistant('worker-event')])
+        result = aggregate([current, minister, worker, copied])
+        self.assertEqual(result['role_session_counts'], {'main': 1, 'minister': 1, 'worker': 1, 'other': 0})
+        self.assertEqual(result['events'], 3)
+        self.assertEqual(result['input'], 39)
+
+    def test_explicit_missing_usage_status_is_observed_usage_event(self):
+        events = [
+            {'type': 'custom', 'id': 'same', 'customType': 'pao-native-usage-status',
+             'data': {'usageReported': False}},
+            {'type': 'custom', 'id': 'different', 'customType': 'pao-native-usage-status',
+             'data': {'usageReported': False}},
+        ]
+        result = aggregate([self.file('status.jsonl', 'status', events)])
+        self.assertEqual(result['events'], 2)
+        self.assertNotIn('request_events', result)
+        self.assertFalse(result['complete'])
+
+    def test_unknown_role_uses_its_own_session_identity(self):
+        result = aggregate([
+            self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-event')]),
+            self.file('unknown-layout/other.jsonl', 'other', [assistant('other-event')]),
+        ])
+        self.assertEqual(
+            result['role_session_counts'],
+            {'main': 1, 'minister': 0, 'worker': 0, 'other': 1},
+        )
+
+    def test_unknown_sessions_directory_is_not_guessed_as_main(self):
+        result = aggregate([
+            self.file('archive/sessions/unknown.jsonl', 'unknown', [assistant('entry')]),
+        ])
+        self.assertEqual(
+            result['role_session_counts'],
+            {'main': 0, 'minister': 0, 'worker': 0, 'other': 1},
+        )
 
     def test_parent_receipt_is_not_added_to_child_again(self):
         receipt = {'type': 'message', 'id': 'receipt', 'message': {'role': 'toolResult', 'content': [{'text': '模拟 worker 汇总', 'usage': usage()}]}}
@@ -59,7 +117,6 @@ class UsageTest(unittest.TestCase):
         ]
         result = aggregate([self.file('summary-without-usage.jsonl', 's', events)])
         self.assertEqual(result['events'], 1)
-        self.assertEqual(result['unknown_cost'], 0)
         self.assertEqual(result['unknown_tokens'], 0)
         self.assertTrue(result['complete'])
 
@@ -67,7 +124,6 @@ class UsageTest(unittest.TestCase):
         events = [{'type': 'usage', 'id': 'independent-usage', 'kind': 'cache_warm'}]
         result = aggregate([self.file('usage-without-usage.jsonl', 's', events)])
         self.assertEqual(result['events'], 0)
-        self.assertEqual(result['unknown_cost'], 0)
         self.assertEqual(result['unknown_tokens'], 0)
         self.assertTrue(result['complete'])
 
@@ -75,15 +131,16 @@ class UsageTest(unittest.TestCase):
         events = [assistant('missing', {}), {'type': 'custom', 'id': 'unknown', 'customType': 'pao-native-usage-status', 'data': {'usageReported': False}},
                   {'type': 'custom', 'id': 'unknown-pre', 'customType': 'pao-precompaction-usage-status', 'data': {'status': '请求未返回用量'}}]
         result = aggregate([self.file('missing.jsonl', 's', events)])
-        self.assertEqual(result['unknown_cost'], 3)
         self.assertEqual(result['unknown_tokens'], 3)
         self.assertFalse(result['complete'])
 
-    def test_missing_cost_boolean_and_nan_are_not_free(self):
-        events = [assistant(str(i), {**usage(), 'cost': value}) for i, value in enumerate([None, True, float('nan')])]
+    def test_zero_or_missing_cost_never_claims_cost_known(self):
+        events = [assistant(str(i), {**usage(), 'cost': value}) for i, value in enumerate(
+            [{'total': 0}, None, True, float('nan')])]
         result = aggregate([self.file('cost.jsonl', 's', events)])
-        self.assertEqual(result['unknown_cost'], 3)
-        self.assertFalse(result['complete'])
+        self.assertEqual(result['cost_status'], 'unknown')
+        self.assertIn('不视为免费', result['cost_source'])
+        self.assertTrue(result['complete'])
 
     def test_conflicting_duplicate_cannot_claim_complete(self):
         a = self.file('a.jsonl', 's', [assistant('same')])

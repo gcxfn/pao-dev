@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shlex
 from pathlib import Path
 from typing import Literal, override
 
-from pydantic import Field, model_validator
+import yaml
+from pydantic import Field, SecretStr, model_validator
 
 from harbor.agents.installed.base import with_prompt_template
 from harbor.agents.installed.pi import Pi, PiOptions
 from harbor.environments.base import BaseEnvironment
 from harbor.models.agent.context import AgentContext, ModelUsage
-from .usage import aggregate_session_usage
+from .usage import aggregate_session_usage, classify_session_file
 
 
 class PAOOptions(PiOptions):
@@ -32,6 +34,10 @@ class PAOOptions(PiOptions):
     archive_format: Literal["zip", "tar.gz"] = "tar.gz"
     model_data_archive: str | None = None
     model_data_sha256: str | None = Field(default=None, pattern=r'^[0-9a-f]{64}$')
+    node_archive: str = Field(description="宿主本地的 Node Linux x64 归档绝对路径。")
+    node_sha256: str = Field(pattern=r"^[0-9a-f]{64}$", description="Node 归档 SHA-256。")
+    system_dependencies_archive: str | None = None
+    system_dependencies_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     no_extensions: bool = Field(
         default=False,
         description="三组均为 false；single 在 SDK 中只不注册 PAO 工厂。",
@@ -45,6 +51,19 @@ class PAOOptions(PiOptions):
         min_length=1,
         description="容器内的固定源码构建命令。",
     )
+    configuration_root: str | None = Field(
+        default=None,
+        description="冻结运行目录的容器路径；只用于读取同目录的角色模型绑定。",
+    )
+    model_metadata_path: str | None = Field(
+        default=None,
+        description="可信模型元数据文件的本机绝对路径。",
+    )
+    model_metadata_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        description="可信模型元数据文件的 SHA-256。",
+    )
 
     @model_validator(mode="after")
     def validate_profile_boundary(self):
@@ -54,6 +73,10 @@ class PAOOptions(PiOptions):
             raise ValueError("overlay 路径和摘要必须同时提供。")
         if bool(self.model_data_archive) != bool(self.model_data_sha256):
             raise ValueError('模型构建数据路径和摘要必须同时提供。')
+        if bool(self.system_dependencies_archive) != bool(self.system_dependencies_sha256):
+            raise ValueError('离线系统依赖归档路径和摘要必须同时提供。')
+        if bool(self.model_metadata_path) != bool(self.model_metadata_sha256):
+            raise ValueError("模型元数据路径和摘要必须同时提供。")
         if self.profile == "pre-pao" and (self.archive_format != "zip" or not self.source_overlay_archive):
             raise ValueError("pre-pao 必须使用主验的 tracked+untracked 两份 ZIP。")
         if not self.tools:
@@ -86,6 +109,41 @@ class PAOAgent(Pi):
     def name() -> str:
         return "pao"
 
+    def _configured_model_binding(self) -> tuple[str, dict[str, str]]:
+        """区分外部选定模型与本次自定义端点的实际运行别名。"""
+        if not self.options.configuration_root:
+            selected_model_name = self.model_name
+            provider, model_id = self._parse_model_name(selected_model_name)
+            runtime_model_name = selected_model_name
+        else:
+            binding_path = (
+                Path(self.options.configuration_root) / "role-model-binding.json"
+            )
+            if not binding_path.is_file():
+                raise FileNotFoundError("缺少角色模型绑定：" + str(binding_path))
+            binding = json.loads(binding_path.read_text(encoding="utf-8"))
+            selected_model_name = binding.get("selected_model_name")
+            provider = binding.get("provider")
+            model_id = binding.get("model")
+            if not isinstance(selected_model_name, str) or not isinstance(provider, str) or not isinstance(model_id, str):
+                raise ValueError("角色模型绑定缺少完整模型身份")
+            runtime_model_name = provider + "/" + model_id
+        expected = {
+            "model_name": runtime_model_name,
+            "selected_model_name": selected_model_name,
+            "provider": provider,
+            "model": model_id,
+            "thinking": self.options.thinking,
+        }
+        if self.options.configuration_root:
+            if binding != expected:
+                raise ValueError("角色模型绑定与选定模型不一致")
+            if self.model_name != runtime_model_name:
+                raise ValueError("运行模型别名与角色模型绑定不一致")
+        if self._parse_model_name(selected_model_name)[1] != model_id:
+            raise ValueError("外部选定模型与运行 model id 不一致")
+        return selected_model_name, expected
+
     @override
     async def install(self, environment: BaseEnvironment) -> None:
         if self.options.source_sha256 == "pending":
@@ -93,10 +151,33 @@ class PAOAgent(Pi):
         archive = Path(self.options.source_archive).expanduser().resolve()
         if not archive.is_file():
             raise FileNotFoundError(f"PAO 源码归档不存在：{archive}")
+        node_archive = Path(self.options.node_archive).expanduser().resolve()
+        if not node_archive.is_file():
+            raise FileNotFoundError(f"Node 归档不存在：{node_archive}")
+        if hashlib.sha256(node_archive.read_bytes()).hexdigest() != self.options.node_sha256:
+            raise ValueError("Node 归档摘要与本机冻结值不符")
 
-        await self.ensure_system_dependencies(
-            environment, ("bash", "coreutils", "curl", "tar", "unzip", "xz")
-        )
+        await self.exec_as_agent(environment, command="python3 -c 'import zipfile, tarfile, lzma'")
+        if self.options.system_dependencies_archive:
+            dependencies = Path(self.options.system_dependencies_archive).expanduser().resolve()
+            if hashlib.sha256(dependencies.read_bytes()).hexdigest() != self.options.system_dependencies_sha256:
+                raise ValueError('离线系统依赖归档摘要不符')
+            await environment.upload_file(dependencies, '/tmp/pao-system-dependencies.zip')
+            await self.exec_as_root(environment, command=(
+                'set -euo pipefail; '
+                f"printf '%s  %s\\n' {self.options.system_dependencies_sha256} /tmp/pao-system-dependencies.zip | sha256sum -c -; "
+                'python3 -m zipfile -e /tmp/pao-system-dependencies.zip /tmp/pao-system-dependencies; '
+                'dpkg --install /tmp/pao-system-dependencies/*.deb'
+            ))
+        await self.ensure_system_dependencies(environment, ("bash", "coreutils", "tar", "python3", "git"))
+        await self.exec_as_agent(environment, command=(
+            'python3 -c ' + shlex.quote(
+                "import json,pathlib,subprocess; "
+                "data={name:subprocess.check_output([name,'--version'],text=True).strip() "
+                "for name in ('git','python3')}; "
+                "pathlib.Path('/tmp/benchmark-prerequisites.json').write_text(json.dumps(data))"
+            )
+        ))
         await environment.upload_file(archive, self._REMOTE_SOURCE_ARCHIVE)
         await self.exec_as_agent(
             environment,
@@ -105,7 +186,7 @@ class PAOAgent(Pi):
                 f"printf '%s  %s\\n' {shlex.quote(self.options.source_sha256)} "
                 f"{shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} | sha256sum -c -; "
                 f"mkdir -p {shlex.quote(self._REMOTE_SOURCE_DIR)}; "
-                + (f"unzip -q {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} -d {shlex.quote(self._REMOTE_SOURCE_DIR)}"
+                + (f"python3 -m zipfile -e {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} {shlex.quote(self._REMOTE_SOURCE_DIR)}"
                    if self.options.archive_format == "zip" else
                    f"tar -xzf {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} -C {shlex.quote(self._REMOTE_SOURCE_DIR)} --strip-components=1")
             ),
@@ -119,7 +200,7 @@ class PAOAgent(Pi):
             await self.exec_as_agent(environment, command=(
                 "set -euo pipefail; "
                 f"printf '%s  %s\\n' {shlex.quote(self.options.source_overlay_sha256)} {remote_overlay} | sha256sum -c -; "
-                f"unzip -qo {remote_overlay} -d {self._REMOTE_SOURCE_DIR}"
+                f"python3 -m zipfile -e {remote_overlay} {self._REMOTE_SOURCE_DIR}"
             ))
         if not self.options.model_data_archive:
             raise ValueError('缺少冻结的离线模型构建数据，禁止联网重新生成源码。')
@@ -130,25 +211,10 @@ class PAOAgent(Pi):
         await self.exec_as_agent(environment, command=(
             'set -euo pipefail; '
             f"printf '%s  %s\\n' {self.options.model_data_sha256} /tmp/harbor-model-data.zip | sha256sum -c -; "
-            f'unzip -qo /tmp/harbor-model-data.zip -d {self._REMOTE_SOURCE_DIR}'
+            f'python3 -m zipfile -e /tmp/harbor-model-data.zip {self._REMOTE_SOURCE_DIR}'
         ))
-        node_install = (
-            "set -euo pipefail; "
-            "NODE_VERSION=v24.18.0; "
-            "NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; "
-            "NODE_DIR=$HOME/.local/pao-node; "
-            "if [ ! -x \"$NODE_DIR/bin/node\" ]; then "
-            "mkdir -p \"$HOME/.local\"; "
-            "curl -fsSLo /tmp/pao-node.tar.xz "
-            "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; "
-            "printf '%s  %s\\n' \"$NODE_SHA256\" /tmp/pao-node.tar.xz | sha256sum -c -; "
-            "mkdir -p \"$NODE_DIR\"; "
-            "tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C \"$NODE_DIR\"; "
-            "fi; "
-            'export PATH="$NODE_DIR/bin:$PATH"; '
-            "\"$NODE_DIR/bin/node\" --version; \"$NODE_DIR/bin/npm\" --version"
-        )
-        await self.exec_as_agent(environment, command=node_install)
+        await environment.upload_file(node_archive, "/tmp/pao-node.tar.xz")
+        await self.exec_as_agent(environment, command=self._node_install_command(self.options.node_sha256))
         await self.exec_as_agent(
             environment,
             command=(
@@ -184,6 +250,22 @@ class PAOAgent(Pi):
                 f"chmod 755 {self._REMOTE_LAUNCHER}"
             ),
         )
+        if self.options.model_metadata_path and self.options.model_metadata_sha256:
+            metadata_path = Path(self.options.model_metadata_path).expanduser().resolve()
+            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
+                raise ValueError("可信模型元数据摘要不符")
+            selected_model_name, binding = self._configured_model_binding()
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))["models"].get(selected_model_name)
+            if not isinstance(metadata, dict):
+                raise ValueError("可信模型元数据没有完整选定模型：" + selected_model_name)
+            if metadata.get("id") != binding["model"]:
+                raise ValueError("可信模型元数据的 id 与选定模型不一致")
+            await self._upload_config_text(
+                environment,
+                content=json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n",
+                remote_path="/tmp/benchmark-model-binding.json",
+                filename="benchmark-model-binding.json",
+            )
 
     @override
     @with_prompt_template
@@ -197,20 +279,33 @@ class PAOAgent(Pi):
             raise ValueError("尚未固定实际模型；禁止运行占位符。")
         if self._resume or self.mcp_servers or self.options.max_turns is not None:
             raise ValueError("本次固定单题配置不支持 resume/MCP/max_turns 扩展。")
-        provider, model_id = self._parse_model_name(self.model_name)
+        selected_model_name, binding = self._configured_model_binding()
+        provider, model_id = self._parse_model_name(selected_model_name)
         access = self.model_connection
         provider = access.provider or provider
         models_json = self._build_custom_models_json(access, model_id)
         if models_json is not None:
-            # 本机已登记的 DeepSeek 组元数据；避免 Harbor 的通用默认窗口截短同一模型。
             custom = models_json['providers']['harbor-endpoint']
             custom['compat'] = {'sendSessionAffinityHeaders': True}
-            custom['models'][0].update(contextWindow=1048576, maxTokens=384000,
-                                        input=['text', 'image'], thinkingLevelMap={'high': 'high'})
+            metadata_path = Path(self.options.model_metadata_path or "").expanduser().resolve()
+            if not self.options.model_metadata_sha256:
+                raise ValueError("自定义端点缺少可信模型元数据")
+            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
+                raise ValueError("可信模型元数据摘要不符")
+            metadata_root = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata = metadata_root["models"][selected_model_name]
+            if metadata["id"] != binding["model"]:
+                raise ValueError("可信模型元数据的 id 与选定模型不一致")
+            custom['models'][0].update(
+                contextWindow=metadata["contextWindow"],
+                maxTokens=metadata["maxTokens"],
+                input=metadata["input"],
+                thinkingLevelMap=metadata["thinkingLevelMap"],
+            )
             await self._write_custom_models_json(environment, models_json)
             provider = "harbor-endpoint"
-        # 主控、部长、worker 的默认档位都指向同一已授权模型；不读取正式 PAO_HOME。
         await self.exec_as_agent(environment, command='mkdir -p /tmp/harbor-pao-home/pao配置 /tmp/harbor-pi-agent')
+        # 主控、部长和 worker 使用同一已选模型；setup.mjs 读取该绑定文件配置角色。
         tiers = {'provider': 'pao', '档位': [
             {'名': name, 'provider': provider, 'model': model_id, 'thinkingLevel': self.options.thinking}
             for name in ('fast', 'primary')
@@ -223,6 +318,9 @@ class PAOAgent(Pi):
         await self._upload_config_text(environment, content=json.dumps(settings),
             remote_path='/tmp/harbor-pi-agent/settings.json', filename='benchmark-settings.json')
         env = dict(access.env)
+        secret = access.api_key
+        if secret is not None:
+            env["PAO_BENCH_API_KEY"] = secret.get_secret_value() if isinstance(secret, SecretStr) else str(secret)
         env.update({"PAO_HOME": "/tmp/harbor-pao-home", "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
                     "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent", "PI_SKIP_VERSION_CHECK": "1"})
         skills_command = self._build_register_skills_command()
@@ -270,19 +368,162 @@ class PAOAgent(Pi):
         # 隔离配置不设置 defaultTools，四项共同基础工具沿 pi 原生默认值。
         return flags
 
+    @staticmethod
+    def _node_install_command(node_sha256: str) -> str:
+        """安装命令只接受已上传归档；不含下载入口或隐式重试。"""
+        return (
+            "set -euo pipefail; "
+            "NODE_DIR=$HOME/.local/pao-node; "
+            "if [ ! -x \"$NODE_DIR/bin/node\" ]; then "
+            "mkdir -p \"$HOME/.local\"; "
+            f"printf '%s  %s\\n' {shlex.quote(node_sha256)} /tmp/pao-node.tar.xz | sha256sum -c -; "
+            'NODE_STAGE=$(mktemp -d "$HOME/.local/pao-node-unpack.XXXXXX"); '
+            'python3 -m tarfile -e /tmp/pao-node.tar.xz "$NODE_STAGE"; '
+            'mv "$NODE_STAGE"/node-*-linux-x64 "$NODE_DIR"; rmdir "$NODE_STAGE"; '
+            "fi; "
+            'export PATH="$NODE_DIR/bin:$PATH"; '
+            "\"$NODE_DIR/bin/node\" --version; \"$NODE_DIR/bin/npm\" --version"
+        )
+
+    def _usage_candidates(self) -> tuple[list[Path], list[str], list[str]]:
+        """只读取有原生会话契约的目录；候选分类结果全部留证。"""
+        if not self.logs_dir.is_dir():
+            return [], [], [f"日志目录不存在或不可读：{self.logs_dir}"]
+        main_dir = self.logs_dir / self._SESSIONS_DIRECTORY
+        worker_dir = self.logs_dir / self._WORKER_SESSIONS_DIRECTORY
+        project_state = worker_dir / "project-state"
+        non_session_paths = {
+            *(project_state / "执行映射").glob("*.jsonl"),
+            project_state / "派发日志.jsonl",
+        }
+        candidates = sorted(path for path in {
+            *main_dir.glob("*.jsonl"),
+            *worker_dir.glob("*.jsonl"),
+            *(project_state / "worker会话").glob("*.jsonl"),
+            *(project_state / "benchmark/部长会话").glob("*/*.jsonl"),
+            *(project_state / "archive").glob("**/部长会话/*/*.jsonl"),
+            *(project_state / "archive").glob("**/worker会话/*.jsonl"),
+            *(project_state / "benchmark/worker-evidence").glob("*.live.jsonl"),
+            *(worker_dir / "native-default-sessions").glob("**/*.jsonl"),
+            *non_session_paths,
+        } if path.is_file())
+        session_files = []
+        ignored = []
+        errors = []
+        for path in candidates:
+            if path in non_session_paths:
+                ignored.append(str(path.relative_to(self.logs_dir)))
+                continue
+            kind, reason = classify_session_file(path)
+            if kind == "session":
+                session_files.append(path)
+            elif kind == "non_session":
+                ignored.append(str(path.relative_to(self.logs_dir)))
+            else:
+                errors.append(f"{path}: {reason}")
+        return session_files, ignored, errors
+
+    def _usage_evidence_counts(self) -> tuple[int | None, int | None, int, int, list[str]]:
+        """按清单与执行快照中的真实身份去重，证据文件另计。"""
+        if not self.logs_dir.is_dir():
+            return None, None, 0, 0, [f"日志目录不存在或不可读：{self.logs_dir}"]
+        project_state = self.logs_dir / self._WORKER_SESSIONS_DIRECTORY / "project-state"
+        instance_paths = sorted(project_state.glob("**/工作流实例-*.md"))
+        instance_ids: set[str] = set()
+        instance_dirs: dict[Path, str] = {}
+        errors: list[str] = []
+        for path in instance_paths:
+            try:
+                lines = path.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeError) as exc:
+                errors.append(f"{path}: 工作流实例清单不可读：{type(exc).__name__}: {exc}")
+                continue
+            if not lines or lines[0].strip() != "---":
+                errors.append(f"{path}: 工作流实例清单缺少 frontmatter")
+                continue
+            try:
+                end = lines.index("---", 1)
+                frontmatter = yaml.safe_load("\n".join(lines[1:end]))
+            except (ValueError, yaml.YAMLError) as exc:
+                errors.append(f"{path}: 工作流实例 frontmatter 无法解析：{type(exc).__name__}: {exc}")
+                continue
+            instance_id = frontmatter.get("实例") if isinstance(frontmatter, dict) else None
+            if not isinstance(instance_id, str) or not instance_id.strip():
+                errors.append(f"{path}: 工作流实例 frontmatter 缺少实例身份")
+                continue
+            instance_id = instance_id.strip()
+            instance_ids.add(instance_id)
+            instance_dirs[path.parent.resolve()] = instance_id
+
+        attempt_paths = sorted(project_state.glob("**/execution-contexts/card-*-attempt-*.json"))
+        attempt_ids: set[tuple[str, str, int, int]] = set()
+        for path in attempt_paths:
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+                key = record["key"]
+                cards_dir = key["cardsDir"]
+                card_no = key["cardNo"]
+                attempt = key["attempt"]
+                if not (
+                    isinstance(record, dict)
+                    and isinstance(cards_dir, str)
+                    and cards_dir
+                    and isinstance(card_no, int)
+                    and not isinstance(card_no, bool)
+                    and isinstance(attempt, int)
+                    and not isinstance(attempt, bool)
+                ):
+                    raise ValueError("执行身份字段无效")
+            except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                errors.append(f"{path}: 执行上下文身份不可读：{type(exc).__name__}: {exc}")
+                continue
+            ancestor_instances = [
+                (len(directory.parts), candidate)
+                for directory, candidate in instance_dirs.items()
+                if path.parent.resolve().is_relative_to(directory)
+            ]
+            if not ancestor_instances:
+                errors.append(f"{path}: 执行上下文无法绑定工作流实例")
+                continue
+            nearest_depth = max(depth for depth, _ in ancestor_instances)
+            instance_id, *conflicts = {
+                candidate
+                for depth, candidate in ancestor_instances
+                if depth == nearest_depth
+            }
+            if conflicts:
+                errors.append(f"{path}: 执行上下文绑定多个工作流实例")
+                continue
+            normalized_cards_dir = cards_dir.replace("\\", "/").rstrip("/")
+            attempt_ids.add((instance_id, normalized_cards_dir, card_no, attempt))
+        return (
+            len(instance_ids) if not errors else None,
+            len(attempt_ids) if not errors else None,
+            len(instance_paths),
+            len(attempt_paths),
+            errors,
+        )
+
     @override
     def populate_context_post_run(self, context: AgentContext) -> None:
         # 父轨迹仍由固定提交中的 Pi 逻辑生成，worker 会话放在独立目录。
         super().populate_context_post_run(context)
-        main_dir = self.logs_dir / self._SESSIONS_DIRECTORY
-        worker_dir = self.logs_dir / self._WORKER_SESSIONS_DIRECTORY
-        session_files = sorted(
-            [
-                *(main_dir.glob("*.jsonl") if main_dir.is_dir() else []),
-                *(worker_dir.rglob("*.jsonl") if worker_dir.is_dir() else []),
-            ]
-        )
+        session_files, ignored_non_session, classification_errors = self._usage_candidates()
         totals = self._aggregate_session_usage(session_files)
+        if classification_errors:
+            # 原生会话候选损坏必须使覆盖结论失败，不能因分类过滤而无痕消失。
+            totals["errors"] = [*classification_errors, *totals["errors"]]
+            totals["complete"] = False
+        (
+            internal_instance_count,
+            worker_attempt_count,
+            instance_evidence_file_count,
+            attempt_evidence_file_count,
+            evidence_errors,
+        ) = self._usage_evidence_counts()
+        if evidence_errors:
+            totals["errors"] = [*totals["errors"], *evidence_errors]
+            totals["complete"] = False
         context.n_input_tokens = totals["input"] if not totals["unknown_tokens"] and not totals["errors"] else None
         context.n_output_tokens = totals["output"] if not totals["unknown_tokens"] and not totals["errors"] else None
         context.n_cache_tokens = totals["cache"] if not totals["unknown_tokens"] and not totals["errors"] else None
@@ -301,12 +542,35 @@ class PAOAgent(Pi):
             **(context.metadata or {}),
             "pao_profile": self.options.profile,
             "pao_source_sha256": self.options.source_sha256,
+            "pao_node_sha256": self.options.node_sha256,
+            "pao_node_archive": str(Path(self.options.node_archive).expanduser().resolve()),
             "pao_session_file_count": len(session_files),
-            "pao_usage_event_count": totals["events"],
-            "pao_usage_unknown_events": totals["unknown_cost"],
-            "pao_usage_known_cost_lower_bound_usd": totals["cost"],
+            "pao_observed_usage_event_count": totals["events"],
+            "pao_harbor_trials_observed": 1,
+            "pao_internal_instance_count": internal_instance_count,
+            "pao_internal_instance_count_status":
+                "observed" if internal_instance_count is not None else "unknown",
+            "pao_internal_instance_evidence_file_count": instance_evidence_file_count,
+            "pao_worker_attempt_count": worker_attempt_count,
+            "pao_worker_attempt_count_status":
+                "observed" if worker_attempt_count is not None else "unknown",
+            "pao_worker_attempt_evidence_file_count": attempt_evidence_file_count,
+            "pao_model_request_count": None,
+            "pao_model_requests_status": "unknown",
+            "pao_model_requests_reason": "用量事件身份不是请求身份；同一请求可能有多条回执，工具用量或转录也可能重复",
+            "pao_role_session_counts": totals["role_session_counts"],
+            "pao_usage_coverage_status": "unknown",
+            "pao_usage_coverage_reason": "只统计已发现的受管会话和辅助请求信号，未证明所有部门、RPC、辅助调用和内部实例均已归档",
+            "pao_role_coverage_status": {
+                role: "observed" if count else "not_observed"
+                for role, count in totals["role_session_counts"].items()
+            },
+            "pao_cost_status": totals["cost_status"],
+            "pao_cost_source": totals["cost_source"],
+            "pao_usage_candidate_count": len(session_files) + len(ignored_non_session) + len(classification_errors),
+            "pao_usage_ignored_non_session": ignored_non_session,
             "pao_usage_scope": "父会话与已同步 worker 会话按 session+event 去重",
-            "pao_observed_usage_complete": totals["complete"],
+            "pao_discovered_usage_complete": totals["complete"],
             "pao_nested_usage_complete": totals["complete"] and self.options.profile == "single",
             "pao_usage_errors": totals["errors"],
             "pao_unknown_token_events": totals["unknown_tokens"],

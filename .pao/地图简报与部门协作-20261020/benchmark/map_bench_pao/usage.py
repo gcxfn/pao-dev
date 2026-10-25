@@ -1,16 +1,52 @@
-"""原生会话用量汇总；标准库实现，独立于 Harbor，回执内的汇总数字不重复入账。"""
+"""原生会话识别和可观察用量汇总；不把执行映射、派发日志或默认零价当模型会话。"""
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
+
+
+def session_role(path: Path) -> str:
+    """按原生会话的受管路径归属角色；未知布局单独计数，不猜成已覆盖角色。"""
+    parts = Path(path).parts
+    if "部长会话" in parts:
+        return "minister"
+    if "worker会话" in parts:
+        return "worker"
+    if "native-default-sessions" in parts:
+        return "main"
+    if "worker-sessions" in parts:
+        return "worker"
+    return "other"
+
+
+def classify_session_file(path: Path) -> tuple[str, str | None]:
+    """按原生会话头分类；损坏候选由调用方依据路径暴露，不能静默过滤。"""
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        return "corrupt", f"{type(exc).__name__}: {exc}"
+    for line_number, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
+        try:
+            first = json.loads(line)
+        except json.JSONDecodeError as exc:
+            return "corrupt", f"第 {line_number} 行无法解析：{exc}"
+        if not isinstance(first, dict):
+            return "non_session", None
+        identity = first.get("id")
+        if first.get("type") == "session" and isinstance(identity, str) and identity:
+            return "session", None
+        return "non_session", None
+    return "corrupt", "空 JSONL 没有原生会话头"
 
 
 def aggregate_session_usage(session_files: list[Path]) -> dict:
     seen: dict[tuple, str] = {}
-    totals = dict(input=0, output=0, cache=0, cache_write=0, cost=0.0)
+    session_roles: dict[str, str] = {}
+    totals = dict(input=0, output=0, cache=0, cache_write=0)
     models: dict[str, dict] = {}
-    unknown_cost = unknown_tokens = events_count = 0
+    unknown_tokens = events_count = 0
     errors: list[str] = []
     if not session_files:
         errors.append("没有原生会话文件，不能按零用量处理")
@@ -24,6 +60,13 @@ def aggregate_session_usage(session_files: list[Path]) -> dict:
         if not isinstance(session_id, str) or not session_id:
             errors.append(f"{path}: 缺少 session id，无法可靠去重")
             session_id = str(path.resolve())
+        else:
+            role = session_role(path)
+            previous_role = session_roles.setdefault(session_id, role)
+            if previous_role != role:
+                errors.append(
+                    f"{path}: 同一会话出现在多个角色路径：{previous_role}/{role}"
+                )
         current_model = "unknown"
         for position, event in enumerate(events, 1):
             if not isinstance(event, dict):
@@ -69,22 +112,31 @@ def aggregate_session_usage(session_files: list[Path]) -> dict:
                 token_unknown |= not valid
             uncertain_failure = is_assistant and message.get("stopReason") in {"error", "aborted"} and sum(values.values()) == 0
             unknown_tokens += int(token_unknown or uncertain_failure)
-            cost = raw.get("cost")
-            if isinstance(cost, dict):
-                cost = cost.get("total")
-            cost_known = isinstance(cost, (int, float)) and not isinstance(cost, bool) and math.isfinite(cost) and cost >= 0 and not uncertain_failure
-            unknown_cost += int(not cost_known)
             model_source = message if is_assistant or is_tool else event
             model_id = model_source.get("model") or model_source.get("responseModel")
             provider = model_source.get("provider")
             model_name = f"{provider}/{model_id}" if isinstance(provider, str) and isinstance(model_id, str) else current_model
-            bucket = models.setdefault(model_name, dict(input=0, output=0, cache=0, cache_write=0, cost=0.0, unknown_cost=0))
+            bucket = models.setdefault(model_name, dict(input=0, output=0, cache=0, cache_write=0))
             additions = dict(input=values["input"] + values["cacheRead"] + values["cacheWrite"], output=values["output"],
-                             cache=values["cacheRead"], cache_write=values["cacheWrite"], cost=float(cost) if cost_known else 0.0)
+                             cache=values["cacheRead"], cache_write=values["cacheWrite"])
             for name, value in additions.items():
                 totals[name] += value
                 bucket[name] += value
-            bucket["unknown_cost"] += int(not cost_known)
-    return {**totals, "models": models, "events": events_count, "unknown_cost": unknown_cost,
-            "unknown_tokens": unknown_tokens, "errors": errors,
-            "complete": not errors and unknown_cost == 0 and unknown_tokens == 0}
+    role_session_counts = {role: 0 for role in ("main", "minister", "worker", "other")}
+    for role in session_roles.values():
+        role_session_counts[role] += 1
+    return {
+        **totals,
+        "models": models,
+        "events": events_count,
+        "role_session_counts": role_session_counts,
+        "unknown_tokens": unknown_tokens,
+        "errors": errors,
+        "cost_status": "unknown",
+        "cost_source": "未提供经核实的单价来源；原始 usage.cost.total=0 不视为免费",
+        "complete": (
+            bool(session_files)
+            and not errors
+            and unknown_tokens == 0
+        ),
+    }
