@@ -23,7 +23,7 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 | `PAO/` | pi fork 与 PAO 内核（独立 Git 仓） | `PAO/AGENTS.md` |
 | `desktop/` | 内嵌内核的桌面应用 pi-gui（独立 Git 仓，monorepo） | `desktop/AGENTS.md`、`desktop/CONTRIBUTING.md` |
 | `plans/` | 需求、架构与实施计划正本 | `plans/v2-ARCHITECTURE.md`、`plans/v2-REQUIREMENTS.md` |
-| `.pao/` | 任务卡、运行留档与验收产物 | 按目录名日期取最新一批（当前最新为 `harness完善-20261017/`）；**批次进度看该目录 `执行记录.md` 的「批次 X」小节，计划 §10 状态表是正本** |
+| `.pao/` | 任务卡、运行留档与验收产物 | 具体证据由对应计划链接；当前状态统一看执行计划 §10 |
 | `AGENTS.md` | 本仓执行约束（规则正本，先读再改） | — |
 
 内核负责会话与业务能力；CLI 与桌面是平级宿主，只负责装配入口、终端/窗口交互与生命周期。桌面发行物内嵌内核，不依赖全局 CLI，也不依赖本仓绝对路径。
@@ -63,6 +63,17 @@ pnpm e2e                                       # 真实 Electron core 车道：�
 
 PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临时目录> PI_OFFLINE=1 PI_NO_LOCAL_LLM=1`。
 
+内核根目录的`npm run check`只读检查，自动修复须显式执行`npm run check:fix`。
+内核单仓关口为`npm run check:pao:kernel`；内核和桌面一起整合时，仍须在
+`PAO/packages/coding-agent`执行`npm run check:gates`，使用对应构建及桌面vendor。
+
+协作基准的现役入口位于`.pao/地图简报与部门协作-20261020/benchmark/`：
+`prepare_run.py --sources <来源配置>`准备冻结输入，`launch_run.py --run <新运行目录> --previous <上一轮目录>`
+在核实上一轮停写后启动，`watch_run.py --run <运行目录> --controller <本轮控制器>`观察并收取终局。
+使用已明确选择的Python解释器；启动模型须有有效授权。`runner_common.py`与`bench_controller.py`
+分别维护公共契约和实际控制逻辑。逐轮的`r*-prepare/launch/start`脚本及`*-runtime-snapshot/`
+属于历史留档，不能作为新轮维护入口，也不能为更新入口而修改历史冻结件。
+
 ## 文档导航
 
 ### Harness 完善与工作台迭代（2026-10-17 起）
@@ -70,6 +81,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 | 要查什么 | 入口 |
 |---|---|
 | 任务安排与当前状态 | [执行计划 §10](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#10-分批实施与依赖) |
+| 协作稳定性集中治理 | [完整修复计划](plans/未完成/2026-10-25-PAO协作稳定性集中治理计划.md)、[主控审核证据](.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)；进度仍看执行计划 §10.21 |
 | 右上悬浮框、独立侧栏与辅助对话 | [归档任务书](plans/已完成/2026-10-19-右上悬浮框与独立侧栏任务书.md)、[交付报告](.pao/harness完善-20261017/悬浮框与独立侧栏-20261019/交付报告.md)；状态仍看执行计划 §10 |
 | 实施经过与验证证据 | [执行记录](.pao/harness完善-20261017/执行记录.md) |
 | 10 月 20 日摩擦修复验收 | [本轮记录](.pao/摩擦修复-20261020/实施与验收记录.md)；任务状态看执行计划 §10.7 |
@@ -84,6 +96,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 
 - 运维、删除预演与人工交付：[操作说明](PAO/packages/coding-agent/docs/pao-operations.md)。
 - 主控与部长后台交接、15/30分钟监督配置：[分层监督说明](PAO/docs/pao-supervision.md)。
+- 部门简介与结构化便捷派发：[架构说明 §28.4](plans/v2-ARCHITECTURE.md#284-结构化任务书与便捷派发2026-10-24)、[工程审核记录](.pao/协作机制重构-20261023/提示词派发优化-20261024/主控整合审核.md)。
 - 执行约束：`AGENTS.md`（本仓）、`PAO/AGENTS.md`、`desktop/AGENTS.md`。
 - 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界、§28 部门目录与唯一受理入口、§29 上下文恢复与总预算门禁）、`plans/v2-REQUIREMENTS.md`。
 - 整体重构（2026-10-06 完成）：计划归档 `plans/已完成/2026-10-05-整体模块化重构总计划.md`，执行留档与交付结论在 `.pao/整体重构-20261005/`。
