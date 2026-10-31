@@ -23,6 +23,7 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 | `PAO/` | pi fork 与 PAO 内核（独立 Git 仓） | `PAO/AGENTS.md` |
 | `desktop/` | 内嵌内核的桌面应用 pi-gui（独立 Git 仓，monorepo） | `desktop/AGENTS.md`、`desktop/CONTRIBUTING.md` |
 | `plans/` | 需求、架构与实施计划正本 | `plans/v2-ARCHITECTURE.md`、`plans/v2-REQUIREMENTS.md` |
+| `bench/` | 基准控制、准备、观察、报告与测试源码 | `bench/控制器使用说明.md` |
 | `.pao/` | 任务卡、运行留档与验收产物 | 具体证据由对应计划链接；当前状态统一看执行计划 §10 |
 | `AGENTS.md` | 本仓执行约束（规则正本，先读再改） | — |
 
@@ -30,11 +31,10 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 
 ## 首次开发
 
-前置：Node 22.19.0+ 与 pnpm（corepack）。PAO 内核要求 Node 22.19.0 或更高版本；使用同一版本可以避免桌面打包和内核检查时出现环境差异。两个子仓各自独立安装依赖（以下 install 命令为各仓标准入口，
-2026-10-06 未实际执行验证；desktop 侧依赖细节见 `desktop/CONTRIBUTING.md`）：
+前置：Node 22.19.0+，内核使用 npm，桌面使用 pnpm（corepack）。两个子仓各自使用已跟踪的锁文件，在各自仓根安装依赖；不要在成员包内单独安装。以下命令按 2026-10-29 的仓库清单核对，本轮未重新安装依赖；desktop 侧依赖细节见 `desktop/CONTRIBUTING.md`：
 
 ```bash
-pnpm --dir PAO install
+npm --prefix PAO ci
 pnpm --dir desktop install
 ```
 
@@ -67,16 +67,27 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 内核单仓关口为`npm run check:pao:kernel`；内核和桌面一起整合时，仍须在
 `PAO/packages/coding-agent`执行`npm run check:gates`，使用对应构建及桌面vendor。
 
-协作基准的现役入口位于`.pao/地图简报与部门协作-20261020/benchmark/`：
-`prepare_run.py --sources <来源配置>`准备冻结输入，`launch_run.py --run <新运行目录> --previous <上一轮目录>`
-在核实上一轮停写后启动，`watch_run.py --run <运行目录> --controller <本轮控制器>`观察并收取终局。
-使用已明确选择的Python解释器；启动模型须有有效授权。`runner_common.py`与`bench_controller.py`
-分别维护公共契约和实际控制逻辑。逐轮的`r*-prepare/launch/start`脚本及`*-runtime-snapshot/`
-属于历史留档，不能作为新轮维护入口，也不能为更新入口而修改历史冻结件。
+协作基准源码位于 `bench/`，在本仓根用已安装基准依赖的 Python 绝对路径执行：
 
-零模型最终装配检查为该目录的`test_final_assembly.py`：显式提供
+```powershell
+& $python -m bench --help
+& $python -m bench prepare --sources <来源配置>
+& $python -m bench run --rehearsal --node <Node可执行文件绝对路径> --output <尚不存在的隔离目录>
+& $python -m bench report --run <运行目录>
+```
+
+`$python` 须先设为实际解释器路径，不能依赖 PATH 猜版本。`doctor` 检查环境，`run` 启动，
+`status` 观察，`collect` 收取，`score` 独立评分，`clean` 默认预览；各自参数见子命令的 `--help`。
+启动真实模型和 Docker 必须已有明确授权，并由对应参数显式传入。
+`run --rehearsal` 用本机回环脚本模型运行产品主控、部长和工人子进程，生成独立 Git 现场及验收证据；
+它不使用真实模型或 Docker，不能证明真实模型质量、费用或官方评分。
+旧 `.pao/地图简报与部门协作-20261020/benchmark/` 顶层命令仍兼容转发到同一实现；
+逐轮的 `r*-prepare/launch/start` 脚本及 `*-runtime-snapshot/` 属于历史留档，不作为新轮维护入口。
+历史冻结件不为更新入口而改写。
+
+零模型最终装配检查为 `bench/tests/test_final_assembly.py`：显式提供
 `PAO_FINAL_ASSEMBLY_SOURCES`（prepare来源清单）和`PAO_HARBOR_PYTHON`（已有Linux Harbor解释器），
-然后执行`python -m unittest -v test_final_assembly`。缺少前置会明确跳过，跳过不能算验收通过。
+然后用已选解释器执行 `-m unittest -v bench.tests.test_final_assembly`。缺少前置会明确跳过，跳过不能算验收通过。
 测试依赖已有`bwrap`和`setpriv`；Windows经WSL以root启动安装测试进程，在本轮挂载目录内
 实际切换root/agent身份，不修改宿主账户或网络设置。系统依赖安装明确模拟，不证明实际OS隔离或模型流程成功。
 
@@ -88,6 +99,8 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 |---|---|
 | 任务安排与当前状态 | [执行计划 §10](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#10-分批实施与依赖) |
 | 协作稳定性集中治理 | [完整修复计划](plans/未完成/2026-10-25-PAO协作稳定性集中治理计划.md)、[主控审核证据](.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)；进度仍看执行计划 §10.21 |
+| 整体深度审核与架构重整（2026-10-28 起） | [任务书](plans/未完成/2026-10-28-整体深度审核与架构重整任务书.md)、[目标架构与实施分路](.pao/深度审核重整-20261028/目标架构与实施分路.md)；状态看执行计划 §10.22 |
+| 协作规则统一与模块边界优化 | [详细实施计划](plans/未完成/2026-10-30-协作规则统一与模块边界优化实施计划.md)、[审查依据](.pao/架构审查-20261030/审查报告.md)；阶段状态看执行计划 §10.23 |
 | 右上悬浮框、独立侧栏与辅助对话 | [归档任务书](plans/已完成/2026-10-19-右上悬浮框与独立侧栏任务书.md)、[交付报告](.pao/harness完善-20261017/悬浮框与独立侧栏-20261019/交付报告.md)；状态仍看执行计划 §10 |
 | 实施经过与验证证据 | [执行记录](.pao/harness完善-20261017/执行记录.md) |
 | 10 月 20 日摩擦修复验收 | [本轮记录](.pao/摩擦修复-20261020/实施与验收记录.md)；任务状态看执行计划 §10.7 |

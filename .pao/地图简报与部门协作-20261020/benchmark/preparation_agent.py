@@ -1,30 +1,15 @@
-"""准备预检代理；只核对安装与组织证据，不调用模型。"""
+"""兼容入口：导入时映射为 ``bench.preparation_agent`` 同一模块。"""
 
-from map_bench_pao_organized import OrganizedPAOAgent
+from __future__ import annotations
 
+from pathlib import Path
+import sys
 
-class PreparationOnlyAgent(OrganizedPAOAgent):
-    @staticmethod
-    def name():
-        return "pao-preparation-only"
+_REPOSITORY = Path(__file__).resolve().parents[3]
+if str(_REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY))
 
-    async def run(self, instruction, environment, context):
-        result = await self.exec_as_agent(
-            environment,
-            command=(
-                "set -eu; test -s /tmp/benchmark-prerequisites.json; "
-                "test -s /logs/agent/organization/git-baseline.json; "
-                "test -s /tmp/benchmark-model-binding.json; "
-                "cp /tmp/benchmark-prerequisites.json /logs/agent/prerequisites.json; "
-                "cp /tmp/benchmark-model-binding.json /logs/agent/model-binding.json; "
-                "printf '%s\\n' preparation_complete_no_model_calls "
-                "> /logs/agent/preparation-complete.txt"
-            ),
-        )
-        if result.return_code != 0:
-            raise RuntimeError("准备证据核对失败")
-        context.metadata = {
-            **(context.metadata or {}),
-            "preparation_only": True,
-            "model_calls": 0,
-        }
+from bench import preparation_agent as _implementation
+
+if __name__ != "__main__":
+    sys.modules[__name__] = _implementation

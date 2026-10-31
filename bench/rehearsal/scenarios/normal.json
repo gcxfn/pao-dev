@@ -1,0 +1,679 @@
+{
+  "schemaVersion": 1,
+  "name": "normal-four-department",
+  "description": "固定 kit 的四部门正常链：真实主控、部长、工人和 Git；模型仅由 127.0.0.1 脚本服务模拟。",
+  "kit": "bench/organized-post/kit.json",
+  "kitSha256": "c9f11a7bf4d943b7d7bdd121987dec51bb9b3699d336180e776f21e875ec69b5",
+  "model": {
+    "provider": "harbor-endpoint",
+    "id": "minimax-code/MiniMax-M3.1-Flash"
+  },
+  "unmatched": "fail",
+  "timeoutMs": 600000,
+  "success": {
+    "controlStatus": "completed",
+    "requiresReviewDecision": true,
+    "reviewDecisionBoundToCurrentTree": true,
+    "requiresAllProcessesStopped": true
+  },
+  "rules": [
+    {
+      "id": "main-start-flow",
+      "match": {
+        "role": "main",
+        "tool": "pao_start_flow",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_start_flow",
+          "arguments": {
+            "name": "基准开发流水线",
+            "params": {
+              "任务": "在 业务/结果.txt 写入且仅写入一行“正常链完成”，然后用真实工具确认文件内容；这是隔离离线彩排任务。"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main-final-query-finished",
+      "match": {
+        "role": "main",
+        "latestToolName": "pao_query_flow",
+        "promptIncludes": "I5-2-FINAL-QUERY"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "已读取产品控制面最终快照。"
+      }
+    },
+    {
+      "id": "main-final-query",
+      "match": {
+        "role": "main",
+        "tool": "pao_query_flow",
+        "promptIncludes": "I5-2-FINAL-QUERY",
+        "afterRule": "main-start-flow"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_query_flow",
+          "arguments": {
+            "name": "基准开发流水线"
+          }
+        }
+      }
+    },
+    {
+      "id": "main-start-finished",
+      "match": {
+        "role": "main",
+        "latestToolName": "pao_start_flow"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "工作流已交回主控；脚本模型不轮询。"
+      }
+    },
+    {
+      "id": "minister-recon-map",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_save_node_map",
+        "latestToolName": "",
+        "promptIncludes": "节点:侦察"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "业务/输入.txt"
+            ],
+            "facts": [
+              "业务/输入.txt 是公开输入",
+              "实施阶段创建并验证 业务/结果.txt"
+            ],
+            "scope_basis": [
+              "本实例只处理隔离临时项目"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-recon-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_save_node_map",
+        "promptIncludes": "节点:侦察",
+        "afterRule": "minister-recon-map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读侦察零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-recon-post-done",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_breakdown_done",
+        "promptIncludes": "节点:侦察",
+        "afterRule": "minister-recon-done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "侦察拆解已结束。"
+      }
+    },
+    {
+      "id": "minister-plan-map",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_save_node_map",
+        "latestToolName": "",
+        "promptIncludes": "节点:规划",
+        "afterRule": "minister-recon-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "业务/输入.txt"
+            ],
+            "facts": [
+              "卡0001 使用 write 创建业务结果，再用 bash 读取验证",
+              "卡0002 只读复核业务结果",
+              "审核阶段使用独立受管副本验证"
+            ],
+            "scope_basis": [
+              "侦察地图与公开任务"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_save_node_map",
+        "promptIncludes": "节点:规划",
+        "afterRule": "minister-plan-map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读规划零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-post-done",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_breakdown_done",
+        "promptIncludes": "节点:规划",
+        "afterRule": "minister-plan-done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "规划拆解已结束。"
+      }
+    },
+    {
+      "id": "minister-implementation-cards",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_submit_cards",
+        "latestToolName": "",
+        "promptIncludes": "节点:实施",
+        "afterRule": "minister-plan-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_submit_cards",
+          "arguments": {
+            "cards": [
+              {
+                "goal": "创建业务结果并用真实 bash 验证内容",
+                "acceptance": "存在: 业务/结果.txt\n包含: 业务/结果.txt :: 正常链完成",
+                "inputs": [
+                  "业务/输入.txt"
+                ],
+                "constraints": "只写 业务/结果.txt；写入后必须用 bash 读取验证"
+              },
+              {
+                "goal": "只读复核业务结果的性质和字节数",
+                "acceptance": "存在: 业务/结果.txt\n包含: 业务/结果.txt :: 正常链完成",
+                "inputs": [
+                  "业务/结果.txt"
+                ],
+                "constraints": "不得修改或删除任何业务文件；使用 read 和 bash 只读验证",
+                "depends_on": [
+                  "卡0001"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-implementation-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_submit_cards",
+        "promptIncludes": "节点:实施",
+        "afterRule": "minister-implementation-cards"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-implementation-post-done",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_breakdown_done",
+        "promptIncludes": "节点:实施",
+        "afterRule": "minister-implementation-done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "实施拆解已结束，等待工人回执。"
+      }
+    },
+    {
+      "id": "worker-card-0001-write",
+      "match": {
+        "role": "worker",
+        "tool": "write",
+        "latestToolName": "",
+        "promptIncludes": "执行卡0001(尝试 1)"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "write",
+          "arguments": {
+            "path": "业务/结果.txt",
+            "content": "正常链完成\n"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0001-bash",
+      "match": {
+        "role": "worker",
+        "tool": "bash",
+        "latestToolName": "write",
+        "promptIncludes": "执行卡0001(尝试 1)",
+        "afterRule": "worker-card-0001-write"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test \"$(cat 业务/结果.txt)\" = \"正常链完成\" && test \"$(wc -l < 业务/结果.txt)\" -eq 1"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0001-receipt",
+      "match": {
+        "role": "worker",
+        "tool": "pao_submit_receipt",
+        "latestToolName": "bash",
+        "promptIncludes": "执行卡0001(尝试 1)",
+        "afterRules": [
+          "worker-card-0001-write",
+          "worker-card-0001-bash"
+        ]
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [
+              "业务/结果.txt"
+            ],
+            "summary": "真实 write 创建业务结果，真实 bash 验证内容与行数。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "bash 验证 业务/结果.txt 内容为“正常链完成”",
+                "结论": "pass",
+                "证据": "write 后 bash 命令退出成功"
+              }
+            ],
+            "changes": [
+              {
+                "路径": "业务/结果.txt",
+                "类型": "created",
+                "说明": "隔离彩排业务结果"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0001-post-receipt",
+      "match": {
+        "role": "worker",
+        "latestToolName": "pao_submit_receipt",
+        "promptIncludes": "执行卡0001(尝试 1)",
+        "afterRule": "worker-card-0001-receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "窄结构化回执已提交。"
+      }
+    },
+    {
+      "id": "worker-card-0002-read",
+      "match": {
+        "role": "worker",
+        "tool": "read",
+        "latestToolName": "",
+        "promptIncludes": "执行卡0002(尝试 1)"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "read",
+          "arguments": {
+            "path": "业务/结果.txt"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0002-bash",
+      "match": {
+        "role": "worker",
+        "tool": "bash",
+        "latestToolName": "read",
+        "promptIncludes": "执行卡0002(尝试 1)",
+        "afterRule": "worker-card-0002-read"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test \"$(wc -c < 业务/结果.txt)\" -eq 16 && test \"$(git status --porcelain -- 业务/结果.txt)\" != \"\""
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0002-receipt",
+      "match": {
+        "role": "worker",
+        "tool": "pao_submit_receipt",
+        "latestToolName": "bash",
+        "promptIncludes": "执行卡0002(尝试 1)",
+        "afterRules": [
+          "worker-card-0002-read",
+          "worker-card-0002-bash"
+        ]
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [],
+            "summary": "真实 read 和 bash 只读复核通过，未改动业务文件。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "读取并验证业务结果",
+                "结论": "pass",
+                "证据": "read 返回正文，bash 验证字节数"
+              }
+            ],
+            "changes": []
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0002-post-receipt",
+      "match": {
+        "role": "worker",
+        "latestToolName": "pao_submit_receipt",
+        "promptIncludes": "执行卡0002(尝试 1)",
+        "afterRule": "worker-card-0002-receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "只读复核回执已提交。"
+      }
+    },
+    {
+      "id": "minister-review-map",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_save_node_map",
+        "latestToolName": "",
+        "promptIncludes": "节点:审核",
+        "afterRules": [
+          "minister-implementation-done",
+          "worker-card-0002-receipt"
+        ]
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "业务/结果.txt",
+              "实施节点交付证据"
+            ],
+            "facts": [
+              "实施工人已用真实 write、bash 和窄回执交付",
+              "审核须在独立受管副本只读检查当前成果"
+            ],
+            "scope_basis": [
+              "实施节点当前尝试证据"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-cards",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_submit_cards",
+        "latestToolName": "pao_minister_save_node_map",
+        "promptIncludes": "节点:审核",
+        "afterRule": "minister-review-map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_submit_cards",
+          "arguments": {
+            "cards": [
+              {
+                "goal": "在独立受管副本只读复核当前业务结果",
+                "acceptance": "存在: 业务/结果.txt\n包含: 业务/结果.txt :: 正常链完成",
+                "inputs": [
+                  "业务/结果.txt"
+                ],
+                "constraints": "只读；不得修改、删除或新增业务文件"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_submit_cards",
+        "promptIncludes": "节点:审核",
+        "afterRule": "minister-review-cards"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-review-post-done",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_breakdown_done",
+        "promptIncludes": "节点:审核",
+        "promptExcludes": "全部卡已经执行，现在读取判定包",
+        "afterRule": "minister-review-done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "审核卡已提交，等待独立审核回执。"
+      }
+    },
+    {
+      "id": "worker-review-read",
+      "match": {
+        "role": "worker",
+        "tool": "read",
+        "latestToolName": "",
+        "promptIncludes": "在独立受管副本只读复核当前业务结果"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "read",
+          "arguments": {
+            "path": "业务/结果.txt"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-bash",
+      "match": {
+        "role": "worker",
+        "tool": "bash",
+        "latestToolName": "read",
+        "promptIncludes": "在独立受管副本只读复核当前业务结果",
+        "afterRule": "worker-review-read"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test \"$(cat 业务/结果.txt)\" = \"正常链完成\" && test -z \"$(git status --porcelain -- 业务/结果.txt)\""
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-receipt",
+      "match": {
+        "role": "worker",
+        "tool": "pao_submit_receipt",
+        "latestToolName": "bash",
+        "promptIncludes": "在独立受管副本只读复核当前业务结果",
+        "afterRules": [
+          "worker-review-read",
+          "worker-review-bash"
+        ]
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [],
+            "summary": "独立受管副本真实 read 和 bash 只读复核通过。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "独立副本中的业务结果与公开要求一致",
+                "结论": "pass",
+                "证据": "read 返回正文，bash 内容与工作区洁净检查退出成功"
+              }
+            ],
+            "changes": []
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-post-receipt",
+      "match": {
+        "role": "worker",
+        "latestToolName": "pao_submit_receipt",
+        "promptIncludes": "在独立受管副本只读复核当前业务结果",
+        "afterRule": "worker-review-receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "独立审核回执已提交。"
+      }
+    },
+    {
+      "id": "minister-review-package",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_decision_pack",
+        "latestToolName": "pao_breakdown_done",
+        "promptIncludes": "全部卡已经执行，现在读取判定包",
+        "afterRules": [
+          "minister-review-done",
+          "worker-review-receipt"
+        ]
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_decision_pack",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-review-decision",
+      "match": {
+        "role": "minister",
+        "tool": "pao_submit_decision",
+        "latestToolName": "pao_minister_decision_pack",
+        "promptIncludes": "节点:审核",
+        "afterRule": "minister-review-package"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_decision",
+          "arguments": {
+            "result": "pass",
+            "reason": "独立受管副本的真实读取和 bash 证据与当前业务成果一致。",
+            "references": [
+              "业务/结果.txt:1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-decision-post",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_submit_decision",
+        "promptIncludes": "节点:审核",
+        "afterRule": "minister-review-decision"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "当前成果版本的独立审核判定已提交。"
+      }
+    }
+  ]
+}

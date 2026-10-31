@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "prepared_on": "2026-10-21",
+  "purpose": "F 真实对比的最小、可审阅离线准备；不包含答案、oracle、隐藏验收正文或真实运行结果。",
+  "benchmark": {
+    "name": "Terminal-Bench",
+    "display_version": "4.0",
+    "dataset": "terminal-bench/terminal-bench@4.0.0",
+    "dataset_version": "sha256:39d9f44b40420cde8fdcc087579c0d72a7e14fa3656d603c3f0d22fb35e27732",
+    "dataset_version_id": "1922072f-a433-429a-8929-350d5e1bcf02",
+    "task_count": 66,
+    "repository": "https://github.com/harbor-framework/terminal-bench.git",
+    "tag": "v4.0.0",
+    "commit": "452bf305c6daa62fc59061d22133a7cbc7c1572e",
+    "official_release_url": "https://www.tbench.ai/news/terminal-bench-4-0",
+    "dataset_manifest_path": "tasks/dataset.toml",
+    "dataset_manifest_contains_selected_tasks": true,
+    "selection_basis": "仅依据公开 instruction.md、task.toml、environment/**、专家时间估计和资源需求形成准备方分类；未读取答案或隐藏验收，未按已知模型成功筛题。"
+  },
+  "harbor": {
+    "repository": "https://github.com/harbor-framework/harbor.git",
+    "commit": "77094ca610014a3c7c2dcac6a29ef01f7ef800c8",
+    "version": "0.24.0",
+    "custom_agent_docs_url": "https://docs.harborframework.com/agents/custom-agents",
+    "sandbox_docs_url": "https://docs.harborframework.com/sandboxes/pre-integrated-sandboxes",
+    "environment_type": "docker",
+    "continuation_install_status": "Windows 旧环境缺 litellm；2026-10-21 Ubuntu 的既有 Linux venv 已通过 pip check，Harbor 0.24.0 真实导入。"
+  },
+  "dataset": {
+    "name": "terminal-bench/terminal-bench",
+    "version": "4.0.0",
+    "version_digest": "sha256:39d9f44b40420cde8fdcc087579c0d72a7e14fa3656d603c3f0d22fb35e27732",
+    "version_id": "1922072f-a433-429a-8929-350d5e1bcf02",
+    "task_count": 66,
+    "manifest_path": "tasks/dataset.toml",
+    "selected": [
+      {
+        "name": "html-js-filter",
+        "dataset_task_name": "terminal-bench/html-js-filter",
+        "dataset_manifest_digest": "sha256:832a5b309edca4f1a7c728da5f1ca530c2712f20a0b7f1db6d1bb6e3171a8866",
+        "hub_task_ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3",
+        "git_task_tree": "f77bc4b71db925fd88587930bfdd2a026645da92",
+        "instruction_blob": "95241b5e7936b50a739548bd15bb3adcaf300bed",
+        "task_toml_blob": "99fd4635353e11c30dac9c0347ec29c89d750aed",
+        "environment_tree": "e707828d568429c15b178012b316400f903bc298",
+        "visible_input_digest": "sha256:358c50951f99b8121fa77c2636173d20985f7d43aa9cf00a8e6cfdc72759365f",
+        "visible_input_file_count": 3,
+        "visible_inputs": [
+          "instruction.md",
+          "task.toml",
+          "environment/**"
+        ],
+        "preparation_category": "边界清楚的小修改",
+        "expert_time_estimate_hours": 0.75,
+        "resources": {
+          "cpus": 2,
+          "memory_mb": 8192,
+          "storage_mb": 10240,
+          "gpus": 0
+        },
+        "timeouts_sec": {
+          "environment_build": 600,
+          "agent": 28800,
+          "verifier": 1800
+        },
+        "verifier": {
+          "environment_mode": "separate",
+          "timeout_sec": 1800
+        },
+        "environment_summary": "Dockerfile based on python:3.12-slim-bookworm; preinstalls beautifulsoup4==4.13.4 and lxml==6.1.1.",
+        "direct_dependencies": [
+          {
+            "name": "beautifulsoup4",
+            "version": "4.13.4",
+            "license": "MIT",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          },
+          {
+            "name": "lxml",
+            "version": "6.1.1",
+            "license": "BSD-style",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          }
+        ],
+        "classification_limit": "准备方依据单一 XSS 过滤脚本需求标记为小任务；不是 Terminal-Bench 官方难度分类。",
+        "public_input_summary": "public-inputs.json#html-js-filter"
+      },
+      {
+        "name": "bun-sourcemap-leak",
+        "dataset_task_name": "terminal-bench/bun-sourcemap-leak",
+        "dataset_manifest_digest": "sha256:ac0b0f77da4e8f6c3904133033ec6d8591eb0d3f18205ab28104ea3cf2a5a07f",
+        "hub_task_ref": "sha256:e55ae542f338f50f4468d940c7d7c93a45d34fd418dc6cc5883c1fedc753603a",
+        "git_task_tree": "15dd9f93a73c743c9c37478205524dc3c1f509bd",
+        "instruction_blob": "9257aed8943fea81020ff1576a87b8fc4a499bdd",
+        "task_toml_blob": "7cf088f15bfff9549ca65374260955a8fe4e3514",
+        "environment_tree": "9fb86096789c3001bd0c85474a29b0dcdb2b0087",
+        "visible_input_digest": "sha256:9f82a6cf8e73659aa7e43569d93f868523a45803ef08a63710a4725f86f9e644",
+        "visible_input_file_count": 14,
+        "visible_inputs": [
+          "instruction.md",
+          "task.toml",
+          "environment/**"
+        ],
+        "preparation_category": "需要调查根因的中等任务",
+        "expert_time_estimate_hours": 1.5,
+        "resources": {
+          "cpus": 2,
+          "memory_mb": 4096,
+          "storage_mb": 10240,
+          "gpus": null
+        },
+        "timeouts_sec": {
+          "environment_build": 600,
+          "agent": 28800,
+          "verifier": 600
+        },
+        "verifier": {
+          "environment_mode": "separate",
+          "timeout_sec": 600
+        },
+        "environment_summary": "Dockerfile based on oven/bun:1.2.15-debian; installs bash, python3 and tmux; fixed app exercises Bun/TypeScript release output and provenance policy.",
+        "direct_dependencies": [
+          {
+            "name": "Bun",
+            "version": "1.2.15-debian image",
+            "license": "fixed base image license must be checked before publication",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          }
+        ],
+        "classification_limit": "准备方依据公开说明中的发布产物私源追踪问题标记为调查型任务；不是 Terminal-Bench 官方难度分类。",
+        "public_input_summary": "public-inputs.json#bun-sourcemap-leak",
+        "dependency_note": "environment/package.json 没有 dependencies/devDependencies；TypeScript 为 Bun 直接处理的源码语言，不能虚列为 npm 直接依赖。Bun 镜像许可仍待核。",
+        "resource_note": "固定 task.toml 未指定 gpus；Harbor schema 为 None，不推断为显式零。"
+      },
+      {
+        "name": "nextjs-performance",
+        "dataset_task_name": "terminal-bench/nextjs-performance",
+        "dataset_manifest_digest": "sha256:8dd4222253b1cac21c139e5c11362ad748e3d7d1a1aa423839d18b7133d70db4",
+        "hub_task_ref": "sha256:81f8315fb984f91208c45b4ac153c8801d07d3beec5eb0f0d3fa9d49b6588fdd",
+        "git_task_tree": "50882f74143bca460cf8745d26367a1be2ec6254",
+        "instruction_blob": "9c78498756c859c0c5cc21da74199cc9788941d5",
+        "task_toml_blob": "dfdf576cdad58eff4d770d0ec464ceebd4b0c3ff",
+        "environment_tree": "867485b738d1ddbb44700dd8d795556f739b9dac",
+        "visible_input_digest": "sha256:08423eb7ccf3265f0df8a10326e72be11ac98af9cbceb84eb65a477d61651d5f",
+        "visible_input_file_count": 37,
+        "visible_inputs": [
+          "instruction.md",
+          "task.toml",
+          "environment/**"
+        ],
+        "preparation_category": "多路由、跨模块、可并行改造候选",
+        "expert_time_estimate_hours": 3.0,
+        "resources": {
+          "cpus": 2,
+          "memory_mb": 4096,
+          "storage_mb": 15360,
+          "gpus": 0
+        },
+        "timeouts_sec": {
+          "environment_build": 900,
+          "agent": 28800,
+          "verifier": 300
+        },
+        "verifier": {
+          "environment_mode": "separate",
+          "timeout_sec": 300
+        },
+        "environment_summary": "Node 22 production Next.js app with Next 15.4.10, React and React DOM 19.0.0; compose includes warehouse API on ports 4100/4101.",
+        "direct_dependencies": [
+          {
+            "name": "Node.js",
+            "version": "22",
+            "license": "to be verified against the fixed official distribution before publication",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          },
+          {
+            "name": "Next.js",
+            "version": "15.4.10",
+            "license": "MIT",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          },
+          {
+            "name": "React",
+            "version": "19.0.0",
+            "license": "MIT",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          },
+          {
+            "name": "React DOM",
+            "version": "19.0.0",
+            "license": "MIT",
+            "maintenance_status": "unknown：固定公开输入只有版本/构建引用，未核对上游维护状态",
+            "license_verification": "保留前稿声明，固定任务元数据不含对应依赖许可证正文；本轮未独立核验"
+          }
+        ],
+        "classification_limit": "准备方依据公开说明中多路由、交互等待和跨模块要求标记为可并行改造候选；Terminal-Bench 不保证任务可按模块并行或衡量跨任务地图复用。",
+        "public_input_summary": "public-inputs.json#nextjs-performance",
+        "development_dependencies": {
+          "@types/node": "22.15.29",
+          "@types/react": "19.0.12",
+          "@types/react-dom": "19.0.4",
+          "typescript": "5.8.3"
+        },
+        "dependency_note": "直接依赖及开发依赖版本已从固定 app/package.json 核对；许可证/维护状态无固定正文证据者保留未验。",
+        "warehouse_development_dependencies": {
+          "@types/node": "22.15.29",
+          "typescript": "5.8.3"
+        }
+      }
+    ]
+  },
+  "profiles": {
+    "single": {
+      "purpose": "单代理共同基线",
+      "source": "2026-10-21 当前工程源码冻结；真实运行前重核身份",
+      "source_archive_sha256": "3f2d1f25076471cce3c05427cd1446178f8c012abf6a4619a6228c1d65341b17",
+      "extension_scope": "SDK extensionFactories 只装 llama.cpp/codemode/tool-search/mcp；不导入 PAO 模块；规则与技能正常发现。",
+      "source_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/source-freeze-20261021/PAO-source.zip",
+      "entry": "scripts/single-entry.mjs",
+      "runtime_status": "Windows 内核构建与桌面工程链通过；Linux SDK 与真实模型未验",
+      "archive_format": "zip"
+    },
+    "pre-pao": {
+      "purpose": "修复前 PAO",
+      "source": "A baseline reconstruction",
+      "base_commit": "a2380612e69f38a0d21e7dd9586e65c42f8fb20e",
+      "tracked_archive": "baseline/PAO/tracked-current.zip",
+      "tracked_archive_sha256": "1127a01e7aba02309291958fd25d9e583d743dcae72b6b8b3dba45a12ccf2b80",
+      "untracked_archive": "baseline/PAO/untracked-sources.zip",
+      "untracked_archive_sha256": "bd4c76811efd005b9db54a8c3f4db771aeb8bc425ab12e275163cc9455f597d6",
+      "reconstruction_status": "主验已通过 tracked+untracked 字节重建；本轮只引用并核对两份归档摘要，不重验 A",
+      "runtime_status": "旧 PAO 是否能启动并完成任务尚未证明",
+      "source_archive_sha256": "1127a01e7aba02309291958fd25d9e583d743dcae72b6b8b3dba45a12ccf2b80",
+      "source_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/baseline/PAO/tracked-current.zip",
+      "source_overlay_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/baseline/PAO/untracked-sources.zip",
+      "source_overlay_sha256": "bd4c76811efd005b9db54a8c3f4db771aeb8bc425ab12e275163cc9455f597d6",
+      "archive_format": "zip"
+    },
+    "post-pao": {
+      "purpose": "修复后 PAO",
+      "source": "2026-10-21 当前工程源码冻结；真实运行前重核身份",
+      "source_archive_sha256": "3f2d1f25076471cce3c05427cd1446178f8c012abf6a4619a6228c1d65341b17",
+      "runtime_status": "Windows 内核构建与桌面工程链通过；Linux SDK 与真实模型未验",
+      "source_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/source-freeze-20261021/PAO-source.zip",
+      "archive_format": "zip"
+    }
+  },
+  "fairness_fixed": {
+    "model_name": "openai/group/deepseek",
+    "thinking": "high",
+    "tool_allowlist": "read,bash,edit,write",
+    "harbor_version": "0.24.0",
+    "terminal_bench_dataset": "terminal-bench/terminal-bench@4.0.0",
+    "terminal_bench_commit": "452bf305c6daa62fc59061d22133a7cbc7c1572e",
+    "node_version": "v24.18.0",
+    "n_attempts": 1,
+    "n_concurrent_trials": 1,
+    "max_retries": 0,
+    "independent_initial_input": true,
+    "per_task_retry": false,
+    "tools_policy": "三组初始 read/bash/edit/write；single SDK 与 PAO CLI 都沿默认能力发现，保留 find/grep/ls/codemode/tool_search 等共同工具。PAO 额外业务工具是被测变量。不得另设 defaultTools。",
+    "local_probe_node_version": "v24.19.0",
+    "environment": {
+      "PAO_HOME": "/tmp/harbor-pao-home",
+      "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+      "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+      "PI_SKIP_VERSION_CHECK": "1",
+      "TMP": "/tmp",
+      "TEMP": "/tmp",
+      "TMPDIR": "/tmp"
+    },
+    "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+    "model_data_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/build-data-freeze-20261021/model-data.zip",
+    "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a"
+  },
+  "licenses": {
+    "terminal_bench": "Apache-2.0",
+    "harbor": "Apache-2.0",
+    "pao": "MIT",
+    "audit_scope": "仅核对直接依赖和已固定仓库许可证；未对全部传递依赖作法律级审计。",
+    "task_metadata": "各任务作者、分类、资源与直接环境依赖见 dataset.selected；本清单不复制 solution 或隐藏验证内容。",
+    "terminal_bench_evidence": {
+      "path": "D:\\AI\\workspace\\临时文件夹\\地图简报基准-20261020\\.source-cache\\terminal-bench\\LICENSE",
+      "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+      "maintenance_status": "unknown：离线快照不证明当前维护状态"
+    },
+    "harbor_evidence": {
+      "path": "D:\\AI\\workspace\\临时文件夹\\地图简报基准-20261020\\.source-cache\\harbor\\LICENSE",
+      "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+      "maintenance_status": "unknown：离线快照不证明当前维护状态"
+    },
+    "pao_evidence": {
+      "path": "D:\\AI\\workspace\\pao-dev\\PAO\\LICENSE",
+      "sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "maintenance_status": "unknown：离线快照不证明当前维护状态"
+    },
+    "direct_dependency_audit": "dependency-audit.json",
+    "environment_dependency_lock": "dependency-lock.json（不完整，见 status）"
+  },
+  "excluded_from_agent_input": [
+    "tasks/*/solution/**",
+    "tasks/*/tests/**",
+    "tasks/*/cheat/**",
+    "oracle",
+    "hidden verifier",
+    "task README prompts during the measured run"
+  ],
+  "preparation_session_only_notes": [
+    "Part of task README.md was read earlier while choosing candidates and may contain hints; do not pass README to the tested agent.",
+    "An initial non-sparse checkout briefly materialized solution/, tests/ and cheat/; their contents were not opened, and the checkout was replaced with sparse metadata-only files.",
+    "No answer or verifier text is included in this benchmark package."
+  ],
+  "authorizations_required_before_real_run": [],
+  "sdk_boundary": {
+    "includePaoBuiltinExtension_exists": false,
+    "actual_option": "DefaultResourceLoaderOptions.extensionFactories",
+    "evidence": [
+      "PAO/packages/coding-agent/src/core/sdk.ts:CreateAgentSessionOptions",
+      "PAO/packages/coding-agent/src/core/resource-loader.ts:DefaultResourceLoaderOptions",
+      "PAO/packages/coding-agent/src/main.ts:MainOptions",
+      "PAO/scripts/build-coding-agent-bundle.mjs"
+    ],
+    "probe": "scripts/probe-single.mjs",
+    "probe_result": "evidence/single-probe.json",
+    "compiled_source_limit": "探针对当前已有 dist，未修改/重建产品目录；不是最终封板证明。容器必须从所核 SHA 的同一源码构建并运行该入口。"
+  },
+  "status": {
+    "completed": [
+      "三组配置",
+      "SDK single 薄入口",
+      "公开输入逐文件摘要",
+      "标准库用量检查与可复跑脚本"
+    ],
+    "checked": [
+      "固定基线两份归档 SHA（引用主验重建结论）",
+      "公开 task.toml 的资源/时限/验收模式逐项一致",
+      "固定公开输入逐文件 SHA-256",
+      "single 保留全部原生及共同扩展可发现工具"
+    ],
+    "real_run": [
+      "真实 Windows SDK 装配；样例规则/技能进入系统提示，无模型调用；本机用户技能也被正常发现，未调用这些技能"
+    ],
+    "unverified": [
+      "Linux/Docker 安装",
+      "pre 可启动",
+      "全角色日志覆盖",
+      "真实模型质量/成本/耗时",
+      "Windows/Electron 与跨任务地图复用"
+    ],
+    "requires_authorization": [],
+    "offline_test_results": {
+      "passed": [
+        "validate-preparation",
+        "Harbor import/schema (0.24.0)",
+        "test-pao-agent (7 项)",
+        "test-usage (10 项)",
+        "真实 SessionManager JSONL 汇总",
+        "probe-single (真实 SDK，样例输入)",
+        "check-single-js"
+      ],
+      "environment_limited": {
+        "pip-check": "仅缺 litellm>=1.92.0；固定 1.93.0 在当前 Windows 无 wheel，缓存源码构建缺 link.exe"
+      },
+      "evidence_as_of": "2026-10-21 本轮 offline-close-20261021；Windows/WSL 离线"
+    },
+    "continuation": {
+      "date": "2026-10-21",
+      "state": "offline_prepared_environment_limited",
+      "report": "F离线准备收尾报告.md",
+      "evidence": "evidence/offline-close-20261021/results.json",
+      "historical_stop_evidence": "evidence/harbor-import-20261021/stopped-result.json",
+      "real_run_blockers": "实际模型/思考档位/预算、Docker Linux engine、Linux SDK 复验、最终源码封板"
+    }
+  },
+  "measurement_limits": [
+    "PAO 部门/RPC 全角色日志覆盖未经真实容器核对，费用和 token 总数保留未知，只提供已观察下界",
+    "禁止相加父回执汇总与子会话账本；原生事件按 session+entry 去重",
+    "真实调用重试、压缩、缓存读写、辅助调用及失败用量不能漏计；缺日志或缺用量为未知",
+    "Terminal-Bench 独立题目不证明跨任务地图复用或 Windows/Electron 工作树闭环",
+    "PAO_HOME 为空隔离现场；部门配方、路由与 worker 相同模型档位须在真实 smoke 阶段核对，不读取正式现场补齐",
+    "本机 v24.19.0 仅用于离线探针；目标 Linux 仍固定 v24.18.0"
+  ],
+  "real_run_authorization": "real-run-authorization.json",
+  "common_build_data": {
+    "manifest": "build-data-freeze-20261021/manifest.json",
+    "reason": "Git 忽略的必需模型数据；three profiles 的 45 份结构/目录源码逐字节相同。只恢复构建数据，业务源码归档不变。"
+  }
+}
