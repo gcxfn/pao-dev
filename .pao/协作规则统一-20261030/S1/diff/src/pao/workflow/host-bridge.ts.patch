@@ -1,0 +1,159 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\host-bridge.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\host-bridge.ts"
+index 9d34856b..5e8fc724 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\host-bridge.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\host-bridge.ts"
+@@ -44,9 +44,15 @@ import {
+ 	type WorkerReviewRequestRecord,
+ 	type WorkflowMinisterContext,
+ } from "./minister.ts";
+-import { isUnattended, pendingDeadline, type WorkflowPending } from "./policy.ts";
++import {
++	isUnattended,
++	pendingDeadline,
++	projectControlStop,
++	storedControlRunMode,
++	type WorkflowPending,
++} from "./policy.ts";
+ import type { RecipeNode, WorkflowRecipe } from "./recipe.ts";
+-import { createDeviationPending } from "./transition.ts";
++import { createDeviationPending, rulingProjection } from "./transition.ts";
+ 
+ /**
+  * 部长模型解析：显式 模型 先按档位名试解析——桌面编辑器会把档位名（如「主力」）替换进 模型 字段，
+@@ -124,7 +130,7 @@ export class WorkflowHostBridge {
+ 		const cardsDir = pathKey(flow.卡目录);
+ 		for (const [key, timer] of this.#deadlineTimers) {
+ 			if (timer.recipe.名字 !== recipe.名字 || pathKey(timer.options.cardsDir) !== cardsDir) continue;
+-			const pending = flow.待决;
++			const pending = flow.停止?.category === "decision" ? flow.停止.pending : undefined;
+ 			if (
+ 				pending?.phase === "待处理" &&
+ 				pending.key === timer.expected.key &&
+@@ -150,7 +156,7 @@ export class WorkflowHostBridge {
+ 		const { recipe, options, expected } = timer;
+ 		if (this.#closing || options.signal?.aborted || options.运行器.isStopped()) return;
+ 		const flow = readControl(recipe, options);
+-		const pending = flow.待决;
++		const pending = flow.停止?.category === "decision" ? flow.停止.pending : undefined;
+ 		if (
+ 			flow.实例 !== expected.instance ||
+ 			!options.ownerSessionId ||
+@@ -295,8 +301,13 @@ export class WorkflowHostBridge {
+ 			? `${dead.节点.length} 个节点的绑定部长会话已无热进程(节点:${dead.节点.join("、")})，重推流将按同会话重开`
+ 			: "";
+ 	}
+-	/** 暂停停因的恢复指引：三件套（实例号＋原owner＋现场核查）缺一不可；name 是工具必填参数，缺了照抄必报错。 */
+-	#resumeNote(flow: FlowControl): string {
++	/** 从同一停因策略生成合法动作指引；恢复仍须实例、原owner和现场核查。 */
++	#controlActionNote(flow: FlowControl): string {
++		const stop = projectControlStop(flow.停止, undefined, storedControlRunMode(flow.运行方式));
++		if (stop?.actions.includes("resolve_pending") && stop.pending)
++			return `逐项裁决：pao_control_node action=resolve_pending name=${flow.工作流} pending_key=${stop.pending.key} decisions=<每项item_ref与basis>`;
++		if (stop?.actions.includes("rule"))
++			return `裁定：pao_control_node action=rule name=${flow.工作流} instance=${flow.实例} node=${stop.identity.node} round=${stop.identity.round} result=<pass|change|reject> reason=<理由> references=<证据路径:行号>`;
+ 		return `恢复：pao_control_node action=resume name=${flow.工作流} instance=${flow.实例} prev_owner=${flow.owner} reason=现场核查`;
+ 	}
+ 	/** 读取依赖节点当前轮已保存的节点地图；必须先过产物摘要和覆盖状态，零卡理由不参与。 */
+@@ -404,7 +415,7 @@ export class WorkflowHostBridge {
+ 		// 报告准备可能让出执行权；投递前重读正本，不唤醒已停止或已换轮的部长。
+ 		if (this.#closing || options.signal?.aborted || options.运行器.isStopped()) return;
+ 		const latest = this.#receiptMaterial(recipe, options, event);
+-		if (latest.flow.暂停 || latest.flow.裁定) return;
++		if (latest.flow.停止?.reason || rulingProjection(latest.flow.停止)) return;
+ 		if (
+ 			latest.flow.实例 !== material.flow.实例 ||
+ 			latest.node.轮次 !== material.node.轮次 ||
+@@ -585,13 +596,13 @@ export class WorkflowHostBridge {
+ 		const applied = await recordPending(recipe, options, pending);
+ 		const latest = readControl(recipe, options);
+ 		if (
+-			!latest.待决 ||
+-			latest.待决.key !== applied.key ||
+-			latest.待决.phase !== "待处理" ||
+-			latest.待决.card_ref !== event.cardRef ||
+-			latest.待决.attempt !== event.attempt ||
+-			latest.待决.items.length !== applied.items.length ||
+-			latest.待决.items.some(
++			!latest.停止?.pending ||
++			latest.停止?.pending.key !== applied.key ||
++			latest.停止?.pending.phase !== "待处理" ||
++			latest.停止?.pending.card_ref !== event.cardRef ||
++			latest.停止?.pending.attempt !== event.attempt ||
++			latest.停止?.pending.items.length !== applied.items.length ||
++			latest.停止?.pending.items.some(
+ 				(item, index) =>
+ 					item.item_ref !== applied.items[index]?.item_ref ||
+ 					item.verification_index !== applied.items[index]?.verification_index,
+@@ -755,10 +766,12 @@ export class WorkflowHostBridge {
+ 				const before = JSON.stringify(flow.节点);
+ 				const dead = this.#deadBound(flow);
+ 				const report = await readControlReport(flow, options, dead.会话);
+-				if (flow.暂停 || report.status === "completed" || report.status === "hold") {
+-					const parts = [flow.暂停, flow.暂停 ? this.#resumeNote(flow) : undefined, this.#deadNote(dead)].filter(
+-						Boolean,
+-					);
++				if (flow.停止?.reason || report.status === "completed" || report.status === "hold") {
++					const parts = [
++						flow.停止?.reason,
++						flow.停止?.reason ? this.#controlActionNote(flow) : undefined,
++						this.#deadNote(dead),
++					].filter(Boolean);
+ 					return { report, steps, stopReason: parts.length ? parts.join("；") : undefined };
+ 				}
+ 				const chainOptions: AutoChainOptions = {
+@@ -987,7 +1000,8 @@ export class WorkflowHostBridge {
+ 							.some((entry) => entry.running && entry.supervisor_context === latest!.脉络);
+ 					if (
+ 						abnormalStop ||
+-						(!runningWorker && (latest.暂停 || (await readControlReport(latest, options)).status === "completed"))
++						(!runningWorker &&
++							(latest.停止?.reason || (await readControlReport(latest, options)).status === "completed"))
+ 					) {
+ 						const root = projectRootForCards(options.cardsDir);
+ 						const handles = this.#host
+@@ -1048,7 +1062,7 @@ export class WorkflowHostBridge {
+ 		const record = flow.记录.findLast((entry) => entry.事件 === WORKFLOW_NODE_MAP_EVENT && entry.理由 === ref);
+ 		const node = flow.节点.find((candidate) => candidate.名字 === record?.节点 && candidate.轮次 === record?.轮次);
+ 		const def = flow.冻结配方.节点.find((candidate) => candidate.名字 === node?.名字);
+-		if (!node || !def?.只读 || node.卡.length || flow.暂停) return false;
++		if (!node || !def?.只读 || node.卡.length || flow.停止?.reason) return false;
+ 		const result = await this.#runMinister(recipe, options, node.名字, [], ref);
+ 		return result.progressed && !result.stopReason;
+ 	}
+@@ -1065,7 +1079,7 @@ export class WorkflowHostBridge {
+ 		if (this.#closing) throw new Error("主会话正在关闭");
+ 		const flow = readControl(recipe, options);
+ 		if (flow.owner !== options.ownerSessionId) throw new Error("工作流 owner 与真实主会话不符");
+-		if (flow.暂停) return { progressed: false, stopReason: flow.暂停 };
++		if (flow.停止?.reason) return { progressed: false, stopReason: flow.停止?.reason };
+ 		const node = flow.节点.find((n) => n.名字 === name)!;
+ 		const def = flow.冻结配方.节点.find((n) => n.名字 === name)!;
+ 		const view = await readControlReport(flow, options);
+@@ -1156,11 +1170,13 @@ export class WorkflowHostBridge {
+ 			signal: options.signal,
+ 		});
+ 		const after = readControl(recipe, options);
+-		if (after.暂停) {
++		if (after.停止?.reason) {
+ 			const dead = this.#deadBound(after);
+ 			return {
+ 				progressed: true,
+-				stopReason: [after.暂停, this.#resumeNote(after), this.#deadNote(dead)].filter(Boolean).join("；"),
++				stopReason: [after.停止?.reason, this.#controlActionNote(after), this.#deadNote(dead)]
++					.filter(Boolean)
++					.join("；"),
+ 			};
+ 		}
+ 		if (refreshMapRef && currentNodeMapRef(after, name) !== refreshMapRef) return { progressed: true };
+@@ -1184,7 +1200,10 @@ export class WorkflowHostBridge {
+ 		for (const { recipe, options } of this.#owned.values()) {
+ 			try {
+ 				const flow = readControl(recipe, options);
+-				if ((await readControlReport(flow, options)).status !== "completed" && !flow.暂停)
++				if (
++					(await readControlReport(flow, options)).status !== "completed" &&
++					(!flow.停止 || flow.停止.category === "decision")
++				)
+ 					await pauseControlIfUnpaused(recipe, options, "主会话关闭，须显式人工恢复");
+ 			} catch (error) {
+ 				failures.push(error);

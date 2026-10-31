@@ -1,0 +1,893 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\control.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\control.ts"
+index 84c1a6d5..4e8e083e 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\control.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\control.ts"
+@@ -2,7 +2,7 @@
+ 
+ import { execFile } from "node:child_process";
+ import { createHash, randomUUID } from "node:crypto";
+-import { existsSync, mkdirSync, readFileSync } from "node:fs";
++import { constants, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+ import { dirname, join, resolve } from "node:path";
+ import { stringify } from "yaml";
+ import { parseFrontmatter } from "../../utils/frontmatter.ts";
+@@ -52,6 +52,7 @@ import {
+ 	assertRunModeAllowsRecipeGates,
+ 	type ControlResult,
+ 	type ControlRunMode,
++	type ControlStop,
+ 	decisionFieldProblems,
+ 	displayRunMode,
+ 	formatDecisionFieldProblems,
+@@ -61,6 +62,7 @@ import {
+ 	type PendingResolutionStage,
+ 	pendingDeadline,
+ 	pendingKey,
++	projectControlStop,
+ 	resolveControlRunMode,
+ 	splitControlRunModeParams,
+ 	storedControlRunMode,
+@@ -72,11 +74,14 @@ import { parseRecipe, type RecipeNode, requireParams, substituteParams, type Wor
+ import {
+ 	type BoundDeviationDecision,
+ 	createRulingPending,
++	decisionStop,
+ 	expirePending as expirePendingFact,
++	formatControlStop,
+ 	mergePending,
+ 	type PendingDecisionInput,
+ 	pendingSummary,
+ 	planPendingResolution,
++	rulingProjection,
+ } from "./transition.ts";
+ 
+ export const WORKFLOW_NODE_MAP_EVENT = "节点交接地图";
+@@ -111,7 +116,7 @@ export interface Decision {
+ 	时间: string;
+ }
+ export interface FlowControl {
+-	版本: 2;
++	版本: 2 | 3;
+ 	实例: string;
+ 	owner: string;
+ 	脉络: string;
+@@ -129,10 +134,11 @@ export interface FlowControl {
+ 	已派卡?: number;
+ 	/** S6-K3 叫人去重（v2）：最近一次叫人的去重键（同 v1 清单「叫人」语义；undefined＝未叫过/已确认清空） */
+ 	叫人?: string;
+-	暂停?: string;
+-	裁定?: { 节点: string; 轮次: number; 理由: string; 通道: "主控" | "人工" };
+-	/** 结构化待决现场；同一时间只允许一个，旧清单缺字段时按既有裁定/暂停行为读取。 */
+-	待决?: WorkflowPending;
++	停止?: ControlStop;
++	/** 公开兼容投影，不可修改，不写入v3文件。 */
++	readonly 暂停?: string;
++	readonly 裁定?: { 节点: string; 轮次: number; 理由: string; 通道: "主控" | "人工" };
++	readonly 待决?: WorkflowPending;
+ 	/** 单次待决办理的阶段正本；与卡五态分离，用于验收后失败定位和幂等恢复。 */
+ 	待决办理?: PendingResolutionRecord[];
+ 	/** 业务结果维度；与卡五态、实例 running/hold/completed 分开记录。 */
+@@ -173,17 +179,162 @@ function canonical(path: string): string {
+ 	return pathKey(resolve(path));
+ }
+ 
++function validateControlStop(stop: ControlStop | undefined, flow: FlowControl, path: string): void {
++	const corrupt = (message: string): never => fail(`控制停因损坏（文件：${path}）：${message}`);
++	if (stop === undefined) return;
++	if (!stop || typeof stop !== "object" || Array.isArray(stop)) corrupt("停止须为映射");
++	if (
++		Object.keys(stop).some(
++			(key) => !["category", "identity", "reason", "pending", "route", "legacyChannel"].includes(key),
++		)
++	)
++		corrupt("停止含未知字段");
++	if (!["decision", "manual_pause", "recovery_required", "terminal_block", "legacy_unknown"].includes(stop.category))
++		corrupt("category无效");
++	if (typeof stop.reason !== "string" || !stop.reason.trim()) corrupt("reason须为非空文本");
++	const id = stop.identity;
++	if (!id || typeof id !== "object" || Array.isArray(id) || id.instance !== flow.实例)
++		corrupt("identity.instance不匹配");
++	if (Object.keys(id).some((key) => !["instance", "node", "round", "cardRef", "attempt"].includes(key)))
++		corrupt("identity含未知字段");
++	if ((id.cardRef === undefined) !== (id.attempt === undefined)) corrupt("cardRef/attempt须同时存在");
++	if (id.attempt !== undefined && (!Number.isSafeInteger(id.attempt) || id.attempt < 1)) corrupt("attempt无效");
++	if ((id.node === undefined) !== (id.round === undefined)) corrupt("node/round须同时存在");
++	if (id.node !== undefined && !flow.节点.some((node) => node.名字 === id.node && node.轮次 === id.round))
++		corrupt("节点或轮次不属于当前控制节点");
++	if (stop.route !== undefined && !["rule", "resolve_pending"].includes(stop.route)) corrupt("route无效");
++	if (stop.legacyChannel !== undefined && !["人工", "主控"].includes(stop.legacyChannel)) corrupt("legacyChannel无效");
++	if (stop.legacyChannel !== undefined && flow.版本 !== 2) corrupt("v3不保存旧裁定通道");
++	if (stop.pending !== undefined) {
++		const problems = validatePending(stop.pending);
++		if (problems.length) corrupt(problems.join("；"));
++		const pending = stop.pending;
++		if (
++			stop.route === "resolve_pending" &&
++			(!pending.card_ref || pending.attempt === undefined || !pending.items.length)
++		)
++			corrupt("逐项办理须绑定卡、attempt和未达项");
++		if (pending.instance !== flow.实例) corrupt("待决instance不匹配");
++		const node = flow.节点.find((node) => node.名字 === pending.node && node.轮次 === pending.round);
++		if (!node) corrupt("待决node/round不匹配");
++		if (flow.冻结配方.节点.find((def) => def.名字 === pending.node)?.人工确认 && pending.channel !== "人工")
++			corrupt("待决通道与冻结人工门冲突");
++		if (id.node !== undefined && (id.node !== pending.node || id.round !== pending.round))
++			corrupt("停止与待决身份冲突");
++		if (
++			pending.card_ref !== undefined &&
++			!node!.卡.some((ref) => parseCardRef(ref) === parseCardRef(pending.card_ref!))
++		)
++			corrupt("待决卡不属于节点");
++		if (id.cardRef !== undefined && (id.cardRef !== pending.card_ref || id.attempt !== pending.attempt))
++			corrupt("停止与待决card/attempt冲突");
++		if (stop.category === "decision" && (pending.phase !== "待处理" || id.node === undefined))
++			corrupt("可办理停因须绑定当前待处理节点");
++	} else if (id.cardRef !== undefined || id.attempt !== undefined) corrupt("卡身份缺少待决依据");
++	if (stop.category === "decision" && (!stop.route || (!stop.pending && flow.版本 !== 2)))
++		corrupt("裁决缺少route或待决");
++}
++
++/** 唯一旧格式解码边界；不从暂停文字推断授权，不写磁盘。 */
++function decodeControlStop(raw: Record<string, unknown>, path: string): void {
++	if (raw.版本 === 3) {
++		if (["暂停", "裁定", "待决"].some((key) => Object.hasOwn(raw, key))) fail(`v3混入旧停因字段（文件：${path}）`);
++		validateControlStop(raw.停止 as ControlStop | undefined, raw as unknown as FlowControl, path);
++		return;
++	}
++	if (raw.停止 !== undefined) fail(`v2混入v3停止字段（文件：${path}）`);
++	const flow = raw as unknown as FlowControl;
++	const pause = flow.暂停;
++	const pending = flow.待决;
++	const ruling = flow.裁定;
++	if (pause !== undefined && (typeof pause !== "string" || !pause.trim())) fail(`暂停记录损坏（文件：${path}）`);
++	if (pending !== undefined) {
++		const problems = validatePending(pending);
++		if (problems.length) fail(`待决损坏（文件：${path}）：${problems.join("；")}`);
++	}
++	if (ruling !== undefined) {
++		if (
++			!ruling ||
++			typeof ruling !== "object" ||
++			!["主控", "人工"].includes(ruling.通道) ||
++			typeof ruling.理由 !== "string" ||
++			!ruling.理由.trim() ||
++			!flow.节点.some((node) => node.名字 === ruling.节点 && node.轮次 === ruling.轮次)
++		)
++			fail(`裁定身份或通道损坏（文件：${path}）`);
++		if (pending && (pending.node !== ruling.节点 || pending.round !== ruling.轮次 || pending.channel !== ruling.通道))
++			fail(`待决与裁定身份或通道冲突（文件：${path}）`);
++	}
++	let stop: ControlStop | undefined;
++	if (pending)
++		stop = decisionStop(
++			pending,
++			ruling || pending.kind === "普通裁定" || pending.kind === "人工确认" ? "rule" : "resolve_pending",
++		);
++	else if (ruling)
++		stop = {
++			category: "decision",
++			identity: { instance: flow.实例, node: ruling.节点, round: ruling.轮次 },
++			reason: ruling.理由,
++			route: "rule",
++			legacyChannel: ruling.通道,
++		};
++	if (pause !== undefined || pending !== undefined)
++		stop = {
++			...stop,
++			category: "legacy_unknown",
++			identity: stop?.identity ?? { instance: flow.实例 },
++			reason: pause ?? stop!.reason,
++		};
++	validateControlStop(stop, flow, path);
++	delete raw.暂停;
++	delete raw.裁定;
++	delete raw.待决;
++	if (stop) raw.停止 = stop;
++}
++
++function attachControlProjections(flow: FlowControl): FlowControl {
++	Object.defineProperties(flow, {
++		暂停: { configurable: true, get: () => formatControlStop(flow.停止) },
++		裁定: { configurable: true, get: () => rulingProjection(flow.停止) },
++		待决: { configurable: true, get: () => flow.停止?.pending },
++	});
++	return flow;
++}
++
++/** 宿主序列化边界：兼容字段仅作为输出，不能成为持久化正本。 */
++export function projectControlForHost(flow: FlowControl): FlowControl {
++	return {
++		...flow,
++		暂停: formatControlStop(flow.停止),
++		裁定: projectControlStop(flow.停止, undefined, storedControlRunMode(flow.运行方式))?.actions.includes("rule")
++			? rulingProjection(flow.停止)
++			: undefined,
++		待决: flow.停止?.pending ? structuredClone(flow.停止.pending) : undefined,
++	};
++}
++
++/** 停因唯一修改归属；调用者必须已经持有控制锁。 */
++function changeControlStop(flow: FlowControl, stop: ControlStop | undefined): void {
++	flow.停止 = stop === undefined ? undefined : structuredClone(stop);
++}
++
++function assertStopAction(flow: FlowControl, action: "rule" | "resolve_pending", now: string): void {
++	if (!projectControlStop(flow.停止, now, storedControlRunMode(flow.运行方式))?.actions.includes(action))
++		fail(`当前停因不允许${action}；暂停、过期或旧现场须人工核查恢复，不能借裁定绕过人工门`);
++}
++
+ export function readControl(recipe: WorkflowRecipe, options: DriverOptions): FlowControl {
+ 	const path = controlPath(recipe, options);
+ 	if (!existsSync(path)) fail(`缺少控制清单（文件：${path}）；只能展示旧卡，须人工重建，不能自动恢复`);
+ 	const { frontmatter: raw } = parseFrontmatter<Record<string, unknown>>(readFileSync(path, "utf8"));
+-	// 格式版本分离：2 才是控制正本。未知新版（如 3）不补默认值、不按 v2 解释——原件保留，
++	// 控制文件v2只读兼容，v3保存单一停止事实；未知版本不补默认值，原件保留。
+ 	// 如实报出盘上实际版本，由人工或升级内核处理，避免把新版现场读成 v2 造成假成功。
+-	if (raw.版本 !== 2)
++	if (raw.版本 !== 2 && raw.版本 !== 3)
+ 		fail(
+ 			`旧实例或未知版本只可历史展示；须显式创建新副本，不可按 v2 续跑（文件：${path}；盘上格式版本：${
+ 				raw.版本 === undefined ? "缺失" : String(raw.版本)
+-			}，控制正本须为 2）；原件保留不动，请用 pao_query_flow 查历史状态或新建实例`,
++			}，控制正本须为 2 或 3）；原件保留不动，请用 pao_query_flow 查历史状态或新建实例`,
+ 		);
+ 	if (
+ 		typeof raw.实例 !== "string" ||
+@@ -205,7 +356,8 @@ export function readControl(recipe: WorkflowRecipe, options: DriverOptions): Flo
+ 		!["运行中", "挂起", "已完成"].includes(String(raw.状态))
+ 	)
+ 		fail(`控制清单损坏（文件：${path}）；原件保留不动，须人工重建摘要，不得自动续跑`);
+-	const flow = raw as unknown as FlowControl;
++	decodeControlStop(raw, path);
++	const flow = attachControlProjections(raw as unknown as FlowControl);
+ 	if (canonical(flow.卡目录) !== canonical(options.cardsDir)) fail("卡目录与控制清单归属不一致");
+ 	if (flow.运行方式 !== undefined) {
+ 		try {
+@@ -267,19 +419,18 @@ export function readControl(recipe: WorkflowRecipe, options: DriverOptions): Flo
+ 	if (flow.已派卡 !== undefined && (!Number.isSafeInteger(flow.已派卡) || flow.已派卡 < 0))
+ 		fail("自动链已派卡计数损坏");
+ 	if (flow.叫人 !== undefined && (typeof flow.叫人 !== "string" || !flow.叫人.trim())) fail("叫人记录损坏");
+-	if (flow.暂停 !== undefined && (typeof flow.暂停 !== "string" || !flow.暂停.trim())) fail("暂停记录损坏");
+-	if (flow.待决 !== undefined) {
+-		const problems = validatePending(flow.待决);
++	if (flow.停止?.pending !== undefined) {
++		const problems = validatePending(flow.停止?.pending);
+ 		if (problems.length > 0) fail(`控制清单待决损坏：${problems.join("；")}`);
+-		if (flow.待决.instance !== flow.实例) fail("待决 instance 与控制清单不一致");
+-		const node = flow.节点.find((candidate) => candidate.名字 === flow.待决!.node);
+-		if (!node || node.轮次 !== flow.待决.round) fail("待决 node/round 不属于当前控制节点");
+-		if (flow.待决.card_ref !== undefined) {
++		if (flow.停止?.pending.instance !== flow.实例) fail("待决 instance 与控制清单不一致");
++		const node = flow.节点.find((candidate) => candidate.名字 === flow.停止!.pending!.node);
++		if (!node || node.轮次 !== flow.停止?.pending.round) fail("待决 node/round 不属于当前控制节点");
++		if (flow.停止?.pending.card_ref !== undefined) {
+ 			let bound = false;
+ 			try {
+-				bound = node.卡.some((ref) => parseCardRef(ref) === parseCardRef(flow.待决!.card_ref!));
++				bound = node.卡.some((ref) => parseCardRef(ref) === parseCardRef(flow.停止!.pending!.card_ref!));
+ 			} catch {
+-				fail(`待决 card_ref 无效：${flow.待决.card_ref}`);
++				fail(`待决 card_ref 无效：${flow.停止?.pending.card_ref}`);
+ 			}
+ 			if (!bound) fail("待决 card_ref 不属于当前控制节点");
+ 		}
+@@ -311,6 +462,8 @@ export function readControl(recipe: WorkflowRecipe, options: DriverOptions): Flo
+ 	return flow;
+ }
+ function saveControl(recipe: WorkflowRecipe, options: DriverOptions, flow: FlowControl): void {
++	if (flow.版本 !== 3) fail("旧控制文件只读；须通过人工 resume 核查并备份迁移，不能隐式续写v2");
++	validateControlStop(flow.停止, flow, controlPath(recipe, options));
+ 	writeFileAtomic(
+ 		controlPath(recipe, options),
+ 		`---\n${stringify(flow)}---\n<!-- v2 流程控制正本，不得从卡重建或当缓存删除 -->\n`,
+@@ -318,6 +471,7 @@ function saveControl(recipe: WorkflowRecipe, options: DriverOptions, flow: FlowC
+ }
+ function assertOwner(flow: FlowControl, options: DriverOptions): void {
+ 	options.signal?.throwIfAborted();
++	if (flow.版本 !== 3) fail("旧控制文件只读；须通过人工 resume 核查并备份迁移，不能隐式续写v2");
+ 	if (!options.ownerSessionId || options.ownerSessionId !== flow.owner)
+ 		fail("owner 会话不匹配；恢复须显式核对现场并接管");
+ }
+@@ -633,6 +787,7 @@ export function controlView(
+ 	}[];
+ 	/** 当前停链原因；恢复后不清历史，历史看最近停链记录。 */
+ 	停链原因?: string;
++	停止?: ReturnType<typeof projectControlStop>;
+ 	/** 当前及历史停链记录；同一控制正本，不另建状态机。 */
+ 	停链记录: ControlRecord[];
+ 	/** 结构化待决正本的只读投影；控制回包从它生成停链摘要，不从暂停文案反解析。 */
+@@ -677,11 +832,11 @@ export function controlView(
+ 		const bad = cards.find((card) => ["failed", "canceled"].includes(card.frontmatter.status));
+ 		const done = completion.get(node.名字)!;
+ 		const reviewHold = def.审核 ? reviewVersionHold(flow, node, contentTree) : undefined;
+-		const pendingStop = flow.待决 ? pendingSummary(flow.待决) : undefined;
++		const pendingStop = formatControlStop(flow.停止);
+ 		const hold =
+ 			(error ? `卡读取异常:${error}` : undefined) ??
+ 			pendingStop ??
+-			flow.暂停 ??
++			formatControlStop(flow.停止) ??
+ 			(bad
+ 				? `卡 ${formatCardNumber(bad.card_no)} ${bad.frontmatter.status}`
+ 				: !def.depends_on.every((dep) => completion.get(dep))
+@@ -726,10 +881,10 @@ export function controlView(
+ 	const ownerReviewStop = [...nodes]
+ 		.reverse()
+ 		.find((node) => node.挂起 && node.挂起 === ownerReviewHolds.get(node.名字))?.挂起;
+-	const pendingStop = flow.待决 ? pendingSummary(flow.待决) : undefined;
++	const pendingStop = formatControlStop(flow.停止);
+ 	const stopReason =
+ 		pendingStop ??
+-		flow.暂停 ??
++		formatControlStop(flow.停止) ??
+ 		(nodes.some((node) => node.状态 === "failed" || node.状态 === "canceled" || node.状态 === "读取异常")
+ 			? stoppedBelow
+ 			: ownerReviewStop);
+@@ -737,7 +892,7 @@ export function controlView(
+ 		工作流: flow.工作流,
+ 		运行方式: storedControlRunMode(flow.运行方式),
+ 		状态:
+-			flow.暂停 || pendingStop
++			formatControlStop(flow.停止) || pendingStop
+ 				? "挂起"
+ 				: allDone
+ 					? "已完成"
+@@ -748,8 +903,9 @@ export function controlView(
+ 		新建卡: [],
+ 		节点: nodes,
+ 		...(stopReason ? { 停链原因: stopReason } : {}),
++		...(flow.停止 ? { 停止: projectControlStop(flow.停止, undefined, storedControlRunMode(flow.运行方式)) } : {}),
+ 		停链记录: flow.记录.filter((record) => record.事件 === "自动链停因"),
+-		...(flow.待决 ? { 待决: structuredClone(flow.待决) } : {}),
++		...(flow.停止?.pending ? { 待决: structuredClone(flow.停止?.pending) } : {}),
+ 		说明: `实例 ${flow.实例}；owner ${flow.owner}；脉络 ${flow.脉络}；卡目录 ${flow.卡目录}${flow.节点.some((n) => n.放行修复) ? "；按配置放行，仍有未解决项" : ""}`,
+ 	};
+ }
+@@ -788,6 +944,7 @@ function reportFromView(view: ReturnType<typeof controlView>): DriveReport {
+ 			})),
+ 		})),
+ 		stop_reason: view.停链原因,
++		...(view.停止 ? { stop: view.停止 } : {}),
+ 		stop_history: view.停链记录,
+ 		...(view.待决
+ 			? {
+@@ -809,7 +966,7 @@ async function mutate<T>(
+ 		const result = await fn(flow);
+ 		// 显式暂停不依赖项目仍可读取；即使 Git/执行目录丢失，也必须能保存停止意图。
+ 		// 已持控制锁时不能再走异步读面，否则同进程会等待自己持有的锁。
+-		const contentTree = flow.暂停
++		const contentTree = formatControlStop(flow.停止)
+ 			? undefined
+ 			: await currentContentTree(
+ 					options,
+@@ -854,7 +1011,7 @@ export async function startControl(
+ 		if (existsSync(controlPath(recipe, options))) fail("实例已存在；保留原件，禁止隐式重启覆盖");
+ 		const id = randomUUID();
+ 		const flow: FlowControl = {
+-			版本: 2,
++			版本: 3,
+ 			实例: id,
+ 			owner: options.ownerSessionId!,
+ 			脉络: id,
+@@ -895,7 +1052,10 @@ function identify(
+ 		identity.部长会话 !== node.部长会话
+ 	)
+ 		fail("旧轮次、错误实例或部长会话；拒绝推进当前节点");
+-	if ((!allowExistingPending && flow.暂停) || !ready(flow, node, projectRootForCards(flow.卡目录), contentTree))
++	if (
++		(!allowExistingPending && formatControlStop(flow.停止)) ||
++		!ready(flow, node, projectRootForCards(flow.卡目录), contentTree)
++	)
+ 		fail("实例已暂停或前置未完成");
+ 	return node;
+ }
+@@ -951,7 +1111,12 @@ export async function bindMinister(
+ 	return mutate(recipe, options, async (flow) => {
+ 		const node = flow.节点.find((n) => n.名字 === nodeName);
+ 		if (flow.冻结配方.节点.find((n) => n.名字 === nodeName)?.执行方式 === "直接") fail("直接节点不启动部长");
+-		if (!node || !session.trim() || !ready(flow, node, projectRootForCards(flow.卡目录), contentTree) || flow.暂停)
++		if (
++			!node ||
++			!session.trim() ||
++			!ready(flow, node, projectRootForCards(flow.卡目录), contentTree) ||
++			formatControlStop(flow.停止)
++		)
+ 			fail("节点未就绪或部长会话为空");
+ 		if (node.部长会话 && node.部长会话 !== session) fail("已绑定其他部长；须恢复操作明确接管");
+ 		node.部长会话 = session;
+@@ -1071,7 +1236,8 @@ export async function prepareDirectNode(
+ 		const node = flow.节点.find((candidate) => candidate.名字 === nodeName);
+ 		const def = flow.冻结配方.节点.find((candidate) => candidate.名字 === nodeName);
+ 		if (!node || def?.执行方式 !== "直接" || def.只读 || def.审核) fail("不是可直接执行的节点");
+-		if (flow.暂停 || !ready(flow, node, projectRootForCards(flow.卡目录), tree)) fail("实例已暂停或前置未完成");
++		if (formatControlStop(flow.停止) || !ready(flow, node, projectRootForCards(flow.卡目录), tree))
++			fail("实例已暂停或前置未完成");
+ 		if (node.部长会话) fail("直接节点不能冒用部长会话");
+ 		if (node.拆解结束) return;
+ 		await captureNodeBaseline(node, options, flow);
+@@ -1160,15 +1326,15 @@ export async function decideNode(
+ 			fail("打回或拒绝须标明失败轴");
+ 		if (requestedRuling) {
+ 			if (
+-				flow.裁定?.通道 !== requestedRuling ||
+-				flow.裁定.节点 !== identity.节点 ||
+-				flow.裁定.轮次 !== identity.轮次 ||
++				rulingProjection(flow.停止)?.通道 !== requestedRuling ||
++				rulingProjection(flow.停止)!.节点 !== identity.节点 ||
++				rulingProjection(flow.停止)!.轮次 !== identity.轮次 ||
+ 				!rulingStart ||
+-				JSON.stringify(rulingStart.裁定) !== JSON.stringify(flow.裁定)
++				JSON.stringify(rulingProjection(rulingStart.停止)) !== JSON.stringify(rulingProjection(flow.停止)) ||
++				rulingStart.停止?.pending?.key !== flow.停止?.pending?.key
+ 			)
+ 				fail(`没有匹配的${requestedRuling}裁定请求`);
+-			if (flow.暂停 !== `等待${requestedRuling}裁定:${flow.裁定.理由}`)
+-				fail(`当前暂停不是等待${requestedRuling}裁定；不能借裁定绕过人工门`);
++			assertStopAction(flow, "rule", options.now?.() ?? new Date().toISOString());
+ 			if (!def.审核) {
+ 				if (
+ 					!node.拆解结束 ||
+@@ -1195,24 +1361,33 @@ export async function decideNode(
+ 						理由: `收到匹配的${requestedRuling}裁定，下一轮按真实卡状态继续`,
+ 					},
+ 				);
+-				flow.裁定 = undefined;
+-				flow.待决 = undefined;
+-				flow.暂停 =
+-					decision.结果 === "reject"
+-						? `${requestedRuling}裁定拒绝:${decision.理由}`
+-						: decision.结果 === "change"
+-							? `${requestedRuling}裁定要求修改:${decision.理由}`
+-							: undefined;
++				changeControlStop(
++					flow,
++					decision.结果 === "pass"
++						? undefined
++						: {
++								category: decision.结果 === "reject" ? "terminal_block" : "recovery_required",
++								identity: { instance: flow.实例, node: node.名字, round: node.轮次 },
++								reason: `${requestedRuling}裁定${decision.结果 === "reject" ? "拒绝" : "要求修改"}:${decision.理由}`,
++							},
++				);
+ 				return;
+ 			}
+ 		}
+ 		const releaseRulingPause =
+ 			requestedRuling &&
+-			flow.裁定?.通道 === requestedRuling &&
+-			flow.裁定.节点 === node.名字 &&
+-			flow.裁定.轮次 === node.轮次 &&
+-			flow.暂停 === `等待${requestedRuling}裁定:${flow.裁定.理由}`;
+-		if ((flow.暂停 && !releaseRulingPause) || !ready(flow, node, projectRootForCards(flow.卡目录), contentTree))
++			rulingProjection(flow.停止)?.通道 === requestedRuling &&
++			rulingProjection(flow.停止)!.节点 === node.名字 &&
++			rulingProjection(flow.停止)!.轮次 === node.轮次 &&
++			projectControlStop(
++				flow.停止,
++				options.now?.() ?? new Date().toISOString(),
++				storedControlRunMode(flow.运行方式),
++			)?.actions.includes("rule");
++		if (
++			(formatControlStop(flow.停止) && !releaseRulingPause) ||
++			!ready(flow, node, projectRootForCards(flow.卡目录), contentTree)
++		)
+ 			fail("实例已暂停或前置未完成");
+ 		if (!def.审核 || !node.拆解结束 || !cardStates(flow, node).every((c) => c.frontmatter.status === "delivered"))
+ 			fail("审核判定须在拆解结束且全部卡机械交付后");
+@@ -1224,9 +1399,7 @@ export async function decideNode(
+ 				轮次: identity.轮次,
+ 				理由: decision.理由,
+ 			});
+-			flow.暂停 = undefined;
+-			flow.裁定 = undefined;
+-			flow.待决 = undefined;
++			changeControlStop(flow, undefined);
+ 		}
+ 		if (node.判定) {
+ 			if (node.判定.结果 !== "pass" || !def.审核) fail("本轮已判定，拒绝重复决定");
+@@ -1264,7 +1437,11 @@ export async function decideNode(
+ 		};
+ 		flow.记录.push({ 时间: stamp, 事件: decision.结果, 节点: node.名字, 轮次: node.轮次, 理由: decision.理由 });
+ 		if (decision.结果 === "reject") {
+-			flow.暂停 = `审核拒绝:${decision.理由}`;
++			changeControlStop(flow, {
++				category: "terminal_block",
++				identity: { instance: flow.实例, node: node.名字, round: node.轮次 },
++				reason: `审核拒绝:${decision.理由}`,
++			});
+ 			return;
+ 		}
+ 		if (decision.结果 !== "change") return;
+@@ -1287,7 +1464,11 @@ function applyReviewBackEdge(
+ 	flow.回边次数[key] = count;
+ 	const exceeded = edge.上限 !== 0 && count > edge.上限;
+ 	if (exceeded && edge.超限动作 === "停滞") {
+-		flow.暂停 = `回边 ${key} 超限 ${edge.上限}:${decision.理由}`;
++		changeControlStop(flow, {
++			category: "terminal_block",
++			identity: { instance: flow.实例, node: node.名字, round: node.轮次 },
++			reason: `回边 ${key} 超限 ${edge.上限}:${decision.理由}`,
++		});
+ 		return;
+ 	}
+ 	const affected = descendantNodeNames(flow, edge.目标);
+@@ -1304,7 +1485,11 @@ function applyReviewBackEdge(
+ 	);
+ 	// 返修涉及多文件：先持久化暂停，任何中断都保留现场，不能以半更新控制清单继续派发。
+ 	if (repairs.length) {
+-		flow.暂停 = "审核返修正在更新原卡；更新中断须核查现场后显式恢复";
++		changeControlStop(flow, {
++			category: "recovery_required",
++			identity: { instance: flow.实例 },
++			reason: "审核返修正在更新原卡；更新中断须核查现场后显式恢复",
++		});
+ 		saveControl(flow.冻结配方, options, flow);
+ 		for (const target of repairs) {
+ 			for (const card of cardStates(flow, target)) {
+@@ -1335,7 +1520,7 @@ function applyReviewBackEdge(
+ 		target.放行修复 = exceeded && target.名字 === node.名字;
+ 	}
+ 	if (repairs.length) {
+-		flow.暂停 = undefined;
++		changeControlStop(flow, undefined);
+ 	}
+ }
+ 
+@@ -1425,8 +1610,8 @@ export async function reworkControl(
+ 			const node = identify(flow, identity, contentTree);
+ 			const def = flow.冻结配方.节点.find((n) => n.名字 === node.名字)!;
+ 			if (!def.审核 || !reason.trim()) fail("常规质量返工只适用于审核节点，且须给出理由");
+-			if (flow.裁定) fail("仍有待处理裁定；先通过 rule 完成裁定，不能以返工绕过");
+-			if (flow.暂停) fail("实例已暂停；须人工恢复后才能返工");
++			if (rulingProjection(flow.停止)) fail("仍有待处理裁定；先通过 rule 完成裁定，不能以返工绕过");
++			if (formatControlStop(flow.停止)) fail("实例已暂停；须人工恢复后才能返工");
+ 			if (!node.拆解结束 || !cardStates(flow, node).every((card) => card.frontmatter.status === "delivered"))
+ 				fail("常规质量返工须在全部审核卡交付后");
+ 			if (!node.判定) fail("质量返工须有独立审核判定，不能凭主控自报绕过审核");
+@@ -1485,7 +1670,7 @@ export async function reopenControl(
+ 				fail("节点或实例已完成，不能作为故障恢复重派");
+ 			if (!node.拆解结束 || !ready(flow, node, projectRootForCards(options.cardsDir), contentTree))
+ 				fail("仅能重开前置已完成且拆解已结束的当前节点；未结束拆解请推流恢复原部长");
+-			if (flow.裁定) fail("仍有待处理裁定；先通过 rule 完成裁定，不能以重开绕过");
++			if (rulingProjection(flow.停止)) fail("仍有待处理裁定；先通过 rule 完成裁定，不能以重开绕过");
+ 			const affected = descendantNodeNames(flow, node.名字);
+ 			if (
+ 				flow.节点.some(
+@@ -1544,7 +1729,8 @@ export async function reworkOriginalCards(
+ 				node.部长会话 !== identity.部长会话
+ 			)
+ 				fail("原卡返修须由当前实例、节点、轮次的真实部长提交");
+-			if (flow.暂停 || flow.裁定) fail("实例已暂停或仍有待处理裁定；不能借原卡返修绕过恢复和人工门");
++			if (formatControlStop(flow.停止) || rulingProjection(flow.停止))
++				fail("实例已暂停或仍有待处理裁定；不能借原卡返修绕过恢复和人工门");
+ 			const contentTree = await currentContentTree(
+ 				options,
+ 				flow.节点.some((candidate) => candidate.判定?.结果 === "pass" || candidate.放行修复),
+@@ -1630,7 +1816,11 @@ export async function reworkOriginalCards(
+ 			}
+ 			const stamp = new Date().toISOString();
+ 			// 多卡先固定更新意图；中途失败保留暂停，下一入口不会按半更新现场继续派发。
+-			flow.暂停 = "原卡返修正在更新；更新中断须核查现场后显式恢复";
++			changeControlStop(flow, {
++				category: "recovery_required",
++				identity: { instance: flow.实例 },
++				reason: "原卡返修正在更新；更新中断须核查现场后显式恢复",
++			});
+ 			saveControl(recipe, options, flow);
+ 			for (const card of cards)
+ 				reopenOriginalCard({
+@@ -1645,7 +1835,7 @@ export async function reworkOriginalCards(
+ 						if (latest.frontmatter.status === "in_progress") reviewPendingOriginalInput(flow, node, latest);
+ 					},
+ 				});
+-			flow.暂停 = undefined;
++			changeControlStop(flow, undefined);
+ 			flow.记录.push({
+ 				时间: stamp,
+ 				事件: "原卡返修",
+@@ -1702,9 +1892,14 @@ async function setPause(
+ 		const flow = readControl(recipe, options);
+ 		assertOwner(flow, options);
+ 		if (!reason.trim()) fail("暂停理由不能为空");
+-		if (preserveExisting && flow.暂停 !== undefined) return false;
++		if (preserveExisting && flow.停止 !== undefined && flow.停止.category !== "decision") return false;
+ 		if (preserveExisting && (await readControlReport(flow, options)).status === "completed") return false;
+-		flow.暂停 = reason;
++		changeControlStop(flow, {
++			category: preserveExisting ? "recovery_required" : "manual_pause",
++			identity: flow.停止?.pending ? flow.停止.identity : { instance: flow.实例 },
++			reason,
++			...(flow.停止?.pending ? { pending: flow.停止.pending, route: flow.停止.route } : {}),
++		});
+ 		flow.状态 = persistedStatus(controlReport(flow, undefined, undefined).status);
+ 		saveControl(recipe, options, flow);
+ 		return true;
+@@ -1773,8 +1968,8 @@ export function reserveControlDispatch(
+ 		const node = flow.节点.find((candidate) => candidate.名字 === input.node);
+ 		if (
+ 			flow.实例 !== input.instance ||
+-			flow.暂停 ||
+-			flow.裁定 ||
++			formatControlStop(flow.停止) ||
++			rulingProjection(flow.停止) ||
+ 			flow.状态 === "已完成" ||
+ 			!node ||
+ 			node.轮次 !== input.round ||
+@@ -1810,6 +2005,7 @@ export function recordControlCalledHuman(recipe: WorkflowRecipe, options: Driver
+ }
+ 
+ function assertPendingBinding(flow: FlowControl, pending: WorkflowPending): NodeControl {
++	if (flow.停止 && flow.停止.category !== "decision") fail("实例已暂停或待恢复，不能办理待决");
+ 	const problems = validatePending(pending);
+ 	if (problems.length > 0) fail(`待决结构无效：${problems.join("；")}`);
+ 	if (flow.状态 === "已完成") fail("实例已完成，不能登记或合并待决");
+@@ -1857,21 +2053,23 @@ function assertPendingBinding(flow: FlowControl, pending: WorkflowPending): Node
+ 
+ function applyPending(flow: FlowControl, pending: WorkflowPending, reasonEvent: string): WorkflowPending {
+ 	assertPendingBinding(flow, pending);
++	if (flow.停止 && flow.停止.category !== "decision") fail("实例已暂停或待恢复，不能登记或合并待决");
+ 	let next = pending;
+ 	let firstWrite = false;
+-	if (flow.待决) {
+-		if (flow.待决.key !== pending.key)
+-			fail(`已有不同待决 ${flow.待决.key}，不能用 ${pending.key} 覆盖；须先按当前现场办理`);
+-		next = mergePending(flow.待决, pending);
++	if (flow.停止?.pending) {
++		if (flow.停止?.pending.key !== pending.key)
++			fail(`已有不同待决 ${flow.停止?.pending.key}，不能用 ${pending.key} 覆盖；须先按当前现场办理`);
++		next = mergePending(flow.停止?.pending, pending);
+ 	} else {
+-		if (flow.暂停 || flow.裁定) fail("实例已有非结构化暂停或旧裁定，不能隐式覆盖");
++		if (formatControlStop(flow.停止) || rulingProjection(flow.停止))
++			fail("实例已有非结构化暂停或旧裁定，不能隐式覆盖");
+ 		firstWrite = true;
+ 	}
+-	const before = flow.待决 ? JSON.stringify(flow.待决) : undefined;
+-	flow.待决 = next;
+-	flow.暂停 = pendingSummary(next);
+-	if (next.kind === "普通裁定" || next.kind === "人工确认")
+-		flow.裁定 = { 节点: next.node, 轮次: next.round, 理由: next.reason, 通道: next.channel };
++	const before = flow.停止?.pending ? JSON.stringify(flow.停止?.pending) : undefined;
++	changeControlStop(
++		flow,
++		decisionStop(next, next.kind === "普通裁定" || next.kind === "人工确认" ? "rule" : "resolve_pending"),
++	);
+ 	if (firstWrite || JSON.stringify(next) !== before)
+ 		flow.记录.push({
+ 			时间: next.created_at,
+@@ -1900,7 +2098,7 @@ export async function readPending(
+ 	options: DriverOptions,
+ 	key?: string,
+ ): Promise<WorkflowPending | undefined> {
+-	const pending = readControl(recipe, options).待决;
++	const pending = readControl(recipe, options).停止?.pending;
+ 	if (!pending || (key !== undefined && pending.key !== key)) return undefined;
+ 	return structuredClone(pending);
+ }
+@@ -1919,31 +2117,33 @@ export async function expirePending(
+ 	const now = options.now?.() ?? new Date().toISOString();
+ 	if (!Number.isFinite(Date.parse(now))) fail(`待决到期检查时间无效：${now}`);
+ 	return mutate(recipe, options, (flow) => {
+-		if (!flow.待决) return undefined;
++		if (flow.停止?.category !== "decision" || !flow.停止?.pending) return undefined;
+ 		if (
+ 			expected &&
+ 			(flow.实例 !== expected.instance ||
+-				flow.待决.instance !== expected.instance ||
+-				flow.待决.key !== expected.key ||
+-				flow.待决.node !== expected.node ||
+-				flow.待决.round !== expected.round ||
+-				flow.待决.card_ref !== expected.card_ref ||
+-				flow.待决.attempt !== expected.attempt ||
+-				flow.待决.deadline !== expected.deadline)
++				flow.停止?.pending.instance !== expected.instance ||
++				flow.停止?.pending.key !== expected.key ||
++				flow.停止?.pending.node !== expected.node ||
++				flow.停止?.pending.round !== expected.round ||
++				flow.停止?.pending.card_ref !== expected.card_ref ||
++				flow.停止?.pending.attempt !== expected.attempt ||
++				flow.停止?.pending.deadline !== expected.deadline)
+ 		)
+ 			return undefined;
+-		const result = expirePendingFact(flow.待决, now);
++		const expired = structuredClone(flow.停止?.pending);
++		const result = expirePendingFact(expired, now);
+ 		if (!result) return undefined;
++		changeControlStop(flow, decisionStop(expired, flow.停止.route ?? "resolve_pending"));
+ 		flow.结果 ??= [];
+ 		flow.结果.push(result);
+ 		flow.记录.push({
+ 			时间: now,
+ 			事件: "待决截止",
+-			节点: flow.待决.node,
+-			轮次: flow.待决.round,
++			节点: flow.停止?.pending.node,
++			轮次: flow.停止?.pending.round,
+ 			理由: result.reason,
+ 		});
+-		return structuredClone(flow.待决);
++		return structuredClone(flow.停止?.pending);
+ 	});
+ }
+ 
+@@ -1962,7 +2162,8 @@ export async function requestRuling(
+ 	const createdAt = options.now?.() ?? new Date().toISOString();
+ 	const deadline = pendingDeadline(createdAt);
+ 	return mutate(recipe, options, (flow) => {
+-		const node = identify(flow, identity, tree, Boolean(flow.待决?.phase === "待处理"));
++		if (flow.停止 && flow.停止.category !== "decision") fail("实例已暂停或待恢复，不能请求裁定");
++		const node = identify(flow, identity, tree, Boolean(flow.停止?.pending?.phase === "待处理"));
+ 		const def = flow.冻结配方.节点.find((n) => n.名字 === node.名字)!;
+ 		if (!reason.trim()) fail("裁定理由不能为空");
+ 		if (flow.状态 === "已完成") fail("实例已完成，不能再请求裁定");
+@@ -1979,16 +2180,19 @@ export async function requestRuling(
+ 			: isUnattended(flow) || (def.允许请求主控裁定 && ownerPresent)
+ 				? "主控"
+ 				: "人工";
+-		if (flow.待决) {
+-			if (flow.待决.instance !== identity.实例 || flow.待决.node !== node.名字 || flow.待决.round !== node.轮次)
+-				fail(`已有另一现场待决 ${flow.待决.key}，拒绝用当前节点请求覆盖`);
+-			if (flow.待决.phase !== "待处理") fail(`待决阶段为 ${flow.待决.phase}，不能继续请求裁定`);
+-			if (flow.待决.channel !== channel) fail(`已有待决通道为 ${flow.待决.channel}，不能用 ${channel} 覆盖`);
+-			const next = structuredClone(flow.待决);
++		if (flow.停止?.pending) {
++			if (
++				flow.停止?.pending.instance !== identity.实例 ||
++				flow.停止?.pending.node !== node.名字 ||
++				flow.停止?.pending.round !== node.轮次
++			)
++				fail(`已有另一现场待决 ${flow.停止?.pending.key}，拒绝用当前节点请求覆盖`);
++			if (flow.停止?.pending.phase !== "待处理") fail(`待决阶段为 ${flow.停止?.pending.phase}，不能继续请求裁定`);
++			if (flow.停止?.pending.channel !== channel)
++				fail(`已有待决通道为 ${flow.停止?.pending.channel}，不能用 ${channel} 覆盖`);
++			const next = structuredClone(flow.停止?.pending);
+ 			if (!next.reason.split("\n").includes(reason)) next.reason = `${next.reason}\n${reason}`;
+-			flow.待决 = next;
+-			flow.裁定 = { 节点: node.名字, 轮次: node.轮次, 理由: next.reason, 通道: channel };
+-			flow.暂停 = `等待${channel}裁定:${next.reason}`;
++			changeControlStop(flow, decisionStop(next, "rule"));
+ 			return structuredClone(next);
+ 		}
+ 		const pending = createRulingPending({
+@@ -2001,8 +2205,7 @@ export async function requestRuling(
+ 			deadline,
+ 		});
+ 		const applied = applyPending(flow, pending, channel === "人工" ? "请求人工确认" : "请求主控裁定");
+-		flow.裁定 = { 节点: node.名字, 轮次: node.轮次, 理由: applied.reason, 通道: channel };
+-		flow.暂停 = `等待${channel}裁定:${reason}`;
++		changeControlStop(flow, decisionStop(applied, "rule"));
+ 		return applied;
+ 	});
+ }
+@@ -2124,7 +2327,7 @@ async function inspectPendingResolution(
+ 		assertTrustedUnattended(flow, options);
+ 		const record = findPendingResolution(flow, key);
+ 		if (!record) fail(`找不到待决办理记录 ${key}`);
+-		const pending = flow.待决;
++		const pending = flow.停止?.pending;
+ 		if (!pending || pending.key !== key) fail(`当前待决不是 ${key}，拒绝串用其他现场`);
+ 		assertPendingBinding(flow, pending);
+ 		if (!expectedStages.includes(record.stage))
+@@ -2178,7 +2381,7 @@ async function updatePendingResolution(
+ 		if (!record) fail(`找不到待决办理记录 ${key}`);
+ 		if (record.input_digest !== digest) fail(`同一待决 ${key} 已绑定不同裁决依据，拒绝重放修改`);
+ 		if (!expectedStages.includes(record.stage)) fail(`待决办理 ${key} 当前阶段为 ${record.stage}，不能写入预期阶段`);
+-		const pending = flow.待决;
++		const pending = flow.停止?.pending;
+ 		if (!pending || pending.key !== key) fail(`当前待决不是 ${key}，拒绝串用其他现场`);
+ 		const cardNo = pending.card_ref ? parseCardRef(pending.card_ref) : 0;
+ 		if (!cardNo) fail("待决办理必须绑定卡号");
+@@ -2228,7 +2431,7 @@ async function independentReviewSubmission(
+ ): Promise<NonNullable<PendingResolutionRecord["submission"]> & { skip: IndependentReviewSubmissionSkip }> {
+ 	assertOwner(flow, options);
+ 	assertTrustedUnattended(flow, options);
+-	const pending = flow.待决;
++	const pending = flow.停止?.pending;
+ 	if (
+ 		!pending ||
+ 		!pending.card_ref ||
+@@ -2360,7 +2563,7 @@ export async function resolvePendingOnce(
+ 					flowStatus: resolutionFlowStatus(flow),
+ 				};
+ 			}
+-			const pending = flow.待决;
++			const pending = flow.停止?.pending;
+ 			if (!pending) fail(`控制正本没有待决 ${input.pending_key}`);
+ 			if (pending.key !== input.pending_key) fail(`当前待决为 ${pending.key}，不能用 ${input.pending_key} 覆盖`);
+ 			assertPendingBinding(flow, pending);
+@@ -2616,7 +2819,7 @@ export async function resolvePendingOnce(
+ 		if (record.stage !== "submitted") fail(`待决办理 ${input.pending_key} 当前阶段为 ${record.stage}，不能清待决`);
+ 		const submission = storedSubmission ?? record.submission;
+ 		if (!submission) fail(`待决办理 ${input.pending_key} 缺少交卷结果，拒绝清待决`);
+-		const pending = flow.待决;
++		const pending = flow.停止?.pending;
+ 		if (!pending || pending.key !== input.pending_key) fail(`当前待决不是 ${input.pending_key}，拒绝清其他现场`);
+ 		assertPendingBinding(flow, pending);
+ 		const cardNo = pending.card_ref ? parseCardRef(pending.card_ref) : 0;
+@@ -2644,18 +2847,15 @@ export async function resolvePendingOnce(
+ 				options,
+ 			);
+ 		}
+-		const expectedPause = pendingSummary(pending);
+-		const rulingPause = `等待${pending.channel}裁定:${pending.reason}`;
+-		if (flow.暂停 !== expectedPause && flow.暂停 !== rulingPause)
+-			fail("当前暂停文案不属于该结构化待决，拒绝清除并掩盖其他停因");
++		assertStopAction(flow, "resolve_pending", resolutionClock(options).iso);
+ 		if (
+-			flow.裁定 &&
+-			(flow.裁定.节点 !== pending.node || flow.裁定.轮次 !== pending.round || flow.裁定.通道 !== pending.channel)
++			rulingProjection(flow.停止) &&
++			(rulingProjection(flow.停止)!.节点 !== pending.node ||
++				rulingProjection(flow.停止)!.轮次 !== pending.round ||
++				rulingProjection(flow.停止)!.通道 !== pending.channel)
+ 		)
+ 			fail("当前裁定不属于该待决，拒绝清除其他现场");
+-		flow.待决 = undefined;
+-		flow.暂停 = undefined;
+-		flow.裁定 = undefined;
++		changeControlStop(flow, undefined);
+ 		flow.记录.push({
+ 			时间: clock.iso,
+ 			事件: "无人值守待决办理完成",
+@@ -2689,7 +2889,7 @@ export async function resolvePendingOnce(
+ 		if (!record || record.input_digest !== digest) fail(`待决办理 ${input.pending_key} 记录已变化`);
+ 		if (record.stage !== "pending_cleared")
+ 			fail(`待决办理 ${input.pending_key} 当前阶段为 ${record.stage}，不能收尾`);
+-		if (flow.待决?.key === input.pending_key) fail("待决仍存在，拒绝伪称办理完成");
++		if (flow.停止?.pending?.key === input.pending_key) fail("待决仍存在，拒绝伪称办理完成");
+ 		record.stage = "completed";
+ 		record.updated_at = clock.iso;
+ 		saveControl(recipe, options, flow);
+@@ -2747,8 +2947,41 @@ export async function resumeControl(
+ 			fail(
+ 				`恢复身份不符或缺现场核查说明；须提供 实例=${flow.实例}、prev_owner=${flow.owner}、reason=<现场核查说明>（pao_control_node action=resume）`,
+ 			);
++		// 旧待决的显式迁移只升级控制文件，不恢复执行、不改卡状态或停止证明。
++		// 该卡仍可能是in_progress；后续裁决入口必须另核当前attempt、截止与真实执行占用。
++		if (flow.版本 === 2 && flow.停止?.pending) {
++			const pending = structuredClone(flow.停止.pending);
++			if (pending.card_ref !== undefined) {
++				const card = loadCard(flow.卡目录, parseCardRef(pending.card_ref));
++				if (card.frontmatter.attempt !== pending.attempt) fail("旧待决attempt已变化，拒绝迁移陈旧请求");
++			}
++			const clock = resolutionClock(options);
++			const result = expirePendingFact(pending, clock.iso);
++			const original = controlPath(recipe, options);
++			copyFileSync(original, `${original}.v2-${randomUUID()}.bak`, constants.COPYFILE_EXCL);
++			flow.版本 = 3;
++			flow.owner = options.ownerSessionId;
++			changeControlStop(flow, decisionStop(pending, flow.停止.route ?? "resolve_pending"));
++			if (result) {
++				flow.结果 ??= [];
++				flow.结果.push(result);
++			}
++			flow.记录.push({
++				时间: clock.iso,
++				事件: "人工迁移",
++				理由: `${input.现场核查}；保留待决${pending.key}，未恢复执行、未改卡状态或确认写者停止`,
++			});
++			flow.状态 = persistedStatus(controlReport(flow, undefined, contentTree).status);
++			saveControl(recipe, options, flow);
++			return;
++		}
+ 		if (flow.节点.some((n) => cardStates(flow, n).some((c) => c.frontmatter.status === "in_progress")))
+ 			fail("仍有在途卡，先确认停止及卡状态");
++		if (flow.版本 === 2) {
++			const original = controlPath(recipe, options);
++			copyFileSync(original, `${original}.v2-${randomUUID()}.bak`, constants.COPYFILE_EXCL);
++			flow.版本 = 3;
++		}
+ 		flow.owner = options.ownerSessionId;
+ 		for (const node of flow.节点)
+ 			if (node.判定?.结果 === "reject") {
+@@ -2761,9 +2994,7 @@ export async function resumeControl(
+ 				});
+ 				node.判定 = undefined;
+ 			}
+-		flow.暂停 = undefined;
+-		flow.裁定 = undefined;
+-		flow.待决 = undefined;
++		changeControlStop(flow, undefined);
+ 		flow.记录.push({ 时间: new Date().toISOString(), 事件: "人工恢复", 理由: input.现场核查 });
+ 		flow.状态 = persistedStatus(controlReport(flow, undefined, contentTree).status);
+ 		saveControl(recipe, options, flow);

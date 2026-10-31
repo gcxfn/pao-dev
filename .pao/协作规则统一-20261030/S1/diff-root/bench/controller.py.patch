@@ -1,0 +1,16 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\controller.py" "b/D:\\AI\\workspace\\pao-dev\\bench\\controller.py"
+index 61ad8a73..a5b2aed5 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\controller.py"
++++ "b/D:\\AI\\workspace\\pao-dev\\bench\\controller.py"
+@@ -436,7 +436,10 @@ def observe_business(run, root, *, quiet_after_seconds=900):
+         raise IntegrityError("控制正本的业务记录损坏")
+     latest = records[-1] if records else None
+     latest_at = (latest or {}).get("时间") or identity.get("bound_at")
+-    blocker = flow.get("裁定") or flow.get("暂停")
++    # 只采集停止事实；授权和合法动作仍由产品控制查询解释。
++    blocker = flow.get("停止") if flow.get("版本") == 3 else flow.get("裁定") or flow.get("暂停")
++    if flow.get("版本") == 3 and blocker is not None and (not isinstance(blocker, dict) or not blocker):
++        raise IntegrityError("控制正本的停止对象损坏")
+     event_key = json.dumps(latest, ensure_ascii=False, sort_keys=True)
+     progress_at = previous.get("progress_observed_at") if previous.get("business_event_key") == event_key else now()
+     progress_at = progress_at or now()

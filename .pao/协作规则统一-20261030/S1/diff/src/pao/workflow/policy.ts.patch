@@ -1,0 +1,57 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\policy.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\policy.ts"
+index cfa36bf4..14a5cb46 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\policy.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\policy.ts"
+@@ -28,6 +28,52 @@ export type PendingPhase = "待处理" | "已过期" | "已完成";
+ export type PendingDefaultAction = "failed" | "stop_unconfirmed";
+ export type ControlResultState = "failed" | "canceled" | "stop_unconfirmed";
+ 
++/** v3控制文件的唯一停因；权限和允许动作只在查询时计算，不另行保存。 */
++export interface ControlStop {
++	category: "decision" | "manual_pause" | "recovery_required" | "terminal_block" | "legacy_unknown";
++	identity: { instance: string; node?: string; round?: number; cardRef?: string; attempt?: number };
++	reason: string;
++	/** 暂停时可保留原待决证据；有证据不表示此时允许办理。 */
++	pending?: WorkflowPending;
++	route?: "rule" | "resolve_pending";
++	/** 仅旧裁定缺少WorkflowPending时使用，不能据此产生主控授权。 */
++	legacyChannel?: PendingChannel;
++}
++
++export interface ControlStopProjection extends ControlStop {
++	authority: "owner" | "human";
++	actions: ("rule" | "resolve_pending" | "resume")[];
++	deadline?: string;
++}
++
++/** 纯策略：不读文件和进程，执行入口仍在锁内重新核对身份及截止。 */
++export function projectControlStop(
++	stop: ControlStop | undefined,
++	now?: string,
++	runMode: ControlRunMode = "有人值守",
++): ControlStopProjection | undefined {
++	if (!stop) return undefined;
++	const pending = stop.pending;
++	const expired =
++		pending && (pending.phase !== "待处理" || (now !== undefined && Date.parse(now) >= Date.parse(pending.deadline)));
++	const actionable =
++		stop.category === "decision" &&
++		pending !== undefined &&
++		!expired &&
++		(stop.route !== "resolve_pending" || runMode === "无人值守");
++	return {
++		...structuredClone(stop),
++		authority: actionable && pending.channel === "主控" ? "owner" : "human",
++		actions:
++			actionable && stop.route
++				? stop.route === "rule" && pending.items.length > 0 && runMode === "无人值守"
++					? ["rule", "resolve_pending"]
++					: [stop.route]
++				: ["resume"],
++		...(actionable ? { deadline: pending.deadline } : {}),
++	};
++}
++
+ export interface WorkflowPendingItem {
+ 	item_ref: string;
+ 	card_ref: string;

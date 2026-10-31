@@ -1,0 +1,17 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\dispatch-context.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\dispatch-context.ts"
+index d6e11ac9..89b7b7d4 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\dispatch-context.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\dispatch-context.ts"
+@@ -80,10 +80,11 @@ export function resolveWorkflowDispatch(
+ 			throw new PaoWorkerError("无效参数", `工作流实例 ${flow.实例} 的 owner 与当前会话不符；拒绝派发`);
+ 		const current = flow.节点.find((node) => node.名字 === marker.节点);
+ 		if (
++			flow.版本 !== 3 ||
+ 			flow.实例 !== versioned[1] ||
+ 			current?.轮次 !== Number(versioned[2]) ||
+ 			!current?.卡.includes(formatCardNumber(card.card_no)) ||
+-			flow.暂停
++			flow.停止?.reason
+ 		)
+ 			throw new PaoWorkerError("无效参数", "工作流 v2 卡不属于当前实例/轮次，或流程已暂停；拒绝按可变配方派发");
+ 		const node = flow.冻结配方.节点.find((candidate) => candidate.名字 === marker.节点);

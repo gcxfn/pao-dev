@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-unverified",
+  "policySource": ".pao/深度审核重整-20261028/目标架构与实施分路.md#3",
+  "source": {
+    "historical": ".pao/深度审核重整-20261028/审核/A1-失败考古.md#5",
+    "stopPoints": ".pao/深度审核重整-20261028/审核/A2-协作核心.md#23"
+  },
+  "kit": "bench/organized-post/kit.json",
+  "kitSha256": "c9f11a7bf4d943b7d7bdd121987dec51bb9b3699d336180e776f21e875ec69b5",
+  "historicalFaults": [
+    { "id": "O-01", "category": "environment", "scenario": "overlapping-subnet", "expected": "自动换子网并留证，不启动冲突网络", "localLayer": "L2", "offlineReason": null },
+    { "id": "O-02", "category": "environment", "scenario": "offline-install", "expected": "离线包完成安装或预检明确失败", "localLayer": "L2", "offlineReason": null },
+    { "id": "O-03", "category": "environment", "scenario": "model-stream-no-finish", "expected": "有限重试后继续或明确停因", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-04", "category": "assembly", "scenario": "empty-directory-provision", "expected": "冻结包入口可导入，kit 是文件，Git 与 Python 可见", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-05", "category": "assembly", "scenario": "three-role-subprocess-handshake", "expected": "主控、部长、工人真实子进程均激活且工具集正确", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-06", "category": "protocol", "scenario": "worker-receipt-text-fences", "expected": "可纠正或程序采集，不进入人工门", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-07", "category": "observation", "scenario": "non-completed-exit", "expected": "外层报 execution_error，不评分", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-08", "category": "observation", "scenario": "observer-fault", "expected": "观察告警，主流程继续", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-09", "category": "protocol", "scenario": "descriptive-input-and-map-uri", "expected": "建卡前拒绝描述性路径；合法地图可定位", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-10", "category": "protocol", "scenario": "nested-shell-quotes", "expected": "实际 argv 与预期逐项一致", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-11", "category": "state", "scenario": "map-after-own-write", "expected": "下游自己的写入不使上游地图误失效", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-12", "category": "state", "scenario": "review-evidence-copy", "expected": "审核副本自己的证据变化不误拒成果版本", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-13", "category": "state", "scenario": "claim-rework-write-race", "expected": "单一胜出，另一请求得到可恢复错误，无残留", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-14", "category": "lifecycle", "scenario": "minister-delay-exit", "expected": "预算内握手；退出后重派或明确停因", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-15", "category": "lifecycle", "scenario": "parent-and-review-exit", "expected": "宿主退出后停止并保留现场，重启仍需人工恢复；不自动接管或重放业务", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-16", "category": "policy", "scenario": "r37-not-run-ruling", "expected": "普通 fail/not_run 登记当前尝试待决，经主控逐项明确裁决后程序办理；不无条件归档或放行", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-17", "category": "policy", "scenario": "stop-point-policy-table", "expected": "S1—S21 每个停点在无人值守下有程序出口或明确终态", "localLayer": "L1", "offlineReason": null },
+    { "id": "O-18", "category": "model", "scenario": "review-finds-defect", "expected": "走声明回边/返修，不落人工黑洞", "localLayer": "L1", "offlineReason": null }
+  ],
+  "stopPoints": [
+    { "id": "S1", "name": "人工裁定", "oldCode": "死角", "newExpectation": "保留真实人工授权门；无人值守停止并保留待人工处理现场" },
+    { "id": "S2", "name": "主控裁定", "oldCode": "依赖模型手续", "newExpectation": "结构化待决项与截止默认动作" },
+    { "id": "S3", "name": "owner 待裁", "oldCode": "依赖模型手续", "newExpectation": "普通 fail/not_run 逐项结构化裁决；未明确接受不得放行，到期停止留证" },
+    { "id": "S4", "name": "部长 hold", "oldCode": "依赖模型手续", "newExpectation": "结构化返修或主控待决，不按自由文本猜状态" },
+    { "id": "S5", "name": "审核 reject", "oldCode": "死角", "newExpectation": "按策略重开回边或进入已终止(审核拒绝)" },
+    { "id": "S6", "name": "回边超限", "oldCode": "死角", "newExpectation": "无人值守明确终止或按声明策略处理" },
+    { "id": "S7", "name": "裁定 reject/change", "oldCode": "死角", "newExpectation": "结构化回边/终止，不自锁" },
+    { "id": "S8", "name": "返修中断", "oldCode": "死角", "newExpectation": "停止新派发并保留部分成果和中断标记；人工核查后显式恢复" },
+    { "id": "S9", "name": "主会话关闭", "oldCode": "死角", "newExpectation": "停止子执行并保留现场；停止未确认则保留占位，重启不自动接管" },
+    { "id": "S10", "name": "地图或驱动异常", "oldCode": "死角", "newExpectation": "告警并可恢复，或明确终止" },
+    { "id": "S11", "name": "owner 不匹配", "oldCode": "死角", "newExpectation": "拒绝身份替换并停止；人工核查后按原恢复入口处理" },
+    { "id": "S12", "name": "卡失败达到上限", "oldCode": "第二次后死角", "newExpectation": "只对既有允许重试的失败类型按额度重试，耗尽后失败结束；未知执行状态不重派" },
+    { "id": "S13", "name": "越界无法核对", "oldCode": "依赖模型", "newExpectation": "现场不明则停止并保留证据，不能交普通偏差裁决自动接受" },
+    { "id": "S14", "name": "地图过期", "oldCode": "依赖再次推流", "newExpectation": "自动刷新或事件触发续跑；召回单列" },
+    { "id": "S15", "name": "地图缺失", "oldCode": "依赖推流", "newExpectation": "程序重开原部长或明确终止" },
+    { "id": "S16", "name": "部长未提交信号或退出", "oldCode": "依赖推流", "newExpectation": "程序重开/重派并有次数上限" },
+    { "id": "S17", "name": "人工确认", "oldCode": "启流即拒绝", "newExpectation": "保持启流前拒绝，不和无人值守混用" },
+    { "id": "S18", "name": "实例卡数上限", "oldCode": "出口未查清", "newExpectation": "达到上限明确终止并保留报告" },
+    { "id": "S19", "name": "在途卡阻止恢复", "oldCode": "加重死角", "newExpectation": "核对当前尝试与真实进程；运行中等待原预算，未知则停止未确认，已停才按原入口处理；不新增卡状态" },
+    { "id": "S20", "name": "审核版本失效", "oldCode": "依赖模型重判", "newExpectation": "程序重新打开审核判定并有次数上限" },
+    { "id": "S21", "name": "审核判定格式错误", "oldCode": "暗门", "newExpectation": "结构化字段校验指出 reason 或 references 索引；在原预算内纠正，否则失败，原判定不生效" }
+  ],
+  "notLocallyReproducible": [
+    {
+      "id": "N-01",
+      "fault": "Windows WinError 1455 页面文件不足",
+      "reason": "改变宿主内存与系统资源状态不在无 Docker 彩排边界内；本机注入只能验证预检报错，不能证明资源故障消失"
+    },
+    {
+      "id": "N-02",
+      "fault": "DockerVM 重启与 Docker Desktop socket 故障",
+      "reason": "脚本彩排层不使用 Docker；真实引擎故障与本机修复属于独立集成证据，不能用脚本证明现场故障已经消失"
+    },
+    {
+      "id": "N-03",
+      "fault": "真实供应商断流概率与费用",
+      "reason": "脚本服务能验证断流处理路径和请求形状，不能证明外部供应商行为或真实 token 成本"
+    }
+  ]
+}

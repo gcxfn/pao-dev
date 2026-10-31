@@ -1,0 +1,22 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\desktop\\canvas.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\canvas.ts"
+index c148960b..341ab808 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\desktop\\canvas.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\canvas.ts"
+@@ -540,7 +540,7 @@ function readV1Instance(path: string, index: CanvasReadIndex): CanvasInstance {
+ 
+ function isV2Instance(path: string): boolean {
+ 	const { frontmatter } = parseFrontmatter<Record<string, unknown>>(readFileSync(path, "utf8"));
+-	return frontmatter.版本 === 2;
++	return frontmatter.版本 === 2 || frontmatter.版本 === 3;
+ }
+ 
+ function readInstanceSectionSync(
+@@ -747,7 +747,7 @@ export function readDesktopNodeDetail(
+ 	try {
+ 		const content = readFileSync(instancePath, "utf8");
+ 		const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
+-		if (frontmatter.版本 === 2) {
++		if (frontmatter.版本 === 2 || frontmatter.版本 === 3) {
+ 			const flow = readFrozenControl(content, instancePath);
+ 			frozenRecipe = flow.冻结配方;
+ 			manifest = {

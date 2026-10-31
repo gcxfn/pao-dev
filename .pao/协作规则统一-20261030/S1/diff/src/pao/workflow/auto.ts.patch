@@ -1,0 +1,22 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\auto.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\auto.ts"
+index 3dd25d37..f588a6c0 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\auto.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\auto.ts"
+@@ -253,7 +253,7 @@ export async function runAutoChain(
+ 				const steps: ChainStep[] = [];
+ 				const flow = readControl(recipe, options);
+ 				if (flow.owner !== options.ownerSessionId) throw new Error("工作流 owner 不匹配");
+-				if (flow.暂停) return { report: controlReport(flow), steps, stopReason: flow.暂停 };
++				if (flow.停止?.reason) return { report: controlReport(flow), steps, stopReason: flow.停止?.reason };
+ 				// S6-K2 实例级累计：累计读控制正本「已派卡」，本次上限与实例余量取较严者
+ 				// （mergeCardLimit）；真正认领时再在 .dispatch 内原子预留。
+ 				const limit = mergeCardLimit(options.maxCards, flow.已派卡 ?? 0);
+@@ -273,7 +273,7 @@ export async function runAutoChain(
+ 					for (;;) {
+ 						options.signal?.throwIfAborted();
+ 						const fresh = readControl(recipe, options);
+-						if (fresh.暂停 || fresh.节点.find((n) => n.名字 === node.名字)?.轮次 !== node.轮次)
++						if (fresh.停止?.reason || fresh.节点.find((n) => n.名字 === node.名字)?.轮次 !== node.轮次)
+ 							return {
+ 								report: await readControlReport(fresh, options),
+ 								steps,

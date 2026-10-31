@@ -1,0 +1,90 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\workflow-instances.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\workflow-instances.ts"
+index 5a303991..1aa5a313 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\workflow-instances.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\workflow-instances.ts"
+@@ -10,7 +10,6 @@
+  */
+ import { readdirSync, readFileSync } from "node:fs";
+ import { basename, dirname, join } from "node:path";
+-
+ import { parseFrontmatter } from "../../utils/frontmatter.ts";
+ import { listProjects } from "../dept/projects.ts";
+ import { controlReport, type FlowControl, readControl, readControlReport } from "../workflow/control.ts";
+@@ -22,7 +21,9 @@ import {
+ 	type WorkflowManifest,
+ } from "../workflow/driver.ts";
+ import { loadFrozenRecipe } from "../workflow/minister.ts";
++import { type ControlStopProjection, projectControlStop, storedControlRunMode } from "../workflow/policy.ts";
+ import type { WorkflowRecipe } from "../workflow/recipe.ts";
++import { rulingProjection } from "../workflow/transition.ts";
+ 
+ /** 挂起实例行（pano 钻取用路径展开明细,首跑清单只显示名字） */
+ export interface SuspendedInstanceRow {
+@@ -36,7 +37,7 @@ export interface SuspendedInstanceRow {
+ /** 单实例共享读取结果：状态扫描和全景详情共用同一版本分流。 */
+ export interface WorkflowInstanceRecord {
+ 	路径: string;
+-	版本: 1 | 2;
++	版本: 1 | 2 | 3;
+ 	工作流: string;
+ 	状态: "运行中" | "挂起" | "已完成";
+ 	清单?: WorkflowManifest;
+@@ -84,6 +85,7 @@ export interface InstanceSignalRow {
+ 	裁定?: { 节点: string; 轮次: number; 理由: string; 通道: "主控" | "人工" };
+ 	/** 控制正本挂起文案（含「回边 … 超限」这类超限停滞） */
+ 	暂停?: string;
++	停止?: ControlStopProjection;
+ 	/** 旧版清单挂起:清单无停因字段,只能人工重建后继续 */
+ 	待恢复: boolean;
+ }
+@@ -134,7 +136,7 @@ type InstanceReadInput = {
+ function readInstanceInput(path: string): InstanceReadInput {
+ 	const content = readFileSync(path, "utf8");
+ 	const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
+-	if (frontmatter.版本 !== 2) return { content, path, version: 1 };
++	if (frontmatter.版本 !== 2 && frontmatter.版本 !== 3) return { content, path, version: 1 };
+ 	const cardDir = frontmatter.卡目录;
+ 	if (typeof cardDir !== "string" || !cardDir) throw new Error("v2 实例缺必要控制字段「卡目录」");
+ 	const options = { cardsDir: cardDir, workspaceDir: dirname(path) };
+@@ -203,7 +205,7 @@ export function readWorkflowInstance(path: string): WorkflowInstanceRecord {
+ 	const report = controlReport(flow);
+ 	return {
+ 		路径: path,
+-		版本: 2,
++		版本: flow.版本,
+ 		工作流: flow.工作流,
+ 		状态: reportStatus(report),
+ 		控制: flow,
+@@ -224,7 +226,10 @@ export async function readWorkflowInstanceFresh(
+ 	const flow = input.flow!;
+ 	const options = input.options!;
+ 	const report = await readControlReport(flow, options, deadMinisters);
+-	return projectReport({ 路径: path, 版本: 2, 工作流: flow.工作流, 状态: reportStatus(report), 控制: flow }, report);
++	return projectReport(
++		{ 路径: path, 版本: flow.版本, 工作流: flow.工作流, 状态: reportStatus(report), 控制: flow },
++		report,
++	);
+ }
+ 
+ function dirErrorLine(path: string, file: string, error: unknown): InstanceAnomalyRow {
+@@ -344,7 +349,7 @@ export async function scanWorkflowInstancesFresh(paoHome: string): Promise<Workf
+ 
+ /** 读单个实例的待处理信号（v2 走控制正本机械字段;v1 只有清单状态可读）。失败抛错,由调用方转异常行。 */
+ function signalFromRecord(path: string, projectName: string, instance: WorkflowInstanceRecord): InstanceSignalRow {
+-	if (instance.版本 === 2 && instance.控制 && instance.报告) {
++	if (instance.版本 !== 1 && instance.控制 && instance.报告) {
+ 		const flow = instance.控制;
+ 		const report = instance.报告;
+ 		return {
+@@ -360,8 +365,9 @@ function signalFromRecord(path: string, projectName: string, instance: WorkflowI
+ 				.filter((node) => node.hold === humanGateSuspendReason)
+ 				.map((node) => ({ 节点: node.name, 轮次: node.round ?? 0, 卡号: node.card_no })),
+ 			nodeHolds: workflowNodeHolds(flow, report),
+-			裁定: flow.裁定,
+-			暂停: flow.暂停,
++			裁定: flow.停止?.category === "decision" ? rulingProjection(flow.停止) : undefined,
++			暂停: flow.停止?.reason,
++			停止: projectControlStop(flow.停止, undefined, storedControlRunMode(flow.运行方式)),
+ 			待恢复: false,
+ 		};
+ 	}

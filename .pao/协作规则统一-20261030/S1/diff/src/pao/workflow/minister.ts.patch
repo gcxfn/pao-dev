@@ -1,0 +1,48 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\minister.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\minister.ts"
+index 78e1f801..d3e02a03 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\minister.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\minister.ts"
+@@ -45,6 +45,7 @@ import type { DriverOptions } from "./driver.ts";
+ import { requiresDispatchMapHandoff } from "./handoff.ts";
+ import { DECISION_REASON_DESCRIPTION, DECISION_REFERENCES_DESCRIPTION } from "./policy.ts";
+ import type { WorkflowRecipe } from "./recipe.ts";
++import { rulingProjection } from "./transition.ts";
+ 
+ export const WORKFLOW_MINISTER_ENV = "PAO_WORKFLOW_MINISTER";
+ export const WORKFLOW_WORKER_REVIEW_REQUEST_EVENT = "工人审核请求";
+@@ -191,7 +192,7 @@ export async function requestWorkerReview(
+ 			!node ||
+ 			node.轮次 !== identity.轮次 ||
+ 			node.部长会话 !== identity.部长会话 ||
+-			flow.暂停
++			flow.停止?.reason
+ 		)
+ 			throw new Error("工人审核请求的真实部长会话或工作流轮次不符");
+ 		if (!node.卡.includes(input.cardRef)) throw new Error(`卡 ${input.cardRef} 不属于当前节点`);
+@@ -255,7 +256,7 @@ async function recordWorkerReviewDecision(
+ 			!node ||
+ 			node.轮次 !== identity.轮次 ||
+ 			node.部长会话 !== identity.部长会话 ||
+-			flow.暂停
++			flow.停止?.reason
+ 		)
+ 			throw new Error("真实部长会话与当前审核请求绑定不符");
+ 		const reason = findReviewRecordReason(flow, WORKFLOW_WORKER_REVIEW_REQUEST_EVENT, params.request_id);
+@@ -354,7 +355,7 @@ async function recordNodeMap(
+ 			!node ||
+ 			node.轮次 !== identity.轮次 ||
+ 			node.部长会话 !== identity.部长会话 ||
+-			flow.暂停
++			flow.停止?.reason
+ 		)
+ 			throw new Error("真实部长会话与工作流绑定不符");
+ 		const def = flow.冻结配方.节点.find((candidate) => candidate.名字 === identity.节点);
+@@ -365,7 +366,7 @@ async function recordNodeMap(
+ 				record.事件 === WORKFLOW_NODE_MAP_EVENT && record.节点 === identity.节点 && record.轮次 === identity.轮次,
+ 		);
+ 		if (mapRefresh) {
+-			if (!def || def.执行方式 === "直接" || !current || current.理由 !== mapRefresh || flow.裁定)
++			if (!def || def.执行方式 === "直接" || !current || current.理由 !== mapRefresh || rulingProjection(flow.停止))
+ 				throw new Error("失效地图复核只能由原节点替代当前轮最新地图");
+ 		} else if (!def?.只读 || node.卡.length > 0) {
+ 			throw new Error("节点地图只允许当前轮零卡的只读节点保存；需要工人调查时交侦察卡");

@@ -1,0 +1,52 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\transition.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\transition.ts"
+index 0f9ef53a..5bc81395 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\transition.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\transition.ts"
+@@ -2,12 +2,47 @@
+ 
+ import {
+ 	type ControlResult,
++	type ControlStop,
+ 	type PendingKind,
+ 	pendingKey,
+ 	type WorkflowPending,
+ 	type WorkflowPendingItem,
+ } from "./policy.ts";
+ 
++/** 同一待决的展示文字和可操作性分离；构造函数只绑定已有事实。 */
++export function decisionStop(pending: WorkflowPending, route: "rule" | "resolve_pending"): ControlStop {
++	return {
++		category: pending.phase === "待处理" ? "decision" : "terminal_block",
++		identity: {
++			instance: pending.instance,
++			node: pending.node,
++			round: pending.round,
++			...(pending.card_ref !== undefined ? { cardRef: pending.card_ref, attempt: pending.attempt } : {}),
++		},
++		reason: pendingSummary(pending),
++		pending: structuredClone(pending),
++		route,
++	};
++}
++
++export function formatControlStop(stop: ControlStop | undefined): string | undefined {
++	return stop?.reason;
++}
++
++/** 旧裁定公开回包的只读投影，不保存第二份裁定事实。 */
++export function rulingProjection(stop: ControlStop | undefined) {
++	if (!stop || stop.route !== "rule" || !stop.identity.node || stop.identity.round === undefined) return undefined;
++	const channel = stop.pending?.channel ?? stop.legacyChannel;
++	return channel
++		? {
++				节点: stop.identity.node,
++				轮次: stop.identity.round,
++				理由: stop.pending?.reason ?? stop.reason,
++				通道: channel,
++			}
++		: undefined;
++}
++
+ export interface DeviationSourceItem {
+ 	verification_index: number;
+ 	条件: string;

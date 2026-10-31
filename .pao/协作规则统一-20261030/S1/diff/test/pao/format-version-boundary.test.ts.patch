@@ -1,0 +1,54 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\format-version-boundary.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\format-version-boundary.test.ts"
+index 164b146f..3f6f069e 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\format-version-boundary.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\format-version-boundary.test.ts"
+@@ -81,12 +81,12 @@ async function setupV2(paoDir: string, flowName: string) {
+ }
+ 
+ describe("未知格式版本：保留原件 + 阻止按旧格式读", () => {
+-	it("实例格式版本 3 → 明确报出实际版本号与文件路径，不降级当 v1 清单", () => {
++	it("实例格式版本 4 → 明确报出实际版本号与文件路径，不降级当 v1 清单", () => {
+ 		const paoDir = join(tempDir(), ".pao");
+ 		const lines = healthyV1Lines("未来流", "挂起", paoDir);
+ 		// 字段齐全到「当 v1 也能读通」的程度——这正是假成功的入口
+-		const content = `---\n版本: 3\n${lines.join("\n")}\n---\n`;
+-		expect(() => parseManifest(content)).toThrow(/格式版本「3」不认识/);
++		const content = `---\n版本: 4\n${lines.join("\n")}\n---\n`;
++		expect(() => parseManifest(content)).toThrow(/格式版本「4」不认识/);
+ 		// 带路径时报错里必须出现该路径，模型才知道改哪个文件
+ 		expect(() => parseManifest(content, join(paoDir, "工作流实例-未来流.md"))).toThrow(/工作流实例-未来流\.md/);
+ 		// 点名可走的路与禁走的路
+@@ -100,11 +100,11 @@ describe("未知格式版本：保留原件 + 阻止按旧格式读", () => {
+ 		expect(() => parseManifest(content)).toThrow(/不要手工改版本号/);
+ 	});
+ 
+-	it("控制正本版本被改成 3 → readControl 拒绝续跑，报出路径与实际版本，原件逐字节保留", async () => {
++	it("控制正本版本被改成 4 → readControl 拒绝续跑，报出路径与实际版本，原件逐字节保留", async () => {
+ 		const paoDir = join(tempDir(), ".pao");
+ 		const { recipe, options, controlFile } = await setupV2(paoDir, "改版流");
+ 		const before = readFileSync(controlFile, "utf8");
+-		const tampered = before.replace(/^版本: 2$/m, "版本: 3");
++		const tampered = before.replace(/^版本: 3$/m, "版本: 4");
+ 		expect(tampered).not.toBe(before);
+ 		writeFileSync(controlFile, tampered, "utf8");
+ 
+@@ -116,7 +116,7 @@ describe("未知格式版本：保留原件 + 阻止按旧格式读", () => {
+ 		}
+ 		expect(message).toContain("[FLOW_CONTROL]");
+ 		expect(message).toContain("未知版本");
+-		expect(message).toContain("3");
++		expect(message).toContain("4");
+ 		expect(message).toContain(controlFile);
+ 		expect(message).toContain("原件保留不动");
+ 		// 保留原件：坏版本号的字节一个没被修掉
+@@ -207,8 +207,8 @@ describe("格式版本与编辑版本不混用", () => {
+ 		const paoDir = join(tempDir(), ".pao");
+ 		const { controlFile } = await setupV2(paoDir, "编号流");
+ 		const content = readFileSync(controlFile, "utf8");
+-		// 这个是格式版本=2 的控制正本
+-		expect(content).toMatch(/^版本: 2$/m);
++		// 控制文件格式v3与配方v2、计划编辑版本分别编号。
++		expect(content).toMatch(/^版本: 3$/m);
+ 		// 控制正本里没有「定义版本」——它是计划侧的编辑版本，不塞进实例格式版本里冒充
+ 		expect(content).not.toMatch(/^定义版本:/m);
+ 		// 同一份正本里两条编号若被混用，轮次/版本会互相顶替；这里断言各自的键都在自己该在的位置

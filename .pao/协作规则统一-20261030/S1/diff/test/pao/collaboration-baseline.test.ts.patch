@@ -1,0 +1,29 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\collaboration-baseline.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\collaboration-baseline.test.ts"
+index d7c6e93a..11b3d300 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\collaboration-baseline.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\collaboration-baseline.test.ts"
+@@ -137,7 +137,7 @@ describe("S0 协作规则当前基线（模拟专业判断，真实控制文件
+ 		expect(readFileSync(controlPath(f.recipe, f.options), "utf8")).toBe(before);
+ 	});
+ 
+-	it("当前只修改暂停展示文字就会阻止相同结构化裁定", async () => {
++	it("同一结构化裁定修改展示文字不再改变合法决定", async () => {
+ 		const f = await fixture();
+ 		const refs = await addNodeCards(f.recipe, f.options, f.identity, [{ goal: "任务", acceptance: "人工判断" }]);
+ 		for (const ref of refs) {
+@@ -159,13 +159,11 @@ describe("S0 协作规则当前基线（模拟专业判断，真实控制文件
+ 		const original = readFileSync(path, "utf8");
+ 		const flow = readControl(f.recipe, f.options);
+ 		const pending = structuredClone(flow.待决);
+-		flow.暂停 = "同一待决，仅换展示文字";
++		flow.停止!.reason = "同一待决，仅换展示文字";
+ 		writeFileSync(path, `---\n${stringify(flow)}---\n`);
+ 		expect(readControl(f.recipe, f.options).待决).toEqual(pending);
+ 		const decision = { 结果: "reject" as const, 理由: "成果不足", 引用: ["source.txt:1"], 失败轴: "card" as const };
+-		await expect(decideNode(f.recipe, f.options, f.identity, decision, "主控")).rejects.toThrow(
+-			"当前暂停不是等待主控裁定",
+-		);
++		await expect(decideNode(f.recipe, f.options, f.identity, decision, "主控")).resolves.toBeUndefined();
+ 		writeFileSync(path, original);
+ 		await expect(decideNode(f.recipe, f.options, f.identity, decision, "主控")).resolves.toBeUndefined();
+ 	});

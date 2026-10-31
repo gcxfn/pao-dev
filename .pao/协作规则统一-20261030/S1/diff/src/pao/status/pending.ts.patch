@@ -1,0 +1,44 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\pending.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\pending.ts"
+index 41926755..220373b3 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\pending.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\pending.ts"
+@@ -10,8 +10,7 @@
+  *
+  * 判据取自正本的结构化字段,不对文案做关键词猜测:
+  * - 人工门＝报告节点 挂起 === 人工门挂起原因（与 driver 同一判据）;
+- * - 裁定＝控制正本 flow.裁定（通道 主控/人工 由 control 写）;
+- * - 超限放行＝控制正本 flow.暂停 含「超限」（control 超限动作=停滞 时的挂起文案）;
++ * - 裁定与恢复＝控制停因的只读动作投影，不从展示文字推断权限;
+  * - 缺输入/审核打回＝卡状态失败时最后一条回执的失败分型（缺输入＝补卡;能力不足/结果未知＝须裁定）;
+  * - 恢复请求＝旧版实例清单挂起（清单无停因字段）与实例异常（坏字段/目录不可达,不得当空闲清理）。
+  *
+@@ -110,7 +109,7 @@ function signalPending(row: InstanceSignalRow, gateLimit: number): PendingItem[]
+ 			建议: `用 /pao flow see ${row.工作流} 看全部节点`,
+ 			证据: evidence,
+ 		});
+-	if (row.裁定) {
++	if (row.停止?.actions.includes("rule") && row.裁定) {
+ 		const channel = row.裁定.通道;
+ 		items.push({
+ 			类型: "待裁定",
+@@ -123,13 +122,14 @@ function signalPending(row: InstanceSignalRow, gateLimit: number): PendingItem[]
+ 			建议: `pao_control_node action=rule name=${row.工作流} instance=${row.实例 ?? "见证据"} node=${row.裁定.节点} round=${row.裁定.轮次} result=<pass|change|reject> reason=<…>`,
+ 			证据: evidence,
+ 		});
+-	} else if (row.暂停?.includes("超限")) {
++	} else if (row.停止?.actions.includes("resolve_pending") && row.停止.pending) {
++		const pending = row.停止.pending;
+ 		items.push({
+-			类型: "超限放行",
+-			主体: `工作流「${row.工作流}」（${row.项目}）`,
+-			为什么停: row.暂停,
+-			要决定什么: "停滞等放行，还是收手改配方；放行即继续修这一轮",
+-			建议: `拍板后用 pao_control_node action=confirm 放行，或停流改配方后建新实例（不改进已冻结实例）`,
++			类型: "待逐项裁决",
++			主体: `工作流「${row.工作流}」节点「${pending.node}」（${row.项目}）第 ${pending.round} 轮`,
++			为什么停: row.停止.reason,
++			要决定什么: "由已获授权的主控逐项核对未达事实并给出独立依据",
++			建议: `pao_control_node action=resolve_pending name=${row.工作流} pending_key=${pending.key} decisions=<每项item_ref与basis>`,
+ 			证据: evidence,
+ 		});
+ 	}

@@ -1,0 +1,53 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\workflow-pending.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-pending.test.ts"
+index 1562d2e6..fd292e78 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\workflow-pending.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-pending.test.ts"
+@@ -200,7 +200,8 @@ describe("I1-2 结构化待决与普通裁定路由", () => {
+ 
+ 		await recordPending(s.recipe, s.options, pending);
+ 		const persisted = readFileSync(controlPath(s.recipe, s.options), "utf8");
+-		expect(persisted).toContain("待决:");
++		expect(persisted).toContain("停止:");
++		expect(persisted).toContain("pending:");
+ 		expect(persisted).toContain(pending.key);
+ 		expect(await readPending(s.recipe, s.options, pending.key)).toEqual(pending);
+ 	});
+@@ -258,7 +259,6 @@ describe("I1-2 结构化待决与普通裁定路由", () => {
+ 			deadline: "2026-10-30T02:30:00.000Z",
+ 		});
+ 		await recordPending(s.recipe, s.options, pending);
+-		const pauseBefore = readControl(s.recipe, s.options).暂停;
+ 
+ 		s.now = "2026-10-30 10:29";
+ 		await expect(expirePending(s.recipe, s.options)).resolves.toBeUndefined();
+@@ -267,7 +267,8 @@ describe("I1-2 结构化待决与普通裁定路由", () => {
+ 
+ 		const flow = readControl(s.recipe, s.options);
+ 		expect(flow.待决).toMatchObject({ key: pending.key, phase: "已过期" });
+-		expect(flow.暂停).toBe(pauseBefore);
++		expect(flow.停止?.category).toBe("terminal_block");
++		expect(flow.暂停).toContain("待决已过期");
+ 		expect(flow.结果).toEqual([
+ 			expect.objectContaining({
+ 				state: "failed",
+@@ -349,16 +350,16 @@ describe("I1-2 结构化待决与普通裁定路由", () => {
+ 		const pending = deviation(identity, ref, card.frontmatter.attempt);
+ 		await recordPending(s.recipe, s.options, pending);
+ 		rewriteFlow(s, (flow) => {
+-			flow.暂停 = "伪造暂停：普通裁定:不是结构化事实";
++			flow.停止!.reason = "伪造暂停：普通裁定:不是结构化事实";
+ 		});
+ 
+ 		const flow = readControl(s.recipe, s.options);
+ 		const report = await readControlReport(flow, s.options);
+ 		const queried = await queryWorkflowCore(s.recipe, s.options);
+-		expect(report.stop_reason).toContain(pending.key);
+-		expect(report.stop_reason).toContain("等待主控逐项裁决");
++		expect(report.pending_key).toBe(pending.key);
++		expect(report.stop_reason).toBe("伪造暂停：普通裁定:不是结构化事实");
+ 		expect(renderReport(report)).toContain(pending.key);
+ 		expect(queried).toContain(pending.key);
+-		expect(queried).not.toContain("伪造暂停");
++		expect(queried).toContain("伪造暂停");
+ 	});
+ });

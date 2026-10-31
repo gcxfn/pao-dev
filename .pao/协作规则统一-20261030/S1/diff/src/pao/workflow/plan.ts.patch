@@ -1,0 +1,18 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\workflow\\plan.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\plan.ts"
+index e68bd364..b5a8b333 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\workflow\\plan.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\plan.ts"
+@@ -1029,7 +1029,12 @@ function readControlIdentity(控制清单: string): { 实例: string; owner: str
+ 	if (!existsSync(控制清单)) return undefined;
+ 	try {
+ 		const { frontmatter } = parseFrontmatter<Record<string, unknown>>(readFileSync(控制清单, "utf8"));
+-		if (frontmatter.版本 !== 2 || typeof frontmatter.实例 !== "string" || !frontmatter.实例) return undefined;
++		if (
++			(frontmatter.版本 !== 2 && frontmatter.版本 !== 3) ||
++			typeof frontmatter.实例 !== "string" ||
++			!frontmatter.实例
++		)
++			return undefined;
+ 		return { 实例: frontmatter.实例, owner: typeof frontmatter.owner === "string" ? frontmatter.owner : "" };
+ 	} catch {
+ 		return undefined;

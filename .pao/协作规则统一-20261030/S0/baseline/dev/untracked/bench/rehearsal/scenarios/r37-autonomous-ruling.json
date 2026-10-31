@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "name": "r37-autonomous-ruling",
+  "description": "复现 r37：固定 kit、四部门、卡0002 四条 not_run，实施部长请求裁定。旧代码的人工通道应停在 S1，新无人值守接口应走程序/主控出口并最终审核 completed。",
+  "kit": "bench/organized-post/kit.json",
+  "kitSha256": "c9f11a7bf4d943b7d7bdd121987dec51bb9b3699d336180e776f21e875ec69b5",
+  "model": {
+    "provider": "harbor-endpoint",
+    "id": "minimax-code/MiniMax-M3.1-Flash"
+  },
+  "unmatched": "fail",
+  "success": {
+    "controlStatus": "completed",
+    "requiresReviewDecision": true,
+    "reviewDecisionBoundToCurrentTree": true,
+    "requiresAllProcessesStopped": true
+  },
+  "oldExpected": {
+    "controlStatus": "hold",
+    "stopPoint": "S1",
+    "rulingChannel": "人工",
+    "reviewDecision": false,
+    "completed": false
+  },
+  "rules": [
+    {
+      "id": "main-start-flow",
+      "match": {
+        "role": "main",
+        "tool": "pao_start_flow",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_start_flow",
+          "arguments": {
+            "name": "基准开发流水线",
+            "cards_dir": "{{PROJECT_ROOT}}/.pao/benchmark/卡",
+            "params": {
+              "任务": "创建并验证一个不含 JavaScript 的 HTML 清洗结果，保留普通 HTML 结构和格式；卡0002 允许报告环境无法执行的说明性未验证项。"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main-start-finished",
+      "match": {
+        "role": "main",
+        "latestToolName": "pao_start_flow"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "工作流已启动，等待后台部门事件；脚本模型不轮询。"
+      }
+    },
+    {
+      "id": "minister-recon-map",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_save_node_map",
+        "promptIncludes": "节点：侦察"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "业务/输入.txt"
+            ],
+            "facts": [
+              "输入文件：业务/输入.txt",
+              "r37 复现任务要求产出 HTML 清洗结果"
+            ],
+            "scope_basis": [
+              "业务/输入.txt 是唯一输入"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-recon-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_save_node_map",
+        "promptIncludes": "节点：侦察"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读侦察零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-map",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_save_node_map",
+        "promptIncludes": "节点：规划"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "业务/输入.txt"
+            ],
+            "facts": [
+              "实施卡0001创建结果，卡0002复核并报告说明性未验证项"
+            ],
+            "scope_basis": [
+              "r37 历史输入与公开任务"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_save_node_map",
+        "promptIncludes": "节点：规划"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读规划零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-implementation-cards",
+      "match": {
+        "role": "minister",
+        "tool": "pao_minister_submit_cards",
+        "promptIncludes": "节点：实施"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_submit_cards",
+          "arguments": {
+            "cards": [
+              {
+                "goal": "根据公开输入创建 HTML 清洗结果",
+                "acceptance": "存在: 业务/结果.txt\n包含: 业务/结果.txt :: 正常链完成\n负责部长确认结果",
+                "inputs": [
+                  "业务/输入.txt"
+                ],
+                "constraints": "只写业务/结果.txt"
+              },
+              {
+                "goal": "只读复核清洗结果并报告说明性未验证项",
+                "acceptance": "存在: 业务/结果.txt\n包含: 业务/结果.txt :: 正常链完成\n负责部长确认只读复核",
+                "inputs": [
+                  "业务/结果.txt"
+                ],
+                "constraints": "不得修改或删除文件",
+                "depends_on": [
+                  "卡0001"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-implementation-done",
+      "match": {
+        "role": "minister",
+        "tool": "pao_breakdown_done",
+        "latestToolName": "pao_minister_submit_cards",
+        "promptIncludes": "节点：实施"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "worker-card-0001-write",
+      "match": {
+        "role": "worker",
+        "tool": "write",
+        "promptIncludes": "卡0001"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "write",
+          "arguments": {
+            "path": "业务/结果.txt",
+            "content": "正常链完成\n"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0001-receipt",
+      "match": {
+        "role": "worker",
+        "latestToolName": "write",
+        "promptIncludes": "卡0001"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "{\"result\":\"success\",\"artifact_path\":[\"业务/结果.txt\"],\"summary\":\"创建 HTML 清洗结果\",\"任务态\":\"completed\",\"verification\":[{\"条件\":\"存在: 业务/结果.txt\",\"结论\":\"pass\",\"证据\":\"真实写入成功\"},{\"条件\":\"包含: 业务/结果.txt :: 正常链完成\",\"结论\":\"pass\",\"证据\":\"正文与要求一致\"},{\"条件\":\"负责部长确认结果\",\"结论\":\"pass\",\"证据\":\"部长验收\"}],\"changes\":[{\"类型\":\"created\",\"路径\":\"业务/结果.txt\",\"说明\":\"清洗结果\"}]}"
+      }
+    },
+    {
+      "id": "worker-card-0002-read",
+      "match": {
+        "role": "worker",
+        "tool": "read",
+        "promptIncludes": "卡0002"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "read",
+          "arguments": {
+            "path": "业务/结果.txt"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-card-0002-receipt",
+      "match": {
+        "role": "worker",
+        "latestToolName": "read",
+        "promptIncludes": "卡0002"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "{\"result\":\"success\",\"artifact_path\":[],\"summary\":\"只读复核通过；四项环境不可验证已如实报告\",\"任务态\":\"completed\",\"verification\":[{\"条件\":\"存在: 业务/结果.txt\",\"结论\":\"pass\",\"证据\":\"真实读取成功\"},{\"条件\":\"包含: 业务/结果.txt :: 正常链完成\",\"结论\":\"pass\",\"证据\":\"正文匹配\"},{\"条件\":\"负责部长确认只读复核\",\"结论\":\"pass\",\"证据\":\"部长验收\"},{\"条件\":\"目录只读分支\",\"结论\":\"not_run\",\"证据\":\"当前宿主无法构造\"},{\"条件\":\"隐藏验收用例\",\"结论\":\"not_run\",\"证据\":\"按约束不读取\"},{\"条件\":\"真实浏览器\",\"结论\":\"not_run\",\"证据\":\"环境无浏览器\"},{\"条件\":\"上游地图偏差收窄\",\"结论\":\"not_run\",\"证据\":\"留审核终审\"}],\"changes\":[]}"
+      }
+    },
+    {
+      "id": "minister-implementation-ruling",
+      "match": {
+        "role": "minister",
+        "tool": "pao_request_ruling",
+        "promptIncludes": "节点：实施"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_request_ruling",
+          "arguments": {
+            "reason": "卡0002 机械验收通过，但工人报告四条说明性 not_run；请判断是否不阻塞交付并继续独立审核。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-decision",
+      "match": {
+        "role": "minister",
+        "tool": "pao_submit_decision",
+        "promptIncludes": "节点：审核"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_decision",
+          "arguments": {
+            "result": "pass",
+            "reason": "实际结果与审核证据已核对；说明性 not_run 已保留为未验证项，当前成果树满足公开任务验收。",
+            "references": [
+              "业务/结果.txt:1"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

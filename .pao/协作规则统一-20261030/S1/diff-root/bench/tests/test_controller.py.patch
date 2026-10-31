@@ -1,0 +1,22 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\tests\\test_controller.py" "b/D:\\AI\\workspace\\pao-dev\\bench\\tests\\test_controller.py"
+index 5b43ad86..90233bca 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\tests\\test_controller.py"
++++ "b/D:\\AI\\workspace\\pao-dev\\bench\\tests\\test_controller.py"
+@@ -674,6 +674,17 @@ class ControllerTest(unittest.IsolatedAsyncioTestCase):
+         self.assertTrue(quiet["needs_manual_check"])
+         self.assertFalse((self.root / "mechanism-acceptance-stopped.json").exists())
+ 
++    async def test_v3_stop_is_observed_without_recreating_authority_rules(self):
++        """固定控制文件夹具：只验证观察器，不表示运行产品或模型。"""
++        controller.ensure_identity(self.root, self.config)
++        self.control(版本=3, 停止={"category": "manual_pause", "identity": {"instance": "instance-one"}, "reason": "等待核查"})
++        progress = controller.observe_business(self.root, self.root)
++        self.assertTrue(progress["needs_manual_check"])
++        self.assertEqual(progress["blocker"]["reason"], "等待核查")
++        self.control(版本=3, 停止={})
++        with self.assertRaisesRegex(controller.IntegrityError, "停止对象损坏"):
++            controller.observe_business(self.root, self.root)
++
+     async def test_supervision_violation_waits_for_writers_and_does_not_run_next_task(self):
+         cleaned = False
+         started = asyncio.Event()

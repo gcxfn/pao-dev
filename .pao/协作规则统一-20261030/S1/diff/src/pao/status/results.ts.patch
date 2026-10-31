@@ -1,0 +1,66 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\results.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\results.ts"
+index 3c767833..e2dfb538 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\status\\results.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\status\\results.ts"
+@@ -15,7 +15,6 @@
+ import { execFile } from "node:child_process";
+ import { existsSync, readFileSync, realpathSync } from "node:fs";
+ import { join } from "node:path";
+-
+ import {
+ 	type BaselineDiff,
+ 	baselineSnapshotPath,
+@@ -36,6 +35,7 @@ import {
+ 	type WorkflowManifest,
+ } from "../workflow/driver.ts";
+ import { substituteParams } from "../workflow/recipe.ts";
++import { rulingProjection } from "../workflow/transition.ts";
+ import {
+ 	type InstanceAnomalyRow,
+ 	readWorkflowInstanceFresh,
+@@ -383,9 +383,9 @@ function resumeSummary(
+ 		report.status === "hold" ||
+ 		humanGate.length > 0 ||
+ 		nodeHolds.length > 0 ||
+-		flow.裁定 !== undefined ||
+-		flow.暂停 !== undefined;
+-	if (flow.暂停) line.push({ 态: "已中断", 文案: `实例暂停：${flow.暂停}`, 证据: [path] });
++		rulingProjection(flow.停止) !== undefined ||
++		flow.停止?.reason !== undefined;
++	if (flow.停止?.reason) line.push({ 态: "已中断", 文案: `实例暂停：${flow.停止?.reason}`, 证据: [path] });
+ 	for (const gate of humanGate)
+ 		line.push({
+ 			态: "已中断",
+@@ -398,13 +398,13 @@ function resumeSummary(
+ 			文案: `节点 ${hold.node} 第 ${hold.round} 轮审核曾通过但当前仍挂起：${hold.hold}`,
+ 			证据: [path],
+ 		});
+-	if (flow.裁定)
++	if (rulingProjection(flow.停止))
+ 		line.push({
+ 			态: "已中断",
+-			文案: `节点 ${flow.裁定.节点} 第 ${flow.裁定.轮次} 轮待${flow.裁定.通道}裁定：${flow.裁定.理由}`,
++			文案: `节点 ${rulingProjection(flow.停止)!.节点} 第 ${rulingProjection(flow.停止)!.轮次} 轮待${rulingProjection(flow.停止)!.通道}裁定：${rulingProjection(flow.停止)!.理由}`,
+ 			证据: [path],
+ 		});
+-	if (!flow.暂停 && humanGate.length === 0 && !flow.裁定 && report.status === "hold")
++	if (!flow.停止?.reason && humanGate.length === 0 && !rulingProjection(flow.停止) && report.status === "hold")
+ 		line.push({ 态: "已中断", 文案: "控制正本状态：挂起（无更细停因字段）", 证据: [path] });
+ 	// 已改未验两判据（拍板 5：冲突并列展示，不加第三标签）：
+ 	// ①基线外改动>0（节点 diff 文件＋新增未跟踪）；②对应卡无机械验收段且无判定
+@@ -448,12 +448,11 @@ function resumeSummary(
+ 		suggestion.push(
+ 			`pao_control_node action=confirm name=${flow.工作流} instance=${flow.实例} node=${gate.name} round=${gate.round ?? 0}（须你在界面确认）`,
+ 		);
+-	if (flow.裁定)
++	if (flow.停止?.category === "decision" && rulingProjection(flow.停止))
+ 		suggestion.push(
+-			`pao_control_node action=rule name=${flow.工作流} instance=${flow.实例} node=${flow.裁定.节点} round=${flow.裁定.轮次} result=<pass|change|reject> reason=<…>`,
++			`pao_control_node action=rule name=${flow.工作流} instance=${flow.实例} node=${rulingProjection(flow.停止)!.节点} round=${rulingProjection(flow.停止)!.轮次} result=<pass|change|reject> reason=<…>`,
+ 		);
+-	else if (flow.暂停?.includes("超限"))
+-		suggestion.push("拍板后用 pao_control_node action=confirm 放行，或停流改配方后建新实例（不改进已冻结实例）");
++
+ 	if (suggestion.length === 0 && report.status === "hold")
+ 		suggestion.push(
+ 			`pao_control_node action=resume name=${flow.工作流} instance=${flow.实例} prev_owner=${flow.owner} reason=<现场核查>（须你在界面确认）`,

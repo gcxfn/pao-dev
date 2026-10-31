@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+x----
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/collaboration-baseline.test.ts > S0 协作规则当前基线（模拟专业判断，真实控制文件和Git） > 直接任务需要语义验收时当前只hold，没有结构化待决或部长
+AssertionError: {"report":{"workflow":"S0现状","run_mode":"unattended","status":"running","created_cards":[],"nodes":[{"name":"开发","status":"in_progress","card_no":"卡0001","card_refs":["卡0001"],"round":1,"manual_confirm":false},{"name":"下游","status":"no_card","card_refs":[],"round":1,"manual_confirm":false,"hold":"等待前置节点"}],"stop_history":[{"时间":"2026-10-30T14:06:47.171Z","事件":"自动链停因","节点":"开发","轮次":1,"理由":"卡卡0001（节点 开发）验收结论「无法机械判」，不自动交付，留 owner 处理后推流续跑"}],"note":"实例 9bbf1385-9e8b-4043-91ed-2f90384b1d3c；owner owner；脉络 9bbf1385-9e8b-4043-91ed-2f90384b1d3c；卡目录 D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\tmp\\pao-s0-baseline-jurzII\\.pao\\卡"},"steps":[{"node":"开发","cardRef":"卡0001","stage":"派发","note":"已派发（理由 工作流自动链:S0现状/开发）"},{"cardRef":"卡0001","stage":"回执","note":"worker 回执 success","node":"开发"},{"cardRef":"卡0001","stage":"越界","note":"比对干净(无声明、无基线外改动)","node":"开发"},{"cardRef":"卡0001","stage":"验收","note":"无法机械判（验收无可机械核对的条目（1 条人话句），走人工/审查口径（§12 边界））","node":"开发"}],"stopReason":"等待人工门、卡结果或裁定"}: expected '等待人工门、卡结果或裁定' to contain '直接任务需要人工判断'
+
+Expected: "直接任务需要人工判断"
+Received: "等待人工门、卡结果或裁定"
+
+ ❯ test/pao/collaboration-baseline.test.ts:104:54
+    102|   try {
+    103|    const result = await bridge.drive(f.recipe, { ...f.options, 运行器: ru…
+    104|    expect(result.stopReason, JSON.stringify(result)).toContain("直接任务需要…
+       |                                                      ^
+    105|    const flow = readControl(f.recipe, f.options);
+    106|    expect(flow.待决).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  22:06:36
+   Duration  11.18s (transform 3.92s, setup 0ms, import 5.08s, tests 5.91s, environment 0ms)
+

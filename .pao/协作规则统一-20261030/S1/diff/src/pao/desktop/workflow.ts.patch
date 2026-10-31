@@ -1,0 +1,37 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\desktop\\workflow.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\workflow.ts"
+index fd1202de..b042b2f6 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\src\\pao\\desktop\\workflow.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\workflow.ts"
+@@ -6,7 +6,13 @@ import { parseFrontmatter } from "../../utils/frontmatter.ts";
+ import { redactContext } from "../context/index.ts";
+ import { gitSpawnErrorText } from "../shared/git.ts";
+ import { collectInstanceDirectories } from "../status/workflow-instances.ts";
+-import { controlView, type FlowControl, readControl, readControlView } from "../workflow/control.ts";
++import {
++	controlView,
++	type FlowControl,
++	projectControlForHost,
++	readControl,
++	readControlView,
++} from "../workflow/control.ts";
+ import { loadFrozenRecipe } from "../workflow/minister.ts";
+ import type { DesktopReadIssue } from "./read-model.ts";
+ 
+@@ -39,7 +45,7 @@ export function readDesktopFlows(project: string): { 工作流: DesktopFlow[]; 
+ 	for (const candidate of discoverDesktopFlows(root, result.问题)) {
+ 		result.工作流.push({
+ 			路径: candidate.path,
+-			控制: candidate.flow,
++			控制: projectControlForHost(candidate.flow),
+ 			进度: controlView(candidate.flow),
+ 			持久状态: candidate.flow.状态,
+ 		});
+@@ -63,7 +69,7 @@ export async function readDesktopFlowsFresh(
+ 			const progress = await readControlView(candidate.flow, candidate.options, deadMinisters);
+ 			result.工作流.push({
+ 				路径: candidate.path,
+-				控制: candidate.flow,
++				控制: projectControlForHost(candidate.flow),
+ 				进度: progress,
+ 				持久状态: candidate.flow.状态,
+ 			});

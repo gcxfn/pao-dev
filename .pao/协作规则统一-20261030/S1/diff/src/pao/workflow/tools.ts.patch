@@ -1,0 +1,58 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\tools.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\tools.ts"
+index e5fcd1ba..59118345 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\tools.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\tools.ts"
+@@ -1,3 +1,4 @@
++import { rulingProjection } from "./transition.ts";
+ /**
+  * 工作流工具与命令注册（架构 §11 v1＝M2a：只做手动一键，定时/事件触发暂缓）。
+  * 模型面：pao_start_flow / pao_push_flow / pao_query_flow / pao_confirm_flow；用户面：/pao flow（启动或列配方）、/pao flow see、/pao flow confirm。
+@@ -159,9 +160,9 @@ function autoChainNoticeKey(
+ 		instance: flow?.实例 ?? recipe.文件路径,
+ 		owner: flow?.owner,
+ 		parameters: flow?.参数,
+-		paused: flow?.暂停,
+-		ruling: flow?.裁定,
+-		pending: flow?.待决,
++		paused: flow?.停止?.reason,
++		ruling: rulingProjection(flow?.停止),
++		pending: flow?.停止?.pending,
+ 		controlStatus: flow?.状态,
+ 		status: chain.report.status,
+ 		stopReason: chain.report.stop_reason,
+@@ -202,7 +203,7 @@ function autoChainNoticeKey(
+ 		state,
+ 		// 待决身份已完整进入 state.pending；同一待决再次推流时，恢复指引等展示性停因
+ 		// 会因经过一次宿主驱动而增补，不能让它把同一业务事实误判成新通知。
+-		stopReason: flow?.待决 ? undefined : chain.stopReason,
++		stopReason: flow?.停止?.pending ? undefined : chain.stopReason,
+ 		waitingForEvent: chain.waitingForEvent === true,
+ 	};
+ 	return createHash("sha256").update(JSON.stringify(notice)).digest("hex");
+@@ -477,7 +478,7 @@ function loadRecipeFor(params: ToolParams, options: WorkflowToolsOptions | undef
+ 			const { frontmatter } = parseFrontmatter<{ 版本?: number; 冻结配方?: WorkflowRecipe }>(
+ 				readFileSync(path, "utf8"),
+ 			);
+-			if (frontmatter.版本 === 2 && frontmatter.冻结配方) {
++			if ((frontmatter.版本 === 2 || frontmatter.版本 === 3) && frontmatter.冻结配方) {
+ 				if (frontmatter.冻结配方.名字 !== params.name) throw new Error("冻结配方名与实例文件不一致");
+ 				return readControl(frontmatter.冻结配方, buildDriverOptions(params, options)).冻结配方;
+ 			}
+@@ -865,7 +866,7 @@ export function registerWorkflowTools(pi: ExtensionAPI, options?: WorkflowToolsO
+ 						const flow = readControl(recipe, driver);
+ 						const node = flow.节点.find((n) => n.名字 === identity.节点);
+ 						if (!node?.部长会话 || !params.result) throw new Error("裁定须指定当前节点与三态结果");
+-						if (flow.裁定?.通道 === "人工")
++						if (rulingProjection(flow.停止)?.通道 === "人工")
+ 							await confirmHumanAction("人工裁定", `${params.result}\n${params.reason ?? ""}`);
+ 						signal?.throwIfAborted();
+ 						// 工具参数英文名 → Decision 持久键（D5 保留）的写入映射收口在此一处。
+@@ -880,7 +881,7 @@ export function registerWorkflowTools(pi: ExtensionAPI, options?: WorkflowToolsO
+ 								失败轴: params.failure_axis,
+ 								目标: params.target,
+ 							},
+-							flow.裁定?.通道 ?? "主控",
++							rulingProjection(flow.停止)?.通道 ?? "主控",
+ 						);
+ 						break;
+ 					}

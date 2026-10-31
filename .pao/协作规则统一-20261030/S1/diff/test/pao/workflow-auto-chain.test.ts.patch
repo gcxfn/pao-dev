@@ -1,0 +1,22 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\workflow-auto-chain.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-auto-chain.test.ts"
+index b507219c..b0b8dee0 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\workflow-auto-chain.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-auto-chain.test.ts"
+@@ -788,7 +788,7 @@ describe("M2-06 自动执行链", () => {
+ 		const options = { cardsDir: f.cardsDir, paoHome: f.paoHome, ownerSessionId: "owner", 运行器: f.runner };
+ 		await startControl(recipe, {}, options);
+ 		const controlFile = join(f.repo, ".pao", "任务A", "工作流实例-v2旧版.md");
+-		const corrupted = readFileSync(controlFile, "utf8").replace(/^版本: 2$/m, "版本: 3");
++		const corrupted = readFileSync(controlFile, "utf8").replace(/^版本: 3$/m, "版本: 4");
+ 		writeFileSync(controlFile, corrupted);
+ 		await expect(runAutoChain(recipe, options)).rejects.toThrow("旧实例或未知版本");
+ 		// 链未修复、未覆盖、未删除：原件（含坏掉的版本号）原样保留给人工核对
+@@ -2346,7 +2346,7 @@ describe("M2-06 自动执行链", () => {
+ 		await endDecomposition(recipe, options, identity);
+ 		f.scriptDefault(["产物.txt"]);
+ 		const controlFile = join(f.repo, ".pao", "任务A", "工作流实例-累计红2.md");
+-		writeFileSync(controlFile, readFileSync(controlFile, "utf8").replace(/^版本: 2$/m, "版本: 2\n已派卡: 50"));
++		writeFileSync(controlFile, readFileSync(controlFile, "utf8").replace(/^版本: 3$/m, "版本: 3\n已派卡: 50"));
+ 		const chain = await runAutoChain(recipe, options);
+ 		expect(f.runner.runs).toHaveLength(0);
+ 		expect(chain.stopReason).toContain("实例累计");

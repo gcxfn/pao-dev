@@ -1,0 +1,32 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\results-aggregate.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\results-aggregate.test.ts"
+index cc12ea3d..1ca34ecc 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\results-aggregate.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\results-aggregate.test.ts"
+@@ -222,7 +222,7 @@ describe("collectInstanceResults（D8c 结果页聚合）", () => {
+ 		const s = buildScenario();
+ 		await startControl(s.recipe, {}, s.options);
+ 		changeFlow(s, (flow) => {
+-			flow.暂停 = "手工暂停:等现场核查";
++			flow.停止 = { category: "manual_pause", identity: { instance: flow.实例 }, reason: "手工暂停:等现场核查" };
+ 		});
+ 		let snap = await collectInstanceResults(s.home);
+ 		let row = findLine(snap.line, "验流");
+@@ -233,12 +233,16 @@ describe("collectInstanceResults（D8c 结果页聚合）", () => {
+ 		// 恢复三件套给真值：resumeControl 硬校验 prev_owner,照抄必含控制正本 owner
+ 		expect(resumeLine?.文案).toContain("prev_owner=owner");
+ 		changeFlow(s, (flow) => {
+-			flow.暂停 = "回边 审查→开发 超限 3:连续两轮不达标";
++			flow.停止 = {
++				category: "terminal_block",
++				identity: { instance: flow.实例 },
++				reason: "回边 审查→开发 超限 3:连续两轮不达标",
++			};
+ 		});
+ 		snap = await collectInstanceResults(s.home);
+ 		row = findLine(snap.line, "验流");
+ 		const approvedLine = row.恢复.行.find((line) => line.态 === "拟续跑");
+-		expect(approvedLine?.文案).toContain("改配方");
++		expect(approvedLine?.文案).toContain("action=resume");
+ 		expect(approvedLine?.文案).not.toContain("动作=恢复");
+ 	});
+ 

@@ -1,0 +1,65 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\pending.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\pending.test.ts"
+index 1830c254..aa78d4ae 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\test\\pao\\pending.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\pending.test.ts"
+@@ -10,7 +10,6 @@ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { stringify } from "yaml";
+-
+ import { createCard, loadCard, parseCardRef, serializeCard } from "../../src/pao/cards/index.ts";
+ import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+ import { buildFirstRunList } from "../../src/pao/status/firstrun.ts";
+@@ -24,6 +23,7 @@ import {
+ 	startControl,
+ } from "../../src/pao/workflow/control.ts";
+ import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
++import { createRulingPending, decisionStop } from "../../src/pao/workflow/transition.ts";
+ 
+ const tempDirs: string[] = [];
+ afterEach(() => {
+@@ -184,8 +184,18 @@ describe("collectPending（S2d 待处理聚合）", () => {
+ 		const s = buildScenario();
+ 		await pushToHumanGate(s);
+ 		changeFlow(s, (flow) => {
+-			flow.裁定 = { 节点: "开发", 轮次: 1, 理由: "两方案取舍", 通道: "人工" };
+-			flow.暂停 = "等待人工裁定:两方案取舍";
++			flow.停止 = decisionStop(
++				createRulingPending({
++					instance: flow.实例,
++					node: "开发",
++					round: 1,
++					reason: "两方案取舍",
++					channel: "人工",
++					createdAt: "2026-10-31T00:00:00Z",
++					deadline: "2026-10-31T00:30:00Z",
++				}),
++				"rule",
++			);
+ 		});
+ 		const items = collectPending(s.home);
+ 		expect(types(items)).toEqual(["待裁定"]);
+@@ -199,19 +209,19 @@ describe("collectPending（S2d 待处理聚合）", () => {
+ 		await pushToHumanGate(s);
+ 		const copyText = "回边 审查→开发 超限 3:连续两轮不达标";
+ 		changeFlow(s, (flow) => {
+-			flow.暂停 = copyText;
++			flow.停止 = { category: "terminal_block", identity: { instance: flow.实例 }, reason: copyText };
+ 		});
+ 		const items = collectPending(s.home);
+-		expect(types(items)).toEqual(["超限放行"]);
++		expect(types(items)).toEqual(["实例恢复请求"]);
+ 		expect(items[0]!.为什么停).toBe(copyText);
+-		expect(items[0]!.要决定什么).toContain("放行");
++		expect(items[0]!.建议).toContain("action=resume");
+ 	});
+ 
+ 	it("v2 一般挂起：无裁定无超限线索时列恢复请求,并提示恢复前确认无在途卡", async () => {
+ 		const s = buildScenario();
+ 		await pushToHumanGate(s);
+ 		changeFlow(s, (flow) => {
+-			flow.暂停 = "手工暂停:等现场核查";
++			flow.停止 = { category: "manual_pause", identity: { instance: flow.实例 }, reason: "手工暂停:等现场核查" };
+ 		});
+ 		const items = collectPending(s.home);
+ 		expect(types(items)).toEqual(["实例恢复请求"]);

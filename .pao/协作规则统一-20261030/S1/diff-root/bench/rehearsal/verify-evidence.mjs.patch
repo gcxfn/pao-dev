@@ -1,0 +1,25 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\rehearsal\\verify-evidence.mjs" "b/D:\\AI\\workspace\\pao-dev\\bench\\rehearsal\\verify-evidence.mjs"
+index 82fe8d99..03b3be75 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\rehearsal\\verify-evidence.mjs"
++++ "b/D:\\AI\\workspace\\pao-dev\\bench\\rehearsal\\verify-evidence.mjs"
+@@ -361,7 +361,7 @@ export function verifyEvidence(outputDir) {
+   const expectedRecipe = substitute(kit.workflow, control?.参数 ?? {});
+   add(
+     "frozen-recipe-matches-kit",
+-    control?.版本 === 2 &&
++    (control?.版本 === 2 || control?.版本 === 3) &&
+       control?.工作流 === kit.workflow.名字 &&
+       control?.运行方式 === "无人值守" &&
+       isDeepStrictEqual(
+@@ -629,9 +629,9 @@ export function verifyEvidence(outputDir) {
+   add(
+     "control-completed-before-and-after-shutdown",
+     control?.状态 === "已完成" &&
+-      control?.暂停 === undefined &&
++      control?.暂停 === undefined && control?.停止 === undefined &&
+       preControl?.状态 === "已完成" &&
+-      preControl?.暂停 === undefined &&
++      preControl?.暂停 === undefined && preControl?.停止 === undefined &&
+       preControlObservation?.completedImmediatelyBeforeQuery === true &&
+       preControlObservation?.text === readFileSync(controlPath, "utf8") &&
+       preControlObservation?.sha256 === fileSha256(controlPath),

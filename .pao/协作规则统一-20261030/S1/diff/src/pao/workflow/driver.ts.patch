@@ -1,0 +1,57 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\driver.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\driver.ts"
+index dfdab8fe..0a627821 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before\\workflow\\driver.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\driver.ts"
+@@ -28,7 +28,7 @@ import {
+ 	startControl,
+ 	tickControl,
+ } from "./control.ts";
+-import type { WorkflowRunMode } from "./policy.ts";
++import type { ControlStopProjection, WorkflowRunMode } from "./policy.ts";
+ import {
+ 	type RecipeNode,
+ 	requireParams,
+@@ -114,6 +114,8 @@ export interface DriveReport {
+ 	note?: string;
+ 	/** 可持久重读的停链原因；当前状态仍只由原有 running/hold/completed 表达。 */
+ 	stop_reason?: string;
++	/** 只读停因及允许动作；调用时由控制正本再次核验。 */
++	stop?: ControlStopProjection;
+ 	stop_history?: { 时间: string; 事件: string; 节点?: string; 轮次?: number; 理由: string }[];
+ 	/** 结构化待决身份与逐项引用；只读投影，不从暂停文案反解。 */
+ 	pending_key?: string;
+@@ -176,14 +178,14 @@ export function parseManifest(content: string, filePath?: string): WorkflowManif
+ 	// 未知格式版本（如 3）一律拒绝降级读取：补默认值当 v1 会把新版现场误画成旧清单，属假成功。
+ 	if (frontmatter.版本 !== undefined) {
+ 		const where = filePath ? `（文件：${filePath}）` : "";
+-		if (frontmatter.版本 === 2) {
++		if (frontmatter.版本 === 2 || frontmatter.版本 === 3) {
+ 			throw new Error(
+ 				`带版本控制的实例须经 v2 控制入口读取，不得降为旧映射${where}；` +
+ 					"实例状态未变、原件保留，请用 v2 入口（pao_query_flow / 控制正本）读取，不要手工改版本号",
+ 			);
+ 		}
+ 		throw new Error(
+-			`实例格式版本「${String(frontmatter.版本)}」不认识，只认 1（旧清单）与 2（控制正本）${where}；` +
++			`实例格式版本「${String(frontmatter.版本)}」不认识，只认 1（旧清单）与 2/3（控制正本）${where}；` +
+ 				"原件保留不动，按新版处理须升级内核；不得当旧清单续跑，也不得手工改版本号掩盖",
+ 		);
+ 	}
+@@ -786,7 +788,16 @@ export function renderReport(report: DriveReport): string {
+ 	if (report.run_mode) lines.push(`运行方式：${report.run_mode === "unattended" ? "无人值守" : "有人值守"}`);
+ 	if (report.pending_key) lines.push(`待决：${report.pending_key}`);
+ 	if (report.pending_item_refs?.length) lines.push(`待决项：${report.pending_item_refs.join("、")}`);
+-	if (report.run_mode === "unattended" && report.pending_key && report.pending_item_refs?.length)
++	if (report.stop)
++		lines.push(
++			`当前处理人：${report.stop.authority === "owner" ? "主控" : "用户"}；允许动作：${report.stop.actions.join("、")}`,
++		);
++	if (
++		report.run_mode === "unattended" &&
++		report.stop?.actions.includes("resolve_pending") &&
++		report.pending_key &&
++		report.pending_item_refs?.length
++	)
+ 		lines.push(
+ 			`逐项办理：pao_control_node action=resolve_pending，pending_key=${report.pending_key}；decisions 中每项填写 item_ref 与独立 basis。只传 name、cards_dir（可选）、action、pending_key、decisions；不要传 instance/node/round/prev_owner，不用 confirm/resume 代办。待决项编号只填 item_ref。`,
+ 		);

@@ -1,0 +1,27 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\rehearsal\\run-rehearsal.mjs" "b/D:\\AI\\workspace\\pao-dev\\bench\\rehearsal\\run-rehearsal.mjs"
+index e3632d26..113770ba 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\345\215\217\344\275\234\350\247\204\345\210\231\347\273\237\344\270\200-20261030\\S1\\before-bench\\bench\\rehearsal\\run-rehearsal.mjs"
++++ "b/D:\\AI\\workspace\\pao-dev\\bench\\rehearsal\\run-rehearsal.mjs"
+@@ -528,8 +528,8 @@ async function main() {
+       timeoutMs,
+       500,
+     );
+-    if (finalControl.状态 !== "已完成") {
+-      throw new Error(`控制正本未完成：状态=${finalControl.状态}，停因=${finalControl.暂停 ?? finalControl.停链原因 ?? "无"}`);
++    if (finalControl.状态 !== "已完成" || finalControl.停止 !== undefined || finalControl.暂停 !== undefined) {
++      throw new Error(`控制正本未完成：状态=${finalControl.状态}，停因=${finalControl.停止?.reason ?? finalControl.暂停 ?? finalControl.停链原因 ?? "无"}`);
+     }
+     const controlCompletedRaw = readFileSync(controlPath, "utf8");
+     const finalQueryPrompt = "I5-2-FINAL-QUERY：请调用 pao_query_flow 读取最终状态。";
+@@ -584,9 +584,9 @@ async function main() {
+       },
+       productQueryText: queryText,
+     });
+-    if (controlBeforeShutdownData?.状态 !== "已完成" || controlBeforeShutdownData?.暂停 !== undefined) {
++    if (controlBeforeShutdownData?.状态 !== "已完成" || controlBeforeShutdownData?.暂停 !== undefined || controlBeforeShutdownData?.停止 !== undefined) {
+       throw new Error(
+-        `最终查询后控制正本状态变化：状态=${controlBeforeShutdownData?.状态}，暂停=${controlBeforeShutdownData?.暂停 ?? "无"}`,
++        `最终查询后控制正本状态变化：状态=${controlBeforeShutdownData?.状态}，暂停=${controlBeforeShutdownData?.停止?.reason ?? controlBeforeShutdownData?.暂停 ?? "无"}`,
+       );
+     }
+     child.stdin.end();
