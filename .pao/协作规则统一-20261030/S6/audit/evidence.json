@@ -1,0 +1,224 @@
+{
+  "schema": "pao-s6-audit-evidence-v1",
+  "auditor": "auditor",
+  "generatedAt": "2026-11-01T01:12:00+08:00",
+  "report": ".pao/协作规则统一-20261030/S6/audit/审计报告.md",
+  "evidenceRoot": "D:/AI/workspace/临时文件夹/协作规则统一-20261030/s6/",
+  "subject": {
+    "file": "PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts",
+    "sha256": "158d04cf7806bca24d5fdd48504d5d9c882eff8261ce201caa8e7f1a41f113a3",
+    "bytes": 24676,
+    "physicalLines": 651,
+    "nonBlankLines": 611,
+    "blankLines": 40,
+    "lineEnding": "LF",
+    "paoHead": "d29d7a838119b9ea4d10d229bace31ca9cf980b2",
+    "diffNumstat": "225 9",
+    "diffHunks": 10,
+    "formatGate": {
+      "trigger": "lead 最终验证批 biome-s6-files exit=1（4 处格式）",
+      "fix": "仓库自带 biome format --write（纯换行/缩进/尾随逗号）",
+      "preFormatCopy": { "path": "s6/probe/workspace.pre-format.ts", "sha256": "ec332907ca63f4ed89a6bf2728869f3d9170588ca0af1753741ff07b4b0df844", "bytes": 24609, "physicalLines": 631, "nonBlankLines": 591, "blankLines": 40 },
+      "independentVerification": { "script": "audit/verify-format-equivalence.mjs", "log": "audit/logs/verify-format-equivalence.log", "method": "TypeScript AST 结构对比（节点种类+字面量语义值，忽略位置/空白/尾随逗号）", "astNodes": 7322, "canonicalChars": 129097, "equal": true }
+    },
+    "baselineOld": {
+      "headBlob": "01ede74fd69c151c2547b9e355faeb9ee7f3e7d6",
+      "sha256": "3404fea0d60d49421e6a8afe4fb89850c0d698c879812bba019d1f979e37602f"
+    },
+    "oracleFrozenCopy": {
+      "path": "audit/old-impl/workspace.audit-old.ts",
+      "sha256": "4e9275be565364ff4010ed224cc1af4dbab19e4c01846e880d4a5bfeb6c53236"
+    }
+  },
+  "environment": {
+    "platform": "win32 x64",
+    "node": "v24.18.0",
+    "git": "git version 2.55.0.windows.3",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX (20 threads)",
+    "totalMemMB": 16003,
+    "envIsolation": { "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "NUL" },
+    "loadNote": "12.3-1/2/3/5/6 的功能与计数证据不受负载影响；耗时数据仅在 2026-10-31T16:07-16:10Z 并发窗口采集，只作参考，不作 12.3-4 判据"
+  },
+  "acceptance": [
+    {
+      "id": "12.3-1",
+      "claim": "除时间戳外，固定现场的内容身份、覆盖范围、缺失标记和有效性判定与原契约一致",
+      "verdict": "pass",
+      "summary": "自建夹具 43/43 场景 JSON 逐字节全等（31 采集 + 12 错误路径）；矩阵全等；bench 交叉 8/8；唯一已知差异为对象损坏场景 SF-1（按 lead 裁定记录不修）",
+      "evidence": [
+        { "path": "audit/raw/equivalence.json", "what": "43/43 全等、differences=[]、sameDispatchMapCoverage/handoff/recapture/identity 矩阵全等" },
+        { "path": "audit/logs/equiv-postfix.log", "what": "修复后（ec332907）复跑仍 43/43" },
+        { "path": "audit/logs/equivalence-first-run-after-impl.log", "what": "首轮（09cfaceb）43/43" },
+        { "path": "audit/logs/lead-verify.log", "what": "Lead 两项独立验证 13 项 PASS（ls-files 并集、batch-check 特殊名 missing 行、特殊名快照）" },
+        { "path": "audit/logs/diag-corrupt.log", "what": "SF-1 逐字段差异证据" }
+      ],
+      "commands": [
+        "cd D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s6\\audit; node scenarios.mjs --mode=equivalence",
+        "node lead-verify.mjs",
+        "node diag-corrupt.mjs"
+      ],
+      "notes": "首轮在 09cfaceb，MF-1 修复后在 ec332907 复跑，结果不降级"
+    },
+    {
+      "id": "12.3-2",
+      "claim": "常规路径一次采集 Git 进程数不随文件数逐文件增长；10/100/1000 文件报告实际数量；回退仅限受支持特殊路径",
+      "verdict": "pass",
+      "summary": "旧实现观测模型 4n+7：51/447/4407（n=11/110/1100）；新固定 8/8/8；artifactEqual=true；bench 同口径 47/407/4007→8/8/8",
+      "evidence": [
+        { "path": "audit/raw/process.json", "what": "rows 计数 + 命令清单 + verdicts: newConstantAcrossSizes=true, formulaMatches=true" },
+        { "path": "audit/logs/process-postfix.log", "what": "修复后复测 8/8/8" }
+      ],
+      "commands": ["node scenarios.mjs --mode=process --sizes 10,100,1000"],
+      "notes": "8 条固定命令：rev-parse ×4、ls-files 并集 ×1、cat-file --batch-check ×1、cat-file --batch ×1、ls-files --stage ×1"
+    },
+    {
+      "id": "12.3-3",
+      "claim": "100 与 1000 文件场景 Git 进程数量至少降低 80%",
+      "verdict": "pass",
+      "summary": "审计夹具 n=11/110/1100：100：447→8（-98.2%）；1000：4407→8（-99.8%）；bench 夹具 n=10/100/1000：407→8（-98.0%）、4007→8（-99.8%）",
+      "evidence": [
+        { "path": "audit/raw/process.json", "what": "verdicts.reduction100Pct=98.2, reduction1000Pct=99.8, acceptance12_3_3=true" },
+        { "path": "audit/logs/process-postfix.log", "what": "复测同样 98.2%/99.8%" },
+        { "path": "s6/bench/对照报告.md", "what": "bench 同判据 407→8（-98.0%）、4007→8（-99.8%）" }
+      ],
+      "commands": ["node scenarios.mjs --mode=process --sizes 10,100,1000"],
+      "notes": "10 规模也降 51→8（-84.3%），仅参考；计划第 3 条只要求 100/1000"
+    },
+    {
+      "id": "12.3-4",
+      "claim": "同机 1000 文件采集耗时中位数至少降低 30%；10 文件无超过 10% 的可重复退化",
+      "verdict": "pass",
+      "summary": "bench 最终钉点受控复测（16:50:09.424–16:55:25.322Z，src 158d04cf 运行前/中/后一致）：1000 文件旧基线中位 301236.3ms→新 848.4ms（-99.7%，同窗口配对 271969.8→-99.7%）；10 文件新 5 次 518.3/530.3/485.7/549.5/525.1ms 全部 < 旧中位×1.10=3546.3ms（最慢仅阈值 15.5%），无 >10% 可重复退化；100 文件 26678.3→632.3ms（-97.6%，附加信息）；artifact 三档去 capturedAt 后 sha256 全等（与支撑轮 ec332907 亦相同）",
+      "evidence": [
+        { "path": "s6/bench/对照报告.md", "what": "正式对照报告（同份 .pao/协作规则统一-20261030/S6/bench/对照报告.md）：表1 基线、表2 配对、表3 10 文件、表8 artifact、轮次关系与干净性证据" },
+        { "path": "s6/bench/controlled-retest.json", "what": "最终钉点受控复测原始数据：meta.newImplSha256=158d04cf、changedDuringRun=false、staleDuringEdit=false、oldSingleMs=2876.7/26762.0/271969.8、oldGitProcesses=47/407/4007、新中位数 525.1/632.3/848.4、每档 8 进程、artifactEqual=true" },
+        { "path": "s6/bench/controlled-retest.log", "what": "最终轮运行日志（逐次时间戳、sha 保护、负载采样）" },
+        { "path": "s6/bench/controlled-retest-support-ec332907-20261031T163700Z.json", "what": "支撑轮（格式化前 ec332907）存档：artifact 三档 sha 与最终轮相同、进程数相同，按计划第 4 条保留两组结果" },
+        { "path": "s6/bench/controlled-retest-STALE-edit-20261031T162030Z.json", "what": "受编辑污染作废轮存档（不用于结论）" },
+        { "path": "audit/logs/perf-run.log", "what": "审计侧非安静窗口参考数（不作判据）" },
+        { "path": "audit/raw/perf.json", "what": "审计侧参考样本（1000 未测）" }
+      ],
+      "commands": ["node audit/scenarios.mjs --mode=perf --sizes 10,100,1000   # 仅安静窗口；正式数用 bench controlled-retest.mjs"],
+      "notes": "100 规模两轮新中位数 539.8→632.3ms（+17.1%），bench 记录为跨窗口环境波动、成因未定位；计划第 4 条只判 1000 与 10 文件，不影响验收。审计侧负载窗口参考：10 -84.4%、100 -97.9%；1000 未测。16:20–16:25 编辑污染轮作废、00:29–00:32 smoke 不属测量"
+    },
+    {
+      "id": "12.3-5",
+      "claim": "工作区状态/文件名差异不改变地图内容身份（特殊名、gitlink、ITA、unmerged 等）",
+      "verdict": "pass",
+      "summary": "Windows 可创建的特殊名/状态全部纳入 43/43 全等；tree/commit/gitlink/unmerged/ITA/空 blob 分支实测全等；CR/LF 文件名平台受限，仅代码级验证",
+      "evidence": [
+        { "path": "audit/logs/probe-edge.log", "what": "18 条直接 Git 行为 + 两实现采集对照（全等或已解释）" },
+        { "path": "audit/logs/lead-verify.log", "what": "batch-check missing/submodule 行、特殊名 untracked 快照" },
+        { "path": "audit/raw/equivalence.json", "what": "attributes/gitlink/ita/unmerged 场景全等" }
+      ],
+      "commands": ["node probe-edge.mjs", "node scenarios.mjs --mode=equivalence"],
+      "notes": "CR/LF：NTFS 不允许文件名含控制字符，无法端到端创建；needsPerFileGitRead/batchReadFallbackReason 代码级断言 + 回退分支已验。报告中如实写平台受限，不声称跨平台通过"
+    },
+    {
+      "id": "12.3-6",
+      "claim": "不改变地图与当前成果版本绑定、调用边界确认和派发前检查；不提高任务预算与测试超时（并复核 12.1 不加跨请求缓存）",
+      "verdict": "pass",
+      "summary": "sameDispatchMapCoverage/assertDispatchMapHandoff/recaptureDispatchMap 无 diff 且矩阵全等；无模块级 let/var、无 cache/WeakMap；maxBuffer 与 GIT_READ_TIMEOUT_MS(30000) 未变；9/9 坏输入拒绝出图且错误文案保留 gitProcessErrorText",
+      "evidence": [
+        { "path": "audit/logs/fault-inject-postfix.log", "what": "10/10 PASS：1 正常对照 + 9 拒绝出图（截断/行数不足/垃圾/size 不符/对象消失/部分退出）" },
+        { "path": "audit/raw/equivalence.json", "what": "sameDispatchMapCoverage 12 用例、handoff 6 用例、recapture 全等" },
+        { "path": "PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts", "what": "最终钉点行号：maxBuffer 64MiB（:46）；错误文案 gitProcessErrorText（:52、:406）；readFileStates 回退（:318 函数，:322-323 类型、:342-343 路径/类型、:349-354 oversized）；缺失防御性 throw（:378）" },
+        { "path": "PAO/packages/coding-agent/src/pao/shared/git.ts", "what": "GIT_READ_TIMEOUT_MS = 30_000（:2，无 diff）" }
+      ],
+      "commands": ["node fault-inject.mjs"],
+      "notes": "代码审查：git -C PAO diff -U0 未触碰 sameDispatchMapCoverage/assertDispatchMapHandoff/recaptureDispatchMap；模块级仅不可变常量"
+    }
+  ],
+  "mustFix": [
+    {
+      "id": "MF-1",
+      "problem": "单 blob 接近 64MiB 时 --batch 输出头开销导致 spawnSync maxBuffer ENOBUFS（旧 git show 恰好可在 64MiB 内成功），固定现场非 byte 等价",
+      "status": "fixed-and-retested",
+      "fix": "workspace.ts:31 阈值 64MiB-8192、:34 batchObjectTooLargeForRead、:330-338 readFileStates 回退旧 fileState",
+      "retest": {
+        "evidence": ["audit/logs/budget-probe.log", "audit/raw/budget-probe.json"],
+        "combos": 10,
+        "allEqual": true,
+        "single64MBExact": { "oldOk": true, "newOk": true, "mapDigest": "sha256:9e1659147f8969668359ff0e9a2e34354e13e4e3878a2adaf845cd4ea6da7961" },
+        "single64MBPlus1": { "oldOk": false, "newOk": false, "message": "Git 读取失败：spawnSync git ENOBUFS" }
+      }
+    }
+  ],
+  "suggestedFix": [],
+  "knownRecords": [
+    {
+      "id": "SF-1",
+      "item": "对象损坏场景：旧实现把损坏 blob 当空内容（headDigest=sha256(空)），新实现判 missing（缺失摘要），mapDigest/untrackedDigest 不同",
+      "disposition": "known-difference-not-fixed",
+      "rationale": "仅限对象损坏仓库；新行为 fail-closed 不静默生成错误内容；按 lead 裁定记录",
+      "evidence": ["audit/logs/diag-corrupt.log", "audit/raw/adversarial.json"]
+    },
+    {
+      "id": "SF-2",
+      "item": "readFileStates 末尾 `地图文件状态缺失` throw 在当前控制流不可达",
+      "disposition": "retained-defensive-invariant",
+      "rationale": "保留防未来重构导致 files 静默缩短；不声称被故障注入覆盖",
+      "evidence": ["PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts:378"]
+    },
+    { "id": "R-1", "item": "快照非原子性（旧逐文件读、新 batchCheck 定身份后读工作区），两者都有时间窗", "disposition": "recorded", "evidence": "audit/logs/race-probe.log（5/5 PASS，无半份字节）" },
+    { "id": "R-2", "item": "brief.ts:572-578 复用同一 prepare 内 gitIdentity", "disposition": "recorded-recon-task-3", "rationale": "prepare 内无写盘/派发边界；handoff 仍派发前/完成前重采集" },
+    { "id": "R-3", "item": "新增导出未进 dispatch-brief/index.ts 桶，公共 API 未变", "disposition": "recorded-acceptable" },
+    { "id": "R-4", "item": "CR/LF 文件名 NTFS 不可创建", "disposition": "platform-limited-unverified" },
+    { "id": "R-5", "item": "旧进程数 4n+7（n=受覆盖文件数）；审计 51/447/4407 与 bench 47/407/4007 同公式不矛盾", "disposition": "recorded" },
+    { "id": "R-6", "item": "幽灵路径注入实验未命中，清单后消失路径未实测", "disposition": "unverified-recorded" },
+    { "id": "R-7", "item": "workspace.ts diff 仅批量读取/清单合并，无无关重构；brief.ts 属 recon", "disposition": "reviewed-clean" }
+  ],
+  "diffReview": {
+    "untouchedSemantics": ["sameDispatchMapCoverage", "assertDispatchMapHandoff", "recaptureDispatchMap", "tryReadGitIdentity", "readGitIdentity"],
+    "indexDigest": "仍是最后一步 git ls-files --stage -z 的原始字节 sha256",
+    "untrackedDigest": "仍是 files 的 fileIdentity 摘要（顺序与内容不变）",
+    "contentDigest": "working ?? index ?? head；size = working?.length ?? 0；缺失仍 <pao:missing>",
+    "publicApi": "dispatch-brief/index.ts 无 diff；shared/ 无 diff"
+  },
+  "platformLimits": [
+    { "item": "CR/LF 文件名", "status": "unverified", "reason": "NTFS/Win32 不允许文件名含 CR/LF 控制字符；仅代码级断言" }
+  ],
+  "finalVerification": {
+    "executedBy": "lead",
+    "sourceSha256": "158d04cf7806bca24d5fdd48504d5d9c882eff8261ce201caa8e7f1a41f113a3",
+    "sourceBytes": 24676,
+    "logDir": "D:/AI/workspace/临时文件夹/协作规则统一-20261030/s6-final-20261031-010013/",
+    "summaryFile": "s6-final-20261031-010013/summary.txt",
+    "steps": [
+      { "name": "tsc-noEmit", "exit": 0 },
+      { "name": "check-types-integration", "exit": 0 },
+      { "name": "check-ts-imports", "exit": 0 },
+      { "name": "check-pao-kernel", "exit": 0 },
+      { "name": "gate-boundary", "exit": 0 },
+      { "name": "check-gates", "exit": 0 },
+      { "name": "biome-s6-files", "exit": 0 },
+      { "name": "vitest-s6-matrix", "exit": 0, "detail": "7 files / 74 tests passed" },
+      { "name": "build-offline", "exit": 0 }
+    ],
+    "compareRerun": {
+      "script": "s6/probe/compare.mjs",
+      "log": "s6/probe/compare-final-158d04cf.log",
+      "result": "36/36 全等，COMPARE_EXIT=0；逐用例新旧进程数与 pre-format 轮一致（gitlink 19→12、大文件分块 19→9、10/30 文件 47/127→8）",
+      "resultFile": "s6/probe/compare-result.json"
+    }
+  },
+  "openItems": [],
+  "scriptHashes": {
+    "scenarios.mjs": "cf2061335f37b92e351cba71cd494dce942667b53cc007cdcd0cd2b5c1aa3609",
+    "budget-probe.mjs": "bb092bc24b0f8cd5abc698b22765934e25b8c97c782b3d44124dc780649152d2",
+    "fault-inject.mjs": "e4f834095f2e38963eb1b6b199d04ace2df3f438100a0f6078363eb722182642",
+    "probe-edge.mjs": "0a8993d8343af2d468e7fe459c53c6ab9f301bc7d0b0ece3d5b3f8f537351226",
+    "race-probe.mjs": "737190ace04e6df1e3b342c988215f374e082a4a780388862651153fcaf92ad2",
+    "lead-verify.mjs": "fbea4c44f4f1921f10f872f8dbb26d0d143293fb772ad87c98afff47e8e5d85e",
+    "diag-corrupt.mjs": "58f2c1d193576509269a0cf941954ad34bb94935545732279130769381020e08",
+    "verify-format-equivalence.mjs": "f1015c43f8efcac081a763cc3428371138d5f1b6db672cc04c41cd3a3f99f1d8",
+    "old-impl/workspace.audit-old.ts": "4e9275be565364ff4010ed224cc1af4dbab19e4c01846e880d4a5bfeb6c53236"
+  },
+  "verdict": {
+    "passable": "yes",
+    "passed": ["12.3-1", "12.3-2", "12.3-3", "12.3-4", "12.3-5", "12.3-6"],
+    "pending": [],
+    "blocking": [],
+    "statement": "§12.3 六条硬验收全部通过：12.3-1 等价 43/43（限对象损坏已知差异 SF-1）；12.3-2 进程不随 n 增长（8/8/8）；12.3-3 100/1000 进程降 98.2%/99.8%（bench 98.0%/99.8%）；12.3-4 同机 1000 文件耗时中位数降 99.7%（≥30% 门槛）、10 文件无 >10% 可重复退化、artifact 三档相等；12.3-5 Windows 可建名全等（CR/LF 平台受限未验证）；12.3-6 版本绑定/边界确认/派发前检查、预算与超时均未变、无跨请求缓存、fail-closed。MF-1 已修并复测；lead 最终验证批 9 步全绿、最终钉点 compare 36/36 全等。S6 可以过验收，openItems 为空。"
+  }
+}
