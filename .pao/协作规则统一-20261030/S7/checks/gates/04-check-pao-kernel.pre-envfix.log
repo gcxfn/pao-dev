@@ -1,0 +1,56 @@
+﻿===== S7 GATE CHECK =====
+step_name:    04-check-pao-kernel
+command:      npm run check:pao:kernel
+workdir:      D:\AI\workspace\pao-dev\PAO
+start_time:   2026-11-01 15:45:04
+pao_home:     D:\AI\workspace\涓存椂鏂囦欢澶筡鍗忎綔瑙勫垯缁熶竴-20261030\s7\gates\pao-home
+temp:         D:\AI\workspace\涓存椂鏂囦欢澶筡鍗忎綔瑙勫垯缁熶竴-20261030\s7\gates\tmp
+pi_offline:   1
+pi_no_local:  1
+node:         v24.18.0
+ps_version:   5.1.26100.9711
+===== OUTPUT =====
+
+
+> pi-monorepo@0.0.3 check:pao:kernel
+> node packages/coding-agent/scripts/gate-kernel-import.mjs --kernel-only && node packages/coding-agent/scripts/gate-boundary.mjs --kernel-only && node --test packages/coding-agent/scripts/gate-kernel-import.test.mjs
+
+[PASS] root(.) — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/desktop — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/todo — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] B1: CLI 源闭包 460 文件无 electron/react/ink（裸外部依赖 856 条全为包依赖）
+[PASS] B2: bundle cli.js（0.0 MB）无 electron/react 引用
+[范围] --kernel-only只检查内核；B3/B4由跨仓check:gates检查
+[PASS] B5(pao/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/desktop/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/todo/summary.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B6: exports ., ./rpc-entry, ./pao, ./pao/desktop, ./pao/todo, ./client, ./experimental/plugin 均不含 cli 目标
+[PASS] B7: worker/supervision.ts 执行侧闭包不 import src/pao/workflow（含 type-only）
+[PASS] B7自检: 故意违规样例已拦截（supervision.ts -> control.ts）
+✔ 纯导出 (183.7769ms)
+✔ disconnect监听 (179.7129ms)
+✔ exit监听 (178.8707ms)
+✔ stdout输出 (188.1967ms)
+✔ stdin数据监听 (186.0911ms)
+✔ raw属性改变 (212.8964ms)
+✔ 导入提前退出 (171.8393ms)
+✔ 导入异常 (167.7934ms)
+✔ 导入后仍有活动句柄 (10097.4548ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11693.0975
+
+===== RUNNER FOOTER =====
+command:      npm run check:pao:kernel
+workdir:      D:\AI\workspace\pao-dev\PAO
+exit_code:    0
+start_time:   2026-11-01 15:45:04
+end_time:     2026-11-01 15:45:20
+elapsed_sec:  15.9
+log_path:     D:\AI\workspace\pao-dev\.pao\协作规则统一-20261030\S7\checks\gates\04-check-pao-kernel.log

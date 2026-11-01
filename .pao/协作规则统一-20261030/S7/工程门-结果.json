@@ -1,0 +1,223 @@
+{
+  "task": "S7 工程检查全量实跑",
+  "team_task_id": "task-3",
+  "agent": "gates",
+  "lead": "lead",
+  "generated_at": "2026-11-01T17:52:00+08:00",
+  "workdir": "D:\\AI\\workspace\\pao-dev",
+  "evidence_root": "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\gates",
+  "environment": {
+    "os_shell": "Windows PowerShell 5.1.26100.9711",
+    "node": "v24.18.0",
+    "node_path": "C:\\Program Files\\nodejs\\node.exe",
+    "npm": "11.16.0",
+    "vitest": "v4.1.11",
+    "python": "Python 3.12.14",
+    "python_path": "D:\\AI\\workspace\\临时文件夹\\地图简报基准-20261020\\f-harbor-import\\.venv\\Scripts\\python.exe",
+    "isolated_pao_home": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\gates\\pao-home",
+    "isolated_temp": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\gates\\tmp",
+    "pi_offline": "1",
+    "pi_no_local_llm": "1",
+    "cleared_env_keys": ["COMMANDCODE_API_KEY", "LLAMA_SERVER_RERANKER_API_KEY", "MNEMOSYNE_LLM_API_KEY"],
+    "formal_pao_home_used": false,
+    "git": {
+      "pao_head": "adbb03bda2c7f52652a2c7c13480a203fe3e3257",
+      "pao_branch": "pao-main",
+      "pao_dev_head": "80607e41669f2fce633edb1e3485d745c783430f",
+      "pao_dev_branch": "main",
+      "desktop_head": "8dd923cb4abde27901a59b661f9fb6458cee609f",
+      "desktop_note": "只读，18 项他人未提交改动",
+      "pao_src_changes": 0,
+      "pao_porcelain_count": 10
+    }
+  },
+  "plan_vs_actual": [
+    {
+      "plan_command": "npm run check:gates (计划 §14.2 第485行)",
+      "actual": "不存在：PAO/package.json 无该 script",
+      "handling": "未运行；等价入口为 npm run check:pao:kernel + 全量 gate-boundary.mjs + npm run check",
+      "evidence": "03-npm-check-full.log / 04-check-pao-kernel.log / 05-gate-boundary.log"
+    },
+    {
+      "plan_command": "node scripts/gate-boundary.mjs (计划 §14.2 第481行，cwd PAO/packages/coding-agent/)",
+      "actual": "实际路径为 packages/coding-agent/scripts/gate-boundary.mjs；PAO/scripts/ 无同名文件",
+      "handling": "按 cwd PAO/ 执行 node packages/coding-agent/scripts/gate-boundary.mjs，exit 0",
+      "evidence": "05-gate-boundary.log"
+    },
+    {
+      "plan_command": "node node_modules/typescript/bin/tsc --noEmit",
+      "actual": "存在",
+      "handling": "已跑，exit 0",
+      "evidence": "01-tsc-noEmit.log"
+    },
+    {
+      "plan_command": "npm run check:types:integration",
+      "actual": "存在（tsc --noEmit -p tsconfig.integration.json）",
+      "handling": "已跑，exit 0",
+      "evidence": "02-check-types-integration.log"
+    },
+    {
+      "plan_command": "npm run check:pao:kernel",
+      "actual": "存在（gate-kernel-import.mjs --kernel-only + gate-boundary.mjs --kernel-only + node --test gate-kernel-import.test.mjs）",
+      "handling": "已跑，exit 0",
+      "evidence": "04-check-pao-kernel.log"
+    },
+    {
+      "plan_command": "node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2",
+      "actual": "存在",
+      "handling": "已跑两轮：首轮 06、结论轮 08",
+      "evidence": "06-vitest-test-pao-full.log / 08-vitest-test-pao-full-r2.log"
+    },
+    {
+      "plan_command": "npm run build:offline (计划 §14.2 第482行)",
+      "actual": "存在",
+      "handling": "由 Lead 覆盖，gates 未重复执行",
+      "evidence": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\build-offline-1.log；D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\lead\\check-bundle-after-vendor.log"
+    },
+    {
+      "plan_command": "& $taskPython -m unittest discover -s bench/tests -t . (计划 §14.3)",
+      "actual": "存在",
+      "handling": "已跑，exit 0，Ran 223 tests，OK (skipped=2)",
+      "evidence": "09-bench-tests-unittest.log"
+    },
+    {
+      "plan_command": "& $taskPython -m bench run --rehearsal --node $taskNode --output $taskOutput (计划 §14.3)",
+      "actual": "本轮由 Lead 以 node bench\\rehearsal\\run-rehearsal.mjs 实跑覆盖；python -m bench run --rehearsal 形式 gates 未执行未核实",
+      "handling": "由 Lead 覆盖，gates 未重复执行",
+      "evidence": ".pao\\协作规则统一-20261030\\S7\\checks\\matrix\\10-normal-default.log（exit 0 / 178.3s / verification 18 项全 True / 证据根 I5-2-2026-11-01T07-53-52Z）"
+    },
+    {
+      "plan_command": "（计划未列）bench/tests 下 JS 检查",
+      "actual": "bench/tests/activate-tools.test.mjs 是 node:test 测试，python unittest 不覆盖",
+      "handling": "gates 补跑 node --test，3/3 通过",
+      "evidence": "10-bench-tests-activate-tools-node-test.log"
+    }
+  ],
+  "items": [
+    {"id": 1, "name": "tsc --noEmit", "command": "node node_modules/typescript/bin/tsc --noEmit", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 11.5, "result": "pass", "log": "01-tsc-noEmit.log"},
+    {"id": 2, "name": "check:types:integration", "command": "npm run check:types:integration", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 5.8, "result": "pass", "log": "02-check-types-integration.log"},
+    {"id": 3, "name": "npm run check (首跑)", "command": "npm run check", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 42.4, "result": "pass", "log": "03-npm-check-full.log", "notes": "biome Checked 1998 files; entry graphs within budget; check:pao:kernel tests 9 pass 9 fail 0; install-lock up to date"},
+    {"id": 4, "name": "check:pao:kernel", "command": "npm run check:pao:kernel", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 23.6, "result": "pass", "log": "04-check-pao-kernel.log", "notes": "tests 9 / pass 9 / fail 0 / skipped 0；--kernel-only 提示 B3/B4 由跨仓检查"},
+    {"id": 5, "name": "gate-boundary 全量", "command": "node packages/coding-agent/scripts/gate-boundary.mjs", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 0.7, "result": "pass", "log": "05-gate-boundary.log", "notes": "B1/B2/B3(宿主闭包111文件)/B4(宿主闭包40文件)/B5x3/B6/B7/B7自检 全 PASS"},
+    {"id": 6, "name": "vitest test/pao 首轮", "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent", "exit_code": 1, "elapsed_sec": 2439.2, "result": "fail (诊断轮，保留不覆盖)", "log": "06-vitest-test-pao-full.log", "notes": "4 failed / 268 passed files; 4 failed / 3058 passed / 2 expected fail / 1 skipped tests; 1 unhandled error"},
+    {"id": 7, "name": "npm run check（夹具订正后）", "command": "npm run check", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO", "exit_code": 0, "elapsed_sec": 41.5, "result": "pass", "log": "07-npm-check-after-test-fixes.log", "notes": "biome Checked 2002 files; 结论源：工程门在含 S7 新增测试文件的最终源码上通过"},
+    {"id": 8, "name": "vitest test/pao 结论轮", "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2 --reporter=verbose", "workdir": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent", "exit_code": 1, "elapsed_sec": 2893.9, "result": "fail (1 条负载敏感 flake)", "log": "08-vitest-test-pao-full-r2.log", "notes": "1 failed / 275 passed / 1 skipped files; 1 failed / 3076 passed / 2 expected fail / 1 skipped tests"},
+    {"id": 9, "name": "bench/tests Python", "command": "& <python3.12 绝对路径> -m unittest discover -s bench/tests -t . -v", "workdir": "D:\\AI\\workspace\\pao-dev", "exit_code": 0, "elapsed_sec": 98, "result": "pass (skipped=2 单列)", "log": "09-bench-tests-unittest.log", "notes": "Ran 223 tests in 93.831s; OK (skipped=2)"},
+    {"id": 10, "name": "bench/tests JS", "command": "node --test bench/tests/activate-tools.test.mjs", "workdir": "D:\\AI\\workspace\\pao-dev", "exit_code": 0, "elapsed_sec": 0.12, "result": "pass", "log": "10-bench-tests-activate-tools-node-test.log", "notes": "tests 3 / pass 3 / fail 0 / skipped 0"}
+  ],
+  "rounds": {
+    "first": {
+      "label": "首轮（诊断轮，原样保留，不覆盖）",
+      "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2",
+      "start": "2026-11-01 15:48:19",
+      "end": "2026-11-01 16:28:57",
+      "elapsed_sec": 2439.2,
+      "exit_code": 1,
+      "files": {"total": 273, "passed": 268, "failed": 4, "skipped": 1},
+      "tests": {"total": 3065, "passed": 3058, "failed": 4, "expected_fail": 2, "skipped": 1},
+      "errors": 1,
+      "log": "06-vitest-test-pao-full.log"
+    },
+    "conclusion": {
+      "label": "结论轮（S7 工程门结论以此为准）",
+      "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2 --reporter=verbose",
+      "start": "2026-11-01 16:59:11",
+      "end": "2026-11-01 17:47:25",
+      "elapsed_sec": 2893.9,
+      "exit_code": 1,
+      "files": {"total": 277, "passed": 275, "failed": 1, "skipped": 1},
+      "tests": {"total": 3080, "passed": 3076, "failed": 1, "expected_fail": 2, "skipped": 1},
+      "duration_detail": "2892.00s (transform 34.82s, setup 0ms, import 124.36s, tests 5579.30s, environment 21ms)",
+      "log": "08-vitest-test-pao-full-r2.log"
+    }
+  },
+  "failures_first_round": [
+    {
+      "id": 1,
+      "test": "test/pao/collaboration-baseline.test.ts:265",
+      "title": "关键cards注册中途失败当前只警告，仍继续注册派发工具",
+      "error_before": "AssertionError: expected '' to contain 'S0注入cards中途失败'",
+      "classification": "过期测试夹具（S0 旧行为快照；S5 起必需模块失败即抛 PaoAssemblyFailure，src/pao/index.ts:514-520）",
+      "fix": "断言改为 rejects.toThrow(/cards 模块装配失败:S0注入cards中途失败/) 并断言 pao_change_status/pao_dispatch_card 未注册；标题改为『关键cards注册中途失败即拒绝装配，不留半装配派发工具』",
+      "ab_evidence": ["diag1-collaboration-baseline.log (exit 0 / 5 passed / 28s)", "08-vitest-test-pao-full-r2.log 结论轮通过"]
+    },
+    {
+      "id": 2,
+      "test": "test/pao/f-novel-loop.test.ts:385",
+      "title": "五项写作、只读审核打回、返修与人工确认形成完整闭环",
+      "error_before": "Error: 模拟宿主：接管 s2大纲 第 2 轮失败（控制正本持续被占用：正本暂不可解析：\"---\\n版本: 3\\n实例: 5ba6ee3f…\"）",
+      "classification": "过期测试夹具（takeoverMinister 硬编码只认 版本: 2；S1 起控制正本写 版本: 3，产品 control.ts:335 接受 2/3）",
+      "diagnostic": "diag2 报『结构不符：实例=string 版本=3 节点是数组=true』，证明 YAML 解析正常、唯一失败条件是过期版本判断",
+      "fix": "版本口径改由产品 readControl(fixture.recipe, fixture.options) 判定（对照断言），保留诊断增强；未改产品源码",
+      "ab_evidence": ["diag2-f-novel-loop.log (exit 1，暴露根因)", "diag3-f-novel-loop.log (exit 0 / 6 passed / 207.3s)", "08-vitest-test-pao-full-r2.log 结论轮通过"],
+      "raw_dump": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\gates\\f-novel-loop-raw-1793523149738.txt"
+    },
+    {
+      "id": 3,
+      "test": "test/pao/workflow-auto-chain.test.ts:1500",
+      "title": "命令面 confirm 与工具面同口径:自动执行配方点头后自动链续跑",
+      "error_before": "Error: Test timed out in 30000ms.",
+      "classification": "负载敏感超时（既有 30s 超时未改、断言未改）；重负载 diag1 中失败落在另一条 :1731，说明同类超时随负载漂移",
+      "fix": "不改超时/断言，靠空载结论轮验证",
+      "ab_evidence": ["diag1-workflow-auto-chain.log (exit 1 / 1 failed | 97 passed / 976.8s / :1731 超时)", "08-vitest-test-pao-full-r2.log auto-chain 98 条全绿"]
+    },
+    {
+      "id": 4,
+      "test": "test/pao/workflow-migration-compat.test.ts:92",
+      "title": "未知版本或损坏轮次保留原件并拒绝恢复；重复启动不覆盖旧实例",
+      "error_before": "AssertionError: expected [Function] to throw an error",
+      "classification": "过期测试夹具（旧断言靠 original.replace(\"版本: 2\", \"版本: 99\") 造坏文件；S1 升 v3 后字面量不存在 → 替换空转）",
+      "fix": "用 /版本: \\d+/、/轮次: \\d+/ 从实际内容替换，先断言替换生效，再断言抛错且原件字节不变",
+      "ab_evidence": ["diag1-workflow-migration-compat.log (exit 0 / 3 passed / 1.7s)", "08-vitest-test-pao-full-r2.log 结论轮通过"]
+    }
+  ],
+  "conclusion_round_failure": {
+    "test": "test/pao/local-worktree-host-cleanup.test.ts:58 / I2-3a 默认共享工作目录工厂的清理保护 > 未合并成果拒绝清理并保留分支与工作目录",
+    "error": "Error: 无法核对工作目录的完整基线。",
+    "stack": ["requireTree src/pao/worktrees/local-host/host.ts:745:9", "requireUnchangedCapture host.ts:732:8", "PaoLocalWorktreeHost.createNow host.ts:468:9", "PaoLocalWorktreeHost.create host.ts:181:11", "test/pao/local-worktree-host-cleanup.test.ts:58:19"],
+    "duration_ms": 6100,
+    "classification": "时序/并发 flake（非本轮改动相关，不写成通过、不写成产品缺陷）",
+    "evidence": [
+      "06 首轮该文件在 268 个通过文件中",
+      "08 重负载 48.3 分钟全量轮失败一次（host.ts:467 二次基线 capture 不可用）",
+      "diag4-local-worktree-host-cleanup.log 单文件串行空载 exit 0 / Tests 5 passed (5) / 46.9s"
+    ],
+    "disk_free": {"C": "34.1GB", "D": "70.0GB"}
+  },
+  "expected_failures": [
+    {"count": 2, "location": ["test/pao/f-results-files.test.ts:491", "test/pao/f-results-files.test.ts:501"], "note": "it.fails 设计内预期失败（R08 待补），两轮一致，不算通过"},
+    {"count": 1, "location": ["test/pao/rehearsal/workflow-rehearsal-real.test.ts"], "note": "PAO_REHEARSAL_REAL !== '1' 时 it.skip（文件第 16 行），不计入通过"},
+    {"count": 2, "location": ["bench.tests.test_final_assembly.FinalAssemblyTest.test_evidence_copy_failure_preserves_wsl_root", "bench.tests.test_final_assembly.FinalAssemblyTest.test_final_assembly_real_harbor_setup_and_current_kernel_rpc"], "note": "缺少 PAO_FINAL_ASSEMBLY_SOURCES；请显式提供 prepare 来源清单（UTF-8 诊断重跑 09b 取原文）"}
+  ],
+  "known_gaps": [
+    "createLocalCheckpointAdapter.capture（src/pao/worktrees/local-host/default.ts:78-88）把捕获异常吞成 {state:'unavailable', code, message}，requireTree（host.ts:743-745）只抛通用『无法核对工作目录的完整基线。』，原始 git 错误丢失；建议把 capture.message/code 并入异常。本轮不改，属后续可诊断性改进。",
+    "计划 §14.2 第485行 npm run check:gates 不存在，应订正为 check:pao:kernel + 全量 gate-boundary.mjs。",
+    "计划 §14.2 第481行 node scripts/gate-boundary.mjs 路径错误，实际为 packages/coding-agent/scripts/gate-boundary.mjs。",
+    "test/pao 默认 reporter 在非 TTY 下无逐文件进度，结论轮改用 --reporter=verbose。",
+    "包装脚本首版因无 BOM UTF-8 中文被 PS 5.1 按 GBK 解析，产生 *.pre-envfix.log 首跑日志（原样保留）；工作区乱码目录由 Lead 收尾清理，证据不指向它。"
+  ],
+  "not_run": [
+    "真实供应商 / V1 验证（离线工程门，未接真实模型）",
+    "desktop 仓门（pnpm test:baseline、typecheck、build、package:win:dir）——由 desktop 成员执行",
+    "PAO_REHEARSAL_REAL=1 的真彩排用例（vitest 跳过）"
+  ],
+  "lead_covered": [
+    {"item": "npm run build:offline", "evidence": ["D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\build-offline-1.log", "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\lead\\check-bundle-after-vendor.log"], "note": "exit 0；bundle 76 files 10.4 MiB；aggregate 913cbd65bca3d56e9b68feaf1b5886e791d7fde361fcb1367a646e0e9bd8c90d"},
+    {"item": "bench run --rehearsal 正常四部门链", "evidence": [".pao\\协作规则统一-20261030\\S7\\checks\\matrix\\10-normal-default.log"], "note": "node bench\\rehearsal\\run-rehearsal.mjs exit 0 / 178.3s / verification 18 项全 True / 证据根 I5-2-2026-11-01T07-53-52Z"}
+  ],
+  "evidence_logs": [
+    "00-probe-env.log", "01-tsc-noEmit.log", "01-tsc-noEmit.pre-envfix.log",
+    "02-check-types-integration.log", "02-check-types-integration.pre-envfix.log",
+    "03-npm-check-full.log", "04-check-pao-kernel.log", "04-check-pao-kernel.pre-envfix.log",
+    "05-gate-boundary.log", "05-gate-boundary.pre-envfix.log",
+    "06-vitest-test-pao-full.log",
+    "07-npm-check-after-test-fixes.log", "07-git-status-test-pao.txt",
+    "08-vitest-test-pao-full-r2.log",
+    "09-bench-tests-unittest.log", "09b-diagnostic-final-assembly-utf8.log",
+    "10-bench-tests-activate-tools-node-test.log",
+    "diag1-collaboration-baseline.log", "diag1-workflow-migration-compat.log", "diag1-f-novel-loop.log", "diag1-workflow-auto-chain.log",
+    "diag2-f-novel-loop.log", "diag3-f-novel-loop.log", "diag4-local-worktree-host-cleanup.log",
+    "precheck-biome-modified-tests.log"
+  ],
+  "final_verdict": "工程门在含 S7 新增测试文件的最终源码上通过（npm run check exit 0）；test/pao 结论轮 277 文件仅 1 条负载敏感 flake，首轮 4 条失败已定性为 3 条过期夹具 + 1 条负载敏感超时并在结论轮消除；bench/tests python 223 tests OK（2 跳过单列），bench JS 3/3。"
+}

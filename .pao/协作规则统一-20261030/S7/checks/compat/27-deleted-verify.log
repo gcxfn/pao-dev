@@ -1,0 +1,81 @@
+﻿timestamp=2026-11-01 16:35:57
+== ID4 旧字段直接赋值 ==
+pattern [\.暂停\s*=[^=]] hits=0
+pattern [\.待决\s*=[^=]] hits=0
+pattern [\.裁定\s*=[^=]] hits=0
+== ID5 releaseRulingPause 旧方法 ==
+pattern [releaseRulingPause\s*\(] hits=0
+== ID6 超限关键词 ==
+pattern [includes\("超限] hits=0
+pattern [超限放行] hits=4
+  \PAO\packages\coding-agent\src\pao\status\firstrun.ts:14: * 人工门待确认／待裁定／超限放行／缺输入补卡／失败待处置／实例恢复请求／实例异常,
+  \PAO\packages\coding-agent\src\pao\status\pending.ts:3: * 把散在各会话的待确认（人工门/裁定）、缺输入、审核打回、超限放行、恢复请求聚成一个待处理列表,
+  \PAO\packages\coding-agent\src\pao\status\pending.ts:39: /** 类型标签（人工门待确认／待裁定／超限放行／缺输入补卡／失败待处置／实例恢复请求／实例异常） */
+  \PAO\packages\coding-agent\src\pao\status\pending.ts:71: /** 实例信号 → 待处理项（人工门→已交付挂起→裁定→超限放行→恢复请求,与实际卡点顺序一致）。 */
+== ID7 resumeNote ==
+pattern [#resumeNote] hits=0
+pattern [resumeNote] hits=0
+== ID11 fanout 完成核心 ==
+pattern [completeDispatchedTask] hits=5
+  \PAO\packages\coding-agent\src\pao\worker\index.ts:106: import { completeDispatchedTask } from "./post-dispatch.ts";
+  \PAO\packages\coding-agent\src\pao\worker\index.ts:1048: const stopReason = await completeDispatchedTask({
+  \PAO\packages\coding-agent\src\pao\worker\post-dispatch.ts:123: export async function completeDispatchedTask(options: PostDispatchOptions): Promise<string | undefined> {
+  \PAO\packages\coding-agent\src\pao\workflow\auto.ts:40: completeDispatchedTask,
+  \PAO\packages\coding-agent\src\pao\workflow\auto.ts:685: const stopReason = await completeDispatchedTask({
+pattern [completeTask] hits=3
+  \PAO\packages\coding-agent\src\pao\worker\index.ts:226: completeTask?: boolean,
+  \PAO\packages\coding-agent\src\pao\worker\index.ts:843: completeTask = false,
+  \PAO\packages\coding-agent\src\pao\worker\index.ts:1046: if (completeTask) {
+== ID13 pao_ack_supervision ==
+pattern [pao_ack_supervision] hits=5
+  \PAO\packages\coding-agent\src\pao\host\host.ts:742: `逐个使用 pao_ack_supervision(key="${key}")确认已实际检查后再调用;未确认的提醒不会重复唤醒。`,
+  \PAO\packages\coding-agent\src\pao\host\host.ts:1814: if (event.toolName !== "pao_ack_supervision" || event.isError) return false;
+  \PAO\packages\coding-agent\src\pao\host\tools.ts:72: name: "pao_ack_supervision",
+  \PAO\packages\coding-agent\src\pao\host\tools.ts:130: if (event.toolName !== "pao_ack_supervision" || event.isError) return;
+  \PAO\packages\coding-agent\src\pao\supervision\state.ts:245: `逐个使用 pao_ack_supervision(key="${work.key}")确认已实际检查后再调用;未确认的提醒不会重复唤醒。`,
+== ID15 supervision 依赖 workflow ==
+pattern [from\s+"\.\./workflow/] hits=35
+  \PAO\packages\coding-agent\src\pao\desktop\canvas.ts:30: import { controlView, readControl, readControlView } from "../workflow/control.ts";
+  \PAO\packages\coding-agent\src\pao\desktop\canvas.ts:31: import { parseManifest } from "../workflow/driver.ts";
+  \PAO\packages\coding-agent\src\pao\desktop\canvas.ts:41: } from "../workflow/recipe.ts";
+  \PAO\packages\coding-agent\src\pao\desktop\editor.ts:8: import { emitRecipeMarkdown } from "../workflow/distill.ts";
+  \PAO\packages\coding-agent\src\pao\desktop\editor.ts:15: } from "../workflow/recipe.ts";
+  \PAO\packages\coding-agent\src\pao\desktop\editor.ts:16: import { listStarterTemplates } from "../workflow/templates.ts";
+== ID18 内联 skipped ==
+pattern [skippedModules] hits=5
+  \PAO\packages\coding-agent\src\pao\index.ts:57: skippedModulesFor,
+  \PAO\packages\coding-agent\src\pao\index.ts:496: const skippedModules = skippedModulesFor(loadout);
+  \PAO\packages\coding-agent\src\pao\index.ts:498: if (skippedModules.has(module)) return;
+  \PAO\packages\coding-agent\src\pao\role.ts:156: export function skippedModulesFor(loadout: PaoLoadout): ReadonlySet<string> {
+  \PAO\packages\coding-agent\src\pao\role.ts:335: const skipped = skippedModulesFor(loadout);
+pattern [skipReason] hits=5
+  \PAO\packages\coding-agent\src\pao\index.ts:509: if (requirement.skipReason !== undefined) {
+  \PAO\packages\coding-agent\src\pao\index.ts:510: tracker.noteSkipped(requirement, requirement.skipReason);
+  \PAO\packages\coding-agent\src\pao\index.ts:511: logWarn(`[pao] ${module}模块按配置前置降级:${requirement.skipReason}`);
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:324: readonly skipReason?: string;
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:335: ...(skipped ? { skipReason: `${skipped.source}:${skipped.reason}` } : {}),
+== ID25 panorama 单版本判定 ==
+pattern [版本 === 2 &&] hits=3
+  \PAO\packages\coding-agent\src\pao\workflow\control.ts:2965: if (flow.版本 === 2 && flow.停止?.pending) {
+  \PAO\packages\coding-agent\src\pao\workflow\tools.ts:327: if (recipe.版本 === 2 && options.driveDepartments)
+  \PAO\packages\coding-agent\src\pao\workflow\tools.ts:348: if (recipe.版本 === 2 && options.driveDepartments)
+pattern [版本 !== 1] hits=2
+  \PAO\packages\coding-agent\src\pao\panorama\index.ts:204: if (instance.版本 !== 1 && instance.控制 && instance.报告) {
+  \PAO\packages\coding-agent\src\pao\status\workflow-instances.ts:352: if (instance.版本 !== 1 && instance.控制 && instance.报告) {
+== ID17 register 降级/抛错 ==
+pattern [noteDegraded] hits=4
+  \PAO\packages\coding-agent\src\pao\index.ts:528: tracker.noteDegraded(degradation);
+  \PAO\packages\coding-agent\src\pao\index.ts:767: tracker.noteDegraded({
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:349: noteDegraded(degradation: PaoAssemblyDegradation): void;
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:364: noteDegraded(degradation) {
+pattern [noteSkipped] hits=3
+  \PAO\packages\coding-agent\src\pao\index.ts:510: tracker.noteSkipped(requirement, requirement.skipReason);
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:350: noteSkipped(requirement: PaoAssemblyPlanEntry, reason: string): void;
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:367: noteSkipped(requirement, reason) {
+pattern [toPaoAssemblyFailure] hits=6
+  \PAO\packages\coding-agent\src\pao\index.ts:50: toPaoAssemblyFailure,
+  \PAO\packages\coding-agent\src\pao\index.ts:184: return finalizePaoAssemblyFailure(teardown, toPaoAssemblyFailure(error));
+  \PAO\packages\coding-agent\src\pao\index.ts:201: throw toPaoAssemblyFailure(error, {
+  \PAO\packages\coding-agent\src\pao\index.ts:232: throw toPaoAssemblyFailure(error, { module });
+  \PAO\packages\coding-agent\src\pao\index.ts:520: throw toPaoAssemblyFailure(error, { module, capability: requirement.capability });
+  \PAO\packages\coding-agent\src\pao\preflight\assembly.ts:78: export function toPaoAssemblyFailure(

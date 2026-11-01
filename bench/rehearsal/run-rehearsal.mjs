@@ -1,5 +1,5 @@
 // 用途：用固定 kit、真实产品 CLI、真实 Git 与回环脚本模型运行隔离正常链。
-// 输入：可选 --output；输出：运行、模型、控制正本、进程和核验证据。
+// 输入：可选 --output 与 --scenario（缺省 bench/rehearsal/scenarios/normal.json）；输出：运行、模型、控制正本、进程和核验证据。
 // 边界：不构建、不联网、不访问正式 PAO_HOME、不使用 Docker 或真实模型。
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -17,6 +17,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
+import { resolveScenarioPath } from "./cli-args.mjs";
 import { verifyEvidence } from "./verify-evidence.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,7 +29,6 @@ const SOURCE_ROOT = join(REPO_ROOT, "PAO");
 const PACKAGE_ROOT = join(REPO_ROOT, "PAO/packages/coding-agent");
 const KIT = join(REPO_ROOT, "bench/organized-post/kit.json");
 const SETUP = join(REPO_ROOT, "bench/organized-post/setup.mjs");
-const SCENARIO = join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
 const PROVIDER = "harbor-endpoint";
 const MODEL = "minimax-code/MiniMax-M3.1-Flash";
 const THINKING = "high";
@@ -363,9 +363,13 @@ async function main() {
   const args = parseArgs({
     options: {
       output: { type: "string" },
+      scenario: { type: "string" },
     },
     allowPositionals: false,
   }).values;
+  // 场景参数先于运行目录创建解析：坏参数快速失败，不建半截证据目录。
+  const scenarioPath = resolveScenarioPath(args.scenario, { repoRoot: REPO_ROOT });
+  const scenarioManifestRoot = relative(REPO_ROOT, scenarioPath).replaceAll("\\", "/");
   const runId = new Date().toISOString().replaceAll(":", "-").replace(/\.\d{3}Z$/, "Z");
   const runRoot = resolve(args.output ?? join(WORKSPACE_TEMP, `I5-2-${runId}`));
   if (!isWithin(WORKSPACE_TEMP, runRoot)) {
@@ -410,10 +414,10 @@ async function main() {
   ]);
   const kitManifest = captureManifest(join(manifestsDir, "kit-manifest.json"), [
     "bench/organized-post",
-    "bench/rehearsal/scenarios/normal.json",
+    scenarioManifestRoot,
   ]);
   const cliSha256 = sha256File(CLI);
-  const scenarioSha256 = sha256File(SCENARIO);
+  const scenarioSha256 = sha256File(scenarioPath);
   const snapshotSha256 = createHash("sha256")
     .update(
       [
@@ -446,7 +450,7 @@ async function main() {
     capturedAt: new Date().toISOString(),
     kitPath: KIT,
     kitSha256: sha256File(KIT),
-    scenarioPath: SCENARIO,
+    scenarioPath,
     scenarioSha256,
     node: NODE,
     nodeVersion: process.version,
@@ -464,13 +468,13 @@ async function main() {
 
   const startedAt = new Date();
   const suiteStarted = Date.now();
-  const scenario = JSON.parse(readFileSync(SCENARIO, "utf8"));
+  const scenario = JSON.parse(readFileSync(scenarioPath, "utf8"));
   if (scenario.kitSha256 !== preflight.kitSha256) throw new Error("场景冻结的 kit 哈希与当前 kit 不一致");
   const { createScriptedModelServer } = await import(
     pathToFileURL(join(HERE, "scripted-model-server.mjs")).href
   );
   const server = await createScriptedModelServer({
-    scenarioPath: SCENARIO,
+    scenarioPath,
     evidenceDir: modelEvidence,
     port: 0,
   });
@@ -792,7 +796,7 @@ async function main() {
       kitFileCount: kitManifest.fileCount,
       snapshotSha256,
       kitSha256: sha256File(KIT),
-      scenarioSha256: sha256File(SCENARIO),
+      scenarioSha256: sha256File(scenarioPath),
       syntheticUsage: true,
     });
     process.stderr.write(`${JSON.stringify(failure)}\n`);

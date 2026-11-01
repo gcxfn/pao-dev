@@ -1,0 +1,20 @@
+﻿timestamp=2026-11-01 16:36:12
+== ID15 scoped: worker/supervision.ts imports ==
+  13: import { resolve } from "node:path";
+  14: import { loadCard, projectRootForCards, readCard } from "../cards/cardfile.ts";
+  15: import { formatCardNumber } from "../cards/counter.ts";
+  16: import type { CardStatus, ParsedCard } from "../cards/types.ts";
+  17: import type { HostActivity } from "../host/host.ts";
+  18: import { resolvePaoRole } from "../role.ts";
+  19: import { logWarn } from "../shared/log.ts";
+  20: import { pathKey } from "../shared/path-key.ts";
+  21: import type { ProcessEntry } from "./registry.ts";
+  22: import type { WorkerRunner } from "./runner.ts";
+== ID13 role.ts 部长白名单 ==
+  role.ts:20: export const WORKFLOW_MINISTER_TOOLS: readonly string[] = [
+  role.ts:35: export function isWorkflowMinisterTool(name: string): boolean {
+  role.ts:36: return WORKFLOW_MINISTER_TOOLS.includes(name);
+  role.ts:40: return registeredNames.filter(isWorkflowMinisterTool);
+== ID13 host tools 注册点 ==
+  host/tools.ts:72: name: "pao_ack_supervision",
+  host/tools.ts:130: if (event.toolName !== "pao_ack_supervision" || event.isError) return;

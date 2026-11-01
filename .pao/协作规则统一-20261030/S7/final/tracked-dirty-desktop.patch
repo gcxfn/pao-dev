@@ -1,0 +1,879 @@
+diff --git a/apps/desktop/contracts/workflow-control.ts b/apps/desktop/contracts/workflow-control.ts
+index af730aa1..fcf49646 100644
+--- a/apps/desktop/contracts/workflow-control.ts
++++ b/apps/desktop/contracts/workflow-control.ts
+@@ -29,6 +29,36 @@ export const WORKFLOW_CONTROL_ACTION_LABELS: Record<WorkflowControlAction, strin
+   resume: "人工恢复",
+ };
+ 
++/** 停因类别：与内核 ControlStop.category 同值，只透传给界面，不自行加判定。 */
++export type WorkflowControlStopCategory =
++  "decision" | "manual_pause" | "recovery_required" | "terminal_block" | "legacy_unknown";
++
++/** 停因允许动作：与内核 ControlStopProjection.actions 同值。 */
++export type WorkflowControlStopAction = "rule" | "resolve_pending" | "resume";
++
++/** 停因投影：内核 projectControlStop 的窄投影，界面用它决定停因语义与可用动作。 */
++export interface WorkflowControlStop {
++  readonly category: WorkflowControlStopCategory;
++  readonly authority: "owner" | "human";
++  readonly actions: readonly WorkflowControlStopAction[];
++  readonly reason: string;
++  readonly node?: string;
++  readonly round?: number;
++  readonly cardRef?: string;
++  readonly attempt?: number;
++  readonly deadline?: string;
++  /** 待决通道；只有 decision 类停因才可能带。 */
++  readonly channel?: "主控" | "人工";
++  /** 待决种类；只有 decision 类停因才可能带。 */
++  readonly kind?: string;
++}
++
++/** 停因允许的下一动作：有结构化停因时以内核为准，v1 旧清单才回退到 pauseReason。 */
++export function workflowControlCanResume(control: WorkflowControlIdentity | undefined): boolean {
++  if (!control) return false;
++  return control.stop ? control.stop.actions.includes("resume") : control.pauseReason !== undefined;
++}
++
+ /** 控制清单里的一个节点：内核 controlReport 的投影（中文含义，英文键）。 */
+ export interface WorkflowControlNodeRow {
+   readonly name: string;
+@@ -56,6 +86,8 @@ export interface WorkflowControlIdentity {
+   readonly status: string;
+   /** 人工暂停推进的原因；有值＝暂停中。其他原因挂起不会写这里，避免与暂停混淆。 */
+   readonly pauseReason?: string;
++  /** 结构化停因（controlView 的 停止 投影）；v1 旧清单可缺省。 */
++  readonly stop?: WorkflowControlStop;
+   readonly nodes: readonly WorkflowControlNodeRow[];
+ }
+ 
+@@ -90,5 +122,4 @@ export type WorkflowControlResult =
+   | { readonly state: "failed"; readonly message: string };
+ 
+ export type WorkflowControlCommandResult =
+-  | { readonly state: "ok" }
+-  | { readonly state: "error"; readonly message: string };
++  { readonly state: "ok" } | { readonly state: "error"; readonly message: string };
+diff --git a/apps/desktop/electron/platform/pao/flow-control-query.ts b/apps/desktop/electron/platform/pao/flow-control-query.ts
+index 3c7722eb..158d7948 100644
+--- a/apps/desktop/electron/platform/pao/flow-control-query.ts
++++ b/apps/desktop/electron/platform/pao/flow-control-query.ts
+@@ -31,6 +31,9 @@ import type {
+   WorkflowControlIdentity,
+   WorkflowControlNodeRow,
+   WorkflowControlResult,
++  WorkflowControlStop,
++  WorkflowControlStopAction,
++  WorkflowControlStopCategory,
+ } from "../../../contracts/workflow-control";
+ 
+ function fail(message: string): never {
+@@ -64,6 +67,58 @@ function positiveRound(value: unknown): number {
+   return value;
+ }
+ 
++function optionalPositiveInteger(value: unknown, name: string): number | undefined {
++  if (value === undefined || value === null) return undefined;
++  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 1)
++    fail(`${name}不是正整数。`);
++  return value;
++}
++
++const STOP_CATEGORIES: readonly WorkflowControlStopCategory[] = [
++  "decision",
++  "manual_pause",
++  "recovery_required",
++  "terminal_block",
++  "legacy_unknown",
++];
++const STOP_ACTIONS: readonly WorkflowControlStopAction[] = ["rule", "resolve_pending", "resume"];
++
++/** controlView 的 停止 投影：字段不全即失败，不用默认值猜停因。 */
++function normalizeStop(value: unknown): WorkflowControlStop | undefined {
++  if (value === undefined || value === null) return undefined;
++  const row = record(value, "控制停因");
++  const category = text(row.category, "停因类别") as WorkflowControlStopCategory;
++  if (!STOP_CATEGORIES.includes(category)) fail(`停因类别不认识：${category}`);
++  const authority = text(row.authority, "停因权限");
++  if (authority !== "owner" && authority !== "human") fail(`停因权限不认识：${authority}`);
++  const actions = list(row.actions, "停因动作").map((action) => {
++    const name = text(action, "停因动作");
++    if (!STOP_ACTIONS.includes(name as WorkflowControlStopAction)) fail(`停因动作不认识：${name}`);
++    return name as WorkflowControlStopAction;
++  });
++  const identity = row.identity === undefined ? {} : record(row.identity, "停因身份");
++  const pending = row.pending === undefined ? undefined : record(row.pending, "停因待决");
++  const channel: "主控" | "人工" | undefined =
++    pending === undefined
++      ? undefined
++      : (optionalText(pending.channel, "停因待决通道") as "主控" | "人工" | undefined);
++  if (channel !== undefined && channel !== "主控" && channel !== "人工")
++    fail(`停因待决通道不认识：${channel}`);
++  return {
++    category,
++    authority,
++    actions,
++    reason: text(row.reason, "停因原因"),
++    node: optionalText(identity.node, "停因节点"),
++    round: optionalPositiveInteger(identity.round, "停因轮次"),
++    cardRef: optionalText(identity.cardRef, "停因卡号"),
++    attempt: optionalPositiveInteger(identity.attempt, "停因尝试号"),
++    deadline: optionalText(row.deadline, "停因截止"),
++    channel,
++    kind: pending === undefined ? undefined : optionalText(pending.kind, "停因待决种类"),
++  };
++}
++
+ function normalizeNode(value: unknown): WorkflowControlNodeRow {
+   const row = record(value, "控制节点");
+   return {
+@@ -89,6 +144,7 @@ export function normalizeFlowControl(value: PaoDesktopFlow): WorkflowControlIden
+     path: text(flow.路径, "控制清单路径"),
+     status: text(progress.状态, "控制进度状态"),
+     pauseReason: optionalText(control.暂停, "暂停原因"),
++    stop: normalizeStop(progress.停止),
+     nodes: list(progress.节点, "控制进度节点").map(normalizeNode),
+   };
+ }
+diff --git a/apps/desktop/src/features/canvas/workflow-runtime-controls.tsx b/apps/desktop/src/features/canvas/workflow-runtime-controls.tsx
+index 92f6a940..96a93ee2 100644
+--- a/apps/desktop/src/features/canvas/workflow-runtime-controls.tsx
++++ b/apps/desktop/src/features/canvas/workflow-runtime-controls.tsx
+@@ -1,8 +1,9 @@
+ import { useCallback, useEffect, useRef, useState } from "react";
+ import type { PiDesktopApi } from "../../../contracts/ipc";
+-import type {
+-  WorkflowControlAction,
+-  WorkflowControlIdentity,
++import {
++  type WorkflowControlAction,
++  type WorkflowControlIdentity,
++  workflowControlCanResume,
+ } from "../../../contracts/workflow-control";
+ import { cardStatusLabel } from "./canvas-model";
+ 
+@@ -146,7 +147,9 @@ export function WorkflowRuntimeControls({
+         <>
+           <p>
+             主控：{control.ownerSessionId}
+-            {control.pauseReason ? ` · 暂停原因：${control.pauseReason}` : ""}
++            {(control.stop?.reason ?? control.pauseReason)
++              ? ` · 停因：${control.stop?.reason ?? control.pauseReason}`
++              : ""}
+           </p>
+           {!owns ? (
+             <button
+@@ -244,12 +247,16 @@ export function WorkflowRuntimeControls({
+                   ? "请先打开原主控"
+                   : !reason.trim()
+                     ? "请填写操作说明"
+-                    : control.status !== "挂起"
+-                      ? "运行记录当前未挂起"
++                    : !workflowControlCanResume(control)
++                      ? control.stop
++                        ? "当前停因不允许人工恢复"
++                        : "运行记录当前未挂起"
+                       : undefined
+               }
+               aria-describedby="workflow-control-hints"
+-              disabled={busy || !sessionId || !node || !reason.trim() || control.status !== "挂起"}
++              disabled={
++                busy || !sessionId || !node || !reason.trim() || !workflowControlCanResume(control)
++              }
+               onClick={() => {
+                 run("resume").catch((error: unknown) => setMessage(String(error)));
+               }}
+diff --git a/apps/desktop/src/features/workflow-cards/workflow-cards-model.ts b/apps/desktop/src/features/workflow-cards/workflow-cards-model.ts
+index 3bf4b48f..e07fbdab 100644
+--- a/apps/desktop/src/features/workflow-cards/workflow-cards-model.ts
++++ b/apps/desktop/src/features/workflow-cards/workflow-cards-model.ts
+@@ -24,6 +24,7 @@ import type {
+ import type {
+   WorkflowControlIdentity,
+   WorkflowControlNodeRow,
++  WorkflowControlStop,
+ } from "../../../contracts/workflow-control";
+ 
+ /**
+@@ -111,9 +112,7 @@ export function isActionableState(state: StepCardState): boolean {
+ 
+ /** 需要人去救的状态：失败、预算不足、暂停推进、状态读不懂（取消是明确终态，不算要救）。 */
+ export function needsAttentionState(state: StepCardState): boolean {
+-  return (
+-    state === "failed" || state === "budget" || state === "paused" || state === "unknown"
+-  );
++  return state === "failed" || state === "budget" || state === "paused" || state === "unknown";
+ }
+ 
+ export interface StepCardView {
+@@ -220,7 +219,7 @@ export function stepCardViews(
+     const row = progressByStep.get(step.stepId);
+     const state = resolveStepState(step, node, row, resolved, control);
+     resolved.set(step.stepId, state);
+-    const holdReason = holdReasonText(node, row);
++    const holdReason = holdReasonText(node, row, stepStop(control, step.stepId));
+     const confirmedAt = row?.confirmed ?? node?.confirmed;
+     // 【修正二 · 轮次以进度行为准】
+     // 现象：待确认类待办挂到了错误轮次，旧轮次的提醒能推进新轮次。
+@@ -273,6 +272,15 @@ export function stepCardViews(
+  * 没有控制正本（`control === undefined`）不是「读不到」：那表示这份计划还没起过实例，
+  * 步骤按定义顺序判成未开始/等前序，不报读取异常。
+  */
++/** 停因是否落在这一步：流级停因（无节点）覆盖所有活节点，节点停因只影响该节点。 */
++function stepStop(
++  control: WorkflowControlIdentity | undefined,
++  stepId: string,
++): WorkflowControlStop | undefined {
++  const stop = control?.stop;
++  return stop && (stop.node === undefined || stop.node === stepId) ? stop : undefined;
++}
++
+ function resolveStepState(
+   step: TemporaryPlanStepRow,
+   node: StepCardViewNode | undefined,
+@@ -302,6 +310,19 @@ function resolveStepState(
+   if (node?.status === "delivered") {
+     return "done";
+   }
++  const stop = stepStop(control, step.stepId);
++  if (stop?.category === "manual_pause") {
++    return "paused";
++  }
++  if (stop?.category === "terminal_block") {
++    return "failed";
++  }
++  if (stop?.category === "recovery_required") {
++    return "paused";
++  }
++  if (stop?.category === "decision") {
++    return stop.channel === "人工" ? "waitReview" : "waitLead";
++  }
+   const hold = row?.hold ?? node?.hold;
+   if (mentionsBudget(hold)) {
+     // 预算原因只在内核挂起说明里，没有独立字段；照原文认，认不出就不认。
+@@ -380,8 +401,9 @@ function gateDependencies(
+ function holdReasonText(
+   node: StepCardViewNode | undefined,
+   row: TemporaryPlanStepProgressRow | undefined,
++  stop: WorkflowControlStop | undefined,
+ ): string | undefined {
+-  return row?.hold ?? node?.hold;
++  return row?.hold ?? node?.hold ?? stop?.reason;
+ }
+ 
+ /** 已完成的步数（只数真的交付完成的，确认门等待中不算完成）。 */
+@@ -389,12 +411,13 @@ export function completedStepCount(views: readonly StepCardView[]): number {
+   return views.filter((view) => view.state === "done").length;
+ }
+ 
+-/** 有实例时的流级状态文案：暂停原因优先，便于一眼看出是人工暂停。 */
++/** 有实例时的流级状态文案：结构化停因优先，v1 旧清单才回退暂停原因。 */
+ export function flowStatusText(control: WorkflowControlIdentity | undefined): string | undefined {
+   if (!control) {
+     return undefined;
+   }
+-  return control.pauseReason ? `${control.status} · ${control.pauseReason}` : control.status;
++  const reason = control.stop?.reason ?? control.pauseReason;
++  return reason ? `${control.status} · ${reason}` : control.status;
+ }
+ 
+ /** 顶部摘要的计数：总量是筛选外的全部步骤，界面必须同时显示「过滤后」数量，避免误读。 */
+@@ -506,7 +529,9 @@ export function parallelStepGroups(plan: TemporaryPlanRow): readonly ParallelGro
+       groups.push({ stepIds: [step.stepId], parallel: false });
+       continue;
+     }
+-    const shared = step.dependsOn.find((dep) => mates.every((mate) => mate.dependsOn.includes(dep)));
++    const shared = step.dependsOn.find((dep) =>
++      mates.every((mate) => mate.dependsOn.includes(dep)),
++    );
+     // 同组只保留部门唯一的成员：同部门的多步要排队，不能算进并行组。
+     const depts = new Set<string>([step.dept]);
+     const stepIds = [step.stepId];
+@@ -648,7 +673,12 @@ export function stepDuration(card: StepCardDurationCard | undefined): StepDurati
+   if (start === undefined || end === undefined) {
+     return { kind: "unrecorded", reason: "卡面时间读不懂（要 YYYY-MM-DD HH:mm）" };
+   }
+-  return { kind: "measured", seconds: Math.max(0, Math.round((end - start) / 1000)), created, finished };
++  return {
++    kind: "measured",
++    seconds: Math.max(0, Math.round((end - start) / 1000)),
++    created,
++    finished,
++  };
+ }
+ 
+ /** `stepDuration` 需要的最小卡面字段（`CanvasNodeDetailData["card"]` 的子集，主进程回什么就用什么）。 */
+@@ -806,9 +836,7 @@ export function artifactVersions(
+   return [...progress.values()]
+     .flatMap((row) => row.artifacts)
+     .filter((row) => row.relativePath === path || row.path === path)
+-    .sort(
+-      (a, b) => a.round - b.round || (a.card < b.card ? -1 : a.card > b.card ? 1 : 0),
+-    );
++    .sort((a, b) => a.round - b.round || (a.card < b.card ? -1 : a.card > b.card ? 1 : 0));
+ }
+ 
+ /**
+@@ -1214,7 +1242,13 @@ function compareTodos(
+   views: readonly StepCardView[],
+   plan: TemporaryPlanRow,
+ ): (a: TodoItem, b: TodoItem) => number {
+-  const order: readonly TodoKind[] = ["recovery", "confirm", "missing_input", "failed", "undelivered"];
++  const order: readonly TodoKind[] = [
++    "recovery",
++    "confirm",
++    "missing_input",
++    "failed",
++    "undelivered",
++  ];
+   const stepIndex = (stepId: string): number => {
+     if (stepId === "") {
+       return -1;
+@@ -1254,11 +1288,7 @@ function makeTodo(
+  * 待办稳定键：同一条待办在不同视图（侧栏/看板/主页面）必须算出同一个键。
+  * 键里带轮次与定义版本：旧轮次的提醒不会命中新轮次的待办，因此不会被重复处理。
+  */
+-export function todoKey(
+-  kind: TodoKind,
+-  identity: TodoIdentity,
+-  feedbackId?: string,
+-): string {
++export function todoKey(kind: TodoKind, identity: TodoIdentity, feedbackId?: string): string {
+   const parts = [
+     kind,
+     identity.instanceId,
+@@ -1282,7 +1312,11 @@ export function todoKey(
+  */
+ export function isTodoStale(
+   todo: TodoItem,
+-  current: { readonly instanceId: string; readonly round?: number; readonly definitionVersion: number },
++  current: {
++    readonly instanceId: string;
++    readonly round?: number;
++    readonly definitionVersion: number;
++  },
+ ): boolean {
+   if (todo.identity.instanceId !== current.instanceId) {
+     return true;
+@@ -1297,14 +1331,21 @@ export function isTodoStale(
+ }
+ 
+ /** 过期待办的说明文案：说清为什么不能照着做，界面据此禁用动作。 */
+-export function staleTodoText(todo: TodoItem, current: {
+-  readonly round?: number;
+-  readonly definitionVersion: number;
+-}): string | undefined {
++export function staleTodoText(
++  todo: TodoItem,
++  current: {
++    readonly round?: number;
++    readonly definitionVersion: number;
++  },
++): string | undefined {
+   if (todo.identity.definitionVersion !== current.definitionVersion) {
+     return `这条待办是照着第 ${todo.identity.definitionVersion} 版定义提的，现在是第 ${current.definitionVersion} 版，请刷新后再处理`;
+   }
+-  if (todo.identity.round !== undefined && current.round !== undefined && todo.identity.round !== current.round) {
++  if (
++    todo.identity.round !== undefined &&
++    current.round !== undefined &&
++    todo.identity.round !== current.round
++  ) {
+     return `这条待办说的是第 ${todo.identity.round} 轮，现在是第 ${current.round} 轮，请刷新后再处理`;
+   }
+   return undefined;
+diff --git a/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx b/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
+index e0cb9e8e..f16bdac3 100644
+--- a/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
++++ b/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
+@@ -26,9 +26,10 @@ import type {
+   TemporaryPlanStepProgressRow,
+   TemporaryPlanStepRow,
+ } from "../../../contracts/temporary-plans";
+-import type {
+-  WorkflowControlIdentity,
+-  WorkflowControlNodeRow,
++import {
++  type WorkflowControlIdentity,
++  type WorkflowControlNodeRow,
++  workflowControlCanResume,
+ } from "../../../contracts/workflow-control";
+ import { useI18n } from "../../i18n/react";
+ import { CloseIcon, MoreIcon } from "../../ui/icons";
+@@ -1033,8 +1034,12 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+             type="button"
+             className="button button--ghost"
+             data-testid="workflow-cards-resume"
+-            disabled={!control?.pauseReason}
+-            title={t("Resume needs a written on-site check")}
++            disabled={!workflowControlCanResume(control)}
++            title={
++              control?.stop && !workflowControlCanResume(control)
++                ? t("The current stop reason does not allow manual resume")
++                : t("Resume needs a written on-site check")
++            }
+             onClick={() => {
+               const node = props.runnableNode ?? control?.nodes[0];
+               if (node) props.onControlAction(node, "resume");
+diff --git a/apps/desktop/tests/core/pao-control-live-owner.spec.ts b/apps/desktop/tests/core/pao-control-live-owner.spec.ts
+index 87332cf8..deb93a75 100644
+--- a/apps/desktop/tests/core/pao-control-live-owner.spec.ts
++++ b/apps/desktop/tests/core/pao-control-live-owner.spec.ts
+@@ -87,6 +87,7 @@ test("真实 owner 经桌面 IPC 暂停，恢复须界面确认且取消不改
+     const initial = await query();
+     expect(initial.state).toBe("ok");
+     if (initial.state !== "ok") throw new Error(initial.message);
++    expect(initial.control.stop).toBeUndefined();
+     const node = initial.control.nodes[0]!;
+     const command = (action: "pause" | "resume") =>
+       page.evaluate(async (input) => window.piApp!.controlWorkflow(input), {
+@@ -99,9 +100,13 @@ test("真实 owner 经桌面 IPC 暂停，恢复须界面确认且取消不改
+         reason: "现场核查：没有运行中的卡",
+       });
+     expect(await command("pause")).toEqual({ state: "ok" });
+-    await expect
+-      .poll(query)
+-      .toMatchObject({ state: "ok", control: { pauseReason: "现场核查：没有运行中的卡" } });
++    await expect.poll(query).toMatchObject({
++      state: "ok",
++      control: {
++        pauseReason: "现场核查：没有运行中的卡",
++        stop: { category: "manual_pause", authority: "human", actions: ["resume"] },
++      },
++    });
+     const cancel = command("resume");
+     const dialog = page.getByTestId("extension-dialog");
+     await expect(page.getByRole("dialog", { name: "工作流人工确认" })).toBeVisible();
+@@ -121,6 +126,7 @@ test("真实 owner 经桌面 IPC 暂停，恢复须界面确认且取消不改
+     expect(resumed.state).toBe("ok");
+     if (resumed.state === "ok") {
+       expect(resumed.control.pauseReason).toBeFalsy();
++      expect(resumed.control.stop).toBeUndefined();
+       expect(resumed.control.ownerSessionId).toBe(session.id);
+       expect(resumed.control.nodes[0]?.round).toBe(node.round);
+     }
+diff --git a/apps/desktop/tests/unit/flow-control-query.spec.ts b/apps/desktop/tests/unit/flow-control-query.spec.ts
+index 8c9fca57..9d9a5ca6 100644
+--- a/apps/desktop/tests/unit/flow-control-query.spec.ts
++++ b/apps/desktop/tests/unit/flow-control-query.spec.ts
+@@ -3,6 +3,7 @@ import type { PaoDesktopFlow, PaoDesktopFlowControlModule } from "@pi-gui/pi-sdk
+ import {
+   WORKFLOW_CONTROL_ACTION_LABELS,
+   WORKFLOW_CONTROL_ACTIONS,
++  workflowControlCanResume,
+   type WorkflowControlCommandInput,
+ } from "../../contracts/workflow-control";
+ import {
+@@ -80,9 +81,10 @@ test("动作集合只有内核支持的三类，暂停文案是暂停推进", ()
+ test("collect 与 run 都等待控制清单核对完成后再使用同一份返回", async () => {
+   let reads = 0;
+   const query = createFlowControlQuery({
+-    loadModule: async () => moduleWith([desktopFlow()], [], undefined, () => {
+-      reads += 1;
+-    }),
++    loadModule: async () =>
++      moduleWith([desktopFlow()], [], undefined, () => {
++        reads += 1;
++      }),
+   });
+ 
+   expect((await query.collect("/project", "安装")).state).toBe("ok");
+@@ -125,6 +127,64 @@ test("normalizeFlowControl 整形真值行，缺字段显式失败", () => {
+   expect(() => normalizeFlowControl(noRound)).toThrow("控制节点轮次不是正整数");
+ });
+ 
++test("normalizeFlowControl 透传内核统一停因投影，动作权限以内核为准", () => {
++  const stop = {
++    category: "manual_pause",
++    authority: "owner",
++    actions: ["resume"],
++    reason: "等人工核查后再推进",
++    identity: { instance: "ins-1", node: "拆解", round: 2, cardRef: "0007", attempt: 1 },
++  } as const;
++  const base = desktopFlow();
++  const identity = normalizeFlowControl({
++    ...base,
++    进度: { ...base.进度, 停止: stop },
++  });
++
++  expect(identity.stop).toEqual({
++    category: "manual_pause",
++    authority: "owner",
++    actions: ["resume"],
++    reason: "等人工核查后再推进",
++    node: "拆解",
++    round: 2,
++    cardRef: "0007",
++    attempt: 1,
++  });
++  expect(workflowControlCanResume(identity)).toBe(true);
++
++  const decision = normalizeFlowControl({
++    ...base,
++    进度: {
++      ...base.进度,
++      停止: {
++        category: "decision",
++        authority: "human",
++        actions: ["rule"],
++        reason: "等待人工裁定",
++        pending: { channel: "人工", kind: "设计取舍" },
++      },
++    },
++  });
++  expect(decision.stop?.category).toBe("decision");
++  expect(decision.stop?.channel).toBe("人工");
++  expect(decision.stop?.kind).toBe("设计取舍");
++  expect(workflowControlCanResume(decision)).toBe(false);
++});
++
++test("normalizeFlowControl 遇到不认识的停因类别显式失败，不默认成某种停因", () => {
++  const base = desktopFlow();
++  expect(() =>
++    normalizeFlowControl({
++      ...base,
++      进度: {
++        ...base.进度,
++        停止: { category: "stopped", authority: "owner", actions: [], reason: "未知" } as never,
++      },
++    }),
++  ).toThrow("停因类别不认识：stopped");
++});
++
+ test("collect 找不到、坏清单或不唯一都显式 failed，不谎报空实例", async () => {
+   const missing = createFlowControlQuery({ loadModule: async () => moduleWith([]) });
+   expect(await missing.collect("/project", "安装")).toEqual({
+@@ -218,7 +278,9 @@ test("run 把 owner 与理由的业务判定交给内核，本桥只核请求关
+   });
+ 
+   // 非 owner 的确认不在桌面层拦截：带磁盘真值原样转交，owner 校验由内核执行（T08 共用业务）。
+-  expect(await query.run("/project", { ...baseCommand, action: "confirm" })).toEqual({ state: "ok" });
++  expect(await query.run("/project", { ...baseCommand, action: "confirm" })).toEqual({
++    state: "ok",
++  });
+   expect(calls).toHaveLength(1);
+   expect(calls[0]?.sessionId).toBe("session-other");
+   expect(calls[0]?.params).toMatchObject({ action: "confirm", prev_owner: "session-owner" });
+@@ -238,7 +300,9 @@ test("run 把 owner 与理由的业务判定交给内核，本桥只核请求关
+   // 恢复缺现场核查说明同样交内核判定（resumeControl 拒「恢复身份不符或缺现场核查说明」），
+   // 桌面层不预判理由规则；空理由不携带 reason 键。
+   calls.length = 0;
+-  expect(await query.run("/project", { ...baseCommand, action: "resume" })).toEqual({ state: "ok" });
++  expect(await query.run("/project", { ...baseCommand, action: "resume" })).toEqual({
++    state: "ok",
++  });
+   expect(calls[0]?.params).toMatchObject({ action: "resume" });
+   expect(calls[0]?.params).not.toHaveProperty("reason");
+ 
+diff --git a/apps/desktop/tests/unit/workflow-cards-model.spec.ts b/apps/desktop/tests/unit/workflow-cards-model.spec.ts
+index 6670c6de..ff0ee366 100644
+--- a/apps/desktop/tests/unit/workflow-cards-model.spec.ts
++++ b/apps/desktop/tests/unit/workflow-cards-model.spec.ts
+@@ -120,8 +120,7 @@ function 进度(
+ }
+ 
+ function 产物(
+-  patch: Partial<TemporaryPlanArtifactRow> &
+-    { round: number; card: string },
++  patch: Partial<TemporaryPlanArtifactRow> & { round: number; card: string },
+ ): TemporaryPlanArtifactRow {
+   return {
+     path: `D:\\项目\\创作成果\\初稿.md`,
+@@ -133,7 +132,8 @@ function 产物(
+   };
+ }
+ 
+-function 控制(patch: Partial<WorkflowControlIdentity> = {}): WorkflowControlIdentity {  return {
++function 控制(patch: Partial<WorkflowControlIdentity> = {}): WorkflowControlIdentity {
++  return {
+     instanceId: "i-1",
+     ownerSessionId: "sess-1",
+     recipeName: "临时-p-20261014-abc123",
+@@ -395,7 +395,10 @@ test.describe("预览锁定版本：同路径多轮次各算一版", () => {
+     ]);
+     const versions = artifactVersions(progress, "成果/初稿.md");
+     expect(versions.map((row) => row.round)).toEqual([1, 2]);
+-    expect(versions.map((row) => row.versionBasis)).toEqual(["第 1 轮（卡0001）", "第 2 轮（卡0004）"]);
++    expect(versions.map((row) => row.versionBasis)).toEqual([
++      "第 1 轮（卡0001）",
++      "第 2 轮（卡0004）",
++    ]);
+   });
+ 
+   test("钉住哪一轮就取哪一轮；没钉轮次取最新一版", () => {
+@@ -610,6 +613,46 @@ test.describe("状态语义细分与未知不译成成功", () => {
+     expect(views[0]?.state).toBe("paused");
+   });
+ 
++  test("结构化停因先于文本猜测：暂停与待裁定各自归位，不再靠中文子串", () => {
++    const paused = stepCardViews(
++      计划(),
++      控制({
++        status: "挂起",
++        stop: {
++          category: "manual_pause",
++          authority: "owner",
++          actions: ["resume"],
++          reason: "等现场核查",
++          node: "s1",
++          round: 1,
++        },
++        nodes: [节点({ name: "s1", status: "in_progress" })],
++      }),
++    );
++    expect(paused[0]?.state).toBe("paused");
++    expect(paused[0]?.holdReason).toBe("等现场核查");
++
++    const decision = stepCardViews(
++      计划(),
++      控制({
++        status: "挂起",
++        stop: {
++          category: "decision",
++          authority: "human",
++          actions: ["rule"],
++          reason: "方案取舍待裁定",
++          node: "s1",
++          round: 1,
++          channel: "人工",
++          kind: "方案选择",
++        },
++        nodes: [节点({ name: "s1", status: "in_progress" })],
++      }),
++    );
++    expect(decision[0]?.state).toBe("waitReview");
++    expect(decision[0]?.holdReason).toBe("方案取舍待裁定");
++  });
++
+   test("每个状态都有独立图标与文案：未知不等于成功，图标也各不相同", () => {
+     const states = Object.keys(STEP_CARD_STATE_LABELS) as (keyof typeof STEP_CARD_STATE_LABELS)[];
+     // 状态不只靠颜色：每个状态都要有可读标识。
+@@ -743,9 +786,7 @@ test.describe("多卡与每轮执行信息", () => {
+   });
+ 
+   test("没有任何判定的轮次不补『通过』：verdict 缺省就是缺省", () => {
+-    const rounds = stepRoundExecutions(
+-      进度({ stepId: "s1", records: [{ round: 2, cards: [] }] }),
+-    );
++    const rounds = stepRoundExecutions(进度({ stepId: "s1", records: [{ round: 2, cards: [] }] }));
+     expect(rounds[0]?.verdict).toBeUndefined();
+     expect(rounds[0]?.reason).toBeUndefined();
+   });
+@@ -838,14 +879,10 @@ test.describe("待办派生（含待确认、缺输入、失败、未送达、
+         节点({ name: "s3", status: "failed" }),
+       ],
+     });
+-    const views = stepCardViews(
+-      plan,
+-      control,
+-      [
+-        进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 2 }),
+-        进度({ stepId: "s3", readProblem: "卡目录不存在", round: 1 }),
+-      ],
+-    );
++    const views = stepCardViews(plan, control, [
++      进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 2 }),
++      进度({ stepId: "s3", readProblem: "卡目录不存在", round: 1 }),
++    ]);
+     const todos = deriveTodos({ plan, control, views });
+     const kinds = todos.map((todo) => todo.kind);
+     // 待确认（s2）、缺输入（s3）、需要处理（s1 预算不足 + s3 失败）、未送达（f1）。
+@@ -901,11 +938,9 @@ test.describe("待办派生（含待确认、缺输入、失败、未送达、
+   test("待办稳定键：同一视图条件下的同一条待办键一致；多视图同一待办只生效一次", () => {
+     const plan = 计划();
+     const control = 控制({ nodes: [节点({ name: "s2", status: "in_progress" })] });
+-    const views = stepCardViews(
+-      plan,
+-      control,
+-      [进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 1 })],
+-    );
++    const views = stepCardViews(plan, control, [
++      进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 1 }),
++    ]);
+     const a = deriveTodos({ plan, control, views });
+     const b = deriveTodos({ plan, control, views });
+     expect(a.map((todo) => todo.key)).toEqual(b.map((todo) => todo.key));
+@@ -922,18 +957,14 @@ test.describe("待办派生（含待确认、缺输入、失败、未送达、
+   test("旧提醒不推进新轮次：轮次/版本对不上就是过期，且说过期原因", () => {
+     const plan = 计划();
+     const control = 控制({ nodes: [节点({ name: "s2", status: "in_progress", round: 2 })] });
+-    const views = stepCardViews(
+-      plan,
+-      control,
+-      [进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 2 })],
+-    );
++    const views = stepCardViews(plan, control, [
++      进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true, round: 2 }),
++    ]);
+     const todo = deriveTodos({ plan, control, views })[0]!;
+     expect(isTodoStale(todo, { instanceId: "i-1", round: 2, definitionVersion: 2 })).toBe(false);
+     // 轮次翻篇：旧提醒不能拿去推进新轮次。
+     expect(isTodoStale(todo, { instanceId: "i-1", round: 3, definitionVersion: 2 })).toBe(true);
+-    expect(
+-      staleTodoText(todo, { round: 3, definitionVersion: 2 }),
+-    ).toContain("第 2 轮");
++    expect(staleTodoText(todo, { round: 3, definitionVersion: 2 })).toContain("第 2 轮");
+     // 定义改过：同样过期。
+     expect(isTodoStale(todo, { instanceId: "i-1", round: 2, definitionVersion: 3 })).toBe(true);
+     expect(staleTodoText(todo, { round: 2, definitionVersion: 3 })).toContain("版定义");
+@@ -952,11 +983,9 @@ test.describe("待办派生（含待确认、缺输入、失败、未送达、
+         节点({ name: "s3", status: "failed" }),
+       ],
+     });
+-    const views = stepCardViews(
+-      plan,
+-      control,
+-      [进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true })],
+-    );
++    const views = stepCardViews(plan, control, [
++      进度({ stepId: "s2", needsConfirmation: true, awaitingConfirmation: true }),
++    ]);
+     expect(deriveTodos({ plan, control, views }).map((todo) => todo.identity.stepId)).toEqual([
+       "s1",
+       "s2",
+@@ -1159,20 +1188,27 @@ test.describe("版本感知文案与草稿身份键", () => {
+       "unrecorded",
+     );
+     // 时钟回拨：不做负数（与内核一致收在 0）。
+-    expect(stepDuration({ created: "2026-10-16 09:20", completed: "2026-10-16 09:05" })).toMatchObject(
+-      { kind: "measured", seconds: 0 },
+-    );
++    expect(
++      stepDuration({ created: "2026-10-16 09:20", completed: "2026-10-16 09:05" }),
++    ).toMatchObject({ kind: "measured", seconds: 0 });
+   });
+ 
+   test("耗时文案覆盖秒/分/小时，并且不把「未记录」说成 0", () => {
+     expect(stepDurationText({ kind: "no_card" })).toBe("暂无卡，没有耗时可算");
+-    expect(stepDurationText({ kind: "unrecorded", reason: "卡面没有记录完成时间（还没交付或交付时未写）" })).toBe(
+-      "未记录：卡面没有记录完成时间（还没交付或交付时未写）",
+-    );
+-    expect(stepDurationText({ kind: "measured", seconds: 45, created: "a", finished: "b" })).toBe("45 秒");
+-    expect(stepDurationText({ kind: "measured", seconds: 900, created: "a", finished: "b" })).toBe("15 分钟");
+     expect(
+-      stepDurationText({ kind: "measured", seconds: 5400, created: "a", finished: "b" }),
+-    ).toBe("1 小时 30 分钟");
++      stepDurationText({
++        kind: "unrecorded",
++        reason: "卡面没有记录完成时间（还没交付或交付时未写）",
++      }),
++    ).toBe("未记录：卡面没有记录完成时间（还没交付或交付时未写）");
++    expect(stepDurationText({ kind: "measured", seconds: 45, created: "a", finished: "b" })).toBe(
++      "45 秒",
++    );
++    expect(stepDurationText({ kind: "measured", seconds: 900, created: "a", finished: "b" })).toBe(
++      "15 分钟",
++    );
++    expect(stepDurationText({ kind: "measured", seconds: 5400, created: "a", finished: "b" })).toBe(
++      "1 小时 30 分钟",
++    );
+   });
+ });
+diff --git a/packages/pi-sdk-driver/src/pao-flow-control.ts b/packages/pi-sdk-driver/src/pao-flow-control.ts
+index c50c840d..234568a2 100644
+--- a/packages/pi-sdk-driver/src/pao-flow-control.ts
++++ b/packages/pi-sdk-driver/src/pao-flow-control.ts
+@@ -27,6 +27,27 @@ export interface PaoFlowNodeReport {
+   readonly 卡号列表?: readonly string[];
+ }
+ 
++/** fork ControlStopProjection 的桌面只读投影：界面只消费这些字段。 */
++export interface PaoFlowStopProjection {
++  readonly category:
++    "decision" | "manual_pause" | "recovery_required" | "terminal_block" | "legacy_unknown";
++  readonly authority: "owner" | "human";
++  readonly actions: readonly ("rule" | "resolve_pending" | "resume")[];
++  readonly reason: string;
++  readonly identity?: {
++    readonly instance: string;
++    readonly node?: string;
++    readonly round?: number;
++    readonly cardRef?: string;
++    readonly attempt?: number;
++  };
++  readonly pending?: {
++    readonly channel?: "主控" | "人工";
++    readonly kind?: string;
++  };
++  readonly deadline?: string;
++}
++
+ /** fork DriveReport（controlReport 整实例产物）。 */
+ export interface PaoFlowProgress {
+   readonly 工作流: string;
+@@ -34,6 +55,8 @@ export interface PaoFlowProgress {
+   readonly 新建卡: readonly { readonly 节点: string; readonly 卡号: string }[];
+   readonly 节点: readonly PaoFlowNodeReport[];
+   readonly 说明?: string;
++  /** controlView 已算好的统一停因投影；v1 旧清单可缺省。 */
++  readonly 停止?: PaoFlowStopProjection;
+ }
+ 
+ /** fork FlowControl 的桌面只读投影：只声明本桥真的读到的键，其余不猜。 */
+diff --git a/packages/pi-sdk-driver/src/session-supervisor.ts b/packages/pi-sdk-driver/src/session-supervisor.ts
+index 85e58489..b30f7ae5 100644
+--- a/packages/pi-sdk-driver/src/session-supervisor.ts
++++ b/packages/pi-sdk-driver/src/session-supervisor.ts
+@@ -62,6 +62,7 @@ import {
+   type BuiltinExtensionEnabled,
+ } from "./builtin-extensions.js";
+ import { piAddonExtensions } from "./pi-addon-extensions.js";
++import { findPaoExtensionLoadErrors, PaoExtensionLoadError } from "./pao-extension-guard.js";
+ import {
+   acquireLeaseFile,
+   currentLeaseIdentity,
+@@ -976,6 +977,7 @@ export class SessionSupervisor {
+     };
+ 
+     const runtime = await this.createAgentSessionRuntimeImpl(createOptions);
++    await this.ensurePaoBuiltinLoaded(runtime);
+     const session = runtime.session;
+ 
+     const record = this.createRecord(
+@@ -1114,6 +1116,7 @@ export class SessionSupervisor {
+     };
+ 
+     const runtime = await this.createAgentSessionRuntimeImpl(createOptions);
++    await this.ensurePaoBuiltinLoaded(runtime);
+     const session = runtime.session;
+ 
+     const title = options.title ?? sourceRecord.title;
+@@ -2147,6 +2150,8 @@ export class SessionSupervisor {
+           this.extensionFlagValuesForSession?.(sessionRef),
+         ),
+       );
++      // 复用会话时同样拒绝启用：PAO 装配失败不能带着半成品 runtime 继续。
++      await this.ensurePaoBuiltinLoaded(runtime);
+     } catch (error) {
+       await this.releaseLeasePath(leasePath);
+       throw error;
+@@ -2256,6 +2261,28 @@ export class SessionSupervisor {
+     return record.runtime;
+   }
+ 
++  /**
++   * PAO 内置扩展装配失败时拒绝启用会话：内核只把错误收进 extensionsResult.errors，
++   * 会话照常建立却没有 PAO 能力。命中后先释放刚创建的 runtime，再抛出带原始原因
++   * 的错误（宿主经 withErrorHandling 落到 state.lastError）。其他扩展的装载错误
++   * 保持现状，不阻断会话。
++   */
++  private async ensurePaoBuiltinLoaded(runtime: AgentSessionRuntime): Promise<void> {
++    const loadErrors = findPaoExtensionLoadErrors(runtime);
++    if (loadErrors.length === 0) {
++      return;
++    }
++    try {
++      await runtime.dispose();
++    } catch (error) {
++      console.warn(
++        "[pi-sdk-driver] failed to dispose runtime after PAO extension load failure:",
++        error,
++      );
++    }
++    throw new PaoExtensionLoadError(loadErrors);
++  }
++
+   private async disposeRecordRuntime(record: ManagedSessionRecord): Promise<void> {
+     const runtime = record.runtime;
+     const session = record.session;

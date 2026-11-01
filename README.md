@@ -40,14 +40,16 @@ pnpm --dir desktop install
 
 ## 开发与检查命令
 
-以下命令均为本仓实际使用的检查入口（最近一次复核 2026-10-17，复核范围见 `.pao/harness完善-20261017/` 各批交付记录；标「已验证」的命令曾在该复核日或注明日期实际执行通过）：
+以下命令均为本仓实际使用的检查入口（最近一次复核 2026-11-01，复核范围见 `.pao/协作规则统一-20261030/S7/` 验收记录与各批交付记录；标「已验证」的命令曾在该复核日或注明日期实际执行通过）：
 
 ```bash
 # PAO 内核（cwd 任意，命令内已含路径）
-cd PAO/packages/coding-agent
-npx tsc -p tsconfig.build.json --noEmit        # 构建级类型门（已验证，exit 0）
-npx vitest run test/pao/<测试文件> --maxWorkers=4  # 定向行为测试（已验证，隔离 PAO_HOME + PI_OFFLINE=1）
-npx vitest run test/pao/ --maxWorkers=4        # 模块门（全套，改动面大时跑）
+cd PAO
+node node_modules/typescript/bin/tsc --noEmit    # 构建级类型门（已验证 2026-11-01，exit 0）
+npm run check:types:integration                  # 集成类型门（已验证 2026-11-01，exit 0）
+cd packages/coding-agent
+node ../../node_modules/vitest/vitest.mjs run test/pao/<测试文件> --maxWorkers=2  # 定向行为测试（隔离 PAO_HOME + PI_OFFLINE=1 + PI_NO_LOCAL_LLM=1）
+node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2            # 模块门（全套，改动面大时跑）
 
 # 桌面（desktop/ 根执行）
 pnpm run build:shared                          # 先建 workspace 共享包（已验证，exit 0）
@@ -61,11 +63,12 @@ pnpm e2e                                       # 真实 Electron core 车道：�
 
 `pnpm e2e` 会启动真实窗口。无人值守、不希望弹窗，或只是验证代码没坏时，改跑 `pnpm test:baseline`（纯 Node 与单元层，不启窗口）；代价是失去真窗口内的证据，这类缺口须在对应批次留档里如实登记为未验。
 
+跑真实 Electron 用例前须剥离宿主可能注入的 `ELECTRON_RUN_AS_NODE`（否则 `electron.exe` 以 Node 模式启动，报 `bad option: --remote-debugging-port=0`）；剥离后 `electron.exe --version` 应打印 37.x 而不是 22.x。
+
 PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临时目录> PI_OFFLINE=1 PI_NO_LOCAL_LLM=1`。
 
 内核根目录的`npm run check`只读检查，自动修复须显式执行`npm run check:fix`。
-内核单仓关口为`npm run check:pao:kernel`；内核和桌面一起整合时，仍须在
-`PAO/packages/coding-agent`执行`npm run check:gates`，使用对应构建及桌面vendor。
+内核单仓关口为`npm run check:pao:kernel`（`gate-kernel-import.mjs --kernel-only` ＋ `gate-boundary.mjs --kernel-only` ＋ `gate-kernel-import` 自检）；内核和桌面一起整合时，另需在`PAO`根执行`node packages/coding-agent/scripts/gate-boundary.mjs`跑全量边界门（含 B3/B4 宿主闭包与 B7 反向依赖自检），使用对应构建及桌面vendor。本仓没有 `check:gates` 这个 script。
 
 协作基准源码位于 `bench/`，在本仓根用已安装基准依赖的 Python 绝对路径执行：
 
@@ -100,7 +103,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 | 任务安排与当前状态 | [执行计划 §10](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#10-分批实施与依赖) |
 | 协作稳定性集中治理 | [完整修复计划](plans/未完成/2026-10-25-PAO协作稳定性集中治理计划.md)、[主控审核证据](.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)；进度仍看执行计划 §10.21 |
 | 整体深度审核与架构重整（2026-10-28 起） | [任务书](plans/未完成/2026-10-28-整体深度审核与架构重整任务书.md)、[目标架构与实施分路](.pao/深度审核重整-20261028/目标架构与实施分路.md)；状态看执行计划 §10.22 |
-| 协作规则统一与模块边界优化 | [详细实施计划](plans/未完成/2026-10-30-协作规则统一与模块边界优化实施计划.md)、[审查依据](.pao/架构审查-20261030/审查报告.md)；阶段状态看执行计划 §10.23 |
+| 协作规则统一与模块边界优化 | [实施计划（已完成）](plans/已完成/2026-10-30-协作规则统一与模块边界优化实施计划.md)、[审查依据](.pao/架构审查-20261030/审查报告.md)、[S7 交付报告](.pao/协作规则统一-20261030/S7/交付报告.md)；阶段状态看执行计划 §10.23 |
 | 右上悬浮框、独立侧栏与辅助对话 | [归档任务书](plans/已完成/2026-10-19-右上悬浮框与独立侧栏任务书.md)、[交付报告](.pao/harness完善-20261017/悬浮框与独立侧栏-20261019/交付报告.md)；状态仍看执行计划 §10 |
 | 实施经过与验证证据 | [执行记录](.pao/harness完善-20261017/执行记录.md) |
 | 10 月 20 日摩擦修复验收 | [本轮记录](.pao/摩擦修复-20261020/实施与验收记录.md)；任务状态看执行计划 §10.7 |
@@ -117,7 +120,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临�
 - 主控与部长后台交接、15/30分钟监督配置：[分层监督说明](PAO/docs/pao-supervision.md)。
 - 部门简介与结构化便捷派发：[架构说明 §28.4](plans/v2-ARCHITECTURE.md#284-结构化任务书与便捷派发2026-10-24)、[工程审核记录](.pao/协作机制重构-20261023/提示词派发优化-20261024/主控整合审核.md)。
 - 执行约束：`AGENTS.md`（本仓）、`PAO/AGENTS.md`、`desktop/AGENTS.md`。
-- 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界、§28 部门目录与唯一受理入口、§29 上下文恢复与总预算门禁）、`plans/v2-REQUIREMENTS.md`。
+- 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界、§28 部门目录与唯一受理入口、§29 上下文恢复与总预算门禁、§33 多部门协作与主控减负、§34 深度审核后的技术边界、§35 协作规则统一与模块边界定案）、`plans/v2-REQUIREMENTS.md`。
 - 整体重构（2026-10-06 完成）：计划归档 `plans/已完成/2026-10-05-整体模块化重构总计划.md`，执行留档与交付结论在 `.pao/整体重构-20261005/`。
 - 内核模块清单与上游差异归因：`.pao/整体重构-20261005/现状与基线.md`。
 - 通用工作台与内核可靠性（2026-10-14 起）：计划 `plans/未完成/2026-10-14-通用工作台与内核可靠性实施总计划.md`，执行证据与验收结论在 `.pao/通用工作台实施-20261014/`（`验收/阶段1…阶段7` 七份，`基线/` 四份）。工作流的默认界面是**步骤卡工作台**（`desktop/apps/desktop/src/features/workflow-cards/`），画布已冻结在 `desktop/archive/canvas-frozen-20261014/`。

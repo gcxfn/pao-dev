@@ -1,0 +1,1511 @@
+{
+    "任务":  "S7 边界案例 B01—B20 与 §8.3 七个中断点取证",
+    "执行人":  "boundary",
+    "团队Lead":  "lead",
+    "生成时间":  "2026-11-01",
+    "工作目录":  "D:\\AI\\workspace\\pao-dev",
+    "内核仓":  {
+                "路径":  "PAO",
+                "分支":  "pao-main",
+                "HEAD":  "adbb03bda"
+            },
+    "环境":  {
+               "PAO_HOME":  "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\boundary\\pao-home",
+               "TEMP":  "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\boundary\\tmp",
+               "PI_OFFLINE":  "1",
+               "PI_NO_LOCAL_LLM":  "1",
+               "Node":  "v24.18.0",
+               "Git":  "2.55.0.windows.3",
+               "正式PAO_HOME":  "未访问（D:\\AI\\workspace\\pao 只读不碰）",
+               "真实供应商":  "未授权，本轮不声称已验证"
+           },
+    "实跑汇总":  {
+                 "命令模板":  "node ../../node_modules/vitest/vitest.mjs run test/pao/<file>.test.ts --maxWorkers=2",
+                 "工作目录":  "PAO/packages/coding-agent",
+                 "文件数":  39,
+                 "用例通过":  523,
+                 "用例失败":  1,
+                 "用例跳过":  0,
+                 "用例总数":  524,
+                 "Duration合计秒":  1696,
+                 "退出码非0文件":  [
+                                 "f-failure-matrix.test.ts"
+                             ],
+                 "失败用例":  "故障矩阵二：版本拒绝 > 未知格式版本拒绝降级读取，原文点名版本号与两条出路，且原件逐字节保留",
+                 "失败判定":  "夹具前提过期（产品 driver.ts:181 已把格式版本 3 并入控制版本分支），非产品缺陷；已按 lead 授权订正夹具并新增钉住新决定的用例",
+                 "原失败日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix.log",
+                 "汇总文件":  [
+                              "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\summary.tsv",
+                              "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\summary-aggregate.txt"
+                          ]
+             },
+    "新增测试":  [
+                 {
+                     "文件":  "PAO/packages/coding-agent/test/pao/s7-boundary-runmodes.test.ts",
+                     "状态":  "新增，未跟踪",
+                     "用例数":  11,
+                     "命令":  "node ../../node_modules/vitest/vitest.mjs run test/pao/s7-boundary-runmodes.test.ts --maxWorkers=2",
+                     "退出码":  0,
+                     "通过":  11,
+                     "失败":  0,
+                     "跳过":  0,
+                     "耗时秒":  56.9,
+                     "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-runmodes.log",
+                     "biome":  {
+                                   "退出码":  0,
+                                   "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-s7-boundary-runmodes.log"
+                               },
+                     "覆盖案例":  [
+                                  "B01",
+                                  "B02",
+                                  "B03",
+                                  "B04"
+                              ],
+                     "策略":  [
+                                "attended",
+                                "unattended"
+                            ],
+                     "证据等级":  [
+                                  "真实Git",
+                                  "同进程契约调用"
+                              ]
+                 },
+                 {
+                     "文件":  "PAO/packages/coding-agent/test/pao/s7-boundary-shutdown-race.test.ts",
+                     "状态":  "新增，未跟踪",
+                     "用例数":  1,
+                     "命令":  "node ../../node_modules/vitest/vitest.mjs run test/pao/s7-boundary-shutdown-race.test.ts --maxWorkers=2",
+                     "退出码":  0,
+                     "通过":  1,
+                     "失败":  0,
+                     "跳过":  0,
+                     "耗时秒":  13.1,
+                     "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-shutdown-race.log",
+                     "biome":  {
+                                   "退出码":  0,
+                                   "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-s7-boundary-race-b20.log"
+                               },
+                     "覆盖案例":  [
+                                  "B10"
+                              ],
+                     "断言":  [
+                                "关闭期间不新派发（第二次派发 4s 竞速未 resolves，pid 文件始终 1）",
+                                "待决不被自动完成（readPending 前后相等、停因仍 decision、记录数不变）",
+                                "真实写者未停则保留执行占位与错误（pid 仍活、锁仍在、名额仍 1、acquireExecutionRootGuard 抛 锁被占用、stopAll 抛注入失败）",
+                                "停止确认后占位才释放（pid alive→!alive、锁 false、名额 0、派发 {可派:true}）"
+                            ],
+                     "证据等级":  [
+                                  "真实进程（node hang.js 子进程 pid 前后对照）",
+                                  "真实Git",
+                                  "真实锁",
+                                  "真实名额"
+                              ]
+                 },
+                 {
+                     "文件":  "PAO/packages/coding-agent/test/pao/s7-boundary-b20-cli.test.ts",
+                     "状态":  "新增，未跟踪",
+                     "用例数":  1,
+                     "命令":  "node ../../node_modules/vitest/vitest.mjs run test/pao/s7-boundary-b20-cli.test.ts --maxWorkers=2",
+                     "退出码":  0,
+                     "通过":  1,
+                     "失败":  0,
+                     "跳过":  0,
+                     "耗时秒":  3.28,
+                     "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b20-cli.log",
+                     "biome":  {
+                                   "退出码":  0,
+                                   "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-s7-boundary-race-b20.log"
+                               },
+                     "覆盖案例":  [
+                                  "B20"
+                              ],
+                     "证据等级":  [
+                                  "真实控制正本（pauseControl 写入）",
+                                  "脚本模拟模型（无模型调用）"
+                              ]
+                 },
+                 {
+                     "文件":  "PAO/packages/coding-agent/test/pao/s7-boundary-b14-cross-entry.test.ts",
+                     "状态":  "新增，未跟踪",
+                     "用例数":  2,
+                     "命令":  "node ../../node_modules/vitest/vitest.mjs run test/pao/s7-boundary-b14-cross-entry.test.ts --maxWorkers=2",
+                     "退出码":  0,
+                     "通过":  2,
+                     "失败":  0,
+                     "跳过":  0,
+                     "耗时秒":  3.06,
+                     "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b14-cross-entry.log",
+                     "biome":  {
+                                   "退出码":  0,
+                                   "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-s7-boundary-b14.log"
+                               },
+                     "覆盖案例":  [
+                                  "B14"
+                              ],
+                     "证据等级":  [
+                                  "真实子进程（假 worker 脚本）",
+                                  "真实Git（隔离库）"
+                              ]
+                 }
+             ],
+    "修改测试":  {
+                 "文件":  "PAO/packages/coding-agent/test/pao/f-failure-matrix.test.ts",
+                 "授权":  "lead 逐条指定",
+                 "改动":  [
+                            "夹具 版本:3 → 版本:4",
+                            "期望文案改为「实例格式版本「4」不认识，只认 1（旧清单）与 2/3（控制正本）」",
+                            "新增用例「版本 3 按控制版本处理，走 v2 控制入口拒绝降级，且原件逐字节保留」"
+                        ],
+                 "未改动":  [
+                             "「原件保留不动，按新版处理须升级内核」",
+                             "「不得当旧清单续跑，也不得手工改版本号掩盖」",
+                             "「原件逐字节保留」"
+                         ],
+                 "验证状态":  "已执行：f-failure-matrix.test.ts exit 0 / 9 passed / 4.36s；biome exit 0（日志 checks\\boundary\\f-failure-matrix-fixed.log、biome-f-failure-matrix.log）",
+                 "说明文件":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix-修改说明.md"
+             },
+    "案例":  [
+               {
+                   "编号":  "B01",
+                   "标题":  "审核 pass 后成果版本改变，原 pass 不能放行新版本",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "pass 与成果内容版本绑定；内容改变后旧 pass 失效；重新独立提交判定才恢复完成",
+                   "入口":  [
+                              "workflow/control.ts decideNode",
+                              "workflow/control.ts readControlReport"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-review-version.test.ts",
+                                  "行":  84,
+                                  "用例名":  "修改已审成果使通过失效，重新独立提交判定后才恢复完成"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "有人值守策略 > B01 审核 pass 后成果版本改变，原 pass 不能放行新版本"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "无人值守策略 > B01 审核 pass 后成果版本改变，原 pass 不能放行新版本"
+                              }
+                          ],
+                   "实际断言":  [
+                                "status==='completed'",
+                                "改写 source.txt 为 v2 后 status!=='completed'",
+                                "stale.nodes[1].hold 含「成果内容已变化」",
+                                "盘上旧 判定.结果 仍为 pass（旧证据未抹）",
+                                "重新 pass 后恢复 completed",
+                                "记录含「审核判定失效」"
+                            ],
+                   "实际运行":  {
+                                "文件":  "workflow-review-version.test.ts",
+                                "退出码":  0,
+                                "通过":  6,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-review-version.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-runmodes.log"
+                            ],
+                   "未覆盖":  "真实工人写盘造成的成果版本漂移（本轮为零卡静态审核，理由显式写「未验证运行」）；真实副本侧由 workflow-independent-review-version-guards 间接覆盖",
+                   "证据等级":  [
+                                "真实Git",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B02",
+                   "标题":  "审核 change 仍在原范围 → 回原任务，生成新 attempt，旧证据保留",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "change 只退回声明过的回边目标；轮次+1；旧判定与引用作为历史保留",
+                   "入口":  [
+                              "workflow/control.ts decideNode(结果:'change',目标)",
+                              "workflow/control.ts applyReviewBackEdge",
+                              "workflow/control.ts resetNodeRound"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "有人值守策略 > B02 审核 change 在原范围回原任务，生成新 attempt 且旧证据保留"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "无人值守策略 > B02 审核 change 在原范围回原任务，生成新 attempt 且旧证据保留"
+                              }
+                          ],
+                   "实际断言":  [
+                                "节点轮次 === [2,2]",
+                                "回边次数['审核→开发'] === 1",
+                                "节点[0].历史[0].判定.结果 === 'change'",
+                                "历史[0].判定.引用 === ['source.txt:1']",
+                                "历史[0].原因 含打回理由",
+                                "节点[0].卡 为空",
+                                "拆解结束 为假",
+                                "记录 含 'change'"
+                            ],
+                   "实际运行":  {
+                                "文件":  "s7-boundary-runmodes.test.ts",
+                                "退出码":  0,
+                                "通过":  11,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-runmodes.log"
+                            ],
+                   "如实标注":  "既有 test/pao/workflow-review-version.test.ts:116 标题写「无人值守」但夹具未传 runMode，实测为 attended（resolveControlRunMode 默认 attended）；本轮不改既有文件，已用新增用例补无人值守侧",
+                   "未覆盖":  "真实工人重跑新 attempt 的整条链路",
+                   "证据等级":  [
+                                "真实Git",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B03",
+                   "标题":  "审核 reject → 明确拒绝，不自动接受",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "reject 落终态阻塞停因；不自动接受；不自动往下游走",
+                   "入口":  [
+                              "workflow/control.ts decideNode(结果:'reject')",
+                              "workflow/control.ts changeControlStop(terminal_block)"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "有人值守策略 > B03 审核 reject 明确拒绝，不自动接受"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "无人值守策略 > B03 审核 reject 明确拒绝，不自动接受"
+                              }
+                          ],
+                   "实际断言":  [
+                                "停止.category === 'terminal_block'",
+                                "停止.reason 含「审核拒绝」",
+                                "节点[1].判定.结果 === 'reject'",
+                                "记录 含 'reject'",
+                                "flow.状态 !== '已完成'",
+                                "readControlReport().status !== 'completed'"
+                            ],
+                   "实际运行":  {
+                                "文件":  "s7-boundary-runmodes.test.ts",
+                                "退出码":  0,
+                                "通过":  11,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-runmodes.log"
+                            ],
+                   "未覆盖":  "「下游工人不启动」的直接断言（加下游节点需完成交接节点地图，抛 DispatchBriefError 与本边界无关；改用末节点 + DriveReport 非 completed 证明不自动接受）",
+                   "证据等级":  [
+                                "真实Git",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B04",
+                   "标题":  "新权限/范围变化 → 不被普通质量裁决放行",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "人工确认门（权限）与成果所属项目根（范围）变化不能被普通 pass 放行；无人值守不能越过人工门",
+                   "入口":  [
+                              "workflow/policy.ts resolveControlRunMode",
+                              "workflow/policy.ts assertRunModeAllowsRecipeGates",
+                              "workflow/control.ts startControl",
+                              "workflow/control.ts readControlReport(hold 含「其他项目根」)"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "attended > B04a 权限：含人工确认门的配方在有人值守可建实例"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "unattended > B04a 权限：人工确认门在无人值守下启动前拒绝且不落控制清单"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-runmodes.test.ts",
+                                  "用例名":  "B04b 范围：判定绑定的项目根改变后不能算完成（hold 含「其他项目根」）"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-run-policy.test.ts",
+                                  "行":  130,
+                                  "用例名":  "启动参数请求 unattended 但可信宿主仅 attended → 拒绝 /冲突.*仅授权 attended/"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-run-policy.test.ts",
+                                  "行":  190,
+                                  "用例名":  "可信 unattended 下人工确认节点在创建实例前拒绝"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pending.test.ts",
+                                  "行":  241,
+                                  "用例名":  "明确人工确认门仍走人工；无人值守在启动前拒绝含人工门的配方"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-control-resolve-tool.test.ts",
+                                  "行":  608,
+                                  "用例名":  "工具入口拒绝可信宿主未授权无人值守"
+                              }
+                          ],
+                   "实际断言":  [
+                                "attended 下 startControl 成功且 运行方式==='有人值守'",
+                                "unattended 下 startControl rejects /人工确认门/ 且 controlPath 不存在（不留半个控制清单）",
+                                "projectRoot 改为 other 后 report.status!=='completed' 且 hold 含「其他项目根」",
+                                "resolveControlRunMode(undefined,'attended')==='有人值守'",
+                                "resolveControlRunMode(undefined,'unattended')==='无人值守'",
+                                "resolveControlRunMode('unattended','attended') 抛 /冲突.*仅授权 attended/",
+                                "resolveControlRunMode('attended','unattended')==='有人值守'（降级允许）"
+                            ],
+                   "实际运行":  {
+                                "文件":  "s7-boundary-runmodes.test.ts / workflow-run-policy.test.ts / workflow-pending.test.ts / workflow-control-resolve-tool.test.ts",
+                                "退出码":  0,
+                                "通过":  33,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-runmodes.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-run-policy.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-control-resolve-tool.log"
+                            ],
+                   "未覆盖":  "运行中提升权限（配方的节点在 startControl 时被 structuredClone 冻结，属设计约束；只在代码层核对 control.ts:987-1000，无专门用例）",
+                   "证据等级":  [
+                                "真实Git",
+                                "脚本模拟模型",
+                                "纯函数断言"
+                            ]
+               },
+               {
+                   "编号":  "B05",
+                   "标题":  "用户主动暂停后到期 → 不自动恢复",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "manual_pause 到截止也不自动恢复；到期业务结果与写者停止分开记录",
+                   "入口":  [
+                              "workflow/transition.ts expirePending",
+                              "workflow/control.ts readControl"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  159,
+                                  "用例名":  "主动暂停即使用原提示也改变结构，保留待决且禁止裁定/请求和到期副作用"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  177,
+                                  "用例名":  "到期业务结果与写者停止分开记录，不能继续办理"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pause-completion.test.ts",
+                                  "行":  107,
+                                  "用例名":  "暂停完成路径（107/121/136）"
+                              },
+                              {
+                                  "文件":  "test/pao/deadline-lifecycle.test.ts",
+                                  "行":  394,
+                                  "用例名":  "到期/关闭/回调异常三组（394/428/539）"
+                              }
+                          ],
+                   "实际断言":  [
+                                "expirePending 后停止类别仍 manual_pause",
+                                "控制文件字节不变",
+                                "暂停不进完成状态",
+                                "关闭清除计时器且新 bridge 不恢复旧待决"
+                            ],
+                   "实际运行":  {
+                                "文件":  "workflow-stop / workflow-pause-completion / deadline-lifecycle",
+                                "退出码":  0,
+                                "通过":  33,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-stop.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pause-completion.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\deadline-lifecycle.log"
+                            ],
+                   "未覆盖":  "宿主生命周期为同进程模拟（deadline-lifecycle 与 B10 同口径降级）",
+                   "证据等级":  [
+                                "脚本模拟模型",
+                                "真实文件"
+                            ]
+               },
+               {
+                   "编号":  "B06",
+                   "标题":  "同一决定重复发送、已受理后改变依据 → 首次生效一次；后者明确冲突",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "同 key 重复不叠加；已受理后改依据拒绝重放",
+                   "入口":  [
+                              "workflow/control.ts recordPending",
+                              "workflow/control.ts resolvePendingOnce（input_digest 校验）"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-pending.test.ts",
+                                  "行":  209,
+                                  "用例名":  "同 key 重复只保留同一暂停事实，不叠加 flow.暂停 或审计项"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-control.test.ts",
+                                  "行":  1002,
+                                  "用例名":  "同一提交混用旧目标/新目标 → rejects '冲突' 且卡数不变"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-reopen.test.ts",
+                                  "行":  129,
+                                  "用例名":  "回执归属冲突"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pending-resolution.test.ts",
+                                  "用例名":  "同一待决已绑定不同裁决依据拒绝重放修改（control.ts:2549/2559/2583 实现）"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "workflow-pending / workflow-control / workflow-reopen / workflow-pending-resolution",
+                                "退出码":  0,
+                                "通过":  80,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-control.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-reopen.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending-resolution.log"
+                            ],
+                   "未覆盖":  "无（重复与改依据两侧都有断言）",
+                   "证据等级":  [
+                                "脚本模拟模型",
+                                "真实文件"
+                            ]
+               },
+               {
+                   "编号":  "B07",
+                   "标题":  "旧 attempt / 旧轮次回执与决定迟到 → 只留证据或拒绝，不改当前任务",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "迟到回执只留档；旧 attempt/旧轮次在落盘前拒绝",
+                   "入口":  [
+                              "cards 回执写入层",
+                              "workflow/control.ts 待决校验"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/cards-receipts.test.ts",
+                                  "行":  113,
+                                  "用例名":  "旧尝试回执只留档：不推进状态、不触发重试、带留档标记"
+                              },
+                              {
+                                  "文件":  "test/pao/cards-receipts.test.ts",
+                                  "行":  162,
+                                  "用例名":  "终态卡迟到回执：追加留档，不再变状态"
+                              },
+                              {
+                                  "文件":  "test/pao/cards-receipts.test.ts",
+                                  "行":  56,
+                                  "用例名":  "同一当前尝试普通回执重送不重复累计"
+                              },
+                              {
+                                  "文件":  "test/pao/cards-receipts.test.ts",
+                                  "行":  73,
+                                  "用例名":  "checkpoint 后合法终结 vs 未留档终结态判冲突"
+                              },
+                              {
+                                  "文件":  "test/pao/s5p1-receipt-final.test.ts",
+                                  "行":  165,
+                                  "用例名":  "终结后的迟到 checkpoint 同样留档"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pending.test.ts",
+                                  "行":  297,
+                                  "用例名":  "旧 attempt、旧节点轮次和已启动下游后的迟到请求均在落盘前拒绝"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-independent-review-version-guards.test.ts",
+                                  "行":  462,
+                                  "用例名":  "attempt 过期：旧卡不能为当前尝试盖章"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "cards-receipts / s5p1-receipt-final / workflow-pending / version-guards",
+                                "退出码":  0,
+                                "通过":  43,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\cards-receipts.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s5p1-receipt-final.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-independent-review-version-guards.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实文件",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B08",
+                   "标题":  "两个不同待决同时到达 → 第一个不被覆盖，第二个来源与拒绝原因可查",
+                   "判定":  "部分覆盖",
+                   "断言点":  "第二个待决不覆盖第一个；拒绝原因与待决来源可查",
+                   "入口":  [
+                              "workflow/control.ts requestRuling",
+                              "workflow/control.ts queryWorkflowCore"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-pending.test.ts",
+                                  "行":  331,
+                                  "用例名":  "另一节点的新请求不能覆盖已有待决（rejects /已有另一现场待决/，readPending 仍等于第一个）"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pending.test.ts",
+                                  "行":  347,
+                                  "用例名":  "query 与报告从结构化待决读取同一 key，不从暂停文案反解析"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "workflow-pending.test.ts",
+                                "退出码":  0,
+                                "通过":  9,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending.log"
+                            ],
+                   "未覆盖":  "并发物理竞争（两个请求真同时写、靠文件锁决出胜负）无专门断言；本轮是串行第二次请求。锁层由 worker-lock-boundaries（17 passed）间接覆盖",
+                   "证据等级":  [
+                                "脚本模拟模型",
+                                "真实控制正本文件"
+                            ]
+               },
+               {
+                   "编号":  "B09",
+                   "标题":  "控制文件损坏 / 旧字段冲突 / 未知版本 → 拒绝推进，错误包含位置，不填默认成功",
+                   "判定":  "已覆盖通过（夹具前提已订正；不写成一次通过）",
+                   "断言点":  "坏文件拒绝推进；错误含文件位置；文件字节不被重写；不填默认值冒充成功",
+                   "入口":  [
+                              "workflow/control.ts readControl",
+                              "workflow/driver.ts parseManifest"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  315,
+                                  "用例名":  "it.each(['轮次','通道','未知版本','混用字段','未知停因','待决身份']) → 错误含文件路径(:329) + 文件字节不变(:330)"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  212,
+                                  "用例名":  "旧文本保守查询与迁移备份（212/224/239/247）"
+                              },
+                              {
+                                  "文件":  "test/pao/f-failure-matrix.test.ts",
+                                  "行":  183,
+                                  "用例名":  "未知格式版本拒绝降级读取…（夹具已订正为 版本:4）"
+                              },
+                              {
+                                  "文件":  "test/pao/f-failure-matrix.test.ts",
+                                  "行":  206,
+                                  "用例名":  "版本 3 按控制版本处理，走 v2 控制入口拒绝降级，且原件逐字节保留（新增，已跑：9 passed）"
+                              }
+                          ],
+                   "原失败":  {
+                               "文件":  "test/pao/f-failure-matrix.test.ts",
+                               "退出码":  1,
+                               "通过":  7,
+                               "失败":  1,
+                               "失败用例":  "未知格式版本拒绝降级读取，原文点名版本号与两条出路，且原件逐字节保留",
+                               "断言位置":  197,
+                               "原因":  "产品 src/pao/workflow/driver.ts:181 已把 版本 3 并入「带版本控制的控制正本」分支；用例仍用 版本:3 期望旧的「只认 1 与 2」文案 ⇒ 夹具前提过期，非产品缺陷",
+                               "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix.log",
+                               "订正":  "版本:3→4；期望文案改「「4」不认识…2/3（控制正本）」；其余断言不动；新增版本3用例钉住 S1 决定；修改说明见 checks/boundary/f-failure-matrix-修改说明.md",
+                               "订正后实跑":  "已执行：退出码 0，Tests 9 passed (9)，4.36s；biome exit 0",
+                               "订正后日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix-fixed.log",
+                               "biome日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-f-failure-matrix.log",
+                               "订正后用例数":  9
+                           },
+                   "实际运行":  {
+                                "文件":  "workflow-stop.test.ts",
+                                "退出码":  0,
+                                "通过":  22,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-stop.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix.log"
+                            ],
+                   "未覆盖":  "控制文件被同时写入导致半截内容的物理场景（靠 withFileLock 与 worker-lock-boundaries 间接覆盖）",
+                   "证据等级":  [
+                                "真实文件",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B10",
+                   "标题":  "宿主关闭与裁决完成竞争 → 无关闭后的新派发，停止失败保留占位",
+                   "判定":  "已覆盖通过（真实进程/真实锁/真实名额专用竞争用例已落地；同进程模拟仅作语义补充，不作进程级证据）",
+                   "断言点":  "关闭后不新派发；停止失败保留执行占位与错误；停止确认后占位才释放",
+                   "入口":  [
+                              "pao/host/host.ts MinisterHost.stopAll",
+                              "workflow/control.ts 停因/结果",
+                              "worker 执行锁"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/runtime-shutdown-window.test.ts",
+                                  "行":  107,
+                                  "用例名":  "真实主控业务关闭活动仍持有控制权，关闭完成后迟到请求继续拒绝（同进程模拟）"
+                              },
+                              {
+                                  "文件":  "test/pao/runtime-shutdown-window.test.ts",
+                                  "行":  142,
+                                  "用例名":  "重复关闭保持业务清理（同进程模拟）"
+                              },
+                              {
+                                  "文件":  "test/pao/runtime-shutdown-window.test.ts",
+                                  "行":  172,
+                                  "用例名":  "停止失败保留控制权，且全部停止处理器执行完后才汇总失败（同进程模拟）"
+                              },
+                              {
+                                  "文件":  "test/pao/host-lifecycle.test.ts",
+                                  "行":  811,
+                                  "用例名":  "stopAll:树杀全部热会话(进程真死)＋登记表摘除＋句柄清空（真实子进程 pid alive→!alive 对照）"
+                              },
+                              {
+                                  "文件":  "test/pao/w2-background-shutdown.test.ts",
+                                  "行":  199,
+                                  "用例名":  "真实子进程 spawn(process.execPath,['-e',ackChild]) + 关闭处理器失败重试"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-shutdown-race.test.ts",
+                                  "行":  223,
+                                  "用例名":  "关闭期间不新派发、待决不被自动完成；真实写者未停则保留执行占位与错误；真死后才释放（真实 node hang.js 子进程 + 真实 Git worktree + 真实执行锁）"
+                              }
+                          ],
+                   "降级标注":  {
+                                "原因":  "runtime-shutdown-window.test.ts 全文 222 行无 child_process；L115 class ShutdownHost extends MinisterHost 覆写 stopAll；L117 注释自认「关闭生命周期边界模拟」；L61 realRunner 用 loadExtensionFromFactory + SessionManager.inMemory 同进程装配",
+                                "等级":  "同进程模拟（降级）"
+                            },
+                   "实际运行":  {
+                                "文件":  "runtime-shutdown-window / host-lifecycle / w2-background-shutdown / s7-boundary-shutdown-race",
+                                "退出码":  0,
+                                "通过":  34,
+                                "失败":  0,
+                                "跳过":  0,
+                                "专用竞争用例":  {
+                                               "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-shutdown-race.log",
+                                               "耗时秒":  13.1,
+                                               "文件":  "s7-boundary-shutdown-race.test.ts",
+                                               "通过":  1
+                                           }
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\runtime-shutdown-window.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\host-lifecycle.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\w2-background-shutdown.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-shutdown-race.log"
+                            ],
+                   "未覆盖":  "无阻塞缺口。仍无法观察的只剩：宿主进程本身被操作系统强杀（如整机 kill -9）时，进程内没有观察者记录竞争结果——这类场景只能靠退出后重放日志判断，属运维观测范畴，不在 B01—B20 边界内。",
+                   "证据等级":  [
+                                "真实进程（pid alive→!alive 对照）",
+                                "真实Git",
+                                "真实锁",
+                                "真实名额",
+                                "同进程模拟（补充语义，不作进程级证据）"
+                            ],
+                   "升级记录":  {
+                                "原因":  "lead 第④步要求 B10 必须真实进程证据",
+                                "新增用例":  "test/pao/s7-boundary-shutdown-race.test.ts:223",
+                                "实跑":  "exit 0 / 1 passed / 13.10s",
+                                "保留口径":  "runtime-shutdown-window.test.ts 为同进程模拟，不能作为 B10 的进程级证据；进程级证据由 host-lifecycle.test.ts:811、w2-background-shutdown.test.ts:199 与新用例提供"
+                            }
+               },
+               {
+                   "编号":  "B11",
+                   "标题":  "Git 提交成功但办理落盘失败 → 合法重放不重复提交，证据绑定正确",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "重放复用同一 Git 对象、不产生第二提交；父提交/引用可校验",
+                   "入口":  [
+                              "delivery 提交与结果固化",
+                              "workflow/control.ts resolvePendingOnce 的 submission_failed 阶段"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/delivery-retry-cumulative.test.ts",
+                                  "行":  29,
+                                  "用例名":  "引用发布后结果写失败，重试完成同一提交；旧记录仍可重放且校验父提交"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-pending-resolution.test.ts",
+                                  "行":  519,
+                                  "用例名":  "交卷结果固化失败留下 submission_failed；同输入恢复复用同一 Git 对象且不重复提交"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "delivery-retry-cumulative / workflow-pending-resolution",
+                                "退出码":  0,
+                                "通过":  28,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\delivery-retry-cumulative.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-pending-resolution.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实Git"
+                            ]
+               },
+               {
+                   "编号":  "B12",
+                   "标题":  "清理工作树与派发竞争 → 同根互斥有效，活写者工作树不被删",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "清理守卫与派发守卫互斥；有活写者 lease 时拒绝删除",
+                   "入口":  [
+                              "执行根守卫/锁",
+                              "worktree 清理入口"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/worker-lock-boundaries.test.ts",
+                                  "行":  502,
+                                  "用例名":  "guard 有活锁时，另一个进程的清理守卫不能进入处置阶段"
+                              },
+                              {
+                                  "文件":  "test/pao/worker-lock-boundaries.test.ts",
+                                  "行":  521,
+                                  "用例名":  "执行根删除互斥期间，新派发在取得执行根守卫时被拒绝"
+                              },
+                              {
+                                  "文件":  "test/pao/local-worktree-host-cleanup.test.ts",
+                                  "行":  19,
+                                  "用例名":  "真实执行 lease 存在时拒绝删除并保留 lease 与工作目录"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "worker-lock-boundaries / local-worktree-host-cleanup",
+                                "退出码":  0,
+                                "通过":  22,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\worker-lock-boundaries.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\local-worktree-host-cleanup.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实锁",
+                                "真实工作目录"
+                            ]
+               },
+               {
+                   "编号":  "B13",
+                   "标题":  "批量中一项失败、其他项完成 → 逐项报告，不把部分成功写成全成功",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "逐项事实保留；部分成功不得写成全成功",
+                   "入口":  [
+                              "fanout/批量入口",
+                              "卡回执逐卡落卡"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/e-batch-sample.test.ts",
+                                  "行":  213,
+                                  "用例名":  "② 批量两条（写作 + 只读审查）：部分成功，拒绝原因来自真实预检（中文文稿夹具）"
+                              },
+                              {
+                                  "文件":  "test/pao/fanout-run.test.ts",
+                                  "行":  146,
+                                  "用例名":  "回执逐卡落卡(卡号+尝试号,不混批),失败带缺省分型与路由建议"
+                              },
+                              {
+                                  "文件":  "test/pao/fanout-run.test.ts",
+                                  "行":  241,
+                                  "用例名":  "单卡 cancel…该卡终态取消,其余照常完成;取消后同卡拒绝再派"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "e-batch-sample / fanout-run",
+                                "退出码":  0,
+                                "通过":  22,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\e-batch-sample.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\fanout-run.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实Git",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B14",
+                   "标题":  "单卡/批量/工作流相同回执 → 共用完成规则，保留各入口原有提交策略",
+                   "判定":  "已覆盖通过（单卡×扇出真实入口同回执同判 + 三入口共用 appendDispatchReceipt 结构证据 + 扇出不提交的结构证据；工作流入口为结构证据，非端到端实跑）",
+                   "断言点":  "同一回执经三入口得到同一完成结论；各入口提交策略不被抹平",
+                   "入口":  [
+                              "pao_dispatch_card",
+                              "pao_fanout",
+                              "自动链",
+                              "acceptIntake"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/dispatch-fault-injection.test.ts",
+                                  "行":  362,
+                                  "用例名":  "T03 入口准入一致:工作流卡 owner 三入口同判"
+                              },
+                              {
+                                  "文件":  "test/pao/intake-accept.test.ts",
+                                  "行":  442,
+                                  "用例名":  "同一批请求经 CLI/桌面/批量三条入口与直调 acceptIntake 结果一致"
+                              },
+                              {
+                                  "文件":  "test/pao/cards-receipts.test.ts",
+                                  "行":  35,
+                                  "用例名":  "完成规则一组（35/56/73/113/162）"
+                              },
+                              {
+                                  "文件":  "test/pao/delivery-commit.test.ts",
+                                  "行":  164,
+                                  "用例名":  "逐路径 add 不裹挟（另 191 无基线外改动不建空提交 / 204 已暂存保持 / 235）"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-b14-cross-entry.test.ts",
+                                  "行":  67,
+                                  "用例名":  "同一份回执经单卡与扇出真实入口得到同一完成结论，且落卡走同一实现"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-b14-cross-entry.test.ts",
+                                  "行":  139,
+                                  "用例名":  "扇出保留既有提交策略：不自动完成/交付、不含任何提交调用，提交能力单点在交付工具"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "dispatch-fault-injection / intake-accept / cards-receipts / delivery-commit / s7-boundary-b14-cross-entry",
+                                "退出码":  0,
+                                "通过":  64,
+                                "失败":  0,
+                                "跳过":  0,
+                                "横向对照用例":  {
+                                               "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b14-cross-entry.log",
+                                               "耗时秒":  3.06,
+                                               "文件":  "s7-boundary-b14-cross-entry.test.ts",
+                                               "通过":  2
+                                           }
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\dispatch-fault-injection.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\intake-accept.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\cards-receipts.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\delivery-commit.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b14-cross-entry.log"
+                            ],
+                   "未覆盖":  "工作流自动链入口只做了结构证据（源码落点 shared 实现），未在端到端自动链里跑同一份回执；工作流侧端到端归属 matrix 的 36 槽位。",
+                   "证据等级":  [
+                                "脚本模拟模型",
+                                "真实Git",
+                                "真实子进程（假 worker 脚本）"
+                            ]
+               },
+               {
+                   "编号":  "B15",
+                   "标题":  "未注册工具/关键模块装配中途失败 → 会话不能派发，资源清理或停止未确认可见",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "半装配拒绝；错误带模块名与原因；不启用会话、无派发副作用；清理可见",
+                   "入口":  [
+                              "index.ts 装配 catch",
+                              "CLI 启动入口"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/assembly-real-loader.test.ts",
+                                  "行":  144,
+                                  "用例名":  "预检失败时装载器 reject，错误带模块名与原始原因，半装配 API 不可再注册"
+                              },
+                              {
+                                  "文件":  "test/pao/assembly-real-loader.test.ts",
+                                  "行":  228,
+                                  "用例名":  "装配到一半失败时先逆序 await 清理资源，再 discard 并 reject"
+                              },
+                              {
+                                  "文件":  "test/pao/cli-assembly-failure-real.test.ts",
+                                  "行":  193,
+                                  "用例名":  "it.each(FAILURES) 退出非 0、原始原因到达 stderr、不启用会话且无派发副作用（真实 CLI 子进程）"
+                              },
+                              {
+                                  "文件":  "test/pao/assembly-validation.test.ts",
+                                  "行":  445,
+                                  "用例名":  "清理有错时抛 PaoAssemblyCleanupFailure"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "assembly-real-loader / cli-assembly-failure-real / assembly-validation",
+                                "退出码":  0,
+                                "通过":  34,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\assembly-real-loader.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\cli-assembly-failure-real.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\assembly-validation.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实进程",
+                                "同进程装配"
+                            ]
+               },
+               {
+                   "编号":  "B16",
+                   "标题":  "工具 action 与字段混用后纠正 → 第一次无副作用，合法第二次可继续",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "混用被字段层拦下；第一次无副作用；改正后同一轮可继续",
+                   "入口":  [
+                              "pao_control_node 字段契约",
+                              "resolve_pending 工具"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-control-resolve-tool.test.ts",
+                                  "行":  518,
+                                  "用例名":  "脚本模型彩排：混用 confirm 与 decisions 被拦下，改正为 resolve_pending 后可继续"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-control-action-contract.test.ts",
+                                  "行":  71,
+                                  "用例名":  "混用动作、缺字段、禁用字段与未知字段均在字段层拒绝"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "workflow-control-resolve-tool / workflow-control-action-contract",
+                                "退出码":  0,
+                                "通过":  11,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-control-resolve-tool.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-control-action-contract.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B17",
+                   "标题":  "独立审核副本新增检查脚本 → 只提交审核证据，不合并脚本，不误判原成果已被改",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "副本内新增声明验证脚本可过验收、只交付证据；源项目未新增文件；未声明文件被越界核查拒绝；副本基线缺失不放行",
+                   "入口":  [
+                              "独立审核副本（git worktree）",
+                              "越界核查",
+                              "聚合与版本校验"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-independent-review.test.ts",
+                                  "行":  450,
+                                  "用例名":  "副本根新增声明验证脚本与报告：机械验收过、卡交付且源项目未新增文件"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-independent-review.test.ts",
+                                  "行":  238,
+                                  "用例名":  "在独立副本执行、交付证据，原项目与 HEAD 不被改写"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-independent-review.test.ts",
+                                  "行":  516,
+                                  "用例名":  "未声明的新增文件被越界核查拒绝"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-independent-review.test.ts",
+                                  "行":  561,
+                                  "用例名":  "副本基线不可用（内容树快照缺失）不放行"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-independent-review-version-guards.test.ts",
+                                  "行":  344,
+                                  "用例名":  "验证后修改副本证据：最终 pass 拒绝（另 352/406/462/495/503/511/521/530/541）"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "workflow-independent-review / -pending / -version-guards",
+                                "退出码":  0,
+                                "通过":  35,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-independent-review.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-independent-review-pending.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-independent-review-version-guards.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实Git",
+                                "真实工作树"
+                            ]
+               },
+               {
+                   "编号":  "B18",
+                   "标题":  "超过原预算/回边/派卡额度 → 明确停止，重试不重置额度",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "超限明确停止；重试/第二次尝试不重置额度；坏账不静默重置",
+                   "入口":  [
+                              "回边上限",
+                              "工具执行预算",
+                              "派卡额度",
+                              "usage 账本"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-control.test.ts",
+                                  "行":  334,
+                                  "用例名":  "第二次尝试仍受上限约束"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-control.test.ts",
+                                  "行":  845,
+                                  "用例名":  "待审原卡返修拒绝…达到上限"
+                              },
+                              {
+                                  "文件":  "test/pao/worker-budget.test.ts",
+                                  "行":  212,
+                                  "用例名":  "第 N+1 次工具执行被拒"
+                              },
+                              {
+                                  "文件":  "test/pao/usage-budget.test.ts",
+                                  "行":  403,
+                                  "用例名":  "坏账如实抛错，绝不静默重置成满额"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-review-version.test.ts",
+                                  "行":  125,
+                                  "用例名":  "未声明回边、旧轮次和暂停均不能被返工接口绕过"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "workflow-control / worker-budget / usage-budget / f-budget-concurrency / workflow-review-version",
+                                "退出码":  0,
+                                "通过":  108,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-control.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\worker-budget.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\usage-budget.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-budget-concurrency.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-review-version.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实账本文件",
+                                "真实Git",
+                                "脚本模拟模型"
+                            ]
+               },
+               {
+                   "编号":  "B19",
+                   "标题":  "地图采集中现场改变或读取失败 → 不生成一半旧一半新的有效地图",
+                   "判定":  "已覆盖通过",
+                   "断言点":  "fail-closed：现场变化 / 快照被改 / 大 blob 读失败都不得产出可用的混合地图",
+                   "入口":  [
+                              "dispatch-brief 采集与重验",
+                              "workflow 节点地图合并"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/dispatch-brief-map-read.test.ts",
+                                  "行":  576,
+                                  "用例名":  "改一个文件后重采集 sameDispatchMapCoverage=false，派发前重验抛 stale_map"
+                              },
+                              {
+                                  "文件":  "test/pao/dispatch-brief-map-read.test.ts",
+                                  "行":  499,
+                                  "用例名":  "64MiB+1 的 blob → missing_input（ENOBUFS）"
+                              },
+                              {
+                                  "文件":  "test/pao/dispatch-brief-prepare.test.ts",
+                                  "行":  246,
+                                  "用例名":  "地图或契约变化、快照被改时 fail-closed"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-node-map-merge.test.ts",
+                                  "行":  182,
+                                  "用例名":  "节点地图合并相关断言"
+                              }
+                          ],
+                   "实际运行":  {
+                                "文件":  "dispatch-brief-map-read / dispatch-brief-prepare / workflow-node-map-merge",
+                                "退出码":  0,
+                                "通过":  30,
+                                "失败":  0,
+                                "跳过":  0
+                            },
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\dispatch-brief-map-read.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\dispatch-brief-prepare.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-node-map-merge.log"
+                            ],
+                   "未覆盖":  "无",
+                   "证据等级":  [
+                                "真实Git",
+                                "真实大文件读取"
+                            ]
+               },
+               {
+                   "编号":  "B20",
+                   "标题":  "CLI/桌面对同一停因查询与处理 → 业务状态及权限一致，界面不自行放行",
+                   "判定":  "已覆盖通过（CLI 侧逐字渲染与动作投影实跑；桌面侧真实 Electron 8/8 对照；两侧经同一 readDesktopFlowsFresh/projectControlStop 同源投影）",
+                   "断言点":  "同一停因下两入口字段一致；放行权限一致；界面不得自行放行",
+                   "入口":  [
+                              "CLI: /pao flow see、pao_query_flow",
+                              "内核: workflow/policy.ts projectControlStop",
+                              "桌面: window.piApp.getWorkflowControl → preload.ts:245 → register-desktop-ipc.ts:363 → flow-control-query.ts → pao-flow-control.ts readDesktopFlowsFresh"
+                          ],
+                   "用例":  [
+                              {
+                                  "文件":  "test/pao/workflow-tools.test.ts",
+                                  "行":  1174,
+                                  "用例名":  "查流：/pao flow see 与 pao_query_flow 渲染逐字一致"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-tools.test.ts",
+                                  "行":  486,
+                                  "用例名":  "pao_query_flow 只读展示持久停链原因：重开可读，查询不改控制正本"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  110,
+                                  "用例名":  "逐项动作投影核对冻结运行方式，不能把有人值守解释成无人值守授权"
+                              },
+                              {
+                                  "文件":  "test/pao/workflow-stop.test.ts",
+                                  "行":  198,
+                                  "用例名":  "待决期间关闭保留请求但必须人工恢复，桌面序列化不再展示可裁定入口"
+                              },
+                              {
+                                  "文件":  "desktop e2e",
+                                  "用例名":  "f-desktop-owner.spec.ts:301:5 T15 确认被拒绝时如实报错、不动控制正本"
+                              },
+                              {
+                                  "文件":  "test/pao/s7-boundary-b20-cli.test.ts",
+                                  "行":  90,
+                                  "用例名":  "pao_query_flow 与 /pao flow see 对同一停因逐字一致，四字段与桌面侧对照表一致（manual_pause：category/reason/authority/actions，裁定负向）"
+                              }
+                          ],
+                   "CLI侧结论":  {
+                                  "单一实现":  "src/pao/workflow/policy.ts:50-75 projectControlStop(stop, now, runMode)",
+                                  "manual_pause投影":  {
+                                                         "authority":  "human",
+                                                         "actions":  [
+                                                                         "resume"
+                                                                     ],
+                                                         "deadline":  null,
+                                                         "裁定":  null
+                                                     },
+                                  "decision停因投影":  {
+                                                       "有人值守":  {
+                                                                    "authority":  "human",
+                                                                    "actions":  [
+                                                                                    "resume"
+                                                                                ]
+                                                                },
+                                                       "无人值守":  {
+                                                                    "authority":  "owner",
+                                                                    "actions":  [
+                                                                                    "resolve_pending"
+                                                                                ]
+                                                                }
+                                                   },
+                                  "未覆盖":  "无（同停因 manual_pause 的 CLI 逐字渲染与动作投影已由 s7-boundary-b20-cli.test.ts 实跑补齐，1 passed）",
+                                  "实际运行":  {
+                                               "文件":  "workflow-tools / workflow-stop / desktop-read-model / s7-boundary-b20-cli",
+                                               "退出码":  0,
+                                               "通过":  85,
+                                               "失败":  0,
+                                               "跳过":  0,
+                                               "新用例":  {
+                                                           "日志":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b20-cli.log",
+                                                           "耗时秒":  3.28,
+                                                           "文件":  "s7-boundary-b20-cli.test.ts",
+                                                           "通过":  1
+                                                       }
+                                           }
+                              },
+                   "桌面侧结论":  {
+                                 "来源":  "成员 desktop（真实 Electron，非模拟）",
+                                 "对照结果":  "8/8 字段与内核 readDesktopFlowsFresh 一致（实例/owner/停因.category/reason/authority/actions/pauseReason/裁定负向 undefined）",
+                                 "PARITY_SUMMARY":  "checks=8 failed=0，exit 0",
+                                 "不得自行放行证据":  [
+                                                  "桌面非测试代码无 pauseControl/resumeControl/confirmControl 直接调用，唯一改控制正本路径 flow-control-query.ts:297 交回内核 bridge.runDesktopFlowCommand",
+                                                  "normalizeStop 字段不全或 category 未知即显式失败，不补默认值、不猜停因",
+                                                  "真实 Electron f-desktop-owner.spec.ts:301:5 T15 1 passed"
+                                              ],
+                                 "证据路径":  [
+                                              "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\desktop\\b20-cross-entry.md",
+                                              "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\desktop\\b20\\b20-parity.log",
+                                              "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\desktop\\b20\\runs\\2026-11-01T08-16-53-143Z\\"
+                                          ],
+                                 "未覆盖":  [
+                                             "terminal_block / recovery_required / legacy_unknown 三种停因桌面侧未造"
+                                         ]
+                             },
+                   "证据等级":  [
+                                "真实控制正本",
+                                "真实停因写入（pauseControl）",
+                                "真实Electron（desktop 提供）",
+                                "脚本模拟模型（无模型调用）"
+                            ],
+                   "证据日志":  [
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-tools.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\workflow-stop.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\desktop-read-model.log",
+                                "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b20-cli.log"
+                            ]
+               }
+           ],
+    "中断点_8_3":  [
+                    {
+                        "编号":  "①",
+                        "要求":  "参数未全部校验 → 无部分接受偏差、改卡或提交",
+                        "用例":  "workflow-pending-resolution.test.ts:327 缺项/重复/外来项/夹带替换身份/空依据均在办理前整体拒绝",
+                        "结果":  "passed（12 passed 文件）",
+                        "日志":  "checks\\boundary\\workflow-pending-resolution.log",
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "②",
+                        "要求":  "已登记办理尚未验收 → 核原身份后从验收继续；旧 attempt 拒绝",
+                        "用例":  "workflow-pending-resolution.test.ts:398；workflow-pending.test.ts:297；workflow-independent-review-version-guards.test.ts:462",
+                        "结果":  "passed（12/9/16）",
+                        "日志":  [
+                                   "checks\\boundary\\workflow-pending-resolution.log",
+                                   "checks\\boundary\\workflow-pending.log",
+                                   "checks\\boundary\\workflow-independent-review-version-guards.log"
+                               ],
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "③",
+                        "要求":  "验收通过交付前 → 重验必要版本，版本改变不能沿旧通过结论",
+                        "用例":  "workflow-review-version.test.ts:84；workflow-independent-review-version-guards.test.ts:344/352/406",
+                        "结果":  "passed（6/16）",
+                        "日志":  [
+                                   "checks\\boundary\\workflow-review-version.log",
+                                   "checks\\boundary\\workflow-independent-review-version-guards.log"
+                               ],
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "④",
+                        "要求":  "交付完成 Git 提交前 → 不重复交付；按契约提交或明确无差异无需提交",
+                        "用例":  "delivery-commit.test.ts:164/191/204/235",
+                        "结果":  "passed（20）",
+                        "日志":  "checks\\boundary\\delivery-commit.log",
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "⑤",
+                        "要求":  "Git 已提交办理写失败 → 识别已生效，不制造第二提交",
+                        "用例":  "delivery-retry-cumulative.test.ts:29；workflow-pending-resolution.test.ts:519",
+                        "结果":  "passed（16/12）",
+                        "日志":  [
+                                   "checks\\boundary\\delivery-retry-cumulative.log",
+                                   "checks\\boundary\\workflow-pending-resolution.log"
+                               ],
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "⑥",
+                        "要求":  "待决清除推进受理前 → 保留可恢复阶段，合法重放只受理一次",
+                        "用例":  "workflow-pending-resolution.test.ts:261；workflow-pause-completion.test.ts:107/121/136",
+                        "结果":  "passed（12/3）",
+                        "日志":  [
+                                   "checks\\boundary\\workflow-pending-resolution.log",
+                                   "checks\\boundary\\workflow-pause-completion.log"
+                               ],
+                        "结论":  "已覆盖"
+                    },
+                    {
+                        "编号":  "⑦",
+                        "要求":  "宿主关闭/取消任何阶段 → 不新派发；真实写者未停保留占位与错误",
+                        "用例":  "runtime-shutdown-window.test.ts（同进程，仅语义补充）；host-lifecycle.test.ts:811（真实子进程 pid alive→!alive）；w2-background-shutdown.test.ts:199（真实子进程）；s7-boundary-shutdown-race.test.ts:223（专用并发竞争，真实 pid/锁/名额）；worker-dispatch-managed-real.test.ts:367（真实 hang worker 未停保留锁/预约/守卫）",
+                        "结果":  "passed（3/29/1/1/3）",
+                        "日志":  [
+                                   "checks\\boundary\\runtime-shutdown-window.log",
+                                   "checks\\boundary\\host-lifecycle.log",
+                                   "checks\\boundary\\w2-background-shutdown.log",
+                                   "checks\\boundary\\s7-boundary-shutdown-race.log",
+                                   "checks\\boundary\\worker-dispatch-managed-real.log",
+                                   "checks\\boundary\\cli-lifecycle-real.log"
+                               ],
+                        "结论":  "已覆盖（真实进程级：关闭期间不新派发、真实写者未停保留占位与错误、停止确认后占位才释放；另有真实 CLI abort 链挂起/退出）",
+                        "证据强度":  "真实进程 + 真实锁 + 真实 Git（同进程模拟不作进程级证据）"
+                    }
+                ],
+    "未验项":  [
+                {
+                    "编号":  1,
+                    "未验项":  "B08 并发物理竞争（两个不同待决真同时到达）",
+                    "影响":  "只证明串行第二次请求被拒且不覆盖第一个（workflow-pending.test.ts:331）；并发胜负由锁层用例间接覆盖，没有业务级并发断言",
+                    "为什么本轮不做":  "真并发需两个真实进程同时写同一控制正本 + 起跑屏障，与 worker-lock-boundaries.test.ts（跨进程真锁）职责重叠；B08 核心断言已由串行用例覆盖",
+                    "谁能补":  "boundary：spawn 两个真实 node 子进程 + 起跑屏障同时 requestRuling，断言只有一个待决落盘、另一个错误含来源与拒绝原因；条件=1 分钟级安静窗口",
+                    "是否阻塞工程优化完成判定":  "不阻塞"
+                },
+                {
+                    "编号":  2,
+                    "未验项":  "s5p1-verify-gate.test.ts / workflow-deviation-registration.test.ts 未在本轮队列",
+                    "影响":  "§13.2「机械验收失败」「需语义判断」两个槽位的边界侧证据不完整（现只有 workflow-independent-review-version-guards.test.ts:521/530 间接证据）",
+                    "为什么本轮不做":  "39 文件队列按 B01—B20 覆盖定位挑选，这两个文件属 §13.2 槽位补强、不在排程内；单跑各约 10-60s",
+                    "谁能补":  "lead 决定是否追加，任一人安静窗口单跑，日志照 checks\\boundary\\<name>.log 命名",
+                    "是否阻塞工程优化完成判定":  "不阻塞"
+                },
+                {
+                    "编号":  3,
+                    "未验项":  "真实供应商（真模型 API）未授权",
+                    "影响":  "涉及真实模型供应商行为的结论（真实模型如何响应停因/裁决）均未验证",
+                    "为什么本轮不做":  "S7 协作约定明文规定真实供应商 V1 未授权，任何人不得声称已验；本轮全部是脚本模拟模型",
+                    "谁能补":  "需用户/lead 明确授权并提供凭证后由 matrix + boundary 联合补，并新增证据等级「真实供应商」",
+                    "是否阻塞工程优化完成判定":  "不阻塞"
+                },
+                {
+                    "编号":  4,
+                    "未验项":  "B03「下游工人不启动」这一层没有直接断言",
+                    "影响":  "B03 已证 reject 落 terminal_block 停因、状态非已完成、DriveReport 非 completed，但没有「后续节点工人根本不启动」的正面断言",
+                    "为什么本轮不做":  "加第三个下游节点时 endDecomposition 要求先有「完成交接节点地图」（src/pao/dispatch-brief/workspace.ts:557），属派发准备职责，补齐成本与本边界无关；本轮用末节点+非 completed 等价证据",
+                    "谁能补":  "boundary：给下游节点先造交接地图后断言下游卡数为 0；条件=约 5 分钟 + 安静窗口",
+                    "是否阻塞工程优化完成判定":  "不阻塞"
+                }
+            ],
+    "产物":  {
+               "结果文档":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\边界B01-B20-结果.md",
+               "机器可读":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\边界B01-B20.json",
+               "原始日志目录":  "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\"
+           },
+    "已完成_原未验项":  [
+                     {
+                         "编号":  "原 1",
+                         "项目":  "B09 订正后实跑",
+                         "结果":  "f-failure-matrix.test.ts exit 0，Tests 9 passed (9)，4.36s，biome exit 0",
+                         "日志":  [
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\f-failure-matrix-fixed.log",
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\biome-f-failure-matrix.log"
+                                ],
+                         "说明":  "原失败日志 f-failure-matrix.log 与订正日志并存，未互相覆盖"
+                     },
+                     {
+                         "编号":  "原 1（B10）",
+                         "项目":  "B10 专用「宿主关闭 vs 裁决完成竞争」真实进程用例落地",
+                         "结果":  "s7-boundary-shutdown-race.test.ts exit 0，1 passed，13.10s（真实 pid alive→!alive + 真实锁 + 真实名额）",
+                         "日志":  [
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-shutdown-race.log"
+                                ],
+                         "说明":  "B10 由降级标注升为已覆盖；同进程模拟口径保留"
+                     },
+                     {
+                         "编号":  "原 1（B10 间接）",
+                         "项目":  "worker-dispatch-managed-real.test.ts:367 已跑",
+                         "结果":  "exit 0，3 passed，35.93s（真实 node hang.js 未停 → 锁/预约/守卫保留、错误可见；真退出才释放）",
+                         "日志":  [
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\worker-dispatch-managed-real.log"
+                                ],
+                         "说明":  "§8.3⑦ 真实写者未停保留占位的直接证据"
+                     },
+                     {
+                         "编号":  "原 2（B14）",
+                         "项目":  "B14 三入口横向对照已补",
+                         "结果":  "s7-boundary-b14-cross-entry.test.ts exit 0，2 passed，3.06s",
+                         "日志":  [
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b14-cross-entry.log"
+                                ],
+                         "说明":  "B14 由部分覆盖升为已覆盖；工作流侧为结构证据"
+                     },
+                     {
+                         "编号":  "B20 剩余",
+                         "项目":  "B20 同停因 CLI 逐字渲染已补",
+                         "结果":  "s7-boundary-b20-cli.test.ts exit 0，1 passed，3.28s",
+                         "日志":  [
+                                    "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\boundary\\s7-boundary-b20-cli.log"
+                                ],
+                         "说明":  "CLI 侧与桌面 8/8 对照表并排对齐"
+                     }
+                 ],
+    "分类统计":  {
+                 "按证据来源":  {
+                               "本轮新增用例直接覆盖":  {
+                                                  "数量":  7,
+                                                  "案例":  [
+                                                             "B01",
+                                                             "B02",
+                                                             "B03",
+                                                             "B04",
+                                                             "B10",
+                                                             "B14",
+                                                             "B20"
+                                                         ],
+                                                  "说明":  "新增 4 个测试文件共 15 条用例全绿：s7-boundary-runmodes(11)、s7-boundary-shutdown-race(1)、s7-boundary-b14-cross-entry(2)、s7-boundary-b20-cli(1)"
+                                              },
+                               "既有用例覆盖加本轮实跑":  {
+                                                   "数量":  12,
+                                                   "案例":  [
+                                                              "B05",
+                                                              "B06",
+                                                              "B07",
+                                                              "B09",
+                                                              "B11",
+                                                              "B12",
+                                                              "B13",
+                                                              "B15",
+                                                              "B16",
+                                                              "B17",
+                                                              "B18",
+                                                              "B19"
+                                                          ],
+                                                   "说明":  "证据全部来自本轮 39 文件串行实跑日志；B09 为夹具前提订正后重跑"
+                                               },
+                               "部分覆盖":  {
+                                            "数量":  1,
+                                            "案例":  [
+                                                       "B08"
+                                                   ],
+                                            "说明":  "B08 缺并发物理竞争的业务级断言（见未验项 1）"
+                                        }
+                           },
+                 "按判定结论":  {
+                               "已覆盖通过":  19,
+                               "部分覆盖":  1,
+                               "合计":  20
+                           },
+                 "各分类合计校验":  "7 + 12 + 1 = 20"
+             },
+    "边界与矩阵关系":  {
+                    "结论":  "boundary 侧是边界案例证据，matrix 侧是 §13.2 的 36 个端到端槽位，两者在交付报告里并列、不能互相冒充",
+                    "特别说明":  "B01—B04 的有人/无人值守双策略覆盖是「用例级」证据（同一批内核函数在两种 runMode 下同判），不等于 36 槽位里「某执行形态 × 某结果 × 无人值守」的端到端槽位证据；端到端必须由 matrix 用真实 CLI 会话跑完整流程",
+                    "反向说明":  "matrix 的端到端槽位也不证明边界组合（如 pass 之后成果又被改动，即 B01）"
+                },
+    "阻塞统计":  {
+                 "阻塞":  0,
+                 "不阻塞":  4,
+                 "阻塞条目":  [
+
+                          ],
+                 "说明":  "原 2 条阻塞已在第 ②③④⑤ 步闭合：B10 由 s7-boundary-shutdown-race.test.ts 升为已覆盖、B14 由 s7-boundary-b14-cross-entry.test.ts 升为已覆盖；剩余 4 条均为不阻塞"
+             }
+}

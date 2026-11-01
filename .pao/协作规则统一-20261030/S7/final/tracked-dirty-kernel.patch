@@ -1,0 +1,162 @@
+diff --git a/packages/coding-agent/test/pao/collaboration-baseline.test.ts b/packages/coding-agent/test/pao/collaboration-baseline.test.ts
+index 2cc0fd6ec..82cddb4b3 100644
+--- a/packages/coding-agent/test/pao/collaboration-baseline.test.ts
++++ b/packages/coding-agent/test/pao/collaboration-baseline.test.ts
+@@ -236,13 +236,15 @@ describe("S0 协作规则当前基线（模拟专业判断，真实控制文件
+ 		}
+ 	});
+ 
+-	it("关键cards注册中途失败当前只警告，仍继续注册派发工具", async () => {
++	// S0 快照原断言（「只警告、仍继续注册派发工具」）见 git 历史与本轮首次失败日志
++	// `.pao/协作规则统一-20261030/S7/checks/gates/06-vitest-test-pao-full.log`；
++	// S5 起必需模块（cards）注册中途失败即抛 PaoAssemblyFailure 并拒绝装配，这里改为断言新定案行为。
++	it("关键cards注册中途失败即拒绝装配，不留半装配派发工具", async () => {
+ 		const f = await fixture();
+ 		vi.stubEnv("PAO_HOME", f.paoHome);
+ 		vi.stubEnv("PAO_ROLE", "主控");
+ 		vi.stubEnv("PAO_WORKFLOW_MINISTER", "");
+ 		const tools: string[] = [];
+-		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+ 		let injected = false;
+ 		const pi = {
+ 			registerTool: (tool: { name: string }) => {
+@@ -258,12 +260,12 @@ describe("S0 协作规则当前基线（模拟专业判断，真实控制文件
+ 			on: vi.fn(),
+ 			sendMessage: vi.fn(),
+ 		} as unknown as ExtensionAPI;
+-		expect(() =>
++		await expect(
+ 			paoExtension(pi, { resolvePaoHome: () => f.paoHome, resolveProjectRoot: () => f.root }),
+-		).not.toThrow();
++		).rejects.toThrow(/cards 模块装配失败:S0注入cards中途失败/);
+ 		expect(injected).toBe(true);
+-		expect(warn.mock.calls.flat().join("\n")).toContain("S0注入cards中途失败");
+-		expect(tools).toContain("pao_dispatch_card");
++		// 半装配不得派发：改状态工具注册失败后，派发工具也不得留在宿主上。
+ 		expect(tools).not.toContain("pao_change_status");
++		expect(tools).not.toContain("pao_dispatch_card");
+ 	});
+ });
+diff --git a/packages/coding-agent/test/pao/f-failure-matrix.test.ts b/packages/coding-agent/test/pao/f-failure-matrix.test.ts
+index aae51ef41..a563d264e 100644
+--- a/packages/coding-agent/test/pao/f-failure-matrix.test.ts
++++ b/packages/coding-agent/test/pao/f-failure-matrix.test.ts
+@@ -185,7 +185,9 @@ describe("故障矩阵二：版本拒绝", () => {
+ 		const paoDir = join(repo, ".pao");
+ 		mkdirSync(paoDir, { recursive: true });
+ 		const path = join(paoDir, "工作流实例-坏版本.md");
+-		const content = ["---", "版本: 3", "工作流: 升级后的新格式", "卡目录: .pao/卡", "---", "", "正文", ""].join("\n");
++		// 夹具前提订正（2026-11-01，S7 B09）：格式版本 3 已由 S1 并入「带版本控制的控制正本」，
++		// 不再是未知版本；真正未知的是 4。原失败保留在 checks/boundary/f-failure-matrix.log。
++		const content = ["---", "版本: 4", "工作流: 升级后的新格式", "卡目录: .pao/卡", "---", "", "正文", ""].join("\n");
+ 		writeFileSync(path, content, "utf8");
+ 		const before = readFileSync(path);
+ 		let message = "";
+@@ -194,13 +196,35 @@ describe("故障矩阵二：版本拒绝", () => {
+ 		} catch (error) {
+ 			message = (error as Error).message;
+ 		}
+-		expect(message).toContain("实例格式版本「3」不认识，只认 1（旧清单）与 2（控制正本）");
++		expect(message).toContain("实例格式版本「4」不认识，只认 1（旧清单）与 2/3（控制正本）");
+ 		expect(message).toContain("原件保留不动，按新版处理须升级内核");
+ 		expect(message).toContain("不得当旧清单续跑，也不得手工改版本号掩盖");
+ 		// 原件逐字节保留：拒绝读取不许顺手重写/补默认值。
+ 		expect(readFileSync(path).equals(before)).toBe(true);
+ 	});
+ 
++	// 钉住 S1 的决定：格式版本 3 是「带版本控制的控制正本」，不是未知版本。
++	// 以后谁把 3 又当未知版本（例如把 driver.ts:181 的 `版本 === 3` 摘掉），这条会先红。
++	it("版本 3 按控制版本处理，走 v2 控制入口拒绝降级，且原件逐字节保留", () => {
++		const repo = tempDir("version3-项目");
++		const paoDir = join(repo, ".pao");
++		mkdirSync(paoDir, { recursive: true });
++		const path = join(paoDir, "工作流实例-控制版本.md");
++		const content = ["---", "版本: 3", "工作流: 控制正本", "卡目录: .pao/卡", "---", "", "正文", ""].join("\n");
++		writeFileSync(path, content, "utf8");
++		const before = readFileSync(path);
++		let message = "";
++		try {
++			parseManifest(readFileSync(path, "utf8"), path);
++		} catch (error) {
++			message = (error as Error).message;
++		}
++		expect(message).toContain("带版本控制的实例须经 v2 控制入口读取");
++		expect(message).toContain(`（文件：${path}）`);
++		expect(message).not.toContain("不认识");
++		expect(readFileSync(path).equals(before)).toBe(true);
++	});
++
+ 	it("带版本 2 却走旧入口也拒绝降级，原文要求走 v2 控制入口", () => {
+ 		const path = join(tempDir("version2-项目"), "工作流实例-v2.md");
+ 		writeFileSync(path, ["---", "版本: 2", "工作流: 控制正本样例", "---", ""].join("\n"), "utf8");
+diff --git a/packages/coding-agent/test/pao/f-novel-loop.test.ts b/packages/coding-agent/test/pao/f-novel-loop.test.ts
+index e959a4872..c898e6581 100644
+--- a/packages/coding-agent/test/pao/f-novel-loop.test.ts
++++ b/packages/coding-agent/test/pao/f-novel-loop.test.ts
+@@ -325,6 +325,7 @@ function takeoverMinister(fixture: Fixture, nodeName: string, round: number): st
+ 	// 接管钉在「哪一个节点、第几轮」上：同一轮只允许出现一个接管会话，桥与本正本都以它为准。
+ 	const session = roundSession(nodeName, round);
+ 	let lastReason = "（未尝试）";
++	let lastRaw = "";
+ 	const apply = () => {
+ 		const path = controlPath(fixture.recipe, fixture.options);
+ 		let raw: string;
+@@ -334,6 +335,7 @@ function takeoverMinister(fixture: Fixture, nodeName: string, round: number): st
+ 			lastReason = `读不到正本：${(error as NodeJS.ErrnoException).code ?? ""}`;
+ 			return false;
+ 		}
++		lastRaw = raw;
+ 		// 控制正本是 YAML frontmatter 正文（`control.ts:171-176` 用 stringify 落盘），不是 JSON。
+ 		let flow: FlowControl;
+ 		let footer: string;
+@@ -341,10 +343,16 @@ function takeoverMinister(fixture: Fixture, nodeName: string, round: number): st
+ 			const parsed = parseFrontmatter<Record<string, unknown>>(raw);
+ 			flow = parsed.frontmatter as unknown as FlowControl;
+ 			footer = parsed.body.startsWith("\n") ? parsed.body.slice(1) : parsed.body;
+-			if (typeof flow.实例 !== "string" || flow.版本 !== 2 || !Array.isArray(flow.节点)) throw new Error("结构不符");
+-		} catch {
+-			// 读到别人写到一半的内容，不算拿到控制权，重试。
+-			lastReason = `正本暂不可解析：${JSON.stringify(raw.slice(0, 40))}`;
++			// 对照断言：正本能否被产品 `readControl` 读回，是「本夹具不得比产品更严」的判据。
++			// S1 起控制正本落盘 `版本: 3`（`control.ts:1016`，读取口见 `control.ts:335` 接受 2/3），
++			// 早先这里硬编码只认 2，把夹具过期误报成「正本暂不可解析/持续被占用」。版本口径一律跟产品走。
++			readControl(fixture.recipe, fixture.options);
++			if (typeof flow.实例 !== "string" || !Array.isArray(flow.节点)) throw new Error("结构不符");
++		} catch (error) {
++			// 读到别人写到一半的内容，不算拿到控制权，重试。诊断：原始错误随重试原因带出，不吞。
++			lastReason = `正本暂不可解析：${error instanceof Error ? error.message : String(error)}；前 200 字：${JSON.stringify(
++				raw.slice(0, 200),
++			)}`;
+ 			return false;
+ 		}
+ 		const node = flow.节点.find((entry) => entry.名字 === nodeName)!;
+@@ -382,6 +390,9 @@ function takeoverMinister(fixture: Fixture, nodeName: string, round: number): st
+ 			/* 忙等 */
+ 		}
+ 	}
++	// 诊断：重试用尽时把最后读到的完整正本落盘（目录由环境变量给，测试里不写死绝对路径）。
++	const dumpDir = process.env.PAO_GATE_DIAG_DUMP_DIR;
++	if (dumpDir && lastRaw) writeFileSync(join(dumpDir, `f-novel-loop-raw-${Date.now()}.txt`), lastRaw);
+ 	throw new Error(`模拟宿主：接管 ${nodeName} 第 ${round} 轮失败（控制正本持续被占用：${lastReason}）`);
+ }
+ 
+diff --git a/packages/coding-agent/test/pao/workflow-migration-compat.test.ts b/packages/coding-agent/test/pao/workflow-migration-compat.test.ts
+index e1dfb51bf..b15c57de7 100644
+--- a/packages/coding-agent/test/pao/workflow-migration-compat.test.ts
++++ b/packages/coding-agent/test/pao/workflow-migration-compat.test.ts
+@@ -87,7 +87,14 @@ describe("迁移预演：兼容、显式转换与拒绝恢复", () => {
+ 		const original = readFileSync(path, "utf8");
+ 		await expect(startControl(s.recipe, {}, s.options)).rejects.toThrow("实例已存在");
+ 		expect(readFileSync(path, "utf8")).toBe(original);
+-		for (const broken of [original.replace("版本: 2", "版本: 99"), original.replace("轮次: 1", "轮次: 0")]) {
++		// 版本/轮次从盘上实际内容取，不硬编码版本号：S1 把控制正本升到 v3 后，硬编码的
++		// `replace("版本: 2", ...)` 会空转，文件仍是合法正本 → 断言变成假红（不是产品回归）。
++		const unknownVersion = original.replace(/版本: \d+/, "版本: 99");
++		const brokenRound = original.replace(/轮次: \d+/, "轮次: 0");
++		// 先证明替换真的生效，再断言拒绝恢复与原件逐字节保留。
++		expect(unknownVersion).not.toBe(original);
++		expect(brokenRound).not.toBe(original);
++		for (const broken of [unknownVersion, brokenRound]) {
+ 			writeFileSync(path, broken);
+ 			expect(() => readControl(s.recipe, s.options)).toThrow();
+ 			expect(readFileSync(path, "utf8")).toBe(broken);

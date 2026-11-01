@@ -1,0 +1,54 @@
+﻿# label: 08-packaged-worktree-toolcalls
+# command: .\node_modules\.bin\pnpm.CMD exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/production/worktree-host-electron.spec.ts
+# workdir: D:\AI\workspace\pao-dev\desktop
+# started: 2026-11-01 16:44:11
+# finished: 2026-11-01 16:44:16
+# duration_seconds: 5.1
+# exit_code: 1
+# PAO_HOME: D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home
+# TEMP: D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp
+# PI_OFFLINE: 1  PI_NO_LOCAL_LLM: 1
+# extra_env: PI_APP_TEST_MODE=background;PI_APP_TEST_RELEASE_DIR=D:\AI\workspace\pao-dev\desktop\apps\desktop\release
+# ELECTRON_RUN_AS_NODE(parent value, stripped before launch): [1]
+
+ELECTRON_RUN_AS_NODE=[]
+
+v37.10.3
+
+Running 3 tests using 1 worker
+
+  ok 1 apps\desktop\tests\production\worktree-host-electron.spec.ts:407:5 › V08 离线脚本顺序与错误停止自检（不启动 Electron） (19ms)
+  ok 2 apps\desktop\tests\production\worktree-host-electron.spec.ts:474:5 › 主进程构建产物不静态 require ESM 内核入口 (11ms)
+  x  3 apps\desktop\tests\production\worktree-host-electron.spec.ts:499:5 › 真实 Electron 装配并执行工作树工具 (1ms)
+
+
+  1) apps\desktop\tests\production\worktree-host-electron.spec.ts:499:5 › 真实 Electron 装配并执行工作树工具 ───
+
+    Error: 启动 Playwright 前须设置 PI_APP_WORKTREE_TEST_TMP 为隔离临时根
+
+      499 | test("真实 Electron 装配并执行工作树工具", async () => {
+      500 |   test.setTimeout(300_000);
+    > 501 |   if (!V08_TMP) throw new Error("启动 Playwright 前须设置 PI_APP_WORKTREE_TEST_TMP 为隔离临时根");
+          |                       ^
+      502 |   for (const name of ["TMP", "TEMP", "TMPDIR"]) {
+      503 |     if (resolve(process.env[name] ?? ".") !== V08_TMP)
+      504 |       throw new Error(`启动 Playwright 前须设置 ${name}=${V08_TMP}`);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\worktree-host-electron.spec.ts:501:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-worktree-host-electron-真实-Electron-装配并执行工作树工具\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-worktree-host-electron-真实-Electron-装配并执行工作树工具\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\production\worktree-host-electron.spec.ts:499:5 › 真实 Electron 装配并执行工作树工具 ────
+  2 passed (1.6s)
+
+## stderr
+(node:5504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

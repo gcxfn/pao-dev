@@ -1,0 +1,24 @@
+﻿# test:baseline 受控窗口环境快照
+# snapshot command: Get-Date / Get-Counter '\Processor(_Total)\% Processor Time' / Win32_OperatingSystem.FreePhysicalMemory / Get-Process node,electron,cmd
+date=2026-11-01T16:20:04.6353668+08:00
+cpu_load_pct=28
+mem_avail_mb=3727
+mem_total_mb=16003
+# PID6264 and PID35776 (gates vitest) presence:
+pid=6264 name=node ws_mb=171 cpu_s=23.9 start=2026-11-01T15:48:18.6313638+08:00
+pid=35776 name=node ws_mb=432 cpu_s=1919.4 start=2026-10-31T15:02:18.6212726+08:00
+# top node/electron/cmd processes:
+pid=35776 name=node ws_mb=433 cpu_s=1919.5
+pid=6264 name=node ws_mb=171 cpu_s=23.9
+pid=16160 name=node ws_mb=5 cpu_s=2.2
+pid=31056 name=node ws_mb=79 cpu_s=1.8
+pid=10268 name=node ws_mb=40 cpu_s=1.6
+pid=29796 name=node ws_mb=119 cpu_s=0.8
+pid=9316 name=node ws_mb=0 cpu_s=0.4
+pid=2184 name=node ws_mb=0 cpu_s=0.2
+pid=13368 name=cmd ws_mb=0 cpu_s=0.1
+pid=36256 name=cmd ws_mb=0 cpu_s=0.1
+# gates vitest detection (command line):
+pid=6264 cmd="C:\Program Files\nodejs\node.exe" ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2
+pid=31056 cmd="C:\Program Files\nodejs\node.exe" --experimental-import-meta-resolve --require D:/AI/workspace/pao-dev/PAO/node_modules/vitest/suppress-warnings.cjs --conditio
+pid=29796 cmd="C:\Program Files\nodejs\node.exe" --experimental-import-meta-resolve --require D:/AI/workspace/pao-dev/PAO/node_modules/vitest/suppress-warnings.cjs --conditio

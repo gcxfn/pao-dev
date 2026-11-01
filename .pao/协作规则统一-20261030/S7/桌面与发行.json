@@ -1,0 +1,601 @@
+{
+  "schema": "s7-desktop-release-result/v1",
+  "task": "S7 桌面与发行验证",
+  "owner": "desktop",
+  "collectedAt": "2026-11-01",
+  "timezone": "Asia/Shanghai",
+  "status": "completed_with_unverified_items",
+  "workingDir": "D:\\AI\\workspace\\pao-dev",
+  "evidenceRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\协作规则统一-20261030\\S7\\checks\\desktop",
+  "summary": {
+    "fourStepGate": "build:shared/typecheck/build passed; test:baseline not passed (default concurrency self-saturation, single-concurrency 256/256 green as mechanism evidence)",
+    "electronTargetedSpecs": "2 specs / 4 cases all passed on real Electron 37.10.3",
+    "b20": "desktop side 10/10 per stop cause for manual_pause and recovery_required; desktop can only read and delegate to kernel",
+    "packageWinDir": "exit 0, 232.3s; vendor kernel refreshed and byte-identical to PAO kernel bundle (76/76); kernel bundle inside resources\\app.asar also byte-verified 76/76 (Electron asar fs)",
+    "packagedSmoke": "all five items have real evidence (startup, normal task with real tool calls, pending display, controlled recovery after close, worktree usage); pending display also verified through rendered UI text",
+    "linuxOfflinePath": "not verified: missing WSL node toolchain, libnss3, xvfb-run"
+  },
+  "environment": {
+    "isolation": {
+      "paoHome": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\desktop\\pao-home",
+      "temp": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\desktop\\tmp",
+      "piOffline": "1",
+      "piNoLocalLlm": "1",
+      "providerKeysRemoved": 16,
+      "electronRunAsNode": "stripped before launching real Electron (host-injected 1)",
+      "formalPaoHomeTouched": false
+    },
+    "tools": {
+      "node": "C:\\Program Files\\nodejs\\node.exe v24.18.0",
+      "pnpm": "10.25.0",
+      "electron": "37.10.3 (electron.exe --version verified in logs)",
+      "playwright": "^1.58.2",
+      "git": "2.55.0"
+    },
+    "envNote": "PowerShell 5.1 decodes BOM-less .ps1/.cmd as GBK; runner rewritten ASCII-only with paths passed as parameters; pre-envfix logs kept as non-authoritative"
+  },
+  "steps": [
+    {
+      "id": "build-shared",
+      "command": ".\\node_modules\\.bin\\pnpm.CMD run build:shared",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+      "exitCode": 0,
+      "durationSeconds": 14.2,
+      "result": "passed",
+      "log": "checks\\desktop\\01-build-shared-v2.log"
+    },
+    {
+      "id": "typecheck",
+      "command": ".\\node_modules\\.bin\\pnpm.CMD --dir apps/desktop run typecheck",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+      "exitCode": 0,
+      "durationSeconds": 22.2,
+      "result": "passed",
+      "log": "checks\\desktop\\02-typecheck-v2.log"
+    },
+    {
+      "id": "desktop-build",
+      "command": ".\\node_modules\\.bin\\pnpm.CMD --dir apps/desktop run build",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+      "exitCode": 0,
+      "durationSeconds": 28.3,
+      "result": "passed",
+      "log": "checks\\desktop\\04-desktop-build.log"
+    },
+    {
+      "id": "test-baseline",
+      "command": ".\\node_modules\\.bin\\pnpm.CMD test:baseline",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+      "exitCode": 1,
+      "durationSeconds": 115.1,
+      "result": "not_passed",
+      "verdict": "default concurrency self-saturation on this machine, not a product/S4 defect; timeouts and assertions untouched",
+      "lane": "@pi-gui/pi-sdk-driver",
+      "laneCounts": { "tests": 256, "pass": 251, "fail": 3, "cancelled": 2 },
+      "rounds": [
+        {
+          "id": "pre-envfix-first-run",
+          "authoritative": false,
+          "startedAt": "2026-11-01T15:46:00+08:00",
+          "exitCode": 1,
+          "durationSeconds": 136.4,
+          "window": "mojibake TEMP/PAO_HOME (GBK decoding of BOM-less script)",
+          "log": "checks\\desktop\\03-test-baseline.pre-envfix.log"
+        },
+        {
+          "id": "controlled-window",
+          "authoritative": true,
+          "startedAt": "2026-11-01T16:20:40+08:00",
+          "finishedAt": "2026-11-01T16:22:35+08:00",
+          "exitCode": 1,
+          "durationSeconds": 115.1,
+          "window": "gates full test/pao/ running in parallel; snapshot cpu 28%, mem available 3727MB",
+          "snapshot": "checks\\desktop\\03-test-baseline-clean.snapshot.txt",
+          "log": "checks\\desktop\\03-test-baseline-clean.log"
+        },
+        {
+          "id": "quiet-window",
+          "authoritative": true,
+          "startedAt": "2026-11-01T16:34:18+08:00",
+          "finishedAt": "2026-11-01T16:36:19+08:00",
+          "exitCode": 1,
+          "durationSeconds": 121.5,
+          "window": "gates stopped at 16:28:57 but machine still at cpu 52.2%, mem available 803MB, 11 node processes",
+          "snapshot": "checks\\desktop\\03c-test-baseline-quiet.snapshot.txt",
+          "log": "checks\\desktop\\03c-test-baseline-quiet.log"
+        },
+        {
+          "id": "single-concurrency-diagnosis",
+          "authoritative": true,
+          "command": "node --test --test-concurrency=1 \"test/**/*.test.mts\"",
+          "startedAt": "2026-11-01T16:27:53+08:00",
+          "finishedAt": "2026-11-01T16:33:46+08:00",
+          "exitCode": 0,
+          "durationSeconds": 352.6,
+          "counts": { "tests": 256, "pass": 256, "fail": 0, "cancelled": 0 },
+          "log": "checks\\desktop\\03b-driver-single-concurrency.log"
+        }
+      ],
+      "failingCasesAcrossRounds": [
+        "test\\builtin-extensions.test.mts:244 (timeout 10s: 10287ms controlled, 15946ms quiet)",
+        "test\\deferred-reload.test.mts:178 (5s waitFor after the turn)",
+        "test\\deferred-reload.test.mts:196 or :213/:240 (5s waitFor variants, set differs per round)",
+        "test\\desktop-extension-bridge.test.mts:10 (timeout 10s: 13057ms / 13031ms)"
+      ],
+      "mechanism": "pi-sdk-driver test script has no concurrency setting; 45 *.test.mts files; node default concurrency = logical cores - 1 = 19; 19 test files run real sessions/timers/subprocesses simultaneously",
+      "sideEvidence": "same lane single-concurrency once 174/174 pass; concurrent runs before S4 also failed (174/4, 249/248); PAO assembly guard never triggered in any log (no PaoExtensionLoadError, all sessions created)",
+      "notes": "\"Session ... is not active.\" stderr lines also appear in the fully green serial run, so they are normal deferred-reload timing path logs, not the failure cause",
+      "suggestedUserDecision": "whether to make the pi-sdk-driver lane serial (package.json test script change) is out of S7 scope and was escalated, not done"
+    }
+  ],
+  "isolatedReruns": [
+    {
+      "file": "packages/pi-sdk-driver/test/builtin-extensions.test.mts",
+      "command": "node --test --test-concurrency=1 test/builtin-extensions.test.mts",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop\\packages\\pi-sdk-driver",
+      "runs": [
+        { "exitCode": 1, "durationSeconds": 17.2, "pass": 6, "fail": 0, "cancelled": 1, "note": "single test timed out 10568ms (limit 10000ms)" },
+        { "exitCode": 0, "durationSeconds": 18.2, "pass": 7, "fail": 0 }
+      ],
+      "reading": "borderline / load-sensitive; green in the fully serial full-lane run"
+    },
+    {
+      "file": "packages/pi-sdk-driver/test/deferred-reload.test.mts",
+      "command": "node --test --test-concurrency=1 test/deferred-reload.test.mts",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop\\packages\\pi-sdk-driver",
+      "runs": [
+        { "exitCode": 1, "durationSeconds": 63.7, "pass": 5, "fail": 3, "note": "three 5s waitFor timeouts" },
+        { "exitCode": 1, "durationSeconds": 73.8, "pass": 7, "fail": 1, "note": "different test set failed" }
+      ],
+      "reading": "red in both isolated runs while machine still loaded, failure set varies, no assertion mismatch; green in serial full-lane run"
+    },
+    {
+      "file": "packages/pi-sdk-driver/test/desktop-extension-bridge.test.mts",
+      "command": "node --test --test-concurrency=1 test/desktop-extension-bridge.test.mts",
+      "workdir": "D:\\AI\\workspace\\pao-dev\\desktop\\packages\\pi-sdk-driver",
+      "runs": [
+        { "exitCode": 1, "durationSeconds": 18.2, "pass": 0, "fail": 0, "cancelled": 1, "note": "single test timed out after 10000ms (wall 15215ms)" },
+        { "exitCode": 1, "durationSeconds": 14.2, "pass": 0, "fail": 0, "cancelled": 1, "note": "single test timed out after 10000ms (wall 11668ms)" }
+      ],
+      "reading": "red in both isolated runs while machine still loaded, hangs at the same point; green in serial full-lane run"
+    }
+  ],
+  "isolatedRunsMachineLoad": {
+    "loadPercent": 67,
+    "cpuLoadPercent": 64.3,
+    "memAvailableMb": 957,
+    "nodeProcessCount": 12,
+    "note": "not a quiet window; another teammate's heavy load present, so isolated-run timeouts were load-confounded (confirmed later by serial full-lane green run)"
+  },
+  "electron": {
+    "driver": "product Playwright lane (playwright.config.ts) with real Electron 37.10.3, not headless fake driver",
+    "env": "PI_APP_TEST_LANE=core, PI_APP_REAL_AUTH=0, PI_APP_TEST_MODE=background, isolated user-data and PAO_HOME, fake credentials",
+    "specs": [
+      {
+        "spec": "apps/desktop/tests/core/pao-control-live-owner.spec.ts",
+        "command": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/pao-control-live-owner.spec.ts",
+        "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+        "exitCode": 0,
+        "durationSeconds": 13.2,
+        "passed": 1,
+        "failed": 0,
+        "cases": [
+          {
+            "name": "真实 owner 经桌面 IPC 暂停，恢复须界面确认且取消不改变暂停",
+            "location": "pao-control-live-owner.spec.ts:43:5",
+            "durationSeconds": 10.9,
+            "result": "passed"
+          }
+        ],
+        "log": "checks\\desktop\\electron\\e2e-pao-control-live-owner.runasnode-fixed.log"
+      },
+      {
+        "spec": "apps/desktop/tests/core/f-desktop-owner.spec.ts",
+        "command": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/f-desktop-owner.spec.ts",
+        "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+        "exitCode": 0,
+        "durationSeconds": 20.2,
+        "passed": 3,
+        "failed": 0,
+        "cases": [
+          {
+            "name": "T15 暂停经界面真受理：控制正本落挂起原因，界面按回执显示而不是自己编",
+            "location": "f-desktop-owner.spec.ts:213:5",
+            "durationSeconds": 5.5,
+            "result": "passed"
+          },
+          {
+            "name": "T15 人工门确认经界面真受理：点确认后内核放行，控制正本真的落确认记录",
+            "location": "f-desktop-owner.spec.ts:243:5",
+            "durationSeconds": 4.8,
+            "result": "passed"
+          },
+          {
+            "name": "T15 确认被拒绝时如实报错、不动控制正本，不显示成成功",
+            "location": "f-desktop-owner.spec.ts:301:5",
+            "durationSeconds": 5.6,
+            "result": "passed"
+          }
+        ],
+        "log": "checks\\desktop\\electron\\e2e-f-desktop-owner.runasnode-fixed.log"
+      }
+    ],
+    "verifiedInLog": {
+      "electronRunAsNode": "[]",
+      "electronVersion": "v37.10.3"
+    },
+    "incidents": [
+      {
+        "id": "electron-run-as-node",
+        "what": "host-injected ELECTRON_RUN_AS_NODE=1 made electron.exe run as Node; Playwright --inspect/--remote-debugging-port rejected with 'bad option: --remote-debugging-port=0', electron.launch failed exitCode=9",
+        "impact": "first runs of both specs failed at launch (1 failed / 3 failed), not assertion failures",
+        "fix": "runner strips ELECTRON_RUN_AS_NODE in same session and logs the parent value plus electron.exe --version",
+        "failedLogsKept": [
+          "checks\\desktop\\electron\\e2e-pao-control-live-owner.electron-runasnode.log",
+          "checks\\desktop\\electron\\e2e-f-desktop-owner.electron-runasnode.log"
+        ],
+        "rerunAfterFix": "both specs exit 0"
+      }
+    ]
+  },
+  "b20": {
+    "purpose": "CLI and desktop query/handle the same stop cause; business state and permissions consistent; desktop must not release on its own",
+    "stopCauses": ["manual_pause", "recovery_required"],
+    "stopCauseOrigin": "kernel API in isolated project: manual_pause via pauseControl(...), recovery_required via pauseControlIfUnpaused(...); not hand-edited files",
+    "desktopReadEntry": "window.piApp.getWorkflowControl -> preload.ts:245 -> register-desktop-ipc.ts:363 -> electron/platform/pao/flow-control-query.ts (normalizeFlowControl L135 / normalizeStop L87) -> pi-sdk-driver/src/pao-flow-control.ts:113-123 (readDesktopFlows = kernel readDesktopFlowsFresh)",
+    "kernelReadEntry": "PAO/packages/coding-agent/dist/pao/desktop/workflow.js readDesktopFlowsFresh(project)",
+    "perCause": {
+      "manual_pause": {
+        "instance": "9bf880df-1619-4d24-b312-26805687db31",
+        "checks": 10,
+        "failed": 0,
+        "exitCode": 0,
+        "durationSeconds": 4.1,
+        "log": "checks\\desktop\\b20\\b20-parity-manual.log",
+        "dataDir": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\desktop\\b20\\runs\\2026-11-01T08-24-05-736Z",
+        "fields": {
+          "停因.category": { "desktop": "manual_pause", "kernel": "manual_pause", "cli": "manual_pause" },
+          "停因.reason": { "desktop": "B20 对表：人工暂停", "kernel": "B20 对表：人工暂停", "cli": "原样透出" },
+          "停因.authority": { "desktop": "human", "kernel": "human", "cli": "human" },
+          "停因.actions": { "desktop": ["resume"], "kernel": ["resume"], "cli": ["resume"] },
+          "pauseReason": { "desktop": "B20 对表：人工暂停", "kernel": "B20 对表：人工暂停" },
+          "裁定（负向）": { "desktop": null, "kernel": null, "cli": null }
+        }
+      },
+      "recovery_required": {
+        "instance": "8d963ae8-7349-4843-9ac8-55b0fbc7aeb6",
+        "checks": 10,
+        "failed": 0,
+        "exitCode": 0,
+        "durationSeconds": 4.9,
+        "log": "checks\\desktop\\b20\\b20-parity-recovery.log",
+        "dataDir": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\desktop\\b20\\runs\\2026-11-01T08-23-52-873Z",
+        "fields": {
+          "停因.category": { "desktop": "recovery_required", "kernel": "recovery_required", "cli": "recovery_required" },
+          "停因.reason": { "desktop": "任意关闭提示", "kernel": "任意关闭提示", "cli": "原样透出" },
+          "停因.authority": { "desktop": "human", "kernel": "human", "cli": "human" },
+          "停因.actions": { "desktop": ["resume"], "kernel": ["resume"], "cli": ["resume"] },
+          "pauseReason": { "desktop": "任意关闭提示", "kernel": "任意关闭提示" },
+          "裁定（负向）": { "desktop": null, "kernel": null, "cli": null }
+        }
+      }
+    },
+    "result": "manual_pause 10/10 equal exit 0 4.1s; recovery_required 10/10 equal exit 0 4.9s (each set includes two fixture-declaration checks)",
+    "readOnlyEvidence": [
+      "no non-test desktop code calls pauseControl/resumeControl/confirmControl directly; only mutation path is flow-control-query.ts:297 -> bridge.runDesktopFlowCommand (kernel), desktop only correlates the request",
+      "normalizeStop (flow-control-query.ts:87) fails explicitly on missing/unknown category/authority/actions/reason, never guesses a stop cause",
+      "f-desktop-owner.spec.ts:301:5 (confirm rejected -> error shown, control original unchanged) passed in real Electron",
+      "getWorkflowControl is read-only: readDesktopFlowsFresh -> readControlView projection, no write entry called",
+      "packaged artifact: UI resume action only raises the human-gate dialog; cancelling shows an honest error and leaves the control file byte-unchanged (09c/09d)"
+    ],
+    "cliColumn": {
+      "source": "boundary (policy.ts:50-75 projectControlStop; pao_query_flow and /pao flow see share the same projection, workflow-tools.test.ts:1174 verbatim-identical, 46 passed exit 0)",
+      "level": "structural same-source + existing passing tests; boundary still to run a same-stop-cause CLI render in a quiet window",
+      "keyStructuralFact": "manual_pause/recovery_required are never actionable (actionable = category==='decision' && ...), so authority is always human and actions are always ['resume'] by construction (policy.ts:59-72); owner/resolve_pending only for decision-class stops"
+    },
+    "report": "checks\\desktop\\b20-cross-entry.md",
+    "logs": [
+      "checks\\desktop\\b20\\b20-parity-manual.log",
+      "checks\\desktop\\b20\\b20-parity-recovery.log",
+      "checks\\desktop\\b20\\b20-parity.log"
+    ],
+    "notCoveredStopCauses": ["decision", "terminal_block", "legacy_unknown"],
+    "notCoveredReason": "decision needs a pending/expiry chain; terminal_block is only produced by a rejected review node or a back-edge overflow (control.ts:1443/1470) and would need a review-node fixture with all cards delivered; legacy_unknown needs a legacy text control file. CLI side covers them structurally (workflow-stop.test.ts:110/126-133/177-185/212-222)."
+  },
+  "vendorIdentity": {
+    "beforePackage": {
+      "measuredAt": "2026-11-01T08:38:14.369Z (pre-package capture)",
+      "vendorDir": "desktop\\apps\\desktop\\vendor\\pao-kernel\\dist\\bundle",
+      "kernelDir": "PAO\\packages\\coding-agent\\dist\\bundle",
+      "vendorFiles": 76,
+      "vendorBytes": 10636041,
+      "vendorBundleAggregateSha256": "72c64d0f10751183fef1786dcfe9e84c2321d163a8f3644c8f09eb44fa9c22ba",
+      "vendorKernelTreeFiles": 1935,
+      "vendorKernelTreeBytes": 30172884,
+      "kernelFiles": 76,
+      "kernelBytes": 10905302,
+      "kernelBundleAggregateSha256": "913cbd65bca3d56e9b68feaf1b5886e791d7fde361fcb1367a646e0e9bd8c90d",
+      "identicalFileCount": 70,
+      "identicalTree": false,
+      "onlyInVendor": ["chunk-CS6FLYIW.js", "chunk-JZAVVAFQ.js", "virtual-modules-UEXGIHZB.js"],
+      "onlyInKernel": ["chunk-4L7XWW7U.js", "chunk-SJCYZKXC.js", "virtual-modules-XG2AHHJY.js"],
+      "changed": ["cli-runtime.js", "index.js", "rpc-entry.js"],
+      "vendorBuildManifest": {
+        "path": "desktop\\apps\\desktop\\vendor\\pao-kernel\\vendor-build-manifest.json",
+        "sha256": "86c46c5d35a613fb566e9df246fb2d8218701246747097e0fffc43941d44313d",
+        "format": 2,
+        "builtAt": "2026-10-25T14:13:28.078Z",
+        "buildCommand": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js run clean/build:offline",
+        "kernelOutputs": 1934,
+        "runtimeOutputs": 5636,
+        "runtimePackages": 11
+      },
+      "captureFiles": [
+        "checks\\desktop\\05-vendor-before.txt",
+        "checks\\desktop\\05-vendor-before.json"
+      ],
+      "log": "checks\\desktop\\vendor-compare\\before-package.log",
+      "json": "D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\compat\\bench\\vendor-compare-before-package.json",
+      "reading": "mismatch expected before vendor:kernel refresh"
+    },
+    "afterPackage": {
+      "measuredAt": "2026-11-01T08:42:34.469Z (post-package capture)",
+      "vendorFiles": 76,
+      "vendorBytes": 10905302,
+      "vendorBundleAggregateSha256": "1e466b6260b34ce2503581377e608bd24db11d107204c46389c5a8226b879e60",
+      "vendorKernelTreeFiles": 1991,
+      "vendorKernelTreeBytes": 31523696,
+      "kernelFiles": 76,
+      "kernelBytes": 10905302,
+      "kernelBundleAggregateSha256": "913cbd65bca3d56e9b68feaf1b5886e791d7fde361fcb1367a646e0e9bd8c90d",
+      "vendorBuildManifest": {
+        "sha256": "a4629a1c0cf0c0ad54da08a0fb5662148e15bc720d301d57cf758d8c049bec99",
+        "format": 2,
+        "builtAt": "2026-11-01T08:39:05.203Z"
+      },
+      "vendorKernelMaterializedFiles": 7637,
+      "vendorKernelMaterializeLogLine": "[vendor-pao-kernel] 已从正式构建物化 7637 个文件；清单 SHA-256 a4629a1c0cf0c0ad54da08a0fb5662148e15bc720d301d57cf758d8c049bec99。",
+      "captureFiles": [
+        "checks\\desktop\\05-vendor-after.txt",
+        "checks\\desktop\\05-vendor-after.json"
+      ],
+      "perFileComparison": {
+        "tool": "s7\\compat\\compare-vendor.mjs",
+        "command": "node \"D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\compat\\compare-vendor.mjs\" \"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\vendor\\pao-kernel\\dist\\bundle\" \"D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\" \"D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\compat\\bench\\vendor-compare-after.json\"",
+        "exitCode": 0,
+        "vendorFiles": 76,
+        "vendorBytes": 10905302,
+        "vendorTreeSha256": "c068cfaa56bfbd46aa6e89ece4c7e9071c7f876a519b3a0f7372546bf14e8765",
+        "kernelFiles": 76,
+        "kernelBytes": 10905302,
+        "kernelTreeSha256": "c068cfaa56bfbd46aa6e89ece4c7e9071c7f876a519b3a0f7372546bf14e8765",
+        "identicalFileCount": 76,
+        "identicalTree": true,
+        "onlyInVendor": [],
+        "onlyInKernel": [],
+        "changed": [],
+        "log": "checks\\desktop\\0x-vendor-vs-bundle-after-package.log",
+        "reading": "identical after refresh; compat recorded it in 兼容与结构收敛-结果.md indicator 10 and flipped its verdict to pass"
+      },
+      "aggregateCaveat": "my capture-vendor-identity.mjs aggregate includes the repo-root-relative path prefix, so vendor and kernel trees cannot be compared across roots via aggregate; judged by per-file sha256 and treeSha256 instead (compat disclosed the same)"
+    },
+    "vendorGitTracking": {
+      "trackedFiles": 0,
+      "ignoredBy": "apps/desktop/.gitignore:10 vendor/",
+      "gitStatusClean": true,
+      "meaning": "vendor:kernel cannot produce a diff in version-controlled files"
+    }
+  },
+  "packageWinDir": {
+    "command": ".\\node_modules\\.bin\\pnpm.CMD run package:win:dir",
+    "workdir": "D:\\AI\\workspace\\pao-dev\\desktop",
+    "exitCode": 0,
+    "durationSeconds": 232.3,
+    "startedAt": "2026-11-01T16:38:21+08:00",
+    "finishedAt": "2026-11-01T16:42:14+08:00",
+    "log": "checks\\desktop\\06-package-win-dir.log",
+    "builder": "electron-builder 26.8.1, platform=win32 arch=x64 electron=37.10.3, appOutDir=release\\win-unpacked",
+    "artifacts": {
+      "exe": "desktop\\apps\\desktop\\release\\win-unpacked\\PAO.exe",
+      "exeBytes": 195.06,
+      "exeFileVersion": "1.0.1",
+      "exeMtime": "2026-11-01T16:42:13",
+      "appAsar": "desktop\\apps\\desktop\\release\\win-unpacked\\resources\\app.asar",
+      "appAsarSizeMb": 206.75,
+      "appAsarBytes": 216792400,
+      "asarUnpackedNodeModules": ["@earendil-works/pi-tui", "node-pty", "@esbuild", "quickjs-wasi", "@silvia-odwyer"],
+      "asarListLog": "checks\\desktop\\09-asar-list.txt",
+      "asarEntryCount": 37361,
+      "kernelEntriesInAsar": 2761,
+      "kernelBundleEntriesInAsar": 77
+    },
+    "publishArtifacts": {
+      "generated": false,
+      "detail": "release\\ was only updated with win-unpacked\\ and builder-debug.yml at 16:42:13; historical PAO-1.0.1-x64-setup.exe / -portable.exe / latest.yml still carry 2026-10-12 09:02 mtime and were not overwritten"
+    },
+    "warnings": {
+      "dependencyNotFoundOnDisk": {
+        "count": 11,
+        "items": ["parse5@6.0.1", "retry@0.12.0", "lru-cache@7.18.3", "@aws-sdk/token-providers@3.1129.0", "ws@8.20.0", "ansi-regex@5.0.1", "ansi-regex@5.0.1", "ansi-regex@5.0.1", "data-uri-to-buffer@6.0.2", "@types/unist@2.0.11", "escape-string-regexp@5.0.0"],
+        "reading": "did not affect any verified path; not verified one by one"
+      }
+    },
+    "inPackageKernelIdentity": {
+      "byteLevelComparison": "done: 76/76 files byte-identical",
+      "how": "Electron's own asar fs support: run desktop\\node_modules\\electron\\dist\\electron.exe with ELECTRON_RUN_AS_NODE=1 and read resources\\app.asar\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle with fs, sha256 each file, compare with PAO\\packages\\coding-agent\\dist\\bundle (script s7\\desktop\\probe-asar-bytes.cjs)",
+      "packagedFiles": 76,
+      "diskFiles": 76,
+      "identicalFileCount": 76,
+      "identicalTree": true,
+      "changed": 0,
+      "onlyInPackaged": 0,
+      "onlyOnDisk": 0,
+      "packagedTreeSha256": "98a1765fe5d0902df91de549bfcfecc0586f111c8d33af6f387732ee7649a1f1",
+      "diskTreeSha256": "98a1765fe5d0902df91de549bfcfecc0586f111c8d33af6f387732ee7649a1f1",
+      "evidence": [
+        "checks\\desktop\\11b-packaged-kernel-asar-bytes.log",
+        "checks\\desktop\\11b-packaged-kernel-asar-bytes.json"
+      ],
+      "processNotes": [
+        "@electron/asar 3.4.1 can list this app.asar (37361 entries) but cannot extract/stat entries (probe checks\\desktop\\10-packaged-kernel.log/.json); that is a reader limitation, not archive damage",
+        "first version of my Electron-based probe (11-packaged-kernel-asar-bytes.log) lost the chunks/ path prefix and produced 72 false differences; fixed walker rerun is 11b and is authoritative"
+      ],
+      "claimBoundary": "kernel inside app.asar is byte-verified; installer/publish artifacts and Linux packages are not"
+    }
+  },
+  "packagedSmoke": {
+    "status": "passed_all_five",
+    "artifact": "apps\\desktop\\release\\win-unpacked\\ (PAO.exe, resources\\app.asar)",
+    "method": "product Playwright lane driving the packaged exe; PI_APP_TEST_MODE=background; PI_APP_TEST_RELEASE_DIR=absolute release path; isolated user-data + isolated PAO_HOME; fake credentials; ELECTRON_RUN_AS_NODE stripped; every case asserts defaultApp=false and process.execPath points into release\\win-unpacked",
+    "checks": [
+      {
+        "id": "startup",
+        "status": "passed",
+        "spec": "apps/desktop/tests/production/packaged-smoke.spec.ts",
+        "command": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/production/packaged-smoke.spec.ts",
+        "exitCode": 0,
+        "durationSeconds": 18.2,
+        "passed": 1,
+        "failed": 0,
+        "caseDurationSeconds": 15.1,
+        "covers": "packaged exe identity (defaultApp=false, execPath), workspace list, open new thread",
+        "log": "checks\\desktop\\07-packaged-smoke-startup.log"
+      },
+      {
+        "id": "normal-task-with-real-tool-call",
+        "status": "passed",
+        "spec": "apps/desktop/tests/production/worktree-host-electron.spec.ts",
+        "command": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/production/worktree-host-electron.spec.ts",
+        "exitCode": 0,
+        "durationSeconds": 63.6,
+        "passed": 3,
+        "failed": 0,
+        "caseDurationSeconds": 59.9,
+        "covers": "real Electron assembles and executes worktree tools (pao_worktree_create/list/dispatch_card) through the real pi loop with the offline scripted provider; when PI_APP_TEST_RELEASE_DIR is set the spec uses launchPackagedDesktop",
+        "log": "checks\\desktop\\08b-packaged-worktree-toolcalls.log",
+        "envExtra": "PI_APP_WORKTREE_TEST_TMP and TMPDIR pointed at the isolated temp root (spec precondition, checked at spec:501)"
+      },
+      {
+        "id": "worktree-usage",
+        "status": "passed",
+        "spec": "same as normal-task-with-real-tool-call",
+        "detail": "same main case creates, lists and dispatches cards on a real worktree",
+        "log": "checks\\desktop\\08b-packaged-worktree-toolcalls.log"
+      },
+      {
+        "id": "pending-display-and-legal-handling-ipc",
+        "status": "passed",
+        "spec": "temporary spec s7\\desktop\\packaged-smoke\\packaged-pending.spec.ts",
+        "exitCode": 0,
+        "durationSeconds": 38.4,
+        "passed": 1,
+        "failed": 0,
+        "caseDurationSeconds": 34.8,
+        "covers": "kernel writes manual_pause; desktop read surface returns {manual_pause, human, ['resume']}; resume cancel -> state:error, pause unchanged; resume confirm -> accepted, stop cleared",
+        "log": "checks\\desktop\\09c-packaged-pending-recovery.log",
+        "evidence": ["checks\\desktop\\packaged-smoke\\01-paused-pending.png", "checks\\desktop\\packaged-smoke\\smoke-findings.json"]
+      },
+      {
+        "id": "controlled-recovery-after-close",
+        "status": "passed",
+        "spec": "same as pending-display-and-legal-handling-ipc (app.close() then relaunch with the same userDataDir)",
+        "covers": "after relaunch the read surface still reports {manual_pause, human, ['resume']} with a non-empty pauseReason; an unconfirmed resume fails and the stop cause is unchanged",
+        "log": "checks\\desktop\\09c-packaged-pending-recovery.log",
+        "evidence": ["checks\\desktop\\packaged-smoke\\02-after-relaunch.png"]
+      },
+      {
+        "id": "pending-display-through-rendered-ui",
+        "status": "passed",
+        "spec": "temporary spec s7\\desktop\\packaged-smoke\\packaged-pending-ui.spec.ts",
+        "exitCode": 0,
+        "durationSeconds": 96.0,
+        "passed": 1,
+        "failed": 0,
+        "caseDurationSeconds": 96.0,
+        "covers": "real UI interaction: open workflow cards, read badge text and hold row text, click Resume (human gate dialog), cancel then confirm, close and relaunch and read the badge again",
+        "observed": {
+          "initialBadge": "运行中",
+          "pauseButtonDisabled": true,
+          "pausedBadge": "挂起 · 界面待决证据：人工暂停",
+          "pausedHoldRow": "界面待决证据：人工暂停",
+          "cancelError": "须用户在界面显式确认；无交互界面不能自动恢复或代替人工门 The action did not take effect and the control file is unchanged…",
+          "afterConfirmNote": "The action was accepted; the control file is the source of truth.",
+          "resumedBadge": "运行中",
+          "afterRelaunchBadge": "挂起 · 界面待决证据：人工暂停",
+          "afterRelaunchCancelStop": "manual_pause"
+        },
+        "sourceOfTextComposition": "src/features/workflow-cards/workflow-cards-model.ts:415 flowStatusText = `${status} · ${stop.reason ?? pauseReason}`",
+        "log": "checks\\desktop\\09d-packaged-pending-ui.log",
+        "evidence": [
+          "checks\\desktop\\packaged-smoke\\03-ui-initial.png",
+          "checks\\desktop\\packaged-smoke\\04-ui-pending-visible.png",
+          "checks\\desktop\\packaged-smoke\\05-ui-cancel-keeps-pending.png",
+          "checks\\desktop\\packaged-smoke\\06-ui-resumed.png",
+          "checks\\desktop\\packaged-smoke\\07-ui-after-relaunch.png",
+          "checks\\desktop\\packaged-smoke\\08-ui-after-relaunch-cancel.png",
+          "checks\\desktop\\packaged-smoke\\ui-findings.json"
+        ]
+      }
+    ],
+    "incidents": [
+      {
+        "id": "ascii-cmd-mangles-nonascii-command-path",
+        "run": "09-packaged-pending-recovery",
+        "exitCode": 1,
+        "durationSeconds": 2,
+        "what": "runner writes -Command into an ASCII-encoded .cmd, so non-ASCII path became '?': playwright reported smoke.config.ts does not exist",
+        "fix": "junction desktop\\.cache\\s7-packaged-smoke -> temp spec dir (git-ignored by desktop\\.gitignore:12 .cache/), run with ASCII -c path",
+        "log": "checks\\desktop\\09-packaged-pending-recovery.log"
+      },
+      {
+        "id": "test-side-wrong-ipc-input-shape",
+        "run": "09b-packaged-pending-recovery",
+        "exitCode": 1,
+        "durationSeconds": 12.1,
+        "what": "Error invoking remote method 'pi-gui:control-workflow': TypeError: input.instanceId must be a string",
+        "diagnosis": "test-side defect, not product: real contract electron\\ipc\\request-validation.ts:1038-1056 only accepts {workspaceId, sessionId, instanceId, nodeName, round, action, reason} and main process fills recipe/cards_dir/owner from disk (flow-control-query.ts:270-297); the UI itself sends instanceId: control.instanceId (workflow-cards-view.tsx:559-567)",
+        "fix": "test changed to match the contract, rerun as 09c/09d",
+        "log": "checks\\desktop\\09b-packaged-pending-recovery.log"
+      }
+    ]
+  },
+  "linuxOfflinePath": {
+    "status": "not_verified",
+    "reason": "missing prerequisites: no node build toolchain inside WSL (node/pnpm unavailable, only npx 11.16.0), missing libnss3.so and xvfb-run",
+    "evidence": [
+      "checks\\desktop\\linux-prereq\\wsl-check.log",
+      "checks\\desktop\\linux-prereq\\wsl-ubuntu-probe.log",
+      "checks\\desktop\\linux-prereq\\docker-check.log"
+    ],
+    "notInstallingSystemDependencies": true
+  },
+  "unverified": [
+    "test:baseline whole suite: not passed under default concurrency (self-saturation); serial full-lane green is the mechanism evidence. Whether to make the lane serial is a user decision, out of S7 scope.",
+    "11 'dependency not found on disk' packages: not verified one by one; all verified paths pass",
+    "B20 desktop side: decision / terminal_block / legacy_unknown stop causes not covered (fixture cost); CLI side covers them structurally",
+    "Linux offline product path: missing WSL node toolchain, libnss3, xvfb-run",
+    "real provider model path (V1): not authorised, not claimed; packaged smoke used the offline scripted provider with fake credentials",
+    "verify:packaged-runtime-deps:windows not run (it depends on @electron/asar app.asar reading, the same reader limitation that blocked my first probe; kernel identity is now covered by the Electron-direct byte comparison anyway)"
+  ],
+  "evidenceIndex": {
+    "stepLogs": "checks\\desktop\\01-build-shared-v2.log, 02-typecheck-v2.log, 03-test-baseline.pre-envfix.log, 03-test-baseline-clean.log, 03c-test-baseline-quiet.log, 03b-driver-single-concurrency.log, 04-desktop-build.log",
+    "snapshots": "checks\\desktop\\03-test-baseline-clean.snapshot.txt, 03c-test-baseline-quiet.snapshot.txt",
+    "isolatedReruns": "checks\\desktop\\isolate\\iso-*.{log,out.txt,err.txt}",
+    "electron": "checks\\desktop\\electron\\e2e-*.runasnode-fixed.log, e2e-*.electron-runasnode.*, e2e-*-v2.*",
+    "b20": "checks\\desktop\\b20-cross-entry.md, checks\\desktop\\b20\\b20-parity-manual.log, b20-parity-recovery.log, b20-parity.log, s7\\desktop\\b20\\runs\\<ts>\\*",
+    "vendorCompare": "checks\\desktop\\05-vendor-before.txt/.json, 05-vendor-after.txt/.json, 0x-vendor-vs-bundle-after-package.log, vendor-compare\\before-package.log, 09-asar-list.txt",
+    "package": "checks\\desktop\\06-package-win-dir.log",
+    "inPackageKernel": "checks\\desktop\\11b-packaged-kernel-asar-bytes.log/.json (authoritative, 76/76 identical), 11-packaged-kernel-asar-bytes.log (first probe, walker defect kept as process evidence), 10-packaged-kernel.log/.json (@electron/asar reader limitation probe), 09-asar-list.txt",
+    "packagedSmoke": "checks\\desktop\\07-packaged-smoke-startup.log, 08-packaged-worktree-toolcalls.log, 08b-packaged-worktree-toolcalls.log, 09-packaged-pending-recovery.log, 09b-packaged-pending-recovery.log, 09c-packaged-pending-recovery.log, 09d-packaged-pending-ui.log, checks\\desktop\\packaged-smoke\\*.png, smoke-findings.json, ui-findings.json",
+    "linuxPrereq": "checks\\desktop\\linux-prereq\\*",
+    "runner": "临时文件夹\\协作规则统一-20261030\\s7\\desktop\\run-step2.ps1 (ASCII only), capture-vendor-identity.mjs, b20\\b20-parity.mjs, packaged-smoke\\{smoke.config.ts, packaged-pending.spec.ts, packaged-pending-ui.spec.ts}, probe-packaged-kernel.mjs, probe-asar-bytes.cjs (Electron node-mode asar reader)",
+    "artifact": "desktop\\apps\\desktop\\release\\win-unpacked\\PAO.exe, desktop\\apps\\desktop\\release\\win-unpacked\\resources\\app.asar"
+  },
+  "evidenceLevel": {
+    "realElectron": "sections electron/packagedSmoke run a real Electron 37.10.3 child process; packaged cases assert defaultApp=false and execPath inside release\\win-unpacked",
+    "realKernel": "stop causes written through kernel public API (pauseControl / pauseControlIfUnpaused); desktop only reads and forwards",
+    "packagedArtifact": "release\\win-unpacked (unpacked dir build), not an installer/zip; the kernel bundle inside resources\\app.asar is byte-verified against the on-disk PAO bundle via Electron's asar fs support (76/76); installer and upload paths not exercised",
+    "realProvider": "not authorised; offline scripted provider and fake credentials only",
+    "baselineAttribution": "concurrency-saturation conclusion is an environment attribution from same-machine round comparisons plus the serial control run, not a code-level root-cause fix"
+  }
+}

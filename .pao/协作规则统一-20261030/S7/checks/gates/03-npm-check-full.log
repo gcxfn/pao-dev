@@ -1,0 +1,88 @@
+﻿===== S7 GATE CHECK =====
+step_name:    03-npm-check-full
+command:      npm run check
+workdir:      D:\AI\workspace\pao-dev\PAO
+start_time:   2026-11-01 15:47:28
+pao_home:     D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\gates\pao-home
+temp:         D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\gates\tmp
+pi_offline:   1
+pi_no_local:  1
+node:         v24.18.0
+ps_version:   5.1.26100.9711
+===== OUTPUT =====
+
+
+> pi-monorepo@0.0.3 check
+> biome check --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:pao:kernel && npm run check:install-lock:coding-agent && tsc --noEmit && npm run check:browser-smoke
+
+Checked 1998 files in 8s. No fixes applied.
+
+> pi-monorepo@0.0.3 check:pinned-deps
+> node scripts/check-pinned-deps.mjs
+
+
+> pi-monorepo@0.0.3 check:runtime-deps
+> node scripts/check-runtime-deps.mjs
+
+Public package runtime imports have declared dependencies.
+
+> pi-monorepo@0.0.3 check:ts-imports
+> node scripts/check-ts-relative-imports.mjs
+
+
+> pi-monorepo@0.0.3 check:entry-graphs
+> node scripts/check-entry-graphs.mjs
+
+Entry point graphs are within budget.
+
+> pi-monorepo@0.0.3 check:pao:kernel
+> node packages/coding-agent/scripts/gate-kernel-import.mjs --kernel-only && node packages/coding-agent/scripts/gate-boundary.mjs --kernel-only && node --test packages/coding-agent/scripts/gate-kernel-import.test.mjs
+
+[PASS] root(.) — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/desktop — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/todo — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] B1: CLI 源闭包 460 文件无 electron/react/ink（裸外部依赖 856 条全为包依赖）
+[PASS] B2: bundle cli.js（0.0 MB）无 electron/react 引用
+[范围] --kernel-only只检查内核；B3/B4由跨仓check:gates检查
+[PASS] B5(pao/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/desktop/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/todo/summary.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B6: exports ., ./rpc-entry, ./pao, ./pao/desktop, ./pao/todo, ./client, ./experimental/plugin 均不含 cli 目标
+[PASS] B7: worker/supervision.ts 执行侧闭包不 import src/pao/workflow（含 type-only）
+[PASS] B7自检: 故意违规样例已拦截（supervision.ts -> control.ts）
+✔ 纯导出 (167.8553ms)
+✔ disconnect监听 (158.7076ms)
+✔ exit监听 (169.5557ms)
+✔ stdout输出 (190.4274ms)
+✔ stdin数据监听 (165.2241ms)
+✔ raw属性改变 (172.1813ms)
+✔ 导入提前退出 (161.2253ms)
+✔ 导入异常 (154.5727ms)
+✔ 导入后仍有活动句柄 (10098.8271ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11563.0271
+
+> pi-monorepo@0.0.3 check:install-lock:coding-agent
+> node scripts/generate-coding-agent-install-lock.mjs --check
+
+packages/coding-agent/install-lock is up to date.
+
+> pi-monorepo@0.0.3 check:browser-smoke
+> node scripts/check-browser-smoke.mjs
+
+
+===== RUNNER FOOTER =====
+command:      npm run check
+workdir:      D:\AI\workspace\pao-dev\PAO
+exit_code:    0
+start_time:   2026-11-01 15:47:28
+end_time:     2026-11-01 15:48:10
+elapsed_sec:  42.4
+log_path:     D:\AI\workspace\pao-dev\.pao\协作规则统一-20261030\S7\checks\gates\03-npm-check-full.log

@@ -1,0 +1,1152 @@
+{
+  "schema": "pao-s7-compat-structure-v1",
+  "stage": "S7",
+  "member": "compat",
+  "taskId": "task-4",
+  "generatedAt": "2026-11-01T09:04:52.522Z",
+  "codeBase": "D:\\AI\\workspace\\pao-dev (HEAD + S1—S6 uncommitted changes), read-only",
+  "boundary": "不改产品源码/既有测试、不提交、不删文件；临时脚本与隔离 PAO_HOME 在 临时文件夹/协作规则统一-20261030/s7/compat；地图耗时为带并发负载数据，判定只用进程数与 artifact 语义",
+  "oldImplementation": {
+    "total": 27,
+    "deleted": {
+      "count": 10,
+      "ids": [
+        4,
+        5,
+        6,
+        7,
+        11,
+        13,
+        15,
+        17,
+        18,
+        25
+      ]
+    },
+    "rewritten": {
+      "count": 7,
+      "ids": [
+        8,
+        9,
+        10,
+        14,
+        23,
+        24,
+        26
+      ]
+    },
+    "thinAdapter": {
+      "count": 9,
+      "ids": [
+        1,
+        2,
+        3,
+        16,
+        19,
+        20,
+        21,
+        22,
+        27
+      ]
+    },
+    "liveCallSites": {
+      "count": 1,
+      "ids": [
+        12
+      ],
+      "note": "decideNode / applyPending 属活代码，非缺陷残留"
+    },
+    "dynamicLoadOfOldImpl": 0,
+    "oldFieldWritesInSource": 0,
+    "rows": [
+      {
+        "id": 1,
+        "name": "可写 FlowControl.暂停?: string",
+        "origin": "workflow/control.ts:118-147 + 15+ 赋值点",
+        "stage": "S1",
+        "current": "只读 getter control.ts:139 + attachControlProjections:298-305",
+        "publicExport": true,
+        "tests": [
+          "test/pao/workflow-stop.test.ts:224-246",
+          "test/pao/workflow-stop.test.ts:259-314"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "v2 旧控制文件只读投影与宿主回包字段名属外部契约"
+      },
+      {
+        "id": 2,
+        "name": "可写 裁定?: {节点,轮次,理由,通道}",
+        "origin": "workflow/control.ts",
+        "stage": "S1",
+        "current": "getter control.ts:140; projectControlForHost:307-317; status/workflow-instances.ts:368",
+        "publicExport": true,
+        "tests": [
+          "workflow-stop.test.ts:217-237",
+          "workflow-pending.test.ts"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "旧裁定缺 WorkflowPending 时需 legacyChannel 提供通道，且不得据此产生主控授权(policy.ts:39)"
+      },
+      {
+        "id": 3,
+        "name": "可写 待决?: WorkflowPending",
+        "origin": "workflow/control.ts",
+        "stage": "S1",
+        "current": "getter control.ts:141; 事实字段 停止.pending; 新字段 待决办理 tools.ts:779",
+        "publicExport": true,
+        "tests": [
+          "workflow-pending.test.ts",
+          "workflow-stop.test.ts:259-314"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "回包字段名兼容，事实只在标准停止对象"
+      },
+      {
+        "id": 4,
+        "name": "flow.暂停/待决/裁定 直接赋值(15+ 处)",
+        "origin": "control.ts, host-bridge.ts, minister.ts, auto.ts, tools.ts, dispatch-context.ts",
+        "stage": "S1",
+        "current": "源码 0 处；唯一写入 saveControl:466-473 + changeControlStop:319-322",
+        "publicExport": false,
+        "tests": [],
+        "verdict": "deleted",
+        "reason": "停因唯一修改归属"
+      },
+      {
+        "id": 5,
+        "name": "releaseRulingPause 全文比较函数",
+        "origin": "control.ts 旧方法",
+        "stage": "S1",
+        "current": "无该函数；局部布尔 control.ts:1379-1388 用标准投影",
+        "publicExport": false,
+        "tests": [],
+        "verdict": "deleted",
+        "reason": "同义文本可骗过全文比较"
+      },
+      {
+        "id": 6,
+        "name": "flow.暂停?.includes(\"超限\") 关键词分类",
+        "origin": "status/pending.ts, status/results.ts",
+        "stage": "S1",
+        "current": "0 处；pending.ts:118/136 改用 停止.actions",
+        "publicExport": false,
+        "tests": [],
+        "verdict": "deleted",
+        "reason": "文案不参与决策"
+      },
+      {
+        "id": 7,
+        "name": "#resumeNote(flow) 一律提示 resume",
+        "origin": "workflow/host-bridge.ts",
+        "stage": "S1",
+        "current": "#controlActionNote:306-317，调用点 :864/:1269",
+        "publicExport": false,
+        "tests": [],
+        "verdict": "deleted",
+        "reason": "提示来自 projectControlStop.actions"
+      },
+      {
+        "id": 8,
+        "name": "版本: 2 类型收窄 + raw.版本 !== 2 校验",
+        "origin": "control.ts",
+        "stage": "S1",
+        "current": "control.ts:118 版本 2|3; :335 校验 2|3; decodeControlStop:240-296",
+        "publicExport": true,
+        "tests": [
+          "format-version-boundary.test.ts"
+        ],
+        "verdict": "rewritten",
+        "reason": "v2 旧控制文件只读兼容，v3 混旧字段 fail"
+      },
+      {
+        "id": 9,
+        "name": "parseManifest 只认版本 2 与旧文案",
+        "origin": "workflow/driver.ts",
+        "stage": "S1",
+        "current": "driver.ts:181 版本 2|3; :186-190 未知版本拒绝降级",
+        "publicExport": false,
+        "tests": [
+          "format-version-boundary.test.ts"
+        ],
+        "verdict": "rewritten",
+        "reason": "v1 清单仍要读，未知版本 fail-closed"
+      },
+      {
+        "id": 10,
+        "name": "各入口自建完成步骤",
+        "origin": "worker/post-dispatch.ts 之前的分散实现",
+        "stage": "S2",
+        "current": "completeDispatchedTask post-dispatch.ts:123；调用点 auto.ts:685, worker/index.ts:1046-1048",
+        "publicExport": true,
+        "tests": [
+          "S2 记录 173 用例"
+        ],
+        "verdict": "consolidated",
+        "reason": "相同验收/交付唯一归属"
+      },
+      {
+        "id": 11,
+        "name": "fanout 自行调完成核心",
+        "origin": "fanout/execute.ts",
+        "stage": "S2",
+        "current": "只做回执，不调 completeDispatchedTask",
+        "publicExport": false,
+        "tests": [],
+        "verdict": "deleted",
+        "reason": "入口差异策略：fanout 仅回执"
+      },
+      {
+        "id": 12,
+        "name": "decideNode / applyPending",
+        "origin": "control.ts:1298 / :2056",
+        "stage": "S2 保留",
+        "current": "tools.ts:892, minister.ts:672 / control.ts:2093,2209",
+        "publicExport": true,
+        "tests": [
+          "动作契约/待决测试"
+        ],
+        "verdict": "live-callsite",
+        "reason": "人工裁定与待决合并是活代码，非缺陷"
+      },
+      {
+        "id": 13,
+        "name": "pao_ack_supervision 在白名单",
+        "origin": "role.ts:20-34",
+        "stage": "S3",
+        "current": "全仓 0 命中",
+        "publicExport": true,
+        "tests": [
+          "S3 部长装配快照 12 项"
+        ],
+        "verdict": "deleted",
+        "reason": "该工具只由 host 模块注册，工作流部长路径从不装配"
+      },
+      {
+        "id": 14,
+        "name": "节点控制旧裸参数处理",
+        "origin": "workflow/tools.ts 旧 handler",
+        "stage": "S3",
+        "current": "tools.ts:764 validateNodeControlInput; policy.ts:811-823 prepare",
+        "publicExport": true,
+        "tests": [
+          "workflow-control-action-contract 等"
+        ],
+        "verdict": "rewritten",
+        "reason": "写入前纯函数校验"
+      },
+      {
+        "id": 15,
+        "name": "worker/supervision.ts 直接 import workflow/control (R4)",
+        "origin": "worker/supervision.ts 旧 imports",
+        "stage": "S4",
+        "current": "supervision.ts:13-22 无 ../workflow；查询注入 index.ts:181/241/476/536",
+        "publicExport": true,
+        "tests": [
+          "gate-boundary B7 + B7自检(实跑 PASS)"
+        ],
+        "verdict": "deleted",
+        "reason": "执行侧不依赖 workflow 内部文件"
+      },
+      {
+        "id": 16,
+        "name": "WorkflowDispatchContext 定义位置",
+        "origin": "workflow/dispatch-context.ts",
+        "stage": "S4",
+        "current": "定义在 worker/dispatch-types.ts；旧文件 dispatch-context.ts:15/22 反向再导出",
+        "publicExport": true,
+        "tests": [
+          "S4 边界/派发测试"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "公开类型名兼容，避免 worker→workflow 反向依赖"
+      },
+      {
+        "id": 17,
+        "name": "关键模块失败 catch 成 warning 继续",
+        "origin": "src/pao/index.ts 旧 register",
+        "stage": "S5",
+        "current": "已删除；checkPaoAssembly:213-221 + register:497-531 required 抛错",
+        "publicExport": false,
+        "tests": [
+          "assembly-failure/cli-assembly-failure-real/assembly-validation/assembly-real-loader 42 passed(实跑)"
+        ],
+        "verdict": "deleted",
+        "reason": "不得进入可派发的半装配状态"
+      },
+      {
+        "id": 18,
+        "name": "内联 skipped 集合 + 工作流部长跳过清单",
+        "origin": "src/pao/index.ts 旧 register",
+        "stage": "S5",
+        "current": "role.ts:340 paoAssemblyRequirements 查表",
+        "publicExport": false,
+        "tests": [
+          "同 17"
+        ],
+        "verdict": "deleted",
+        "reason": "必需能力唯一事实"
+      },
+      {
+        "id": 19,
+        "name": "逐文件 git 读(4n+7 进程)",
+        "origin": "dispatch-brief/workspace.ts 旧实现",
+        "stage": "S6",
+        "current": "batchCheck:236/batchContents:268/readFileStates:318；回退 fileState :323/343/354",
+        "publicExport": true,
+        "tests": [
+          "dispatch-brief-map-read.test.ts(15)",
+          "git-read-boundaries.test.ts(5)"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "回退三条件( gitlink 对象/64MiB 整/换行文件名)各有用例"
+      },
+      {
+        "id": 20,
+        "name": "bench controller.py 无版本判断读旧字段",
+        "origin": "bench/controller.py",
+        "stage": "S1",
+        "current": "controller.py:440 版本三分支",
+        "publicExport": false,
+        "tests": [
+          "bench/tests/test_controller.py:618,661(v2)",
+          ":680,684(v3)"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "采集侧需读历史 v2 证据"
+      },
+      {
+        "id": 21,
+        "name": "bench run-rehearsal 只读 暂停 ?? 停链原因",
+        "origin": "bench/rehearsal/run-rehearsal.mjs",
+        "stage": "S1",
+        "current": ":531-532, :587-589 双读 停止/暂停",
+        "publicExport": false,
+        "tests": [
+          "bench 自检/演练"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "v3 用 停止、v2 用 暂停"
+      },
+      {
+        "id": 22,
+        "name": "bench verify-evidence 单版本判断",
+        "origin": "bench/rehearsal/verify-evidence.mjs",
+        "stage": "S1",
+        "current": ":364 版本 2|3; :632-639 双字段 undefined",
+        "publicExport": false,
+        "tests": [
+          "bench 自检"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "同上"
+      },
+      {
+        "id": 23,
+        "name": "desktop 版本 === 2 判断",
+        "origin": "src/pao/desktop/canvas.ts, workflow.ts",
+        "stage": "S1",
+        "current": "canvas.ts:543/750 2||3; workflow.ts:107 readControl",
+        "publicExport": true,
+        "tests": [
+          "桌面画布/流程测试"
+        ],
+        "verdict": "rewritten",
+        "reason": "版本判断放宽 + 统一读取边界"
+      },
+      {
+        "id": 24,
+        "name": "status/workflow-instances 版本 1|2 与旧字段直读",
+        "origin": "status/workflow-instances.ts",
+        "stage": "S1",
+        "current": ":139 版本 2|3 否则 v1; :368-370 从停止投影",
+        "publicExport": true,
+        "tests": [
+          "status/pending 测试"
+        ],
+        "verdict": "rewritten",
+        "reason": "v1 清单只读兼容"
+      },
+      {
+        "id": 25,
+        "name": "panorama 版本===2 && 控制 && 报告",
+        "origin": "panorama/index.ts",
+        "stage": "S1",
+        "current": "源码 0 命中(改读标准投影)",
+        "publicExport": true,
+        "tests": [
+          "panorama 测试"
+        ],
+        "verdict": "deleted",
+        "reason": "全景不依赖旧格式"
+      },
+      {
+        "id": 26,
+        "name": "plan.ts 版本 !== 2 → undefined",
+        "origin": "workflow/plan.ts",
+        "stage": "S1",
+        "current": "plan.ts:1033 (版本 !== 2 && 版本 !== 3)",
+        "publicExport": true,
+        "tests": [
+          "plan 测试"
+        ],
+        "verdict": "rewritten",
+        "reason": "支持 v3 控制正本"
+      },
+      {
+        "id": 27,
+        "name": "chain.stopReason.includes(\"留 owner\") 旧链路兜底",
+        "origin": "workflow/tools.ts:243; workflow/driver.ts:367",
+        "stage": "S1 保留(已登记)",
+        "current": "tools.ts:243 / driver.ts:367 文本匹配兜底；结构化挂起字段为主判据",
+        "publicExport": false,
+        "tests": [
+          "旧链路自动链测试"
+        ],
+        "verdict": "thin-adapter",
+        "reason": "src/pao/已知边界.md:6 已登记：改停因文案会击穿兜底；v3 正常路径不依赖"
+      }
+    ],
+    "deletedVerification": [
+      {
+        "id": 4,
+        "oldImplementation": "flow.暂停/待决/裁定 直接赋值",
+        "verification": "`\\.暂停\\s*=[^=]`/`\\.待决\\s*=[^=]`/`\\.裁定\\s*=[^=]` 均 0 命中（src/pao 全部 .ts）",
+        "note": "已彻底删除：调用点已消失"
+      },
+      {
+        "id": 5,
+        "oldImplementation": "releaseRulingPause(flow, requestedRuling) 比较暂停全文",
+        "verification": "`releaseRulingPause\\s*\\(` 0 命中；同名标识符仅 control.ts:1379 局部布尔（无参数调用）",
+        "note": "已彻底删除（方法）；同名局部变量是标准投影判定"
+      },
+      {
+        "id": 6,
+        "oldImplementation": "flow.暂停?.includes(\"超限\") → 超限放行分类",
+        "verification": "`includes(\"超限` 0 命中；`超限放行` 4 处全部为注释（status/firstrun.ts:14、status/pending.ts:3,39,71）",
+        "note": "已彻底删除：公开导出面无引用（仅注释保留词义）"
+      },
+      {
+        "id": 7,
+        "oldImplementation": "#resumeNote(flow) 宿主一律 resume 提示",
+        "verification": "`resumeNote` 0 命中；替代 #controlActionNote 在 workflow/host-bridge.ts:306，调用点 :864,:1269",
+        "note": "已彻底删除（替换）"
+      },
+      {
+        "id": 11,
+        "oldImplementation": "fanout 分支自行调完成核心",
+        "verification": "`completeDispatchedTask` 5 命中：post-dispatch.ts:123 定义；worker/index.ts:106,1048；workflow/auto.ts:40,685；fanout/ 0 命中",
+        "note": "已彻底删除：调用点已消失"
+      },
+      {
+        "id": 13,
+        "oldImplementation": "pao_ack_supervision 在工作流部长白名单",
+        "verification": "role.ts 内 0 命中（白名单 role.ts:20、判定 :36）；工具本体仍由 host 模块注册 host/tools.ts:72",
+        "note": "已彻底删除（白名单）；工具本体属 host 职责"
+      },
+      {
+        "id": 15,
+        "oldImplementation": "worker/supervision.ts 直接 import workflow/control",
+        "verification": "imports 逐行（supervision.ts:13-22）无 ../workflow/；gate-boundary B7 PASS+B7自检 PASS（checks/compat/23-gate-boundary.log）",
+        "note": "已彻底删除：调用点已消失 + 检查可抓"
+      },
+      {
+        "id": 17,
+        "oldImplementation": "关键模块注册失败→warning 后继续装配",
+        "verification": "index.ts:520 required 抛 toPaoAssemblyFailure；:528 仅可选模块 noteDegraded；装配 4 文件 42 用例全过（checks/compat/25-assembly-failure.log）",
+        "note": "已彻底删除：缺陷路径被抛出替代"
+      },
+      {
+        "id": 18,
+        "oldImplementation": "内联 skipped 集合+工作流部长跳过清单",
+        "verification": "index.ts:496 `skippedModulesFor(loadout)`（role.ts:156）+ :498 只查表；无内联写死清单",
+        "note": "已彻底删除（改为角色门控查表）"
+      },
+      {
+        "id": 25,
+        "oldImplementation": "panorama/index.ts 版本===2&&控制&&报告 单版本判定",
+        "verification": "panorama/index.ts:204 现为 `版本 !== 1 && instance.控制 && instance.报告`；该文件 `版本 === 2 &&` 0 命中",
+        "note": "已彻底删除（改写为接受任何非 v1 版本）"
+      }
+    ]
+  },
+  "indicators": [
+    {
+      "id": 1,
+      "title": "停因决策来源",
+      "criterion": "内部只消费标准停因；旧字段只在兼容边界编解码",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": 118,
+          "note": "版本 2|3, 停止?: ControlStop"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "240-296",
+          "note": "decodeControlStop 唯一旧格式解码边界"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "298-305",
+          "note": "attachControlProjections 只读 getter"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "319-322,466-473",
+          "note": "changeControlStop 唯一修改归属 + saveControl 私有唯一写"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/policy.ts",
+          "line": "31-41,50-75",
+          "note": "ControlStop 正本 + projectControlStop 纯结构投影"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/dispatch-context.ts",
+          "line": "71-84",
+          "note": "派发前读控制"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/status/pending.ts",
+          "line": "118,136",
+          "note": "用 actions 分类"
+        }
+      ],
+      "unknowns": [
+        "真实跑批未验"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "文案参与决策",
+      "criterion": "当前格式正常路径 0 次靠文字判断；旧未知文本不自动放行",
+      "verdict": "pass-with-registered-legacy-fallback",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/driver.ts",
+          "line": "115,826",
+          "note": "停链原因 仅字段名/展示"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "790,791,907,948",
+          "note": "同上"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/policy.ts",
+          "line": "50-75",
+          "note": "projectControlStop 不接收文字参数"
+        },
+        {
+          "file": "PAO/packages/coding-agent/test/pao/workflow-stop.test.ts",
+          "line": "239-246",
+          "note": "旧文本即使伪装待裁定/超限 动作仍只有 resume"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+          "line": 243,
+          "note": "已登记旧链路兜底 chain.stopReason.includes(\"留 owner\")，不产生授权"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/driver.ts",
+          "line": 367,
+          "note": "同一兜底"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/已知边界.md",
+          "line": 6,
+          "note": "该兜底已登记为已知边界"
+        }
+      ],
+      "unknowns": [
+        "旧链路兜底仍是文本匹配，改文案会击穿(已登记)"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "裸 hold 出口",
+      "criterion": "本计划三种判断来源均有可执行处理或明确失败，不能只有通知文字",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/host-bridge.ts",
+          "line": "580-656",
+          "note": "工人未达 → createDeviationPending(618) → recordPending(635) → 回读校验 → scheduleDeadline(651)；585 明确失败"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/host-bridge.ts",
+          "line": "657-709",
+          "note": "部长 hold/直接任务 → createRulingPending(685) → recordPending(697) → scheduleDeadline(707)；667/675 明确失败"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/minister.ts",
+          "line": 701,
+          "note": "部长主动 requestRuling → control.ts:2152/2200"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/transition.ts",
+          "line": "251-261",
+          "note": "到期 expirePending → writer_stop_confirmed:false 明确失败"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/dispatch-context.ts",
+          "line": "61-112",
+          "note": "派发侧 hold → 显式 throw 拒绝派发"
+        }
+      ],
+      "unknowns": [
+        "未做真机无人值守演练"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "结果完成实现",
+      "criterion": "相同验收/交付步骤只有一个业务归属，入口差异只有已记录策略",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/worker/post-dispatch.ts",
+          "line": 123,
+          "note": "completeDispatchedTask 唯一完成链"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/auto.ts",
+          "line": 685,
+          "note": "调用点 1"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/worker/index.ts",
+          "line": "1046-1048",
+          "note": "调用点 2(completeTask 开关 226/843)"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "9-34,2519",
+          "note": "resolvePendingOnce 复用 cards 同一批实现"
+        }
+      ],
+      "unknowns": []
+    },
+    {
+      "id": 5,
+      "title": "执行反向依赖",
+      "criterion": "worker 监督实现不依赖 workflow 内部文件，违规反例能被检查抓到",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/worker/supervision.ts",
+          "line": "13-22",
+          "note": "imports 无 ../workflow"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/supervision-query.ts",
+          "line": "163-217",
+          "note": "注入式窄查询"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/worker/supervision.ts",
+          "line": "290-303",
+          "note": "无查询时 fail-closed unknown"
+        },
+        {
+          "file": ".pao/协作规则统一-20261030/S7/checks/compat/23-gate-boundary.log",
+          "line": "B7",
+          "note": "B7 PASS + B7自检故意违规样例已拦截"
+        }
+      ],
+      "runs": [
+        {
+          "command": "node scripts/gate-boundary.mjs",
+          "workdir": "PAO/packages/coding-agent",
+          "exitCode": 0
+        }
+      ],
+      "unknowns": []
+    },
+    {
+      "id": 6,
+      "title": "模型固定手续",
+      "criterion": "正常交接无需手工改卡/交卷/重复推流；一次合法裁决后程序办理，不要求第二次同义确认",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+          "line": "773,779,811",
+          "note": "resolve_pending 已受理不重复推进/幂等重放"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+          "line": "854-879",
+          "note": "rule 一次裁决即完成交付"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+          "line": "828-829",
+          "note": "部长动作禁主控代交"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+          "line": "830-839,888-889",
+          "note": "人工门只一次界面确认，非同义重复确认"
+        }
+      ],
+      "unknowns": [],
+      "normalChainEvidence": {
+        "source": "正常四部门链 run-rehearsal.mjs（默认 scenarios/normal.json）的 evidence/verification.json：ok=true, checks=18",
+        "checks": {
+          "all-three-model-roles-observed": "bench/rehearsal/verify-evidence.mjs:608（main/minister/worker 三角色均被观测，无未匹配/乱序/未知工具）",
+          "scripted-model-clean-and-ordered": "bench/rehearsal/verify-evidence.mjs:591（每条响应命中规则，minister-review-decision 恰一次并有一次 post，无 scripted_model_unmatched/out_of_order/unknown_tool）"
+        },
+        "s7Run": "exit 0、178.3s、18/18 true；只读复核日志 checks/compat/29-rehearsal-chain-evidence.log（跑批由 matrix 成员执行）",
+        "note": "本轮未另造「正常交接」源码调用点，故以「源码一次裁决即办理」+「正常链核验无手工改卡/交卷/重复推流」两头合证"
+      }
+    },
+    {
+      "id": 7,
+      "title": "关键模块失败",
+      "criterion": "不能进入可派发的半装配状态",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/index.ts",
+          "line": "169-175",
+          "note": "factory 返回 Promise，生产入口直传"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/index.ts",
+          "line": "213-221",
+          "note": "checkPaoAssembly 装配前失败"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/index.ts",
+          "line": "497-531",
+          "note": "register required 抛错/可选显式降级"
+        },
+        {
+          "file": ".pao/协作规则统一-20261030/S7/checks/compat/25-assembly-failure.log",
+          "line": "4 files 42 tests",
+          "note": "全过 exit 0"
+        }
+      ],
+      "runs": [
+        {
+          "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/assembly-failure.test.ts test/pao/cli-assembly-failure-real.test.ts test/pao/assembly-validation.test.ts test/pao/assembly-real-loader.test.ts --maxWorkers=2",
+          "workdir": "PAO/packages/coding-agent",
+          "exitCode": 0,
+          "passed": 42,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "unknowns": []
+    },
+    {
+      "id": 8,
+      "title": "状态存储",
+      "criterion": "不新增可独立维护的停因/完成正本；原始证据与兼容字段单列",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": 174,
+          "note": "controlPath 单控制文件"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "466-473",
+          "note": "saveControl 私有唯一写，17 处调用均在本文件"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "142-143,2623-2624,2925-2937",
+          "note": "待决办理 同文件字段，非独立正本"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+          "line": "298-305",
+          "note": "兼容字段只读 getter 不落盘"
+        },
+        {
+          "file": "PAO/packages/coding-agent/src/pao/worker/post-dispatch.ts",
+          "line": "170-207",
+          "note": "原始证据只读校验，不搬入控制正本"
+        }
+      ],
+      "unknowns": []
+    },
+    {
+      "id": 9,
+      "title": "地图性能",
+      "criterion": "达到 S6 的进程数、耗时和语义目标",
+      "verdict": "pass",
+      "evidence": [],
+      "runs": [
+        {
+          "command": "node controlled-retest.mjs --reuse-old ... --sizes 10,100,1000",
+          "exitCode": 0,
+          "measured": {
+            "files": [
+              10,
+              100,
+              1000
+            ],
+            "oldProcesses": [
+              47,
+              407,
+              4007
+            ],
+            "newProcesses": [
+              8,
+              8,
+              8
+            ],
+            "newMedianMs": [
+              1179.6,
+              1210.6,
+              2273.4
+            ],
+            "s6CleanMs": [
+              525.1,
+              632.3,
+              848.4
+            ],
+            "oldMs": [
+              3223.9,
+              26678.3,
+              301236.3
+            ],
+            "artifactEqual": [
+              true,
+              true,
+              true
+            ]
+          },
+          "note": "S7 本轮带并发负载，耗时不可当回归；判定只用进程数与 artifact"
+        },
+        {
+          "command": "node measure-map-s7.mjs ...",
+          "exitCode": 0,
+          "measured": {
+            "files": [
+              5,
+              20,
+              50
+            ],
+            "oldProcesses": [
+              27,
+              87,
+              207
+            ],
+            "newProcesses": [
+              8,
+              8,
+              8
+            ],
+            "oldMs": [
+              3577.3,
+              9277.1,
+              26749.9
+            ],
+            "newMs": [
+              793.9,
+              1042.9,
+              1130
+            ],
+            "s0HistoricOldMs": [
+              2287.2111,
+              8292.2817,
+              20233.26
+            ],
+            "artifactCanonicalEqual": true,
+            "stable": true,
+            "detectsWorkingChange": true
+          }
+        }
+      ],
+      "unknowns": [
+        "耗时绝对值受机器负载影响；G2 结构指标未产出数字"
+      ]
+    },
+    {
+      "id": 10,
+      "title": "产品同源",
+      "criterion": "bench 不携带独立产品宿主副本，桌面 vendor 的内核与本次内核匹配",
+      "verdict": "pass",
+      "evidence": [
+        {
+          "file": "D:/AI/workspace/pao-dev/bench",
+          "line": "dir",
+          "note": "无 bundle/dist/vendor/kernel 子目录；引用开发仓 dist/bundle"
+        },
+        {
+          "file": "desktop/apps/desktop/vendor/pao-kernel/vendor-build-manifest.json",
+          "line": "builtAt",
+          "note": "2026-10-25T14:13:28.078Z，早于 S1—S6"
+        },
+        {
+          "file": ".pao/协作规则统一-20261030/S7/checks/compat/vendor-compare.json",
+          "line": "before",
+          "note": "76 vs 76 文件；70 相同；onlyVendor 3/onlyKernel 3/changed 3"
+        }
+      ],
+      "preRefresh": {
+        "vendor": {
+          "fileCount": 76,
+          "totalBytes": 10636041,
+          "treeSha256": "caeb711aa0de2469917e2199254e07962d48759cdd7116f487a1d3acb60e83ba"
+        },
+        "kernel": {
+          "fileCount": 76,
+          "totalBytes": 10905302,
+          "treeSha256": "c068cfaa56bfbd46aa6e89ece4c7e9071c7f876a519b3a0f7372546bf14e8765"
+        },
+        "identicalFileCount": 70,
+        "onlyInVendor": [
+          "chunks/chunk-CS6FLYIW.js",
+          "chunks/chunk-JZAVVAFQ.js",
+          "chunks/virtual-modules-UEXGIHZB.js"
+        ],
+        "onlyInKernel": [
+          "chunks/chunk-4L7XWW7U.js",
+          "chunks/chunk-SJCYZKXC.js",
+          "chunks/virtual-modules-XG2AHHJY.js"
+        ],
+        "changed": [
+          "cli-runtime.js",
+          "index.js",
+          "rpc-entry.js"
+        ],
+        "vendorBuiltAt": "2026-10-25T14:13:28.078Z"
+      },
+      "postRefresh": {
+        "executedAt": "2026-11-01T16:39:05+08:00（vendor:kernel 刷新）；16:42:50 desktop 独立复跑",
+        "command": "node \"…/s7/compat/compare-vendor.mjs\" \"…/desktop/apps/desktop/vendor/pao-kernel/dist/bundle\" \"…/PAO/packages/coding-agent/dist/bundle\" \"…/s7/compat/bench/vendor-compare-after.json\"",
+        "exitCode": 0,
+        "vendor": {
+          "fileCount": 76,
+          "totalBytes": 10905302,
+          "treeSha256": "c068cfaa56bfbd46aa6e89ece4c7e9071c7f876a519b3a0f7372546bf14e8765"
+        },
+        "kernel": {
+          "fileCount": 76,
+          "totalBytes": 10905302,
+          "treeSha256": "c068cfaa56bfbd46aa6e89ece4c7e9071c7f876a519b3a0f7372546bf14e8765"
+        },
+        "identicalFileCount": 76,
+        "identicalTree": true,
+        "onlyInVendor": [],
+        "onlyInKernel": [],
+        "changedCount": 0,
+        "vendorManifest": {
+          "sha256": "a4629a1c0cf0c0ad54da08a0fb5662148e15bc720d301d57cf758d8c049bec99",
+          "format": 2,
+          "builtAt": "2026-11-01T08:39:05.203Z",
+          "kernelFiles": 1991,
+          "kernelBytes": 31523696
+        },
+        "crossCheck": {
+          "desktopIndependentRun": "S7/checks/desktop/0x-vendor-vs-bundle-after-package.log（同一脚本、exit 0、identicalFileCount=76、identicalTree=true、onlyInVendor/onlyInKernel=0）",
+          "desktopPackage": "package:win:dir EXIT=0、232.3s（S7/checks/desktop/06-package-win-dir.log）；release/win-unpacked 16:42:13",
+          "determinism": "打包期内核被 clean+build:offline 重建，重建后 aggregate 仍为 913cbd65…（与刷新前一致），说明构建确定性、源码未变",
+          "gitControlPlane": "git ls-files apps/desktop/vendor = 0 条；apps/desktop/.gitignore:10 = vendor/；git status 干净 → 刷新不产生受控 diff",
+          "vendorKernelLog": "[vendor-pao-kernel] 已从正式构建物化 7637 个文件；清单 SHA-256 a4629a1c…（desktop 06-package-win-dir.log）",
+          "aggregateCaliber": "capture-vendor-identity.mjs 用 path\\0bytes\\0sha256\\n 且 path 为仓库根相对路径，跨根（vendor 根 vs PAO 根）比较恒不等；判定以逐文件 sha256 + treeSha256 为准",
+          "desktopConfirmationMessage": "desktop 消息（m00537）确认与 compat 口径一致、指标 10 记 pass"
+        },
+        "evidence": [
+          "S7/checks/compat/vendor-compare-after.json",
+          "S7/checks/compat/30-vendor-compare-after.log",
+          "S7/checks/desktop/0x-vendor-vs-bundle-after-package.log",
+          "S7/checks/desktop/05-vendor-before.txt",
+          "S7/checks/desktop/05-vendor-after.txt",
+          "S7/checks/desktop/05-vendor-after.json",
+          "S7/checks/desktop/05-vendor-before.json",
+          "S7/checks/desktop/vendor-compare/before-package.log",
+          "S7/checks/desktop/10-packaged-kernel.json",
+          "S7/checks/compat/36-desktop-11b-packaged-kernel-asar-bytes.json"
+        ],
+        "packagedAsar": {
+          "criterion": "发行包 resources/app.asar 内 pi-coding-agent/dist/bundle vs 磁盘 PAO/packages/coding-agent/dist/bundle",
+          "method": "desktop：ELECTRON_RUN_AS_NODE=1 运行 desktop/node_modules/electron/dist/electron.exe，用 Electron 自带 asar fs 直读归档内 76 个文件，逐文件 sha256（绕过 @electron/asar 3.4.1 只能 list 的限制）",
+          "exitCode": 0,
+          "packagedFiles": 76,
+          "diskFiles": 76,
+          "identicalFileCount": 76,
+          "changedCount": 0,
+          "onlyInPackaged": 0,
+          "onlyOnDisk": 0,
+          "treeSha256BothSides": "98a1765fe5d0902df91de549bfcfecc0586f111c8d33af6f387732ee7649a1f1",
+          "treeSha256Caliber": "path\\0bytes\\0sha256\\n 排序串接（与 compare-vendor.mjs 的 treeSha256 口径不同，二者不可互比）",
+          "firstProbeNote": "首版探针 11-packaged-kernel-asar-bytes.* 遍历漏 chunks/ 层级前缀，出现 72 条假差异（identicalFileCount=4）；修正后 11b 为准",
+          "evidence": [
+            "S7/checks/compat/36-desktop-11b-packaged-kernel-asar-bytes.json",
+            "S7/checks/compat/37-desktop-11b-packaged-kernel-asar-bytes.log",
+            "S7/checks/desktop/11b-packaged-kernel-asar-bytes.log",
+            "S7/checks/desktop/11b-packaged-kernel-asar-bytes.json"
+          ]
+        }
+      },
+      "unknowns": [
+        "发行包运行期行为未验（由 desktop 负责；打包产物可运行、asar 包内 kernel 已 76/76 逐字节验证）"
+      ]
+    }
+  ],
+  "knownCouplings": [
+    {
+      "id": "C1",
+      "file": "PAO/packages/coding-agent/src/pao/worker/index.ts",
+      "line": 61,
+      "detail": "import { resolveWorkflowDispatch } from \"../workflow/dispatch-context.ts\"；使用点 :924-929 workflowCheck 注入",
+      "nature": "worker 入口(工人工具装配面)依赖 workflow 派发上下文解析；非监督实现；B7 只查 worker/supervision.ts 闭包，故指标 5 仍通过；本轮未改",
+      "impact": "方向性耦合，属已知遗留"
+    },
+    {
+      "id": "C2",
+      "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+      "line": 243,
+      "detail": "chain.stopReason.includes(\"留 owner\") 旧链路兜底(同 driver.ts:367)；已登记 src/pao/已知边界.md:6",
+      "nature": "旧格式回退，正常 v3 路径不用、不产生授权",
+      "impact": "改文案会击穿兜底，改文案前先改判据"
+    },
+    {
+      "id": "C3",
+      "file": "PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts",
+      "line": "323,343,354",
+      "detail": "逐文件 git 读回退 + bench/desktop v2 兼容分支",
+      "nature": "兼容边界",
+      "impact": "非死代码"
+    }
+  ],
+  "commands": [
+    {
+      "id": "gate-boundary",
+      "command": "node scripts/gate-boundary.mjs",
+      "workdir": "PAO/packages/coding-agent",
+      "exitCode": 0,
+      "log": ".pao/协作规则统一-20261030/S7/checks/compat/23-gate-boundary.log"
+    },
+    {
+      "id": "assembly-failure",
+      "command": "node ../../node_modules/vitest/vitest.mjs run test/pao/assembly-failure.test.ts test/pao/cli-assembly-failure-real.test.ts test/pao/assembly-validation.test.ts test/pao/assembly-real-loader.test.ts --maxWorkers=2",
+      "workdir": "PAO/packages/coding-agent",
+      "exitCode": 0,
+      "log": ".pao/协作规则统一-20261030/S7/checks/compat/25-assembly-failure.log",
+      "passed": 42,
+      "failed": 0
+    },
+    {
+      "id": "controlled-retest",
+      "command": "node \"…/s6/bench/controlled-retest.mjs\" --reuse-old \"…/s6/bench/controlled-retest.json\" --new \"…/PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts\" --sizes 10,100,1000 --out \"…/s7/compat/bench/controlled-retest-s7.json\" --log \"…/s7/compat/log/20-controlled-retest-s7.log\"",
+      "exitCode": 0,
+      "log": ".pao/协作规则统一-20261030/S7/checks/compat/20-controlled-retest-s7.log"
+    },
+    {
+      "id": "measure-map-s0-basis",
+      "command": "node \"…/s7/compat/measure-map-s7.mjs\" \"…/s7/compat/bench/map-metrics-s7.json\" \"…/s6/old-impl/workspace.old.ts\" \"…/PAO/packages/coding-agent/src/pao/dispatch-brief/workspace.ts\"",
+      "exitCode": 0,
+      "log": ".pao/协作规则统一-20261030/S7/checks/compat/21-map-metrics-s7.log"
+    },
+    {
+      "id": "vendor-compare",
+      "command": "node \"…/s7/compat/compare-vendor.mjs\" \"…/desktop/apps/desktop/vendor/pao-kernel/dist/bundle\" \"…/PAO/packages/coding-agent/dist/bundle\" \"…/s7/compat/bench/vendor-compare.json\"",
+      "exitCode": 0,
+      "log": ".pao/协作规则统一-20261030/S7/checks/compat/18-vendor-compare.log"
+    }
+  ],
+  "unverified": [
+    "真实供应商(V1)与真实跑批、无人值守真机演练",
+    "桌面宿主运行期行为（打包产物可运行已由 desktop 验证；磁盘 vendor 与内核匹配见 §10；发行包 app.asar 内 kernel 已由 desktop 11b 验证 76/76 逐字节一致）",
+    "全量 test/pao/ 由 gates 成员覆盖，本成员未跑",
+    "G2 结构指标(measure-structure.mjs)未产出当前实现数字"
+  ],
+  "summaryTable": [
+    {
+      "id": 1,
+      "name": "停因决策来源",
+      "criterion": "内部只消费标准停因；旧字段只在兼容边界编解码",
+      "conclusion": "达到",
+      "evidenceType": "源码调用点+类型定义",
+      "evidence": "workflow/control.ts:118,240-296,319-322,466-473; workflow/policy.ts:31-41"
+    },
+    {
+      "id": 2,
+      "name": "文案参与决策",
+      "criterion": "当前格式正常路径 0 次靠文字判断；旧未知文本不自动放行",
+      "conclusion": "达到",
+      "evidenceType": "全量检索+纯函数+测试断言",
+      "evidence": "workflow/policy.ts:50-75; includes(\"超限 0 命中; tools.ts:243/driver.ts:367 已登记兜底; test/pao/workflow-stop.test.ts:239-246"
+    },
+    {
+      "id": 3,
+      "name": "裸 hold 出口",
+      "criterion": "三种判断来源均有可执行处理或明确失败",
+      "conclusion": "达到",
+      "evidenceType": "源码调用点+显式失败原文",
+      "evidence": "workflow/host-bridge.ts:580-656,657-709,585,667,675; workflow/minister.ts:701->control.ts:2152/2200; workflow/transition.ts:251-261"
+    },
+    {
+      "id": 4,
+      "name": "结果完成实现",
+      "criterion": "相同验收/交付步骤只有一个业务归属，入口差异只有已记录策略",
+      "conclusion": "达到",
+      "evidenceType": "调用点计数+import 复用",
+      "evidence": "worker/post-dispatch.ts:123; workflow/auto.ts:685; worker/index.ts:1046-1048; control.ts:2519 复用 control.ts:9-34 cards 函数"
+    },
+    {
+      "id": 5,
+      "name": "执行反向依赖",
+      "criterion": "worker 监督实现不依赖 workflow 内部文件，违规反例能被检查抓到",
+      "conclusion": "达到",
+      "evidenceType": "实跑门禁+反例自检",
+      "evidence": "node scripts/gate-boundary.mjs exit 0; checks/compat/23-gate-boundary.log; scripts/gate-boundary.mjs:133-144,151"
+    },
+    {
+      "id": 6,
+      "name": "模型固定手续",
+      "criterion": "正常交接无需手工改卡/交卷/重复推流；一次合法裁决后程序办理不要求第二次同义确认",
+      "conclusion": "达到",
+      "evidenceType": "源码调用点+正常链核验",
+      "evidence": "workflow/tools.ts:850-885,779,828-829; bench/rehearsal/verify-evidence.mjs:608,591; 正常链 verification.json 18/18 true; checks/compat/29-rehearsal-chain-evidence.log"
+    },
+    {
+      "id": 7,
+      "name": "关键模块失败",
+      "criterion": "不能进入可派发的半装配状态",
+      "conclusion": "达到",
+      "evidenceType": "源码调用点+实跑",
+      "evidence": "src/pao/index.ts:175,213-221,520; 4 文件 42 用例全过 checks/compat/25-assembly-failure.log"
+    },
+    {
+      "id": 8,
+      "name": "状态存储",
+      "criterion": "不新增可独立维护的停因/完成正本；原始证据与兼容字段单列",
+      "conclusion": "达到",
+      "evidenceType": "路径/写入点+字段归属",
+      "evidence": "workflow/control.ts:174,466-473,298-305,142-143,2623-2624,2936-2937; worker/post-dispatch.ts:170-207"
+    },
+    {
+      "id": 9,
+      "name": "地图性能",
+      "criterion": "达到 S6 的进程数、耗时和语义目标",
+      "conclusion": "达到",
+      "evidenceType": "同口径复测数据",
+      "evidence": "S6 口径 47/407/4007->8/8/8 artifact 相等 checks/compat/controlled-retest-s7.json; S0 口径 27/87/207->8/8/8 canonical 相等 checks/compat/map-metrics-s7.json"
+    },
+    {
+      "id": 10,
+      "name": "产品同源",
+      "criterion": "bench 不携带独立产品宿主副本；桌面 vendor 内核与本次内核匹配",
+      "conclusion": "达到",
+      "evidenceType": "静态比对 + 双方复跑 + 打包日志",
+      "evidence": "bench 无 bundle/vendor 副本；刷新前 vendor tree caeb711a…（70 相同/3+3+3 差异，旧内核）；刷新后 vendor 76/76、10905302B、tree c068cfaa… 与内核全等（vendor-compare-after.json；desktop 0x-vendor-vs-bundle-after-package.log 同结果）"
+    }
+  ],
+  "verdictSummary": {
+    "passed": 9,
+    "passWithRegisteredLegacyFallback": 1,
+    "partial": 0,
+    "failed": 0,
+    "unknown": 0,
+    "baseline": "§13.5 十项；结论四档：达到/部分达到/未达到/未知"
+  }
+}

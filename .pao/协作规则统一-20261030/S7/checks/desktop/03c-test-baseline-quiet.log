@@ -1,0 +1,760 @@
+﻿# label: 03c-test-baseline-quiet
+# command: .\node_modules\.bin\pnpm.CMD test:baseline
+# workdir: D:\AI\workspace\pao-dev\desktop
+# started: 2026-11-01 16:34:18
+# finished: 2026-11-01 16:36:19
+# duration_seconds: 121.5
+# exit_code: 1
+# PAO_HOME: D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home
+# TEMP: D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp
+# PI_OFFLINE: 1  PI_NO_LOCAL_LLM: 1
+# extra_env: 
+# ELECTRON_RUN_AS_NODE(parent value, stripped before launch): [1]
+
+ELECTRON_RUN_AS_NODE=[]
+
+v37.10.3
+
+> pi-gui@1.0.1 test:baseline D:\AI\workspace\pao-dev\desktop
+> pnpm test:guards && pnpm --filter @pi-gui/catalogs test && pnpm --filter @pi-gui/pi-sdk-driver test && pnpm --filter @pi-gui/extension-ui test && pnpm test:extension-examples && pnpm test:release-helpers && pnpm test:desktop-unit
+
+
+> pi-gui@1.0.1 test:guards D:\AI\workspace\pao-dev\desktop
+> node --test scripts/ci-guards.test.mjs scripts/check-renderer-boundary.test.mjs scripts/check-workspace-typechecks.test.mjs scripts/format-guard.test.mjs scripts/check-ci-results.test.mjs scripts/typed-lint.test.mjs scripts/test-entrypoints.test.mjs scripts/marketing-assets.test.mjs scripts/state-owner-boundary.test.mjs scripts/ipc-main-frame-boundary.test.mjs scripts/check-contract-authority.test.mjs scripts/contract-resolution.test.mjs scripts/check-host-boundary.test.mjs .github/scripts/summarize-playwright-trend.test.mjs scripts/check-timeline-owner.test.mjs scripts/workflow-action-policy.test.mjs
+
+✔ groups failures by spec file without merging unrelated surfaces (14.4872ms)
+✔ all required jobs must succeed (2.8464ms)
+✔ missing, malformed, or unexpected results fail closed (0.3754ms)
+✔ CLI exit status reflects the result and rejects invalid JSON (810.262ms)
+✔ workflow aggregate covers every job and cannot ignore unsuccessful checks (32.762ms)
+✔ CI runs the canonical baseline unconditionally (16.584ms)
+✔ all Core shards are required and retain independent reports (943.6175ms)
+✔ rejects ambient contract substitute @pi-gui/session-driver (9.7077ms)
+✔ rejects ambient contract substitute @pi-gui/session-driver/runtime-types (0.9112ms)
+✔ rejects ambient contract substitute @pi-gui/catalogs (0.572ms)
+✔ rejects ambient contract substitute @pi-gui/* (0.4635ms)
+✔ rejects ambient contract substitute @* (0.7127ms)
+✔ rejects ambient contract substitute * (0.4431ms)
+✔ rejects module augmentation as another owned contract path (2.0803ms)
+✔ accepts canonical definitions, imports, and unrelated external declarations (4.4203ms)
+✔ repository guard rejects an untracked vendor declaration and accepts its replacement (566.2642ms)
+✔ host rejects import { value } from "../src/ui"; (28.3083ms)
+✔ host rejects import type { View } from "@renderer/ui"; (13.4261ms)
+✔ host rejects type View = import("../src/ui").View; (14.7408ms)
+✔ host rejects void import("../src/ui"); (14.2046ms)
+✔ host rejects renderer dependency through a neutral-looking helper (22.9409ms)
+✔ host rejects test fixture dependencies (19.688ms)
+✔ host accepts contracts and Node APIs (20.5464ms)
+✔ catalogs cannot import the Pi adapter even from an unused source file (21.7016ms)
+✔ package source cannot reach the desktop host (21.426ms)
+✔ rejects import fs from "node:fs"; (43.6053ms)
+✔ rejects import "fs/promises"; (16.6401ms)
+✔ rejects import { ipcRenderer } from "electron"; (19.6493ms)
+✔ rejects import "@earendil-works/pi-coding-agent"; (20.0591ms)
+✔ rejects import "@earendil-works/pi-agent-core"; (11.9957ms)
+✔ rejects import "../electron/service.js"; (21.0087ms)
+✔ rejects import "@main/service"; (18.2434ms)
+✔ rejects export * from "@main/service"; (17.344ms)
+✔ rejects import { type Contract, service } from "@main/service"; (15.1021ms)
+✔ rejects import { type Contract } from "@main/service"; (13.1968ms)
+✔ rejects export { type Contract } from "@main/service"; (16.9211ms)
+✔ rejects void import("@main/service"); (17.5249ms)
+✔ rejects require("@main/service"); (39.6691ms)
+✔ rejects import service = require("@main/service"); (17.3963ms)
+✔ rejects const target = "@main/service"; void import(target); (19.3104ms)
+✔ rejects import "./missing.js"; (15.4571ms)
+✔ rejects import.meta.glob("../electron/*.ts", { eager: true }); (15.1539ms)
+✔ checks Vite worker imports without treating their constructors as global workers (199.0415ms)
+✔ follows aliased workspace re-exports and .js source resolution (29.7336ms)
+✔ allows explicit type-only imports, pure helpers, cycles and browser assets (27.9879ms)
+✔ inline types retain runtime edges under verbatimModuleSyntax (107.5293ms)
+✔ checks Worker URL entries and their transitive dependencies (47.4383ms)
+✔ checks SharedWorker URL entries and their transitive dependencies (48.9628ms)
+✔ checks window.Worker URL entries and their transitive dependencies (52.6642ms)
+✔ checks globalThis.SharedWorker URL entries and their transitive dependencies (48.8851ms)
+✔ checks self.Worker URL entries and their transitive dependencies (51.1096ms)
+✔ rejects uncheckable worker entry: new Worker(new URL(target, import.meta.url)); (11.6886ms)
+✔ rejects uncheckable worker entry: new SharedWorker(target); (27.1564ms)
+✔ rejects uncheckable worker entry: new Worker("./worker.js"); (11.8411ms)
+✔ rejects uncheckable worker entry: new Worker(new URL("./worker.ts", document.baseURI)); (11.3154ms)
+✔ rejects runtime imports backed only by local declarations (16.6757ms)
+✔ checks resolved package identity even behind an npm alias (30.1234ms)
+✔ allows ordinary external browser packages (15.2032ms)
+✔ rejects contract implementation dependency: import type { Contract } from "../electron/service"; (12.8053ms)
+✔ rejects contract implementation dependency: export type { Contract } from "@main/service"; (16.0403ms)
+✔ rejects contract implementation dependency: type Contract = import("../electron/service").Contract; (14.1706ms)
+✔ rejects contract implementation dependency: import "../src/index"; (13.8238ms)
+✔ rejects contract implementation dependency: import fs from "node:fs"; (16.4443ms)
+✔ checks unused contracts and permits pure contract reuse (15.7728ms)
+✔ rejects host-only extension-ui runtime import: import { createChordServerConnection } from "@pi-gui/extension-ui/transport"; (13.5875ms)
+✔ rejects host-only extension-ui runtime import: import { parseDesktopHostAction } from "@pi-gui/extension-ui/browser"; (12.6886ms)
+✔ rejects host-only extension-ui runtime import: export * from "@pi-gui/extension-ui/browser"; (19.9702ms)
+✔ rejects host-only extension-ui runtime import: void import("@pi-gui/extension-ui/transport"); (12.9949ms)
+✔ rejects host-only extension-ui runtime import: import { type DesktopHostAction } from "@pi-gui/extension-ui/browser"; (20.5776ms)
+✔ rejects host-only extension-ui runtime import: import "../../../packages/extension-ui/src/transport.ts"; (15.149ms)
+✔ allows type-only imports from host-only extension-ui entry points (18.2753ms)
+✔ timeline consumers cannot bypass the viewport owner (14.2376ms)
+✔ actual timeline consumers respect the owner (101.4337ms)
+✔ pnpm discovery catches a new workspace without a typecheck command (2426.0282ms)
+✔ the real lint config rejects shortcuts across source and script scopes (26652.8347ms)
+✔ CI rejects a focused Playwright test but discovers an ordinary test (2651.0047ms)
+✔ SDK driver implements canonical SessionDriver and cannot omit tree operations (6854.8705ms)
+✔ desktop runtime resolves its catalog backend without TypeScript aliases (6.5943ms)
+✔ format check rejects bad formatting and autofix is stable (1732.437ms)
+✔ source release/build directories remain format checked while outputs are ignored (1116.0119ms)
+✔ the IPC guard rejects raw handlers and hand-copied frame checks (3.0839ms)
+✔ main-frame IPC is registered only through the helper (123.3079ms)
+✔ every published marketing asset has one runnable producer and live consumers (98.9704ms)
+✔ product build excludes media rendering and marketing commands are explicit (2.4826ms)
+✔ marketing commands delegate to scripts owned by their producer workspace (4.4935ms)
+✔ marketing producers support staged proof and pass credentials only explicitly (13.894ms)
+✔ failed media generation preserves the published file and partial evidence (81.7456ms)
+✔ the state-owner guard rejects the former whole-store shortcut (15.7986ms)
+✔ desktop state owners expose only their bounded operation ports (10.9042ms)
+✔ the state-owner guard rejects durable review and checkpoint state outside its owners (0.5792ms)
+✔ reviewed marks, checkpoint storage and atomic writes stay in their owner modules (334.6151ms)
+✔ root e2e delegates to the built, isolated desktop core lane (10.9283ms)
+✔ root Playwright entrypoint preserves desktop safeguards and rejects focused tests (4310.5079ms)
+✔ desktop tests use one public Electron helper entrypoint (301.6693ms)
+✔ the public Electron helper loads through Playwright and the marketing script loader (2624.865ms)
+✔ Core shards cover each discovered test exactly once and default to one worker in CI (11193.1793ms)
+✔ every desktop spec has a known lane and lane commands cannot mix suites (12.7661ms)
+✔ requested live runs fail before build when auth configuration is missing (331.9643ms)
+✔ each workspace and desktop execution context rejects unsafe values and unhandled promises (33689.8079ms)
+✔ every discovered workspace has all required typed lint rules (413.444ms)
+✔ a new workspace cannot silently receive only syntax lint (1068.7382ms)
+✔ source release/build directories are linted while generated output stays ignored (1130.0824ms)
+✔ compiler bypass comments fail but explained expected errors remain allowed (6.3533ms)
+✔ isAction matches the action name and ignores the ref (1.5235ms)
+✔ the repository workflows match the Node 24 action policy (114.0559ms)
+✔ valid seven-action corpus passes (9.1271ms)
+✔ stale Node 20 majors fail (11.195ms)
+✔ setup-node v5 is not an allowed major (6.9569ms)
+✔ download-artifact must pair with upload-artifact v7 as v8 (6.615ms)
+✔ unknown remote actions fail closed (7.4354ms)
+✔ SHA refs are not accepted (6.8836ms)
+✔ setup-node must keep application Node 22 (8.0392ms)
+✔ jobs that install pnpm must cache pnpm and jobs that do not must omit cache (58.2958ms)
+✔ runtime shims are rejected (15.6207ms)
+ℹ tests 114
+ℹ suites 0
+ℹ pass 114
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38408.3632
+
+> @pi-gui/catalogs@0.0.0 test D:\AI\workspace\pao-dev\desktop\packages\catalogs
+> node --test "test/**/*.test.mts"
+
+✔ writes new content and creates missing directories (21.1891ms)
+✔ leaves only the target file behind, no lingering temp files (27.4764ms)
+✔ concurrent writes never collide or leave a partial file; result is one of the inputs (319.9381ms)
+✔ same-path stores serialize concurrent workspace, session, and worktree mutations (309.0594ms)
+✔ new stores reload an externally replaced catalog and preserve it on mutation (23.7288ms)
+✔ an interrupted temp write leaves the last committed catalog readable (19.9174ms)
+▶ invalid catalog data rejects reads and writes without dropping any saved records
+  ✔ future version (4.4095ms)
+  ✔ null document (2.8976ms)
+  ✔ array document (2.8385ms)
+  ✔ missing v2 collection (4.1697ms)
+  ✔ wrong collection shape (2.9597ms)
+  ✔ null workspace among valid records (5.9104ms)
+  ✔ workspace timestamp (4.7422ms)
+  ✔ workspace sort order (2.7935ms)
+  ✔ workspace pinned (2.4521ms)
+  ✔ session reference (4.058ms)
+  ✔ session workspace mismatch (4.0048ms)
+  ✔ session status (3.5343ms)
+  ✔ session optional field (3.3376ms)
+  ✔ worktree kind (2.5173ms)
+  ✔ worktree status (2.6978ms)
+  ✔ worktree optional field (2.8311ms)
+  ✔ file map array (2.8606ms)
+  ✔ file map value (3.1646ms)
+  ✔ legacy malformed collection (5.3138ms)
+✔ invalid catalog data rejects reads and writes without dropping any saved records (69.9675ms)
+✔ legacy catalogs retain records and upgrade only when a mutation succeeds (19.1123ms)
+✔ a failed load can be retried after the original catalog is repaired (3.16ms)
+✔ session writes that change nothing leave the catalog file alone (39.028ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 666.3293
+
+> @pi-gui/pi-sdk-driver@0.0.0 test D:\AI\workspace\pao-dev\desktop\packages\pi-sdk-driver
+> node --test "test/**/*.test.mts"
+
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-K39m77\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-K39m77\agent\pao-home\pao配置\档位.json'
+✔ PAO inventory forwards host options (436.0072ms)
+[pi-gui] Falling back to runtime resource loading without npm package sources for D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-1qGe2b\workspace: 模拟 npm root -g 失败
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-1qGe2b\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-1qGe2b\agent\pao-home\pao配置\档位.json'
+✔ PAO inventory forwards host options after npm fallback (375.2501ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-5YVnif\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-5YVnif\agent\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-5YVnif\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-builtins-5YVnif\agent\pao-home\pao配置\档位.json'
+✔ PAO inventory respects include, environment and extensions switches (1352.7924ms)
+✔ a switched-off built-in contributes no tools, and comes back on the next reload (72.6101ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ Settings lists a switched-off built-in with its tools and name (575.5155ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7f77-72d6-ae1b-458c2ef30725"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7f77-72d6-ae1b-458c2ef30725"}
+✖ a session loads a built-in only while it is switched on, rechecked on reload (15946.0619ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ Settings records each tool's label, and whether it replaces one of pi's tools (145.5259ms)
+✔ a stopping session still owns its execution root (7.0845ms)
+[pi-sdk-driver] abort failed for workspace:session: Error: abort boom
+    at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:223:22)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1325:25)
+    at Test.start (node:internal/test_runner/test:1191:17)
+    at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+    at run (node:internal/test_runner/harness:396:12)
+    at test (node:internal/test_runner/harness:405:12)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:222:7
+[pi-sdk-driver] abort failed for workspace:session: Error: abort boom
+    at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:250:22)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1325:25)
+    at Test.start (node:internal/test_runner/test:1191:17)
+    at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+    at run (node:internal/test_runner/harness:396:12)
+    at test (node:internal/test_runner/harness:405:12)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:249:7
+[pi-sdk-driver] abort failed for workspace:session: Error: settle hook failed after stop
+    at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:277:22)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1325:25)
+    at Test.start (node:internal/test_runner/test:1191:17)
+    at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+    at run (node:internal/test_runner/harness:396:12)
+    at test (node:internal/test_runner/harness:405:12)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:276:7
+[pi-sdk-driver] abort failed for workspace:session: Error: abort boom
+    at TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:302:22)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1325:25)
+    at Test.start (node:internal/test_runner/test:1191:17)
+    at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17)
+    at run (node:internal/test_runner/harness:396:12)
+    at test (node:internal/test_runner/harness:405:12)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/cancel-stopping.test.mts:301:7
+✔ cancelCurrentRun announces stopping while abort hangs, then settles idle (25.8962ms)
+✔ cancelCurrentRun keeps stopping when abort settles but the stream is still live (1.5206ms)
+✔ cancelCurrentRun keeps stopping when abort returns during compaction (1.182ms)
+✔ cancelCurrentRun rejects without settling while abort fails and the run is live (2.5233ms)
+✔ cancelCurrentRun keeps stopping when abort fails during compaction (1.6282ms)
+✔ cancelCurrentRun settles a failed abort only after Pi confirms idle (1.5975ms)
+✔ a late settled event finishes a cancel whose abort failed (2.9925ms)
+✔ cancelCurrentRun settles to failed when the run was already failing (1.0535ms)
+✔ cancelCurrentRun skips the stopping announcement when nothing is in flight (1.0623ms)
+✔ buildSnapshot omits the cancellation marker once it clears (0.6532ms)
+✔ requested abort emits only idle state, without completion or failure notifications (6.1354ms)
+✔ desktop and driver catalog owners preserve each other's records (116.6427ms)
+✔ workspace removal wins over a touch that was already in flight (170.7502ms)
+✔ workspace rename wins over an older metadata touch (126.804ms)
+✔ a metadata touch that reaches the queue after removal cannot re-add the workspace (190.2816ms)
+✔ a metadata touch that reaches the queue after rename preserves the accepted name (176.0879ms)
+✔ explicit registration can add a workspace again after removal (253.8944ms)
+✔ reconcile preserves the persisted workspace display name (410.4499ms)
+✔ reconcile does not register a workspace that was already removed (144.4717ms)
+✔ workspace removal waits for an older full sync transaction (475.317ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-779a-7027-9f49-8cbaffbb5411"}
+{"type":"pao_usage_complete","sessionId":"01a1963f-7459-7027-9f49-8cb9ccea172a"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7459-7027-9f49-8cb9ccea172a"}
+✔ model context edits preserve original desktop history and fork targets on live and reopened sessions (18820.3545ms)
+✔ display projection preserves compaction ranges and original tool results (1.2184ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-742a-7519-88f4-f5f833f838dc"}
+✔ extensions see rpc mode and idle custom messages reach the live transcript with their entry id (12761.9866ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a5b6-7519-88f4-f5fafcc06414"}
+✔ a hidden custom message never becomes the thread preview (6042.7835ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd54-7519-88f4-f5fde16390a2"}
+✔ custom messages sent during a run keep their persisted entry ids (5304.8701ms)
+✔ rejects malformed providers [] without changing bytes (18.4486ms)
+✔ rejects malformed providers ["saved-value"] without changing bytes (7.9441ms)
+✔ rejects malformed providers null without changing bytes (12.9038ms)
+✔ rejects malformed providers false without changing bytes (9.6164ms)
+✔ rejects malformed providers 0 without changing bytes (13.5139ms)
+✔ rejects malformed providers "saved-value" without changing bytes (8.2865ms)
+✔ missing file or providers supports saving and reopening an endpoint (115.1355ms)
+✔ set and delete preserve unrelated upstream fields and providers (43.2137ms)
+✔ malformed existing target configs are never overwritten (47.6517ms)
+✔ the queue recovers once malformed saved data is repaired externally (60.3342ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7429-7199-8431-3507954090c5"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✖ a reload asked for during a turn waits for the turn to end (13007.2853ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a6a6-7199-8431-3509b79619ef"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✖ a deferred reload runs once when Stop ends the turn (5965.8152ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bdf0-7199-8431-350af625f738"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bdf0-7199-8431-350af625f738"}
+[pi-sdk-driver] deferred reload failed for reload-workspace:01a1963f-bdf0-7199-8431-350af625f738: Error: Session reload-workspace:01a1963f-bdf0-7199-8431-350af625f738 is not active.
+    at SessionSupervisor.requireSession (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1700:19)
+    at SessionSupervisor.syncRecordAfterSessionMutation (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:2338:30)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1439:24
+    at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1416:13
+✔ a deferred reload runs when prompt() returns after its events are delivered (5204.6948ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-d245-7199-8431-350d2f5fe9f3"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✖ a deferred reload runs when the prompt fails before a run starts (7340.8994ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-eef3-7199-8431-350e802c37e9"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-eef3-7199-8431-350e802c37e9"}
+✔ a message sent during a reload starts its turn after the reload (9281.9544ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-1335-7199-8431-3510c92e5d19"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-1335-7199-8431-3510c92e5d19"}
+[pi-sdk-driver] deferred reload failed for reload-workspace:01a19640-1335-7199-8431-3510c92e5d19: Error: Session reload-workspace:01a19640-1335-7199-8431-3510c92e5d19 is not active.
+    at SessionSupervisor.requireSession (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1700:19)
+    at SessionSupervisor.syncRecordAfterSessionMutation (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:2338:30)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1439:24
+    at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1416:13
+✔ a reload waits for a running extension command (4406.9849ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-246b-7199-8431-3512eb1cf300"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-246b-7199-8431-3512eb1cf300"}
+✔ a message sent before a pending reload has started runs after that reload (5944.9493ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-3bb3-7199-8431-351492e52a62"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-3bb3-7199-8431-351492e52a62"}
+[pi-sdk-driver] deferred reload failed for reload-workspace:01a19640-3bb3-7199-8431-351492e52a62: Error: Session reload-workspace:01a19640-3bb3-7199-8431-351492e52a62 is not active.
+    at SessionSupervisor.requireSession (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1700:19)
+    at SessionSupervisor.syncRecordAfterSessionMutation (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:2338:30)
+    at file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1439:24
+    at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:1416:13
+✔ a reload asked for while an extension command is starting waits for it (4339.2479ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7462-73df-86f8-9081ac0f7f7f"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✖ installed Pi discovers one loaded closure per runtime without waiting for stalled desktop work (13031.214ms)
+✔ tails from disk when an idle session's file grew past the reconciled baseline (1.1831ms)
+✔ never tails mid-stream — the live runtime is authoritative while generating (0.2705ms)
+✔ does not tail when disk mtime is unchanged or older than the baseline (0.2586ms)
+✔ does not tail without a stat result (also covers a missing session file) (0.2373ms)
+✔ first serve (no baseline yet) serves memory, not disk (0.2789ms)
+✔ disposeAll aborts and disposes every managed session (6.7315ms)
+✔ concurrent closes share one real runtime dispose (1.0351ms)
+✔ a failed close stays live for retry and does not stop other sessions (131.1713ms)
+✔ event queue keeps delivering after a work item throws (10.6558ms)
+✔ singleFlight runs the factory once for concurrent callers and yields one result (4.7697ms)
+✔ singleFlight clears the entry on failure and lets the next call retry (1.8816ms)
+✔ distinct keys run their own factory concurrently (0.4677ms)
+✔ a card entry becomes a card item with the entry id; unknown fields are ignored (10.4883ms)
+✔ card buttons parse into the fixed action list; anything else is dropped (0.9225ms)
+✔ a keyed card has a key-based id; a bad key is a visible error row (0.5026ms)
+✔ the projection keeps a keyed card where it first appeared with its latest write (4.9927ms)
+✔ a card without a title is a visible custom row saying what is wrong (1.8033ms)
+✔ the session projection places cards in entry order and skips other custom entries (0.8695ms)
+✔ a pin entry parses like a card with a required key; remove unpins it (0.6014ms)
+✔ a malformed pin is one error row per key; without a valid key it keeps the entry id (0.5932ms)
+✔ the projection keeps each pin's latest write, removes it, and re-pins it as new (1.2671ms)
+✔ a pin written before a compaction's kept range survives it (3.1817ms)
+✔ a pin on another branch is not shown (0.6442ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7446-75ad-8e73-d1c411ec54e0"}
+✔ a live card and the reopened transcript show the same card once (12800.0629ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7437-7059-b853-19267c65d8a2"}
+✔ a card button's failing command leaves the thread's running turn alone (12839.2447ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7471-71c6-a9c1-ff36a59c6f98"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7471-71c6-a9c1-ff36a59c6f98"}
+✔ flag values given to createSession reach the extension through pi (18708.4786ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd53-71c6-a9c1-ff399321c8a4"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd53-71c6-a9c1-ff399321c8a4"}
+✔ a reopened session gets the flags it started with again (12541.3737ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-ee4c-71c6-a9c1-ff3adda63a1d"}
+✔ pi's flag diagnostics reach the first subscriber as extension errors (4988.5456ms)
+✔ editing one server keeps every other field, key and the file's indentation (44.7585ms)
+✔ listing returns no secrets and marks project servers (15.9936ms)
+✔ a file that does not parse is reported and never overwritten (16.8451ms)
+✔ new servers are validated and never replace an existing one (6.126ms)
+✔ server names follow pi's rule and Object keys are ordinary names (23.0995ms)
+✔ stdio arguments that look like credentials are masked in listings (6.7119ms)
+✔ a new server whose name differs from another only by - and _ is refused (7.3391ms)
+✔ a new global server is refused when it clashes with another open folder's (8.3276ms)
+✔ listings name the servers pi skips, and why (5.1155ms)
+✔ a description is saved when given and listed with the server (6.1917ms)
+✔ 守卫只把 builtin:pao 的装载错误判为致命 (3.2783ms)
+✔ 命中 poa 装载错误时先释放 runtime，再拒绝并保留原始原因 (84.3088ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-r5PutY\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-r5PutY\agent\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-773a-75a2-974b-c799cbc0bbc1"}
+✔ 真实内核：PAO 装配失败时 createSession 被拒绝，同一工作区随后仍可正常建会话 (1000.2021ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-DBq5JR\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-DBq5JR\agent\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-790c-75a2-974b-c79ade10d96f"}
+✔ 真实内核：PAO 装配失败时 openSession 拒绝恢复并保留原始原因 (724.8785ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-Kki69f\agent\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-pao-guard-Kki69f\agent\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-7c33-75a2-974b-c79d2fa50772"}
+✔ 真实内核：非 pao 扩展的装载错误不阻断会话（保持现状） (658.6267ms)
+✔ 加载器取到 fork 构建产物的 readDesktopCanvas (1070.4587ms)
+✔ 好/坏配方段隔离：坏配方显 RECIPE_CYCLE 错误不拖好配方 (66.2902ms)
+✔ 实例节点卡状态现读＋坏清单进异常行不拖好实例 (30.7075ms)
+✔ 卡缺失如实报读取异常；清单卡号不作数 (92.2446ms)
+✔ card operations use the public PAO entry and preserve disk-backed state rules (2119.8058ms)
+✔ loader resolves to the native public PAO desktop module (871.3111ms)
+✔ flow 节点着色对单域英文命中 (1.5685ms)
+✔ 恢复摘要「已完成」名单对 controlView 实际投影值命中 (1.2074ms)
+✔ 节点进度状态显示名对单域英文投影回中文，未知透传 (0.2887ms)
+✔ jsonFallback：details 里 summary 标签＋pre 原始 JSON，审计可展开 (0.5479ms)
+✔ workerLineText：内核行投影的头部字段与内容块拼接 (0.4895ms)
+✔ 节点部门归属按冻结配方定义取，未定义如实 undefined (0.261ms)
+✔ 部门过滤：按部门取节点，dept 未设取全部 (0.3196ms)
+✔ 死断定 badge 判定：只对本 owner 的流判死，异 owner 与热部长不判（A1） (0.2597ms)
+✔ 部门总览统计：配方部门 ∪ 热部长部门 ∪ 卡部门并集，活卡剔 delivered/canceled (2.1026ms)
+✔ selectedDept 跨 tab 不残留：切走再切回任务 tab 回到部门总览（A5） (430.985ms)
+✔ 部门详情态只列所选部门的卡 (145.7158ms)
+✔ 没有定时目录：零落盘、零子进程 (6.4028ms)
+✔ 未知工具、无id、任意repeat均拒绝；未知任务不会解释prompt (18.931ms)
+✔ 到期真实子进程完成；单次跨重启不重跑 (592.4411ms)
+✔ 单个坏任务不阻塞有效任务，同id冲突双方都不执行 (478.3759ms)
+✔ 真实机械worker等待执行前断IPC即退，主进程强杀也退出 (403.1576ms)
+✔ 关闭调度器可靠终止已启动真实子进程，无独立会话误杀 (150.1547ms)
+✔ 停用与关闭后的tick均不启动 (8.8451ms)
+✔ 归档只删除超出30份的已成功机械留档，保留失败和人工文件 (985.0389ms)
+✔ 实际worker归档正在删除时强杀父进程，后续删除停止 (8142.8492ms)
+✔ 任务文件未变化时每秒扫描零重读，变化/新增/移除按需重读 (15.4156ms)
+✔ 坏 JSON 与符号链接每轮都如实上报，不吃缓存 (5.86ms)
+✔ 修好的任务文件重新进缓存，错误不粘滞 (4.5983ms)
+✔ 没有临时计划目录时是空结果，不是读失败 (792.3938ms)
+✔ 读到计划定义与步骤摘要：步骤 ID 稳定、人工门与依赖如实、未启动不带关联 (24.546ms)
+✔ 坏定义点名进问题，计划列表不冒充完整 (13.3661ms)
+✔ worktree loader returns the shared product host and native lock functions (14.0151ms)
+✔ migrated bridges load real functions from the native public PAO entries (80.0313ms)
+✔ 新建档位：追加一行，保留 provider/部门默认，落盘 tab 缩进 (38.1988ms)
+✔ 新建重名拒绝：旧文件字节不变 (5.0252ms)
+✔ 编辑替换：改 provider/model/thinkingLevel 且保留未编辑的可选字段 (18.819ms)
+✔ 改名：原档名换新档名，部门默认引用旧名被内核拒绝（不静默丢引用） (3.9936ms)
+✔ 改名后无悬挂引用则成功 (18.5789ms)
+✔ 编辑不存在的档位（过期视图）拒绝 (5.5555ms)
+✔ 坏 JSON：读失败如实抛错，旧文件不被覆盖 (4.7131ms)
+✔ 写前自动备份旧文件（.bak- 时间戳） (18.3037ms)
+✔ 必填字段缺失由内核校验拒绝（空 provider） (4.0755ms)
+✔ listBackups 辅助自检：备份目录可列 (0.3959ms)
+✔ 折叠行与 TUI 同口径：完成 n/m 分母扣 cancelled，当前任务 activeForm 优先，空清单隐藏 (1.4947ms)
+✔ 展开列表与 TUI 同口径：四态符号、8 行上限＋剩余计数，空清单隐藏 (4.1597ms)
+✔ 扫描取内核 scanTodoState 同口径：成功 details 后者胜、错误不改、快照条目续读 (3.0443ms)
+✔ rpc 接线：todo_write 成功结果驱动状态行＋挂件；错误与其他工具不刷新 (1.0298ms)
+✔ rpc 接线：session_start/session_tree 按分支重扫恢复（切会话正确），shutdown 清空 (1.0041ms)
+✔ 模式门：tui 模式零输出（TUI 皮肤归内核 todo-summary，不双写） (0.5344ms)
+✔ 与 TUI 同键：状态行键「待办」、挂件键 todo-summary（同权威源不同皮） (0.219ms)
+✔ pending 默认口径：单类前 3 条＋尾行计数（fork 内部默认不变） (53.5849ms)
+✔ pending 透传限额：cardItemLimit 放行全量,itemLimit 截总,部门字段随卡面 (25.5698ms)
+✔ pending 不传限额与旧签名同形：证据/四行字段齐全 (21.2832ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ Settings lists pi's add-ons by their builtin: path and switches them in pi's setting (1320.4875ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ code mode Always on adds and removes +codemode, keeping other defaultTools (253.7918ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ code mode Always on reports only its own settings error (252.9845ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-86ea-71c6-b28a-887a828522a4"}
+{"type":"pao_usage_complete","sessionId":"01a1963f-89e0-71c6-b28a-887dce2602ae"}
+✔ a new session loads pi's add-ons and starts mcp.json servers, unless -builtin:mcp (1129.8767ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-8b48-71c6-b28a-887f30d33212"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-8b48-71c6-b28a-887f30d33212"}
+✔ switching code mode Always on reaches an open thread when it reloads (585.9922ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-809b-72de-9012-c767c0b1fdef"}
+✔ before-settle continuation stays running and completes once with the original run id (9520.155ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a59f-72de-9012-c7685820a196"}
+✔ a retryable attempt keeps the run id and reports only the eventual success (6093.7035ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd6c-72de-9012-c76a797e56d4"}
+✔ an extension turn started after settlement receives a distinct desktop run id (5283.5105ms)
+✔ private Pi hooks stay behind the compatibility boundary (346.9925ms)
+✔ private Pi hook guard rejects direct property and element access (2.0226ms)
+✔ private Pi hook guard accepts adapter access and ignores comments and strings (0.625ms)
+✔ forced Pi persistence keeps the private flushed state aligned (1.3885ms)
+✔ forced Pi persistence does not rewrite a file Pi already writes (0.2635ms)
+✔ forced Pi persistence keeps turns another Pi process appended (48.3688ms)
+✔ forced Pi persistence is a no-op when Pi has no private rewrite hook (0.6914ms)
+✔ project settings compatibility marks every field before saving (2.0616ms)
+✔ project settings compatibility fails clearly when upstream hooks change (1.0405ms)
+✔ compatibility hooks match the bundled Pi runtime (3.035ms)
+✔ global setting compatibility fails clearly when upstream hooks change (0.4718ms)
+✔ global setting compatibility writes one field through the bundled Pi runtime (13.0217ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-8241-7239-af5f-cd00e060600f"}
+✔ a message queued after pi settled, before the app heard, starts the next turn (9207.0441ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a608-7239-af5f-cd03818cac55"}
+✔ a message queued while pi's settle hooks run starts the next turn (5963.7907ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd54-7239-af5f-cd056c785b32"}
+✔ queue changes in that gap start one turn, then deliver the rest in order (5311.8522ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pi-sdk-driver] starting a queued message failed for queue-workspace:01a1963f-d20d-7239-af5f-cd06a984232c: Error: No API key
+    at session.prompt (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/queue-after-settle.test.mts:268:41)
+    at SessionSupervisor.sendCheckedMessage (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:967:49)
+    at async SessionSupervisor.sendReadyMessage (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/dist/session-supervisor.js:868:13)
+{"type":"pao_usage_complete","sessionId":"01a1963f-d20d-7239-af5f-cd06a984232c"}
+✔ a queued message that fails to start goes back on the queue until the next change (7229.562ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-ee4c-7239-af5f-cd08429e703c"}
+✔ a queue change from a list that still shows the started message does not resend it (4988.3747ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-01ce-7239-af5f-cd0be662d822"}
+✔ two queued messages with the same text each get their own turn (5593.3801ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-17a5-7239-af5f-cd0da91281f5"}
+✔ a queue change during a start's requeue is not undone by it (6099.4103ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-2f77-7239-af5f-cd0fdb20f532"}
+✔ a queued message pi already delivered under another text is not started again (3087.0719ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-3b91-7239-af5f-cd1163561758"}
+✔ a follow-up sent during a queue change is delivered with the queued messages (4317.4469ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ runtime snapshot includes providers registered by extensions (509.5331ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ disabling an extension drops the providers it registered (1032.6896ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ each workspace only sees providers its own project extensions register (928.1526ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ the same provider id resolves to each workspace's own configuration (791.7816ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+(node:31356) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 beforeExit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31356) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:31356) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGTERM listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+✔ disabling an extension only drops the registrations of that workspace (1185.3291ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ setProviderApiKey persists into a later snapshot as a connected API key (407.111ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ extension providers survive a runtime refresh (537.9286ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-8704-7479-9f54-3dcec830061f"}
+✔ a second send while the first turn runs queues instead of failing (7925.149ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a5b7-7479-9f54-3dd16bd26b41"}
+✔ a send arriving during the first prompt's pre-run steps queues and settles once (6068.3241ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-86b8-71c8-b34d-3774686bc1b0"}
+{"type":"pao_usage_complete","sessionId":"01a1963f-8997-71c8-b34d-3776edec1393"}
+{"type":"pao_usage_complete","sessionId":"01a1963f-8b0a-71c8-b34d-3779b8b1fba1"}
+✔ deleteSession removes the file and the catalog entry; archive keeps the file (8041.0584ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-8c5b-74ed-a2ec-32f8fefe72af"}
+✔ a workspace resolves its own models for a provider id another workspace also registers (7652.5629ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a6e5-74ed-a2ec-32fb104d3fc2"}
+✔ a session keeps its own workspace's endpoint and key for a shared provider and model id (6069.2455ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bfe7-74ed-a2ec-32fc3eb75951"}
+✔ removing a workspace leaves another workspace's session resolution intact (5280.5708ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ removing a workspace evicts its runtime context (613.4346ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+(node:39912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 beforeExit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:39912) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGTERM listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+{"type":"pao_usage_complete","sessionId":"01a1963f-d604-74ed-a2ec-32fecb2f5994"}
+✔ an override-only registration keeps the models the first registration defined (6622.0715ms)
+✔ lease path is a .lease sibling of the session file (ignored by pi's .jsonl discovery) (1.1448ms)
+✔ isSameHolder matches on pid + hostname for tokenless leases (0.2793ms)
+✔ same-host lease is dead when its pid is gone, alive when pid runs and mtime fresh (0.3842ms)
+✔ cross-host lease falls back to TTL: fresh mtime alive, stale mtime dead (0.2708ms)
+✔ leaseBlocksBinding: own lease never blocks, foreign+alive blocks, foreign+dead does not (1.9671ms)
+✔ defaultIsPidAlive: current process alive, invalid pids not alive (0.4563ms)
+✔ write/read/remove lease round-trips and tolerates missing + corrupt files (55.1103ms)
+✔ stale takeover: a dead foreign lease can be overwritten by our own (120.3795ms)
+✔ isSameHolder compares owner tokens when both sides have one (0.7316ms)
+✔ acquireLeaseFile: absent → acquired, own → acquired, live foreign → held (348.6852ms)
+✔ acquireLeaseFile takes over dead and corrupt leases (462.2508ms)
+✔ a refreshed lease keeps blocking past two TTLs; an unrefreshed one expires (227.9003ms)
+✔ releaseLeaseFile removes only the caller's own lease (68.5232ms)
+✔ processes racing for an absent session lease: exactly one acquires (751.2017ms)
+✔ processes racing to take over a dead lease: exactly one acquires (4034.772ms)
+✔ releaseLeaseFile waits for an in-progress takeover before checking ownership (233.6626ms)
+✔ buildSessionSchemaInfo flags only strictly-newer file versions (1.532ms)
+✔ schemaVersionFromHeaderLine parses version, defaults missing to 1, rejects non-headers (0.375ms)
+✔ current-version file is not flagged as written by a newer runtime (18.0674ms)
+✔ a file written by a newer pi is flagged (3.979ms)
+✔ the detected version survives external appends (disk-tail re-read) (11.2685ms)
+✔ unreadable / headerless files yield undefined (skew assumed absent) (7.3264ms)
+✔ a streaming partial emits its driver events without writing the catalog (4.8474ms)
+✔ a discrete agent event still writes the catalog (0.8086ms)
+✔ messageText preserves Markdown newlines in array-shaped assistant content (1.4768ms)
+✔ only a requested SDK abort is cancellation; actual provider errors remain failures (1.354ms)
+✔ the persist policy exempts streaming partials and keeps every discrete event (0.3438ms)
+✔ persistedToolOutput keeps only the content and details Pi saves (0.4044ms)
+✔ transcriptFromMessages shows displayed custom messages the way terminal pi does (2.7287ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-94a4-7274-b1f6-204d07370a73"}
+✔ a fresh session reports its context window before any turn (4517.3039ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a605-7274-b1f6-204eee18ed47"}
+✔ a completed turn reports pi's context, cache and totals (5975.2216ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd5b-7274-b1f6-205045fbdd37"}
+✔ switching models drops the old model's cache expiry (5292.0938ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-d208-7274-b1f6-20524172c1a2"}
+✔ a model without a declared cache lifetime reports unknown expiry (7238.4442ms)
+✔ Codex plan-limit headers parse into windows (0.4429ms)
+✔ Claude unified limit headers parse as percentages (0.1368ms)
+✔ responses without plan headers report nothing (0.0783ms)
+✔ 主投影材料、真实图片和 system sections 进入辅助 prompt，且问答不重复 (730.1325ms)
+✔ 损坏的辅助记录不静默清空；修好后同一 runtime 可再次发送 (307.523ms)
+✔ 旧 v1/v2 闭会话日志只读加载，字节和哈希不变 (115.1046ms)
+✔ 空和损坏的主会话日志显式失败，不变成新空会话 (52.0128ms)
+✔ 主控忙时读取标出完成边界，不阻断辅助问答 (245.9077ms)
+✔ P4-04 error 的部分回答保留但不作为成功历史 (299.2573ms)
+✔ P4-04 aborted 的部分回答保留但不作为成功历史 (250.7517ms)
+✔ P4-04 连续三次失败后健康回答不受错误历史计数影响 (257.265ms)
+✔ P4-05 坏图与正常图并存时只报告坏图，并在重开和再次同步时保持限制 (671.9823ms)
+✔ P4-05 source setting 不绕过来源图片策略，也不声称附件完整 (193.9224ms)
+✔ P4-05 model capability 不绕过来源图片策略，也不声称附件完整 (514.038ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ a sign-in that offers browser login takes it without asking (402.241ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+✔ a sign-in choice without browser login still asks (323.3881ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-9ef8-72ab-a5f6-41878908fcc7"}
+✔ Stop pressed while Pi is still starting a run cancels that run (7811.4285ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-lVN5JB\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-lVN5JB\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-a071-7537-a37d-e56fd1218b31"}
+✔ opening capture is awaited before the provider or real write tool can change files (7432.7102ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-unDwA1\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-unDwA1\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-bd6f-7537-a37d-e57021954c31"}
+✔ consumed steering and follow-up each split at the actual file boundary (5285.2439ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-4ssJp1\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-4ssJp1\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-d213-7537-a37d-e572e3e70d42"}
+✔ consecutive users before an assistant response coalesce into one interval (7212.3257ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-7qDfMc\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-7qDfMc\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a1963f-ee3f-7537-a37d-e5749d660d53"}
+✔ retry and before-settle continuation retain the initial baseline and all assistant anchors (4975.7156ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-LZJfXD\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-LZJfXD\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-01b2-7537-a37d-e5769a2f9172"}
+✔ Stop after a partial file edit closes the interval as stopped (4468.6569ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-3PsQp8\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-3PsQp8\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-1324-7537-a37d-e579a52e0b53"}
+✔ extension abort in before-settle is stopped without an aborted assistant message (4393.8531ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-Oh1Z85\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-Oh1Z85\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-244a-7537-a37d-e57b3b361b2f"}
+✔ an extension abort while idle does not cancel its next custom-started activity (1672.57ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-i2sr3V\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-i2sr3V\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-2ad3-7537-a37d-e57d0135b60a"}
+✔ closing a session during before-settle captures interruption after a successful assistant turn (4298.4361ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-MT5lqX\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-MT5lqX\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-3bb1-7537-a37d-e57fe31e02cb"}
+✔ closing a session after settlement preserves the completed capture (4282.1385ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-5WzmD6\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-5WzmD6\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-4c5c-7537-a37d-e58047a7b047"}
+✔ custom extension starts and settled-triggered user prompts get distinct captured activities (4446.6386ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-gvZKIL\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-gvZKIL\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-5db8-7537-a37d-e5829a1e372f"}
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-gvZKIL\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-gvZKIL\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-5db8-7537-a37d-e5829a1e372f"}
+✔ reloading the same Pi session creates a fresh runtime generation and checkpoint (7462.2551ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-CvpmVz\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-CvpmVz\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-7ae6-7537-a37d-e584bebbb22d"}
+✔ capture callback rejection does not block coding or reuse the failed activity (4020.2641ms)
+[pao] tiers模块按配置前置降级:tier-config:无法读取档位配置文件 D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-XE4cA4\pao-home\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\协作规则统一-20261030\s7\desktop\tmp\pi-gui-turn-capture-XE4cA4\pao-home\pao配置\档位.json'
+{"type":"pao_usage_complete","sessionId":"01a19640-8a96-7537-a37d-e586ee0bc414"}
+✔ capture deadline aborts its observer and records the missing baseline while coding proceeds (3956.5203ms)
+ℹ tests 256
+ℹ suites 0
+ℹ pass 251
+ℹ fail 3
+ℹ cancelled 2
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78997.4795
+
+✖ failing tests:
+
+test at test\builtin-extensions.test.mts:244:7
+✖ a session loads a built-in only while it is switched on, rechecked on reload (15946.0619ms)
+  'test timed out after 10000ms'
+
+test at test\deferred-reload.test.mts:178:7
+✖ a reload asked for during a turn waits for the turn to end (13007.2853ms)
+  Error: Timed out waiting for the deferred reload after the turn
+      at waitFor (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:16:38)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:190:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:178:1
+
+test at test\deferred-reload.test.mts:196:7
+✖ a deferred reload runs once when Stop ends the turn (5965.8152ms)
+  Error: Timed out waiting for the deferred reload after Stop
+      at waitFor (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:16:38)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:208:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:196:1
+
+test at test\deferred-reload.test.mts:240:7
+✖ a deferred reload runs when the prompt fails before a run starts (7340.8994ms)
+  Error: Timed out waiting for the deferred reload after the failure
+      at waitFor (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:16:38)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:257:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/pi-sdk-driver/test/deferred-reload.test.mts:240:1
+
+test at test\desktop-extension-bridge.test.mts:10:7
+✖ installed Pi discovers one loaded closure per runtime without waiting for stalled desktop work (13031.214ms)
+  'test timed out after 10000ms'
+D:\AI\workspace\pao-dev\desktop\packages\pi-sdk-driver:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @pi-gui/pi-sdk-driver@0.0.0 test: `node --test "test/**/*.test.mts"`
+Exit status 1
+ ELIFECYCLE  Command failed with exit code 1.
+
+## stderr

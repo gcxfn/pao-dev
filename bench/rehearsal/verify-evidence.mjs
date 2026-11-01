@@ -303,7 +303,12 @@ export function verifyEvidence(outputDir) {
   const projectRoot =
     typeof run.projectRoot === "string" ? resolve(run.projectRoot) : join(runRoot, "project");
   const kit = readJson(join(REPO_ROOT, "bench/organized-post/kit.json"));
-  const scenario = readJson(join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json"));
+  // 旧证据目录可能没有 scenarioPath（或指向已清理的临时文件）：退回 S6/S0 基线默认场景，保持历史可复核。
+  const scenarioPath =
+    typeof preflight.scenarioPath === "string" && existsSync(preflight.scenarioPath)
+      ? resolve(preflight.scenarioPath)
+      : join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
+  const scenario = readJson(scenarioPath);
   const controlPath = join(projectRoot, ".pao", `工作流实例-${kit.workflow.名字}.md`);
   const control = existsSync(controlPath) ? parseFrontmatter(controlPath).data : null;
   const cardsDir = control?.卡目录 ? resolve(control.卡目录) : join(projectRoot, ".pao", "卡");

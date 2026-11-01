@@ -1,0 +1,51 @@
+﻿
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+xstdout | test/pao/s7-boundary-b14-cross-entry.test.ts > B14 同一回执三入口对照 > 同一份回执经单卡与扇出真实入口得到同一完成结论，且落卡走同一实现
+DEBUG-fanout-result {"卡号":"0001","终态":"失败","attempt":1,"摘要":"C:\\Program Files\\nodejs\\node.exe: bad option: --mode","失败类型":"transient","路由建议":{"类型":"transient","建议动作":"重试","自动重派":true,"说明":"瞬时故障自动重试；尝试数达上限即升级人，不论失败原因"},"证据路径":"D:\\AI\\workspace\\临时文件夹\\协作规则统一-20261030\\s7\\boundary\\tmp\\pao-s7-b14-24zd6G\\扇出\\证据\\卡0001-尝试1-56544d227935-29bc76e5-cefe-4e43-be60-f101ba6a9940.live.jsonl","回执落卡":"已记录","持续毫秒":848,"认领基线":{"available":false,"existingEntryCount":0,"attempt":1,"reason":"fatal: not a git repository (or any of the parent directories): .git"}}
+
+x
+node.exe : 
+所在位置 行:7 字符: 1
++ & node ../../node_modules/vitest/vitest.mjs run test/pao/s7-boundary- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/s7-boundary-b14-cross-entry.test.ts > B14 同一回执三入口对照 > 同一份回执经单卡与扇出真实入口得到同一完成结论，且落卡走同一实现
+AssertionError: expected '失败' to be '成功' // Object.is equality
+
+Expected: "成功"
+Received: "失败"
+
+ ❯ test/pao/s7-boundary-b14-cross-entry.test.ts:116:28
+    114|   expect(single.可派 ? single.result : undefined).toBe("已记录");
+    115|   expect(summary.结果).toHaveLength(1);
+    116|   expect(summary.结果[0].终态).toBe("成功");
+       |                            ^
+    117|   expect(summary.结果[0].回执落卡).toBe("已记录");
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/s7-boundary-b14-cross-entry.test.ts > B14 同一回执三入口对照 > 扇出保留既有提交策略：不自动完成/交付、不含任何提交调用，提交能力单点在交付工具
+Error: ENOENT: no such file or directory, open 'D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\pao\delivery.ts'
+ ❯ source test/pao/s7-boundary-b14-cross-entry.test.ts:64:46
+     62|
+     63| const SRC_ROOT = join(import.meta.dirname, "../../src/pao");
+     64| const source = (relative: string): string => readFileSync(join(SRC_ROO…
+       |                                              ^
+     65|
+     66| describe("B14 同一回执三入口对照", () => {
+ ❯ test/pao/s7-boundary-b14-cross-entry.test.ts:145:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  16:46:21
+   Duration  3.76s (transform 1.19s, setup 0ms, import 1.57s, tests 2.00s, environment 0ms)
+
