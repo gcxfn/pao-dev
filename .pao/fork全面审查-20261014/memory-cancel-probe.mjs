@@ -1,0 +1,23 @@
+// 用途：验证已取消的记忆工具是否仍写共享供应商；输入：当前源码+模拟供应商；输出：控制台。无网络调用。
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+const src='file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/src/pao/';
+const { registerMemory }=await import(src+'memory/index.ts');
+const { registerMemoryVendor }=await import(src+'memory/memory-vendor.ts');
+const { projectFromCwd }=await import(src+'knowledge/outbound.ts');
+const root='D:/AI/workspace/pao-dev/.pao/fork全面审查-20261014/memory-cancel-data';
+mkdirSync(root,{recursive:true});
+const config=join(root,'mock-config.json');
+writeFileSync(config,JSON.stringify({供应商:'audit-cancel',参数:{}}));
+let writes=0,recalls=0;
+registerMemoryVendor('audit-cancel',()=>({vendorName:'audit-cancel',capabilities:{},start:async()=>{},close:async()=>{},write:async()=>{writes++;},recall:async()=>{recalls++;return[];}}));
+const tools=[];
+const pi={registerTool:t=>tools.push(t),on:()=>{}};
+const project=projectFromCwd(root);
+const manager=registerMemory(pi,{resolveConfigPath:()=>config,outbound:{projects:{[project]:{allowed:true,asOf:'2099-01-01'}}}});
+const controller=new AbortController();
+const pending=tools.find(t=>t.name==='pao_memory_write').execute('canceled-request',{content:'模拟写入'},controller.signal,()=>{},{cwd:root});
+controller.abort();
+const result=await pending;
+console.log(JSON.stringify({aborted:controller.signal.aborted,writes,result}));
+await manager.close();
