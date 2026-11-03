@@ -303,11 +303,21 @@ export function verifyEvidence(outputDir) {
   const projectRoot =
     typeof run.projectRoot === "string" ? resolve(run.projectRoot) : join(runRoot, "project");
   const kit = readJson(join(REPO_ROOT, "bench/organized-post/kit.json"));
-  // 旧证据目录可能没有 scenarioPath（或指向已清理的临时文件）：退回 S6/S0 基线默认场景，保持历史可复核。
-  const scenarioPath =
+  // 旧证据目录可能没有 scenarioPath（或指向已清理的临时文件）：退回 S6/S0 基线默认场景，保持历史可复核；
+  // 退回不是默认场景被静默当作实参：回包里如实留痕，复核者知道场景不是原证。
+  const requestedScenario =
     typeof preflight.scenarioPath === "string" && existsSync(preflight.scenarioPath)
       ? resolve(preflight.scenarioPath)
-      : join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
+      : null;
+  const scenarioPath = requestedScenario ?? join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
+  const scenarioFallback =
+    requestedScenario === null
+      ? {
+          requested: typeof preflight.scenarioPath === "string" ? preflight.scenarioPath : null,
+          used: scenarioPath,
+          reason: "证据目录缺少可用 scenarioPath，退回基线默认场景",
+        }
+      : null;
   const scenario = readJson(scenarioPath);
   const controlPath = join(projectRoot, ".pao", `工作流实例-${kit.workflow.名字}.md`);
   const control = existsSync(controlPath) ? parseFrontmatter(controlPath).data : null;
@@ -657,6 +667,7 @@ export function verifyEvidence(outputDir) {
     controlStatusFromYaml: control?.状态 ?? null,
     currentContentTree: currentTree ?? null,
     gitStatus: currentTree ? collectGitDiffStatus(projectRoot) : null,
+    ...(scenarioFallback === null ? {} : { scenarioFallback }),
     syntheticUsageNote: modelUsage.note,
     limitation: "脚本模型 usage 固定为 1/1/2，仅验证协议与证据形状；不能作为真实 token、费用或性能结论。",
   };
