@@ -4,7 +4,7 @@
 
 ## 调查方法
 
-1. 读 W 正本 `plans/未完成/2026-10-05-工作流与看板形态重构需求.md` 全文，提取全部条目。
+1. 读 W 正本 `plans/已完成/存档-收编-2026-10-07/2026-10-05-工作流与看板形态重构需求.md` 全文，提取全部条目。
 2. 读历史证据：`.pao/工作流重构-20261005/交付报告.md`（含 2026-10-05 追加、收尾检查点等全部末尾段落，共 98 行）；`.pao/整体重构-20261005/交付报告.md` 中画布/看板相关行；统一计划第 5 节阶段表（S2 画布基础、S3 属性标签、S4 主控、S5-S6 运行、S7 看板）。
 3. 逐条 grep/读源码核实当前工作区（含未提交修改，不用 HEAD 判断）。主要文件：
    - 桌面：`desktop/apps/desktop/src/features/canvas/`（canvas-page.tsx、canvas-model.ts、recipe-canvas-editor.tsx、workflow-editor.tsx、recipe-library.tsx、workflow-tabs.tsx、instance-workflow-view.tsx、workflow-runtime-controls.tsx、workflow-wizard.tsx）、`src/features/workboard/kanban-board.tsx`、`src/features/conversation/embedded-chat.tsx`、`src/app/App.tsx`、`contracts/desktop-state.ts`、`contracts/i18n-zh.ts`、`contracts/i18n-en.ts`、`electron/application/workflow-tabs.ts`、`electron/platform/pao/`（canvas-query.ts、workflow-wizard-bridge.ts、kanban-query.ts、workboard-query.ts）、`electron/windows/workflow-leave-guard.ts`

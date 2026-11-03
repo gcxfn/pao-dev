@@ -5,8 +5,8 @@
 
 ## 调查方法
 
-1. 读 F 正本 `plans/未完成/2026-10-07-pi-maestro-flow参照实施清单.md`（16 项机制描述与完成判据）与附件摘录 `plans/附件/2026-10-07-pi-maestro-flow抄改代码摘录.md`（参照实现形态）。
-2. 读统一计划 `plans/未完成/2026-10-07-统一分阶段自主执行计划.md` 第 5 节（S2/S4—S7 范围）与第 7 节（16 项阶段归属、C1—C5 条件项）。
+1. 读 F 正本 `plans/已完成/存档-收编-2026-10-07/2026-10-07-pi-maestro-flow参照实施清单.md`（16 项机制描述与完成判据）与附件摘录 `plans/附件/2026-10-07-pi-maestro-flow抄改代码摘录.md`（参照实现形态）。
+2. 读统一计划 `plans/已完成/2026-10-07-统一分阶段自主执行计划.md` 第 5 节（S2/S4—S7 范围）与第 7 节（16 项阶段归属、C1—C5 条件项）。
 3. 逐项用 grep 定位关键标识符（`sessionGeneration`/`lease`/`completed_with_deviations`/`operationId`/`realpath` 等）并读源码确认，覆盖 PAO 内核 `PAO/packages/coding-agent/src/pao/`、pi 内核 `PAO/packages/coding-agent/src/core/`、桌面 `desktop/apps/desktop/electron/` 与 `desktop/apps/desktop/src/`、桌面共享包 `desktop/packages/`。
 4. 代码图（codebase-memory，D-AI-workspace-pao-dev-PAO / D-AI-workspace-pao-dev-desktop）确认可用（状态 ready，索引 2026-10-06），本轮以 grep+精读为准；行号截至 2026-10-07 工作区现状，仅供定位。
 

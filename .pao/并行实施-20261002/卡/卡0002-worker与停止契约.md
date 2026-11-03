@@ -1,7 +1,7 @@
 ---
 目标: 在 PAO fork 内实现 headless worker 运行器:拉起/结构化回执收集/取消先停后放锁/主会话退出停进程树/重启只读盘点
 部门: 核心机制
-输入: [plans/v2-ARCHITECTURE.md §1 后台运行契约/R05, plans/未完成/2026-10-02-实施前契约修订.md R05, PAO/packages/coding-agent/examples/extensions/subagent/index.ts(spawn与JSON事件流参考), .pao/并行实施-20261002/黑板.md]
+输入: [plans/v2-ARCHITECTURE.md §1 后台运行契约/R05, plans/已完成/2026-10-02-实施前契约修订.md R05, PAO/packages/coding-agent/examples/extensions/subagent/index.ts(spawn与JSON事件流参考), .pao/并行实施-20261002/黑板.md]
 约束: 只动 PAO/packages/coding-agent/src/pao/worker/ 与 test/pao/worker-*.test.ts;不碰其余源码
 验收: 见正文
 depends_on: []
