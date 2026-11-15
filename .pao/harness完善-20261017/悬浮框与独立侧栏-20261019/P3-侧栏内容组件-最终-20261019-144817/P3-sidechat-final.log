@@ -1,0 +1,35 @@
+P3 final targeted checks
+workspace: D:/AI/workspace/pao-dev/desktop
+evidence: D:\AI\workspace\pao-dev\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P3-侧栏内容组件-最终-20261019-144817
+
+[1] \$ ./node_modules/.bin/prettier --check apps/desktop/src/features/side-chat/side-chat-panel.tsx apps/desktop/src/features/workboard/department-execution-panel.tsx apps/desktop/tests/unit/side-chat-panel-model.spec.ts apps/desktop/src/styles/side-chat.css
+Checking formatting...
+All matched files use Prettier code style!
+exit_code=0
+
+[2] \$ ./node_modules/.bin/tsc -p apps/desktop/tsconfig.json --noEmit --pretty false
+
+exit_code=0
+
+[3] \$ ./node_modules/.bin/playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/unit/side-chat-panel-model.spec.ts --output="D:\AI\workspace\pao-dev\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P3-侧栏内容组件-最终-20261019-144817\playwright-test-results"
+
+Running 11 tests using 1 worker
+
+(node:29952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:46:5 › 部门详情只选择项目、来源主控、实例和轮次同时匹配的执行组 (5ms)
+  ok  2 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:59:5 › 同实例的节点和轮次不能互相冒充 (1ms)
+  ok  3 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:80:5 › 共享卡目录的不同工作流实例不能串组 (1ms)
+  ok  4 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:104:5 › 看板不可用时不构造空部门 (1ms)
+  ok  5 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:115:5 › 部门身份按工作区与来源主控精确读取，现场缺失不冒充加载中 (2ms)
+  ok  6 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:164:5 › 辅助会话快照的异步返回不能串到另一个来源会话 (1ms)
+  ok  7 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:185:5 › 同步只覆盖更旧快照，相同消息身份不会因轮询重复落地 (2ms)
+  ok  8 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:222:5 › 部门面板的回执夹具保留磁盘记录原值，不补造成功状态 (2ms)
+  ok  9 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:270:5 › 可控延迟请求跨一次同步周期：发送完成、迟到同步失效、发送状态仍能清理 (5ms)
+  ok 10 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:303:5 › 发送的完成清理只接受自己的 source 与发送序号 (1ms)
+  ok 11 apps\desktop\tests\unit\side-chat-panel-model.spec.ts:314:5 › 隐藏后重开时宿主快照的 busy 能阻止重复发送并要求同步结果 (1ms)
+
+  11 passed (1.6s)
+exit_code=0

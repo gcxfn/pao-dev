@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+···························x····x···························
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/dispatch-brief-artifacts.test.ts > dispatch-brief persistence and map > 已交付前置卡冻结的旧来源通过 depends_on 命中未终态下游，并排除无关与终态卡
+DispatchBriefError: 上游地图在派发准备前已经过期；请通知保存该地图的部长复核并用 previous_ref 显式替代，删除卡面指针不会移除工作流注入的依赖
+ ❯ prepareDispatchBrief src/pao/dispatch-brief/brief.ts:645:11
+    643|    const current = recaptureDispatchMap(saved, input);
+    644|    if (!sameDispatchMapCoverage(saved, current)) {
+    645|     throw new DispatchBriefError(
+       |           ^
+    646|      "stale_map",
+    647|      "上游地图在派发准备前已经过期；请通知保存该地图的部长复核并用 previous_ref 显式替代，删除卡面指针不会移除工作流注入…
+ ❯ test/pao/dispatch-brief-artifacts.test.ts:814:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/dispatch-brief-artifacts.test.ts > dispatch-brief persistence and map > precheck 与 verify 对显式替代后的旧地图和旧契约都停发，旧版本仍可加载
+DispatchBriefError: 上游地图在派发准备前已经过期；请通知保存该地图的部长复核并用 previous_ref 显式替代，删除卡面指针不会移除工作流注入的依赖
+ ❯ prepareDispatchBrief src/pao/dispatch-brief/brief.ts:645:11
+    643|    const current = recaptureDispatchMap(saved, input);
+    644|    if (!sameDispatchMapCoverage(saved, current)) {
+    645|     throw new DispatchBriefError(
+       |           ^
+    646|      "stale_map",
+    647|      "上游地图在派发准备前已经过期；请通知保存该地图的部长复核并用 previous_ref 显式替代，删除卡面指针不会移除工作流注入…
+ ❯ test/pao/dispatch-brief-artifacts.test.ts:1270:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  2 failed | 58 passed (60)
+   Start at  21:54:23
+   Duration  112.33s (transform 824ms, setup 0ms, import 1.77s, tests 109.69s, environment 0ms)
+

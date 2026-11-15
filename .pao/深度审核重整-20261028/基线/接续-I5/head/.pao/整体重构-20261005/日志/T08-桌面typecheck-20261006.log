@@ -1,0 +1,73 @@
+
+> pi-gui@1.0.1 typecheck D:\AI\workspace\pao-dev\桌面端
+> pnpm check:workspaces && pnpm build:shared && pnpm -r --if-present typecheck && pnpm typecheck:extension-examples
+
+
+> pi-gui@1.0.1 check:workspaces D:\AI\workspace\pao-dev\桌面端
+> node scripts/check-workspace-typechecks.mjs
+
+All 7 workspaces declare typecheck commands.
+
+> pi-gui@1.0.1 build:shared D:\AI\workspace\pao-dev\桌面端
+> pnpm --filter @pi-gui/session-driver build && pnpm --filter @pi-gui/catalogs build && pnpm --filter @pi-gui/extension-ui build && pnpm --filter @pi-gui/pi-sdk-driver build
+
+
+> @pi-gui/session-driver@0.0.0 build D:\AI\workspace\pao-dev\桌面端\packages\session-driver
+> tsc -p tsconfig.json
+
+
+> @pi-gui/catalogs@0.0.0 build D:\AI\workspace\pao-dev\桌面端\packages\catalogs
+> tsc -p tsconfig.json
+
+
+> @pi-gui/extension-ui@0.0.0 build D:\AI\workspace\pao-dev\桌面端\packages\extension-ui
+> tsc -p tsconfig.json && node scripts/build-browser.mjs
+
+
+> @pi-gui/pi-sdk-driver@0.0.0 build D:\AI\workspace\pao-dev\桌面端\packages\pi-sdk-driver
+> tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+
+Scope: 7 of 8 workspace projects
+apps/website typecheck$ tsc -p tsconfig.json --noEmit
+packages/session-driver typecheck$ tsc -p tsconfig.json --noEmit
+packages/extension-ui typecheck$ tsc -p tsconfig.json --noEmit
+video typecheck$ tsc -p tsconfig.json --noEmit
+packages/session-driver typecheck: Done
+packages/extension-ui typecheck: Done
+video typecheck: Done
+apps/website typecheck: Done
+packages/catalogs typecheck$ tsc -p tsconfig.json --noEmit
+packages/catalogs typecheck: Done
+packages/pi-sdk-driver typecheck$ tsc -p extensions/pao/tsconfig.json && tsc -p tsconfig.json --noEmit
+packages/pi-sdk-driver typecheck: Done
+apps/desktop typecheck$ tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit
+apps/desktop typecheck: Done
+
+> pi-gui@1.0.1 typecheck:extension-examples D:\AI\workspace\pao-dev\桌面端
+> pnpm --dir examples/desktop-extensions/pr-review typecheck && pnpm --dir examples/desktop-extensions/test-runs typecheck && pnpm --dir examples/desktop-extensions/github typecheck && pnpm --dir examples/desktop-extensions/usage typecheck && pnpm --dir examples/desktop-extensions/trace typecheck
+
+
+> @pi-gui/example-pr-review@0.0.0 typecheck D:\AI\workspace\pao-dev\桌面端\examples\desktop-extensions\pr-review
+> tsc -p tsconfig.json
+
+index.ts(3,22): error TS2307: Cannot find module '@earendil-works/pi-ai' or its corresponding type declarations.
+index.ts(4,53): error TS2307: Cannot find module '@earendil-works/pi-coding-agent' or its corresponding type declarations.
+index.ts(99,27): error TS7006: Parameter '_event' implicitly has an 'any' type.
+index.ts(99,35): error TS7006: Parameter 'context' implicitly has an 'any' type.
+index.ts(110,26): error TS7006: Parameter '_event' implicitly has an 'any' type.
+index.ts(110,34): error TS7006: Parameter 'context' implicitly has an 'any' type.
+index.ts(114,32): error TS7006: Parameter 'event' implicitly has an 'any' type.
+index.ts(114,39): error TS7006: Parameter 'context' implicitly has an 'any' type.
+index.ts(124,33): error TS7006: Parameter 'event' implicitly has an 'any' type.
+index.ts(154,19): error TS7006: Parameter '_id' implicitly has an 'any' type.
+index.ts(154,24): error TS7006: Parameter 'input' implicitly has an 'any' type.
+index.ts(154,31): error TS7006: Parameter 'signal' implicitly has an 'any' type.
+index.ts(184,19): error TS7006: Parameter '_id' implicitly has an 'any' type.
+index.ts(184,24): error TS7006: Parameter 'input' implicitly has an 'any' type.
+index.ts(184,31): error TS7006: Parameter 'signal' implicitly has an 'any' type.
+index.ts(211,21): error TS7006: Parameter '_args' implicitly has an 'any' type.
+index.ts(211,28): error TS7006: Parameter 'context' implicitly has an 'any' type.
+ ELIFECYCLE  Command failed with exit code 2.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
+ ELIFECYCLE  Command failed with exit code 2.
+ ELIFECYCLE  Command failed with exit code 2.

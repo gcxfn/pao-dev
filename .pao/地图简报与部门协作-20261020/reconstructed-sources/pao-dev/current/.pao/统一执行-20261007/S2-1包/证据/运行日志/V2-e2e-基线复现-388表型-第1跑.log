@@ -1,0 +1,36 @@
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 (53.9s)
+
+
+  1) tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────────────────
+
+    TimeoutError: locator.fill: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workflow-inspector').getByLabel('配方名称')[22m
+
+
+      386 |     expect(await readFile(join(home, "工作流", "另存验证.md"), "utf8")).toContain("真实保存验证");
+      387 |     await page.getByRole("button", { name: "新建工作流", exact: true }).click();
+    > 388 |     await page.getByTestId("workflow-inspector").getByLabel("配方名称").fill("新建验证");
+          |                                                                     ^
+      389 |     // 主控会话按标签页绑定（工作流标签契约）：同标签内新建配方复用已建立的主控，
+      390 |     // 按钮保持「已建立＋禁用」，不再按配方重复建立。
+      391 |     await expect(page.getByTestId("canvas-open-master-session")).toContainText("主控会话已建立");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:388:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 ──────────────────────────────────

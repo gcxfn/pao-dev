@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ × packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts > 真实 WorkerRunner 与真实 managed Git 根 > 两个 managed 根的两个离线 Node 子进程执行时间真实重叠 9135ms
+   → [{"event":"start","time":1792545743023,"id":"b"},{"event":"end","time":1792545745531,"id":"b"},{"event":"start","time":1792545746522,"id":"a"},{"event":"end","time":1792545749025,"id":"a"}]: expected false to be true // Object.is equality
+ ↓ packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts > 真实 WorkerRunner 与真实 managed Git 根 > 同一 managed 根的双写被真实执行锁互斥，只启动一个子进程
+ ↓ packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts > 真实 WorkerRunner 与真实 managed Git 根 > 真活 worker 停止未知时保留锁、预约和守卫；随后真退出才全部释放
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts > 真实 WorkerRunner 与真实 managed Git 根 > 两个 managed 根的两个离线 Node 子进程执行时间真实重叠
+AssertionError: [{"event":"start","time":1792545743023,"id":"b"},{"event":"end","time":1792545745531,"id":"b"},{"event":"start","time":1792545746522,"id":"a"},{"event":"end","time":1792545749025,"id":"a"}]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts:207:43
+    205|   const bEnd = events.find((entry) => entry.event === "end" && entry.i…
+    206|   const overlap = aStart.time < bEnd.time && bStart.time < aEnd.time;
+    207|   expect(overlap, JSON.stringify(events)).toBe(true);
+       |                                           ^
+    208|   const active = runner.registry.list().filter((entry) => entry.runnin…
+    209|   expect(active).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  09:22:18
+   Duration  10.10s (transform 548ms, setup 0ms, import 807ms, tests 9.14s, environment 0ms)
+

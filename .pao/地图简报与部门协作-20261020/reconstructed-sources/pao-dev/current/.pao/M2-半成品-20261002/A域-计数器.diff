@@ -1,0 +1,55 @@
+diff --git a/packages/coding-agent/src/pao/cards/counter.ts b/packages/coding-agent/src/pao/cards/counter.ts
+index 5fd67b4a6..80e7a4de7 100644
+--- a/packages/coding-agent/src/pao/cards/counter.ts
++++ b/packages/coding-agent/src/pao/cards/counter.ts
+@@ -1,13 +1,49 @@
+ import { existsSync, readFileSync } from "node:fs";
++import { join, resolve } from "node:path";
+ 
+ import { writeFileAtomic } from "./atomic.ts";
+ import { PaoCardError } from "./errors.ts";
+ import { withFileLock } from "./lock.ts";
+ 
++/**
++ * 计数器落点统一（摩擦日志 2026-10-02「卡号计数器双写」修复）：
++ * 写入只写项目编排目录 `<...>/.pao/卡号.txt`——沿卡目录向上找最近的 `.pao` 路径段，
++ * 计数器落在该 `.pao` 目录下（同一项目多任务工作区共用一个号池，天然不重号）；
++ * 卡目录不在 .pao 下时退回卡目录上级（编排目录约定由调用方自担）。
++ */
++export function resolveCounterPath(cardsDir: string): string {
++	const parts = resolve(cardsDir).split(/[\\/]+/).filter((p) => p.length > 0);
++	for (let i = parts.length - 1; i >= 0; i--) {
++		if (parts[i] === ".pao") {
++			return join(...parts.slice(0, i + 1), "卡号.txt");
++		}
++	}
++	return join(resolve(cardsDir), "..", "卡号.txt");
++}
++
++/**
++ * 旧落点兼容读（只搬一次账，不回写旧位置）：新落点计数器还不存在而旧落点
++ * （仓库根 卡号.txt，M1 双写缺陷产物）有值时，把旧值搬进新落点作为起始号。
++ * 此后 nextCardNumber 只写新落点，旧文件原样不动、逐渐自然废弃。
++ */
++export function seedCounterFromLegacy(counterPath: string, legacyPath: string): void {
++	if (counterPath === legacyPath) return;
++	if (existsSync(counterPath) || !existsSync(legacyPath)) return;
++	let value = "0\n";
++	try {
++		const raw = readFileSync(legacyPath, "utf8").trim();
++		const parsed = Number.parseInt(raw, 10);
++		if (Number.isFinite(parsed) && parsed > 0) value = `${parsed}\n`;
++	} catch {
++		// 旧文件读不了按无旧账处理，不阻断建卡
++	}
++	writeFileAtomic(counterPath, value);
++}
++
+ /**
+  * 卡号发号器：按项目独立递增，计数器文件一行存当前最大号。
+  * 跨进程安全 = withFileLock（proper-lockfile，mkdir 原子性，Windows 可用，见 lock.ts 依据）。
+- * 计数器路径由调用方传入（约定 `<项目>/.pao/卡号.txt`，见 createCard 默认值推导）。
++ * 计数器路径由调用方传入（约定 `<项目>/.pao/卡号.txt`，缺省推导见 resolveCounterPath）。
+  */
+ export async function nextCardNumber(counterPath: string): Promise<number> {
+ 	// 锁前确保计数器存在：proper-lockfile 的 stale 检查基于锁目录而非目标文件，

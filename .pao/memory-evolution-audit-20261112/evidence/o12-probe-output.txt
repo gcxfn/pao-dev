@@ -1,0 +1,18 @@
+PASS  template registerResource — root=工作流/revision.md
+PASS  template snapshotResourceFiles — versionId=v-b5c653ea07ff files=1
+PASS  template readResourceVersion 读回单文件 — path=revision.md
+PASS  recipe registerResource — root=部门/finanzas/配方.md
+PASS  recipe snapshotResourceFiles — versionId=v-cad7c402f16b
+PASS  recipe readResourceVersion 读回单文件 — path=配方.md
+PASS  skill 目录快照回归 — files=2
+PASS  check: 空 links 拒绝 — 问题没有登记任何来源关联（空关联不能代替有效依据）
+PASS  check: sources 行已删拒绝 — 问题的来源 src-gone 已被删除
+PASS  check: source_exclusions 命中拒绝 — 问题的来源 src-exc1 已被排除
+PASS  check: memory_id 已删拒绝 — 问题的来源 src-m1 引用的记忆 mem-gone 已被删除排除
+PASS  check: revision 过期拒绝 — 问题的来源 src-r1 引用的记忆 mem-r1 当前修订 r1 低于关联修订 r3
+PASS  check: 来源有效通过 — undefined
+PASS  cleanup: problem 唯一证据→正文清空+pending — summary=[cleared] status=observed problemsCleaned=1 pending=[]
+PASS  cleanup: 共享来源保留未删范围 — refs=["evidence:keep-9"]
+PASS  cleanup: candidate cancelled+正文清空+目录移除+plan invalidated — status=cancelled dir=false invalidated=true
+
+16/16 通过

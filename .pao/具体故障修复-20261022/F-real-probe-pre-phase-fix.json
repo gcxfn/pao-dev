@@ -1,0 +1,149 @@
+{
+  "status": "passed",
+  "image_id": "9779ef143cc8",
+  "container": "pao-f-monitor-e7a45c689f__env-main-1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--detach",
+      "--name",
+      "pao-f-monitor-e7a45c689f__env-main-1",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmp0t8x412z\\packages\\coding-agent\\dist\\bundle:/tmp/harbor-pao-source/packages/coding-agent/dist/bundle:ro",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmp0t8x412z:/tmp/f-monitor:ro",
+      "--env",
+      "NODE_OPTIONS=--require=/tmp/f-monitor/process-title.cjs",
+      "--env",
+      "PAO_ROLE=部长",
+      "--env",
+      "PAO_DEPT=实施",
+      "--env",
+      "PI_CODING_AGENT=true",
+      "--entrypoint",
+      "sh",
+      "9779ef143cc8",
+      "-lc",
+      "cp /tmp/f-monitor/benchmark-prerequisites.json /tmp/benchmark-prerequisites.json; mkdir -p /tmp/harbor-pao-source/packages/coding-agent/dist/bundle; PAO_ROLE=worker node /tmp/f-monitor/task.js & env -u PI_CODING_AGENT node /tmp/f-monitor/title-only.js & PAO_ROLE=worker PAO_DEPT=内核 node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js & exec node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/rpc-entry.js"
+    ]
+  ],
+  "assertions": {
+    "probe_collected": true,
+    "pao_runtime_count": true,
+    "rpc_identified": true,
+    "rpc_role": true,
+    "cli_identified": true,
+    "cli_role": true,
+    "task_node_count": true,
+    "ordinary_task_kept_argv0": true,
+    "ordinary_task_role_ignored": true,
+    "title_only_not_pao": true,
+    "title_only_no_agent_marker": true,
+    "phase_preparation": true,
+    "no_probe_errors": true
+  },
+  "cleanup": {
+    "container_remove_returncode": 0,
+    "container_remove_stderr": "",
+    "container_left": [],
+    "temp_dir_removed_by_context": true
+  },
+  "probe": {
+    "ticks": 100,
+    "processes": [
+      {
+        "start_ticks": 142942,
+        "pid": 1,
+        "cpu_ticks": 5,
+        "role": "部长",
+        "role_status": "env",
+        "ppid": 0,
+        "dept": "实施",
+        "kind": "pao-runtime",
+        "inherited_role_ignored": false,
+        "identity": "pao-rpc",
+        "runtime": "node",
+        "title": "pao-rpc",
+        "agent_env": true,
+        "rss": 41537536
+      },
+      {
+        "start_ticks": 142955,
+        "pid": 12,
+        "cpu_ticks": 3,
+        "role": null,
+        "role_status": "ignored_inherited_role",
+        "ppid": 1,
+        "dept": null,
+        "kind": "task-node",
+        "inherited_role_ignored": true,
+        "identity": "runtime-exe",
+        "runtime": "node",
+        "title": "node",
+        "agent_env": true,
+        "rss": 41795584
+      },
+      {
+        "start_ticks": 142955,
+        "pid": 13,
+        "cpu_ticks": 2,
+        "role": null,
+        "role_status": "ignored_inherited_role",
+        "ppid": 1,
+        "dept": null,
+        "kind": "task-node",
+        "inherited_role_ignored": true,
+        "identity": "runtime-exe",
+        "runtime": "node",
+        "title": "pao",
+        "agent_env": false,
+        "rss": 41676800
+      },
+      {
+        "start_ticks": 142955,
+        "pid": 14,
+        "cpu_ticks": 2,
+        "role": "worker",
+        "role_status": "env",
+        "ppid": 1,
+        "dept": "内核",
+        "kind": "pao-runtime",
+        "inherited_role_ignored": false,
+        "identity": "pao-cli",
+        "runtime": "node",
+        "title": "pao",
+        "agent_env": true,
+        "rss": 41320448
+      },
+      {
+        "start_ticks": 142997,
+        "pid": 45,
+        "cpu_ticks": 2,
+        "role": null,
+        "role_status": "ignored_inherited_role",
+        "ppid": 0,
+        "dept": null,
+        "kind": "task-python",
+        "inherited_role_ignored": true,
+        "identity": "runtime-exe",
+        "runtime": "python",
+        "title": "python3",
+        "agent_env": true,
+        "rss": 11489280
+      }
+    ],
+    "scan_errors": [],
+    "prerequisites": {
+      "marker": "present",
+      "python3": "present"
+    },
+    "probe_status": "collected",
+    "phase": {
+      "phase": "unknown",
+      "marker": null,
+      "category": "preparation"
+    }
+  },
+  "errors": []
+}

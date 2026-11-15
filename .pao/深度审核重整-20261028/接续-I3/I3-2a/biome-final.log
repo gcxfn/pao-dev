@@ -1,0 +1,27 @@
+packages\coding-agent\src\pao\worker\receipt.ts:489:7 lint/suspicious/noPrototypeBuiltins  FIXABLE  ━━━━━━━━━━
+
+  ! Do not access Object.prototype method 'hasOwnProperty' from target object.
+  
+    487 │ 	const normalized: Record<string, unknown> = {};
+    488 │ 	for (const field of WORKER_RESULT_FIELDS) {
+  > 489 │ 		if (Object.prototype.hasOwnProperty.call(source, field)) normalized[field] = source[field];
+        │ 		    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    490 │ 	}
+    491 │ 	if (!Array.isArray(normalized.artifact_path)) return normalized;
+  
+  i It's recommended using Object.hasOwn() instead of using Object.hasOwnProperty().
+  
+  i See MDN web docs for more details.
+  
+  i Safe fix: Use 'Object.hasOwn()' instead.
+  
+    487 487 │   	const normalized: Record<string, unknown> = {};
+    488 488 │   	for (const field of WORKER_RESULT_FIELDS) {
+    489     │ - → → if·(Object.prototype.hasOwnProperty.call(source,·field))·normalized[field]·=·source[field];
+        489 │ + → → if·(Object.hasOwn(source,·field))·normalized[field]·=·source[field];
+    490 490 │   	}
+    491 491 │   	if (!Array.isArray(normalized.artifact_path)) return normalized;
+Checked 3 files in 182ms. No fixes applied.
+Found 1 warning.
+  
+

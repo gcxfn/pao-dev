@@ -1,0 +1,28 @@
+stdout | test/pao/evolution-o13-review.test.ts > R1/R2 E15 两轮激活与根基线 > R2 对照：不改根 → v2 激活成功
+[o13-review] R2 v2 activate: {"ok":true,"versionId":"v-83e8b3aff6f5","activationId":"act-e63b19ac-e071-47fc-97e1-647da9465596","fromVersion":"v-f10bd98c3acf"}
+stdout | test/pao/evolution-o13-review.test.ts > R1/R2 E15 两轮激活与根基线 > R1 反面：首轮激活成功后人工改资源根 → 第二轮激活必须 conflict（根基线）
+[o13-review] R1 v2 activate(改根后): {"ok":true,"status":"conflict","reason":"资源根当前文件指纹 v-ef18d5ec562f（1 个文件）与根基线 v-d85d8ba841cb 不一致——用户现场资源根被人工改动，旧版保留，待重评估","currentEffectiveVersion":"v-f10bd98c3acf"}
+·stdout | test/pao/evolution-o13-review.test.ts > R1/R2 E15 两轮激活与根基线 > R1b 反面：人工改根后且恶意删 v1 版本目录 → v2 激活仍 conflict（两层防线之一必拦）
+[o13-review] R1b publish(坏base目录): {"ok":true,"status":"not_ready","reason":"baseline 版本目录指纹不匹配:C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-o13-review-I2JlGv\\evolution\\versions\\skill_test-skill\\v-f10bd98c3acf（期望 v-f10bd98c3acf，实际 v-8883a46d29a8——验证所依据的旧版正文被换，发布内容不可信）"}
+stdout | test/pao/evolution-o13-review.test.ts > R3 recordUsed 幂等 > 同 (taskId,resourceId,receiptRef) 连写两次 → 观察行数
+[o13-review] R3 两次同 receiptRef 写入 ok=true/true，used 行数=2
+··stdout | test/pao/evolution-o13-review.test.ts > R4/R5 handleRegression 判定前提 > R4：绑坏版 + 无任何 used 行 + 无 problemId → 应 isRegression=false
+[o13-review] R4 judge: {"ok":true,"isRegression":false,"badVersion":"v-f10bd98c3acf","reason":"不满足 regression 判定口径（未给 problemId），失败「坏了」保留调查，不归因到版本 v-f10bd98c3acf","sourceIds":["task:sess-nofail"]}
+stdout | test/pao/evolution-o13-review.test.ts > R4/R5 handleRegression 判定前提 > R5：坏版有 used 行（别的任务写的）+ 本任务绑坏版 → normal_breakage 判定
+[o13-review] R5 judge: {"ok":true,"isRegression":true,"badVersion":"v-f10bd98c3acf","kind":"normal_breakage","reason":"正常用法破坏:sess-B 失败（任务 sess-B 绑定版本 v-f10bd98c3acf，该版本有 1 条 used 行，失败可归因该版本）","sourceIds":["task:sess-B"]}
+··stdout | test/pao/evolution-o13-review.test.ts > R6 ensure 重绑语义 > R6：effective 前进后对已绑会话再 ensure → 绑定刷新与否/历史追加与否
+[o13-review] R6 重 ensure 后绑定: versionId=v-f10bd98c3acf history=[]
+stdout | test/pao/evolution-o13-review.test.ts > R7 declare 资源归属 > R7：两条 active 绑定时 listTaskBindings 排序（items[0] 是 bound_at 最新者）
+[o13-review] R7 绑定顺序: skill:skill-second@2026-11-14T20:12:57.445Z, skill:skill-first@2026-11-14T20:12:57.445Z
+··stdout | test/pao/evolution-o13-review.test.ts > R9 declare 多绑定误归因→真实回退 > R9：会话绑 A+B、A 的 effective 有 used 行 → declare 后 handleRegression 是否回退无辜资源
+[o13-review] R9 items[0]=skill:skill-b v=v-6fd886d6d988
+[o13-review] R9 regression: {"isReg":true,"kind":"normal_breakage","rolledBack":false,"bad":"v-6fd886d6d988"}
+[o13-review] R9 !!回退发生: skill:skill-b badVersion=v-6fd886d6d988 rolledBack=false
+[o13-review] R9-A regression: {"isReg":true,"kind":"normal_breakage","rolledBack":true,"bad":"v-a0bbed896726","prev":"v-a9fdbc983fe3"}
+[o13-review] R9-A effective 现状: v-a9fdbc983fe3（原 v1A=v-a0bbed896726）
+stdout | test/pao/evolution-o13-review.test.ts > R8 跨进程 recover > R8：进程A写入→新 store 句柄 recover
+[o13-review] R8 recover: attention=[]
+
+[2026-11-15 补记] 修复后重跑：探针 10/10 绿；探针文件按自身标注「跑完即删」从测试树移除，
+源码副本留本目录 o13-review-probe.test.ts。修复内容：tools.ts declare 填充仅单绑定生效；
+dispatch-core.ts used/归因改按 receipt.会话路径 真实 sessionId + 孤儿绑定清理。

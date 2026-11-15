@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-30T07:33:40.970445+00:00",
+  "instance": "15db94df-6578-4234-a1fc-7a02728db71d",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "15db94df-6578-4234-a1fc-7a02728db71d",
+      "owner": "01a18b90-1f00-730f-be21-47bfdadec3d1",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "279937d631d589ba112bebb76c0b4a71c8d4180127d5461ab70f891d34c942b5"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": null,
+  "responsible_party": "01a18b90-1f00-730f-be21-47bfdadec3d1",
+  "latest_business_event": {
+    "时间": "2026-10-30T07:29:41.977Z",
+    "事件": "pass",
+    "节点": "审核",
+    "轮次": 1,
+    "理由": "卡面轴：实际业务改动是 /app/filter.py（514 行，仅 import bisect/html/re/sys）与 selftest_filter.py、sample_clean.html；实现只做区间裁剪不重排（filter.py:322 分析、filter.py:450 拼接），CLI 契约见 filter.py:486。机械验收在受控副本实际执行 7 条全过（判定包 1198-1204），属程序采集事实而非回执宣称。独立复验卡0002 在受管副本执行：audit_assert.py 的断言失败即退 1，实际 exit 0（判定包 100），断言覆盖良性 B1/B2/B3 过滤后逐字节不变（audit_assert.py:207）、载荷 C 无禁用特征且保留结构（:242）、difflib 差异规则证明只删危险片段且无插入（:258）、幂等（:268）、CLI 缺参与不存在路径退非 0 且无 Traceback（:275）、三文件前后 sha256 相等证明审核未改实现（:290）；该副本基线 tree 与卡0001 检查后 tree 同为 83ea0ee，说明被验证对象即交付对象。部门标准轴：四项需求各有对应实现与证据，边界（畸形输入、未闭合 script、BOM/CRLF/非 UTF-8 字节）有明确处理并被自测覆盖；本地检查与官方验收已区分，官方夹具与比较语义未知如实列为未验证项；证据均引真实文件与行号；用量以两卡回执 usage 为准，未编造费用。未验证项：官方验收夹具未知（未读 /tests、/solution）；独立载荷夹具仅一份，未覆盖 data:text/html 变体、srcset 列表、CSS @import url(javascript:)、RCDATA 元素内伪标签等类别。"
+  },
+  "latest_business_event_at": "2026-10-30T07:29:41.977Z",
+  "business_event_key": "{\"事件\": \"pass\", \"时间\": \"2026-10-30T07:29:41.977Z\", \"理由\": \"卡面轴：实际业务改动是 /app/filter.py（514 行，仅 import bisect/html/re/sys）与 selftest_filter.py、sample_clean.html；实现只做区间裁剪不重排（filter.py:322 分析、filter.py:450 拼接），CLI 契约见 filter.py:486。机械验收在受控副本实际执行 7 条全过（判定包 1198-1204），属程序采集事实而非回执宣称。独立复验卡0002 在受管副本执行：audit_assert.py 的断言失败即退 1，实际 exit 0（判定包 100），断言覆盖良性 B1/B2/B3 过滤后逐字节不变（audit_assert.py:207）、载荷 C 无禁用特征且保留结构（:242）、difflib 差异规则证明只删危险片段且无插入（:258）、幂等（:268）、CLI 缺参与不存在路径退非 0 且无 Traceback（:275）、三文件前后 sha256 相等证明审核未改实现（:290）；该副本基线 tree 与卡0001 检查后 tree 同为 83ea0ee，说明被验证对象即交付对象。部门标准轴：四项需求各有对应实现与证据，边界（畸形输入、未闭合 script、BOM/CRLF/非 UTF-8 字节）有明确处理并被自测覆盖；本地检查与官方验收已区分，官方夹具与比较语义未知如实列为未验证项；证据均引真实文件与行号；用量以两卡回执 usage 为准，未编造费用。未验证项：官方验收夹具未知（未读 /tests、/solution）；独立载荷夹具仅一份，未覆盖 data:text/html 变体、srcset 列表、CSS @import url(javascript:)、RCDATA 元素内伪标签等类别。\", \"节点\": \"审核\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-30T07:29:44.476435+00:00",
+  "needs_manual_check": false,
+  "os_isolation_implemented": false
+}

@@ -1,0 +1,21 @@
+== 基线门 runVitest 自建环境现状（scripts/check-baseline-failures.mjs :248-267，HEAD fc2bc9257 实摘，2026-10-09）==
+	const testRoot = mkdtempSync(join(tmpdir(), "pao-baseline-"));
+	try {
+		const home = join(testRoot, "home");
+		const temp = join(testRoot, "tmp");
+		mkdirSync(home);
+		mkdirSync(temp);
+		const userConfig = join(testRoot, "npm-userconfig");
+		const globalConfig = join(testRoot, "npm-globalconfig");
+		writeFileSync(userConfig, "");
+		writeFileSync(globalConfig, "");
+		// 与 test.sh 同样从空环境起步，不带真实端点、凭证或用户配置跑全量。
+		const allowed = new Set(["PATH", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "PROGRAMFILES", "PROGRAMFILES(X86)", "CI", "GITHUB_ACTIONS", "LANG", "LC_ALL", "TZ"]);
+		const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => allowed.has(name.toUpperCase())));
+		Object.assign(env, {
+			HOME: home, USERPROFILE: home, TMPDIR: temp, TMP: temp, TEMP: temp,
+			XDG_CONFIG_HOME: join(home, ".config"), XDG_CACHE_HOME: join(testRoot, "cache"),
+			GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: process.platform === "win32" ? "NUL" : "/dev/null",
+			GIT_TERMINAL_PROMPT: "0", PI_OFFLINE: "1", PI_NO_LOCAL_LLM: "1", AWS_EC2_METADATA_DISABLED: "true",
+			NPM_CONFIG_USERCONFIG: userConfig, NPM_CONFIG_GLOBALCONFIG: globalConfig, NPM_CONFIG_CACHE: join(testRoot, "cache", "npm"),
+		});

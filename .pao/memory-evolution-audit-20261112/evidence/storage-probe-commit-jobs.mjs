@@ -1,0 +1,26 @@
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { commitExtractionCandidates } from './PAO/packages/coding-agent/src/pao/memory/extract-commit.ts';
+import { createJob, claimJob, completeJob, reopenDoneJob, failJob, recoverJobs } from './PAO/packages/coding-agent/src/pao/memory/extraction-jobs.ts';
+const schema = readFileSync('./PAO/packages/coding-agent/src/pao/memory/store.ts','utf8').match(/const SCHEMA_SQL = `([\s\S]*?)`;/)[1];
+const db = new DatabaseSync(':memory:'); db.exec(schema);
+const store = {db,mode:'readwrite',transaction(fn){db.exec('BEGIN IMMEDIATE');try{const r=fn();db.exec('COMMIT');return r;}catch(e){db.exec('ROLLBACK');throw e;}},close(){db.close();}};
+const at='2026-11-12T00:00:00Z'; const scope={projectId:'p'};
+for(const [id,sess] of [['s1','sess1'],['s2','sess2']]) db.prepare('INSERT INTO sources(source_id,session_id,entry_id,event_type,captured_at) VALUES(?,?,?,?,?)').run(id,sess,id,'user',at);
+db.prepare('INSERT INTO memories VALUES(?,?,?,?,?,?,?,?)').run('m','decision',JSON.stringify(scope),1,'active',null,at,at);
+db.prepare('INSERT INTO memory_revisions VALUES(?,?,?,?,?)').run('m',1,JSON.stringify({conclusion:'存储使用 SQLite',confirmation:'tentative',evidenceKind:'user_statement'}),'model',at);
+db.prepare('INSERT INTO memory_source_links VALUES(?,?,?)').run('m',1,'s1');
+let creates=0;
+const service={async createMemory(input){creates++;return {ok:true,id:'simulated-new',revision:1};},async flagForReDiscussion(){throw Error('unexpected flag');}};
+const candidate={kind:'decision',conclusion:'存储使用 SQLite',confirmation:'confirmed',evidenceKind:'user_statement',sourceIds:['s2'],quotedSpans:[{sourceId:'s2',text:'就用 SQLite'}],spanLocations:[]};
+const input={jobId:'j',scope,candidates:[candidate],sourceRefs:[{sourceId:'s2',sessionId:'sess2',entryId:'s2',eventType:'user'}],now:at};
+const a=await commitExtractionCandidates(store,service,input);
+console.log(JSON.stringify({case:'tentative_to_confirmed',outcome:a.outcomes,current:JSON.parse(db.prepare('SELECT content_json FROM memory_revisions WHERE memory_id=?').get('m').content_json),creates}));
+db.prepare("UPDATE memories SET usage_state='stopped' WHERE id='m'").run();
+const b=await commitExtractionCandidates(store,service,{...input,candidates:[{...candidate,sourceIds:['s1']}],sourceRefs:[{sourceId:'s1',sessionId:'sess1',entryId:'s1',eventType:'user'}],relatedMemories:[]});
+console.log(JSON.stringify({case:'replay_stopped_source_without_active_snapshot',outcome:b.outcomes,createInvocations:creates}));
+const job=createJob(store,{sourceScope:'{}',scopeKey:'session:long',createdAt:at});
+for(let i=0;i<3;i++){claimJob(store,{jobId:job.jobId,ownerProcess:`pid-${process.pid}`,claimedAt:at});completeJob(store,{jobId:job.jobId,completedAt:at});reopenDoneJob(store,{jobId:job.jobId,reopenedAt:at});}
+claimJob(store,{jobId:job.jobId,ownerProcess:`pid-${process.pid}`,claimedAt:at});failJob(store,{jobId:job.jobId,reason:'temporary provider error',failedAt:at});
+console.log(JSON.stringify({case:'failure_after_three_successful_batches',recovered:recoverJobs(store,at).recovered.length,job:db.prepare('SELECT status,attempt_count FROM extraction_jobs WHERE job_id=?').get(job.jobId)}));
+store.close();

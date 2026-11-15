@@ -1,0 +1,22 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\tools.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\tools.ts"
+index de328e7..62639b9 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\tools.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\tools.ts"
+@@ -66,7 +66,7 @@ import {
+ 	type WorkflowRecipe,
+ 	WorkflowRecipeError,
+ } from "./recipe.ts";
+-import { buildReviewReport, renderReviewReport, WORKFLOW_REVIEW_SECTION } from "./review.ts";
++import { buildReviewReport, buildV2ReviewReport, renderReviewReport, WORKFLOW_REVIEW_SECTION } from "./review.ts";
+ 
+ /** 两面共用的注册态：终态复盘入队是注册闭包的会话内存态（命令面/工具面共用同一队列），toast 开关与 pao_start_flow 同源解析。 */
+ export interface WorkflowCommon {
+@@ -804,7 +804,7 @@ export function registerWorkflowTools(pi: ExtensionAPI, options?: WorkflowToolsO
+ 				const driverOptions = buildDriverOptions(params, options);
+ 				if (recipe.版本 === 2) {
+ 					const flow = readControl(recipe, driverOptions);
+-					return `${renderReport(controlReport(flow))}\n回边次数:${JSON.stringify(flow.回边次数)}\n判定及恢复记录:${JSON.stringify(flow.记录)}\n节点历史:${JSON.stringify(flow.节点.map((n) => ({ 名字: n.名字, 历史: n.历史, 判定: n.判定 })))}`;
++					return renderReviewReport(buildV2ReviewReport(recipe, driverOptions.cardsDir, flow));
+ 				}
+ 				const manifestFile = manifestPath(recipe, driverOptions);
+ 				const manifest = existsSync(manifestFile)

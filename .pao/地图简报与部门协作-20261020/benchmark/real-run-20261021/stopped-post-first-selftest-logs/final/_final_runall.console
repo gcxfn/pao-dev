@@ -1,0 +1,63 @@
+### 0. environment
+### 1. fixtures
+fixtures_exit=0
+### 2. adversarial suite (danger grep + bs4 structure/text + idempotency)
+runner_exit=0
+runner_exit=0
+### 3. shell-level sha256 + cmp (independent of the python driver)
+### 4. benign byte-identity (cmp -s must be 0)
+benign_cmp_failures=0
+### 5. danger-surface grep on every output (7 card patterns, shell grep -Ei)
+### 6. CLI contract
+exit=2
+traceback_lines=0
+exit=1
+traceback_lines=0
+exit=1
+traceback_lines=0
+### 7. regression: card1 + card2 suites re-run against the current filter.py
+== card1 V1-V4 (logs/V1..V4 regenerated? no: card1 logs are frozen) ==
+   card1 fixtures are re-run by card2's run_all.sh:
+   - V2 benign      -> /tmp/pf/logs/card2/benign-corpus.log
+   - V3 a..l        -> /tmp/pf/logs/card2/regress-card1.log
+   - V3 assertions  -> /tmp/pf/logs/card2/regress-v3-assert.log
+   - V4 idempotency -> /tmp/pf/logs/card2/struct-text.log (idem lines)
+   - V3+EXTRA text/structure -> /tmp/pf/logs/card2/struct-text.log
+
+== values copied from those logs after this run ==
+benign_regression_failures=0
+benign_cmp_exit=0
+v3_cmp0_lines=12/12
+FAILURES: 0
+v3_assert_exit=v3_assert_exit=0
+extra_diffs=extra_diffs=0/10
+struct_text_PASS=69 FAIL=0
+struct_text_idem_cmp0=47
+run_cases_FAIL=0
+grep_per_case_total_danger_hits=total_danger_hits=0
+grep_per_case_missing_benign=missing_benign_markers=0
+perf_wall_clock=wall_clock_seconds=1.122
+perf_failures=perf_failures=0
+fuzz=fuzz_malformed_cases=300 failures=0 fuzz_benign_cases=200 failures=0 byte_identity_violations=0 fuzz_exit=0 
+
+== card1 V3 assertion script re-run directly ==
+v3_assert_exit=0
+[PASS] structure: <li> count preserved 2 -> 2
+
+FAILURES: 0
+### 7b. independent card1 regression (own copies, own log, no card2 files)
+cmp_exit=0
+v3_regression_failures=0
+v3_assert_exit=0
+extra_diffs=0/10
+### 8. adversarial mutation sweep (evasion variants; not a fixture pass)
+total 878 failure-groups 0
+mutfuzz_exit=0
+### 9. self-check warnings on the adversarial corpus (stderr must be quiet)
+fixtures_with_warning=0
+final /app listing:
+total 44
+drwxr-xr-x 1 root root  4096 Oct 21 14:32 .
+drwxr-xr-x 1 root root  4096 Oct 21 12:58 ..
+drwxr-xr-x 6 root root  4096 Oct 21 14:06 .pao
+-rw-r--r-- 1 root root 30869 Oct 21 14:16 filter.py

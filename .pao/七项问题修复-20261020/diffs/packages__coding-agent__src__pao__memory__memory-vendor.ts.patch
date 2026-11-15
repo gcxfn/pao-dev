@@ -1,0 +1,15 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\memory\\memory-vendor.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\memory\\memory-vendor.ts"
+index 5e3e5e8..c7af909 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\memory\\memory-vendor.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\memory\\memory-vendor.ts"
+@@ -59,8 +59,8 @@ export interface MemoryVendor {
+ 	start(): Promise<void>;
+ 	/** 写入一条记忆;标签可选 */
+ 	write(content: string, label?: readonly string[]): Promise<MemoryWriteReceipt> | Promise<void>;
+-	/** 召回:按检索词取前 上限 条(缺省由适配器定,§18.1 口径 top3) */
+-	recall(searchQuery: string, limit?: number): Promise<MemoryHit[]>;
++	/** 召回:按检索词取前 上限 条(缺省由适配器定,§18.1 口径 top3);实现可选接收取消信号 */
++	recall(searchQuery: string, limit?: number, signal?: AbortSignal): Promise<MemoryHit[]>;
+ 	/** 忘却:按准确记忆 ID 清除,返回清除条数;仅 能力.忘却=true 的供应商实现 */
+ 	forget?(memoryId: string): Promise<number>;
+ 	/** 随主会话 session_shutdown 停子进程树;幂等 */

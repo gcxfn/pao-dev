@@ -1,0 +1,52 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > before_agent_start 注入真实命中：带修订号/条件/防污染标注 230ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > B 会话自动召回 A 来源时显示完整 source metadata、准确采集时间和其他会话归档 189ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 同一来源在 A 会话显示为当前会话事件 163ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 页面纠正的 rev-2 按操作来源显示，不从 scope 推断 222ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 手动召回与自动召回使用同一来源 metadata 格式 171ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 公开召回默认 current，history+superseded 只返回旧修订且不成为当前依据 215ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 同一修订不重复注入；压缩移除后可补回 208ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 当前轮命中已在上下文可见时不重复注入，但仍作为本轮派发依据 203ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 纠正产生新修订：旧 ID+旧 revision 去重不拦新 revision 注入 224ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 停用记忆不注入 170ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > current rejected 明确候选未采用，但理由与适用条件仍可见 184ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > history rejected 标历史修订，不冒充当前否决并保留重议标记 2ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 缺失 source metadata 时保留完整 ID 并标未知 1ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > needsReDiscussion 标「需核对条件/重议」 174ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > model_inference 的理由标「模型推测」 169ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 空输入不查库也不注入 152ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > service 不在线(未装配 builtin):降级为不注入,一次性标注 21ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 语义路降级(未许可外发)时本地词法照召回,降级可见 165ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 固定向量夹具:无词面交集的同义输入经语义路命中 162ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > readonly 库:usage 记账跳过,本地召回照常注入 157ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > AbortSignal 取消:本轮不注入也不标注失败 158ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 召回条数由渲染预算约束:候选 8 条预算够时可注入超过 top3 208ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > /pao memory 视图能看到注入条目编号 133ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 装不下整项省略:超长命中不截成半句 170ms
+ ✓ test/pao/memory-recall-inject.test.ts > builtin 自动召回注入 > 自动召回缺省关:不注入(零行为) 129ms
+ ✓ test/pao/memory-recall-inject.test.ts > SessionMemory 修订级去重 > 同 memoryId 不同修订号:去重按 revision 粒度,新 revision 不被旧拦 3ms
+ ✓ test/pao/memory-recall-inject.test.ts > SessionMemory 修订级去重 > 排除是记忆级:rev-1 被排除后 rev-2 不复活 1ms
+ ✓ test/pao/memory-recall-inject.test.ts > SessionMemory 修订级去重 > refreshInjected:当前依据更新到新修订;历史注入正文与修订保真;stopped 只临时抑制 5ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 采集的未提炼事件 history 命中 sourceHits；current 不返 50ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 封存段后 history 仍命中同一 sourceId 83ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 删除来源关联记忆后该来源不再命中（source_exclusions 生效） 48ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > rebuildSourceFts 后 history 命中与重建前一致 42ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 只传 memory_id 返回当前修订详情与来源列表 40ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > source_id 分页：hasMore/nextOffset 连续翻页 45ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > memory_id+source_id 不归属返回 invalid_input 38ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 缺失来源如实 source_missing 39ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > memory_id+source_id 归属核对通过 → 展开且 expand 记账落 memory_usage 47ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 只 source_id 展开不写 expand 记账（与桌面口径一致） 49ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 长 conditions+多来源条目渲染超限时整项省略（不截条件） 54ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 候选 8 条预算够时注入超过 3 条 85ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 上下文余量收紧（投影接近 contextWindow）时注入减少 91ms
+ ✓ test/pao/memory-o05.test.ts > F10 agent_settled 封存 > agent_settled 后本会话 unsealed 段被封存，原文仍可读 358ms
+
+ Test Files  2 passed (2)
+      Tests  42 passed (42)
+   Start at  14:27:15
+   Duration  15.23s (transform 7.41s, setup 0ms, import 9.72s, tests 5.07s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o05-deep-existing-vitest.json

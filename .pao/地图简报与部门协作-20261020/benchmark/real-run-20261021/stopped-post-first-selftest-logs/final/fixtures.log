@@ -1,0 +1,48 @@
+01-script-inline-body           76 bytes  inline script in body; both siblings must survive
+02-script-external              90 bytes  external script in head; src must vanish with the element
+03-script-selfclose             47 bytes  self-closing script; following sibling must survive
+04-script-unclosed              50 bytes  unclosed script swallows rest of file (documented browser semantics)
+05-script-in-table-cell         75 bytes  script inside a table cell; table/tr/td structure must be preserved
+06-script-in-attr-value-only    71 bytes  escaped script text inside an attribute value is inert, must be kept
+07-script-literal-in-text       62 bytes  entity-escaped script in visible text is not a tag
+08-script-mixed-case            72 bytes  mixed case script with attributed src and spaced end tag
+09-script-in-attribute-string    53 bytes  attribute value equals the word script (kept); real script removed
+10-events-basic                 82 bytes  onclick + uppercase ONERROR removed, src/alt/class kept
+11-events-spaced-assignment     75 bytes  spaced assignment and unquoted value
+12-events-namespaced            84 bytes  xlink:onload, onbegin removed; benign xlink:href=#ok kept
+13-url-tab-scheme               46 bytes  tab inside javascript: scheme
+14-url-entity-newline           61 bytes  &#x0A; splits the scheme; benign link kept
+15-url-entity-decimal           40 bytes  decimal entity for the leading j
+16-url-mixed-case               72 bytes  mixed-case scheme removed; uppercase HTTPS URL kept
+17-url-leading-space            38 bytes  leading whitespace before the scheme
+18-url-data-text-html           64 bytes  data:text/html in src
+19-url-vbscript                 34 bytes  vbscript scheme
+20-url-all-url-attrs           265 bytes  href/src/action/formaction/poster/background/xlink:href one each
+21-srcdoc-nested                97 bytes  srcdoc with escaped nested HTML (raw or escaped, the attribute goes)
+22-meta-refresh-danger         112 bytes  dangerous refresh dropped, benign charset kept
+23-meta-refresh-benign          77 bytes  benign refresh must survive byte-exactly
+24-base-href                    95 bytes  base href element dropped, title/link kept
+25-object-embed                 79 bytes  object data / embed src rewritten (element kept, dangerous attr gone)
+26-style-attr-benign            70 bytes  benign style attribute byte-identical
+27-style-attr-expression        67 bytes  expression() in a style attribute -> whole attribute dropped, sibling kept
+28-style-element-benign         57 bytes  benign stylesheet element byte-identical
+29-style-element-danger         61 bytes  stylesheet with javascript: -> element dropped (documented trade-off)
+30-comment-danger               66 bytes  comment kept, dangerous substrings inside it removed
+31-comment-benign               48 bytes  benign comment byte-identical
+32-cdata-pseudo                 45 bytes  CDATA section (inert in HTML) has its dangerous substrings removed
+33-conditional-comment          74 bytes  downlevel-revealed conditional: markup still sanitised inside
+34-svg-events                   95 bytes  svg root and child event attributes removed, geometry kept
+35-svg-animate                 103 bytes  SVG SMIL gadget + namespaced handler removed
+36-mathml-events                76 bytes  MathML event attributes removed, math structure kept
+37-benign-complex             1207 bytes  fully benign complex page: must stay byte-exact
+38-benign-prose-literal         69 bytes  visible prose mentioning javascript: is text, rule 9 keeps it
+39-url-quoted-value             94 bytes  a URL wrapped in a second pair of quotes (single/double) must be rejected
+40-css-quoted-url              126 bytes  CSS url() with single/double/entity quotes must be rejected
+41-event-namespaced-colon       81 bytes  on:click / xlink:on:load obfuscations of the on* namespace
+42-smil-retarget               114 bytes  SVG SMIL elements that would *create* a dangerous attribute are removed
+43-srcset                       86 bytes  css-style candidate list: bad candidate drops the attribute, benign list kept
+44-bogus-declaration            41 bytes  bogus markup declaration is comment-like: dangerous substrings removed
+45-textarea-rcdata              54 bytes  documented trade-off: script text inside RCDATA containers is removed too
+46-on-prefixed-benign-name      41 bytes  documented trade-off: the spec's on[a-z0-9_:.-]* rule also drops only/once/online
+fixtures=46 total_bytes=4592 dir=/tmp/pf/final/cases
+fixtures_exit=0

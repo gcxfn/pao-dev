@@ -1,0 +1,88 @@
+{
+  "id": "I08",
+  "description": "停用→搜索→恢复→彻底删除",
+  "sessions": [
+    {
+      "sessionId": "sess-i",
+      "messages": [
+        {
+          "role": "user",
+          "content": "嵌入模型用 text-embedding-3-small。",
+          "timestamp": "2026-11-08T19:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "已记录：嵌入模型用 text-embedding-3-small。",
+          "timestamp": "2026-11-08T19:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "先不用这个决定了。",
+          "timestamp": "2026-11-08T19:05:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "嵌入模型使用 text-embedding-3-small",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "嵌入模型",
+          "mustContain": [],
+          "mustNotContain": ["mem-embed-model"]
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-i2",
+      "messages": [
+        {
+          "role": "user",
+          "content": "恢复刚才的嵌入模型决定。",
+          "timestamp": "2026-11-08T19:10:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "已恢复：嵌入模型使用 text-embedding-3-small。",
+          "timestamp": "2026-11-08T19:10:05Z"
+        },
+        {
+          "role": "user",
+          "content": "不对，彻底删掉这条。",
+          "timestamp": "2026-11-08T19:15:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "嵌入模型使用 text-embedding-3-small",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "note": "恢复后又被要求彻底删除"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "嵌入模型",
+          "mustContain": [],
+          "mustNotContain": ["mem-embed-model"]
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [],
+    "sources": [
+      {
+        "sourceId": "src-sess-i-001",
+        "sessionId": "sess-i",
+        "entryId": "entry-003",
+        "note": "来源保留，记忆已删除"
+      }
+    ]
+  }
+}

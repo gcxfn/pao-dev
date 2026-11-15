@@ -1,0 +1,277 @@
+diff --git a/packages/coding-agent/src/pao/cards/handoff.ts b/packages/coding-agent/src/pao/cards/handoff.ts
+index 70298c73f..c247b0612 100644
+--- a/packages/coding-agent/src/pao/cards/handoff.ts
++++ b/packages/coding-agent/src/pao/cards/handoff.ts
+@@ -1,7 +1,7 @@
++import { nowString } from "../shared/time.ts";
+ import { baselineSnapshotPath, diffAgainstBaseline } from "./baseline.ts";
+ import { listCards } from "./cardfile.ts";
+ import { formatCardNumber } from "./counter.ts";
+-import { nowString } from "../shared/time.ts";
+ import { isPendingReview } from "./receipts.ts";
+ import { renderQueue } from "./render.ts";
+ import { isTerminal } from "./statemachine.ts";
+diff --git a/packages/coding-agent/src/pao/dept/registry.ts b/packages/coding-agent/src/pao/dept/registry.ts
+index 254238486..13b07bd0b 100644
+--- a/packages/coding-agent/src/pao/dept/registry.ts
++++ b/packages/coding-agent/src/pao/dept/registry.ts
+@@ -1,7 +1,7 @@
+ import { existsSync, mkdirSync, readFileSync } from "node:fs";
+ import { dirname } from "node:path";
+-import { writeFileAtomic } from "../cards/atomic.ts";
+ import lockfile from "proper-lockfile";
++import { writeFileAtomic } from "../cards/atomic.ts";
+ 
+ /** 部门总目录名(相对 PAO_HOME) */
+ export const DEPT_DIR_NAME = "部门";
+diff --git a/packages/coding-agent/src/pao/fanout/execute.ts b/packages/coding-agent/src/pao/fanout/execute.ts
+index 4de26a271..a7a1d1b5e 100644
+--- a/packages/coding-agent/src/pao/fanout/execute.ts
++++ b/packages/coding-agent/src/pao/fanout/execute.ts
+@@ -21,6 +21,7 @@ import {
+ 	routeFailure,
+ } from "../cards/index.ts";
+ import { recordFrictionDraft } from "../friction/drafts.ts";
++import { nowString } from "../shared/time.ts";
+ import {
+ 	appendDispatchReceipt,
+ 	classifyWorkerFailure,
+@@ -30,7 +31,6 @@ import {
+ 	locateDispatchCard,
+ } from "../worker/dispatch-core.ts";
+ import { PaoWorkerError } from "../worker/errors.ts";
+-import { nowString } from "../shared/time.ts";
+ import {
+ 	defaultWorkerRunner,
+ 	type WorkerReceipt,
+diff --git a/packages/coding-agent/src/pao/healthcheck/report.ts b/packages/coding-agent/src/pao/healthcheck/report.ts
+index f43266018..25d1b846f 100644
+--- a/packages/coding-agent/src/pao/healthcheck/report.ts
++++ b/packages/coding-agent/src/pao/healthcheck/report.ts
+@@ -5,10 +5,8 @@
+  */
+ import { existsSync, mkdirSync } from "node:fs";
+ import { join } from "node:path";
+-
+-import { writeFileAtomic } from "../cards/atomic.ts";
+-
+ import type { Usage } from "@earendil-works/pi-ai";
++import { writeFileAtomic } from "../cards/atomic.ts";
+ 
+ import type { 探针结果 } from "./probes.ts";
+ 
+diff --git a/packages/coding-agent/src/pao/panel/settings.ts b/packages/coding-agent/src/pao/panel/settings.ts
+index 0c22d3267..617da36ab 100644
+--- a/packages/coding-agent/src/pao/panel/settings.ts
++++ b/packages/coding-agent/src/pao/panel/settings.ts
+@@ -26,9 +26,9 @@
+ import { existsSync } from "node:fs";
+ import { join } from "node:path";
+ import { writeFileAtomic } from "../cards/atomic.ts";
+-import { readJsonRaw } from "../shared/json.ts";
+ import { WARM_CONFIG_RELATIVE_PATH } from "../host/config.ts";
+ import { MEMORY_CONFIG_RELATIVE_PATH } from "../memory/memory-vendor.ts";
++import { readJsonRaw } from "../shared/json.ts";
+ 
+ /** 保温.json 全路径（相对路径与 host/config 同源） */
+ export function resolveWarmConfigPath(paoHome: string): string {
+diff --git a/packages/coding-agent/src/pao/patrol/shell-guard.ts b/packages/coding-agent/src/pao/patrol/shell-guard.ts
+index f4d7e7266..ee0f7f4dc 100644
+--- a/packages/coding-agent/src/pao/patrol/shell-guard.ts
++++ b/packages/coding-agent/src/pao/patrol/shell-guard.ts
+@@ -314,7 +314,12 @@ function 程序名(词文本: string): string {
+ 
+ /** 引号词取引号内原文；裸词取行余部整段（cmd /c、env 的命令参数都是行余部语义；过近似，宁可多审）。 */
+ const 取命令串或行余部 = (词表: 细词段, 起点: number): string =>
+-	词表[起点]!.引号 !== null ? 词表[起点]!.文本 : 词表.slice(起点).map((w) => w.文本).join(" ");
++	词表[起点]!.引号 !== null
++		? 词表[起点]!.文本
++		: 词表
++				.slice(起点)
++				.map((w) => w.文本)
++				.join(" ");
+ 
+ /**
+  * 从一段子命令提取套壳内层命令串。
+@@ -410,13 +415,25 @@ function 提取段内层(词表: 细词段): string[] | null {
+ 			if (等号 <= 0 || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(词文本.slice(0, 等号))) break;
+ 			内层.push(词文本.slice(等号 + 1));
+ 		}
+-		if (i < 词表.length) 内层.push(词表.slice(i).map((w) => w.文本).join(" "));
++		if (i < 词表.length)
++			内层.push(
++				词表
++					.slice(i)
++					.map((w) => w.文本)
++					.join(" "),
++			);
+ 		return 内层;
+ 	}
+ 
+ 	if (程序 === "wsl") {
+ 		// wsl 之后的整段按内层命令再审：wsl 自己的选项词是裸词按常规漏过，路径词（--cd /etc 等）照判
+-		if (词表.length > 1) 内层.push(词表.slice(1).map((w) => w.文本).join(" "));
++		if (词表.length > 1)
++			内层.push(
++				词表
++					.slice(1)
++					.map((w) => w.文本)
++					.join(" "),
++			);
+ 		return 内层;
+ 	}
+ 
+diff --git a/packages/coding-agent/src/pao/routing/config.ts b/packages/coding-agent/src/pao/routing/config.ts
+index 039eceee0..14a78af61 100644
+--- a/packages/coding-agent/src/pao/routing/config.ts
++++ b/packages/coding-agent/src/pao/routing/config.ts
+@@ -80,7 +80,9 @@ export function validateTierConfig(parsed: unknown, source: string): TierConfig
+ 	const seen = new Set<string>();
+ 	for (const tier of 档位) {
+ 		if (seen.has(tier.名)) {
+-			throw new Error(`档位配置 ${source} 存在重复档名「${tier.名}」(档位名即虚拟模型 id,须唯一,否则注册时静默覆盖丢档)`);
++			throw new Error(
++				`档位配置 ${source} 存在重复档名「${tier.名}」(档位名即虚拟模型 id,须唯一,否则注册时静默覆盖丢档)`,
++			);
+ 		}
+ 		seen.add(tier.名);
+ 	}
+diff --git a/packages/coding-agent/test/pao/blackboard-upstream.test.ts b/packages/coding-agent/test/pao/blackboard-upstream.test.ts
+index f816da2a9..378a0fc94 100644
+--- a/packages/coding-agent/test/pao/blackboard-upstream.test.ts
++++ b/packages/coding-agent/test/pao/blackboard-upstream.test.ts
+@@ -170,9 +170,7 @@ function git(cwd: string, args: string[]): void {
+ }
+ 
+ /** git 仓库 fixture＋一张卡＋pao_派单 工具就绪（PAO_HOME 可选落保温.json）;face 供等后台收敛 */
+-async function setup(
+-	保温?: unknown,
+-): Promise<{
++async function setup(保温?: unknown): Promise<{
+ 	repo: string;
+ 	cardsDir: string;
+ 	runner: FakeRunner;
+@@ -198,7 +196,11 @@ async function setup(
+ 	process.env.PAO_ROLE = "主控";
+ 	const runner = new FakeRunner();
+ 	const captured = capturePi();
+-	const face = registerWorkerTools(captured.pi, { runner, resolveCardsDir: () => cardsDir, resolvePaoHome: () => paoHome });
++	const face = registerWorkerTools(captured.pi, {
++		runner,
++		resolveCardsDir: () => cardsDir,
++		resolvePaoHome: () => paoHome,
++	});
+ 	const dispatch = captured.tools.find((t) => t.name === "pao_派单");
+ 	if (!dispatch) throw new Error("未注册 pao_派单");
+ 	return { repo, cardsDir, runner, dispatch, face };
+diff --git a/packages/coding-agent/test/pao/knowledge-ingest.test.ts b/packages/coding-agent/test/pao/knowledge-ingest.test.ts
+index 3484c508d..a6e93dd6f 100644
+--- a/packages/coding-agent/test/pao/knowledge-ingest.test.ts
++++ b/packages/coding-agent/test/pao/knowledge-ingest.test.ts
+@@ -177,8 +177,8 @@ describe("入库路径越界校验", () => {
+ 		if (process.platform !== "win32") return;
+ 		const backslashed = `${join(libRoot, "待验证")}\\..\\..\\逃逸.md`;
+ 		await expect(ingestEntry({ libRoot, candidatePath: backslashed, type: "教训" })).rejects.toThrow("越界");
+-		await expect(
+-			ingestEntry({ libRoot, candidatePath: "C:\\pao-库外逃逸.md", type: "教训" }),
+-		).rejects.toThrow("越界");
++		await expect(ingestEntry({ libRoot, candidatePath: "C:\\pao-库外逃逸.md", type: "教训" })).rejects.toThrow(
++			"越界",
++		);
+ 	});
+ });
+diff --git a/packages/coding-agent/test/pao/shared-json.test.ts b/packages/coding-agent/test/pao/shared-json.test.ts
+index 31f2fe561..314fe4aef 100644
+--- a/packages/coding-agent/test/pao/shared-json.test.ts
++++ b/packages/coding-agent/test/pao/shared-json.test.ts
+@@ -49,7 +49,7 @@ function writeConfig(dir: string, name: string, body: string): string {
+ 
+ describe("stripUtf8Bom:只剥首字符 BOM,无 BOM 逐字节不变", () => {
+ 	it("有 BOM 剥掉,无 BOM 原样,正文中间的 U+FEFF 不动", () => {
+-		expect(stripUtf8Bom("\uFEFF{\"a\":1}")).toBe('{"a":1}');
++		expect(stripUtf8Bom('\uFEFF{"a":1}')).toBe('{"a":1}');
+ 		expect(stripUtf8Bom('{"a":1}')).toBe('{"a":1}');
+ 		expect(stripUtf8Bom('{"a":"\uFEFF"}')).toBe('{"a":"\uFEFF"}');
+ 	});
+diff --git a/packages/coding-agent/test/pao/tier-editor-config.test.ts b/packages/coding-agent/test/pao/tier-editor-config.test.ts
+index 6f1efbf45..8fd0031ff 100644
+--- a/packages/coding-agent/test/pao/tier-editor-config.test.ts
++++ b/packages/coding-agent/test/pao/tier-editor-config.test.ts
+@@ -98,7 +98,9 @@ describe("saveTierConfig（备份＋原子写回）", () => {
+ 		第二份内容.档位 = [{ 名: "新档", provider: "a", model: "m2", thinkingLevel: "low" }];
+ 		第二份内容.部门默认 = {}; // 换档集后原部门默认引用的「快」已不存在,不清会被写前自校验拒写
+ 		saveTierConfig(path, 第二份内容, fixedNow);
+-		const backups = readdirSync(dir).filter((f) => f.includes("bak")).sort();
++		const backups = readdirSync(dir)
++			.filter((f) => f.includes("bak"))
++			.sort();
+ 		expect(backups).toEqual(["档位.json.bak-20261003-140506-789", "档位.json.bak-20261003-140506-789-1"]);
+ 		expect(JSON.parse(readFileSync(join(dir, backups[0]!), "utf8")).档位[0].名).toBe("旧档");
+ 		expect(JSON.parse(readFileSync(join(dir, backups[1]!), "utf8")).档位[0].名).toBe("快");
+diff --git a/packages/coding-agent/test/pao/verifier-run.test.ts b/packages/coding-agent/test/pao/verifier-run.test.ts
+index bc9d50980..1166a4caf 100644
+--- a/packages/coding-agent/test/pao/verifier-run.test.ts
++++ b/packages/coding-agent/test/pao/verifier-run.test.ts
+@@ -282,7 +282,9 @@ describe("存在/包含读侧路径安检（与跑命令安检门同等级，R16
+ 		const repo = makeRepo();
+ 		const { 卡目录 } = await makeClaimedCard(
+ 			repo,
+-			["存在: ..\\源.txt", "存在: C:\\源.txt", "包含: src\\..\\..\\源.txt :: PAO", "存在: src/../../源.txt"].join("\n"),
++			["存在: ..\\源.txt", "存在: C:\\源.txt", "包含: src\\..\\..\\源.txt :: PAO", "存在: src/../../源.txt"].join(
++				"\n",
++			),
+ 		);
+ 		const { result } = await verifyCard(卡目录, 1, { 操作者: "部长A", 沙箱根: sandboxRoot() });
+ 
+@@ -307,7 +309,12 @@ describe("项目根推导口径（与 cardfile.projectRootForCards 一致）", (
+ 		writeFileSync(join(repo, "源.txt"), "PAO 影子沙箱测试项目\n");
+ 		const 卡目录 = join(repo, ".pao", "任务A", "卡");
+ 		mkdirSync(卡目录, { recursive: true });
+-		const card = await createCard(卡目录, { 目标: "非git根卡", 部门: "核心机制", 验收: "存在: 源.txt", 创建: "2026-10-02 10:00" });
++		const card = await createCard(卡目录, {
++			目标: "非git根卡",
++			部门: "核心机制",
++			验收: "存在: 源.txt",
++			创建: "2026-10-02 10:00",
++		});
+ 		changeCardStatus(card, { 操作者: "部长A", to: "进行中", 时间: "2026-10-02 10:01" });
+ 
+ 		const { result } = await verifyCard(卡目录, 1, { 操作者: "部长A", 沙箱根: sandboxRoot() });
+@@ -327,7 +334,7 @@ describe("跑命令超时树杀（复用 worker/kill.killTree）", () => {
+ 		);
+ 		const { 卡目录 } = await makeClaimedCard(
+ 			repo,
+-			'跑: node -e "require(\'child_process\').spawn(process.execPath,[\'孙进程.js\'],{stdio:\'ignore\'}),setInterval(function(){},60000)"',
++			"跑: node -e \"require('child_process').spawn(process.execPath,['孙进程.js'],{stdio:'ignore'}),setInterval(function(){},60000)\"",
+ 		);
+ 		const { result } = await verifyCard(卡目录, 1, {
+ 			操作者: "部长A",
+diff --git a/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts b/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
+index e4634543b..05f6415af 100644
+--- a/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
++++ b/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
+@@ -104,7 +104,8 @@ function toolFor(runner: WorkerRunner, cardsDir: string, toolName = "pao_派单"
+ 		},
+ 	} as unknown as ExtensionAPI;
+ 	registerWorkerTools(pi, { runner, 信号: false, resolveCardsDir: () => cardsDir });
+-	if (toolName === "pao_扇出")		registerFanout(pi, { runner, resolveCardsDir: () => cardsDir, 公共参数: { 工具白名单: ["read"] } });
++	if (toolName === "pao_扇出")
++		registerFanout(pi, { runner, resolveCardsDir: () => cardsDir, 公共参数: { 工具白名单: ["read"] } });
+ 	if (!dispatch) throw new Error(`没有工具 ${toolName}`);
+ 	return dispatch;
+ }
+diff --git a/packages/coding-agent/test/pao/worker-dispatch.test.ts b/packages/coding-agent/test/pao/worker-dispatch.test.ts
+index 2a1d4b0be..0e359319c 100644
+--- a/packages/coding-agent/test/pao/worker-dispatch.test.ts
++++ b/packages/coding-agent/test/pao/worker-dispatch.test.ts
+@@ -189,9 +189,7 @@ describe("pao_派单:理由必填(派前自省,留痕供审查)", () => {
+ // ── 权限矩阵(fail-closed) ────────────────────────────────────────────────
+ 
+ describe("pao_派单:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒)", () => {
+-	async function setup(
+-		卡部门: string,
+-	): Promise<{
++	async function setup(卡部门: string): Promise<{
+ 		tool: Captured["tools"][number];
+ 		face: ReturnType<typeof registerWorkerTools>;
+ 		captured: Captured;

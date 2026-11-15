@@ -1,0 +1,29 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+·······x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 历史证据充足但当前回执漏报本次改动时仍拒绝
+AssertionError: expected '卡0001 拒绝交卷：累计成果归属不足——尝试 1 的历史回执没有可归属改…' to contain '尝试 2 的回执声明与相邻基线 tree 差不能逐项对应'
+
+Expected: "尝试 2 的回执声明与相邻基线 tree 差不能逐项对应"
+Received: "卡0001 拒绝交卷：累计成果归属不足——尝试 1 的历史回执没有可归属改动。保留原基线与回执，不猜中间改动属于本卡。"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:497:21
+    495|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    496|   expect(result.原因).toBe("累计成果归属不足");
+    497|   expect(result.消息).toContain("尝试 2 的回执声明与相邻基线 tree 差不能逐项对应");
+       |                     ^
+    498|  }, 60000);
+    499| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  09:36:16
+   Duration  79.37s (transform 224ms, setup 0ms, import 409ms, tests 78.81s, environment 0ms)
+

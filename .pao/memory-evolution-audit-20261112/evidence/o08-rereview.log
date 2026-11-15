@@ -1,0 +1,68 @@
+O08 独立复核日志（2026-11-15，复核子代理）
+
+环境：隔离 PAO_HOME=D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o08-pao-home，PI_OFFLINE=1，PI_NO_LOCAL_LLM=1。
+
+== 独立重跑（真实数字）==
+- test/pao/memory-artifact-card-hooks.test.ts：3/3 通过（7.5s）
+- memory-artifact* 全组（6 文件）：30/30 通过（17.6s）
+- cards/delivery/verifier 宽口径回归（23 文件）：345/345 通过（256s）
+- Electron desktop/apps/desktop tests/core/memory-artifacts.spec.ts：1/1 通过
+  —— 注意：第一次跑在旧 out/ 构建上；build:if-stale 重建后重跑仍 1/1（12.7s）。
+- 复核自建反面用例（复制进包内临时跑，跑后已删）：3/3 通过
+  1) 浏览不记执行：resolve 后无回执 → artifact_uses 0 行
+  2) 登记失败只补登记：回调抛异常 → 回执仍落定 + 工具文本留痕
+     "成果登记失败...登记服务模拟崩溃"，artifact_versions 无半成品
+  3) decodeArtifactReceiptRef：fail→fail、无前推→verdict undefined
+     （页面"有回执/结果待核"）、null→皆 undefined（"未验证"）
+
+== 源码审查结论 ==
+- artifact-registration.ts：挂点A/B 共用闭包；登记/归因失败留痕不抛；
+  来源未捕获时如实跳过不留无证行。
+- index.ts:600/874 vs :915——cards/delivery 注册先于 memory，闭包惰性解引用
+  builtinMemoryRegistration；装配顺序正确。
+- artifacts.ts:461-508 F12：artifactId 决策后置，全部 dup 取 dup.artifact_id，
+  isNewArtifact 仅全新定位才建行；:484-490/:533-540 查重命中分支补 aref 'task'；
+  :301 syncArtifactFts 按版本自身 artifactId 分组（注释含 F12 说明）。
+- artifacts.ts:691-721 receipt_ref `<verdict>:` 前缀 encode/decode，
+  无前推如实 undefined；值域 pass|fail|not_run|pending_review。
+- session.ts:965-975 resolvedArtifactVersions 会话态：读成功才 mark
+  （tools.ts:685 在 available 之后才记），回执边界消费后 clear 一次性归因。
+- tools.ts:302 captureToolCallSource 导出供闭包复用（同 pao_memory_write 口径）。
+- desktop/memory.ts:693-723 mapVersionItem：剥前缀给 receiptRef、verdict 透传
+  verificationStatus、sourceSessionId/usageRefs 补齐；ARTIFACT_VERSION_COLUMNS 同步。
+- artifacts-model.ts:45-65 artifactVerificationLabel：pass→已验证、fail→验证未过、
+  not_run→验证未执行、pending_review→待审核、无status有ref→有回执/结果待核、
+  皆无→未验证。失败不冒充成功 ✓。
+- pi-sdk-driver：PaoDesktopArtifactVersionItem 由内核类型派生，字段自动透传 ✓。
+- desktop tsc --noEmit（tsconfig.electron.json）：0 错。
+
+== 类型检查（coding-agent 仓根 tsconfig）==
+余 3 错：
+- src/pao/memory/tools.ts:1003 TierConfig 未 import（O10/E01 范围，非 O08 文件）
+- test/pao/memory-artifact-card-hooks.test.ts:137 Record<string,unknown>→JsonObject
+  【O08 自己新测试文件的类型错，实施方自报未列——属 O08 责任，vitest 运行不受影响】
+- test/pao/memory-f14-review.test.ts:371（F14 批次范围，非 O08）
+
+== 覆盖盘点（对照任务书验收口径）==
+- Git 真实任务建卡→认领→回执→验收→交卷→Git 版本登记：挂点B用例覆盖，
+  location.kind=git、commit 全 40 位 SHA、receipt_ref pass: 前缀 ✓
+- 非 Git（managed）回执→版本登记：挂点A用例覆盖 ✓
+- resolve→submit_receipt 归因：artifact_uses reuse+回执引用 ✓；
+  浏览不记执行：反面用例亲验 ✓
+- 两任务共享 Git 版本：artifactId===versions[0].artifactId、aref 'task' 补记、
+  artifacts 表 1 行（memory-artifacts.test.ts:313-368 断言齐全）✓
+- 失败/未知不显示成功：fail→验证未过、无前推→有回执/结果待核 ✓（亲验+源码）
+- 登记失败不阻断：反面用例亲验 ✓
+- F13 五类：pass/无前推待核在 Electron spec 种子+断言；fail 种子在库但页面标签
+  未专断言（unit 逻辑已审查正确）；"取消"无独立前缀（落入未验证，如实不冒充）。
+
+== 问题清单 ==
+P2【已最小修复】：o08 新测试文件 test/pao/memory-artifact-card-hooks.test.ts:137
+TS 类型错（Record<string,unknown> 不兼容 ToolCall["arguments"]=JsonObject）。
+复核代理按「blocker 可最小修复」已改 `args as never`（同文件既有 cast 风格），
+tsc 该条消除、测试仍 3/3 通过。
+
+== 结论 ==
+O08 可关闭。全部验收口径逐条亲验通过，测试类型错已最小修复。
+剩余 tsc 2 错均属其他批次：tools.ts:1003 TierConfig 未 import（O10/E01）、
+test/pao/memory-f14-review.test.ts:371（F14）——转对应批次处理。

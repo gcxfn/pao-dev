@@ -1,0 +1,210 @@
+{
+  "schema": "r22-ruling-observation-v1",
+  "observed_at": "2026-10-26T07:38:20Z",
+  "instance": "00cdea8c-bb1d-46b5-b4f7-463310a274ba",
+  "run": "real-run-20261026-prepared-r22",
+  "ruling": {
+    "node": "实施",
+    "round": 1,
+    "channel": "人工",
+    "requested_at": "2026-10-26T07:33:35.529Z",
+    "recorded_at": "2026-10-26T07:33:35.551Z",
+    "tool_result_at": "2026-10-26T07:33:35.558Z",
+    "tool_result": "已暂停并记录裁定请求",
+    "reason_source": "/app/.pao/benchmark/工作流实例-基准开发流水线.md:316-349",
+    "reason": "请求裁定：卡0001 已完成且机械验收全过（存在 filter.py 与 selftest/run_selftest.py；python3 -m py_compile filter.py exit 0；python3 selftest/run_selftest.py exit 0 输出 SELFTEST OK；见卡0001「机械验收」段），但我逐行审阅源码后发现两处与原始任务声明相悖的缺陷，需主控裁定走审核回边还是按现状收口。\n\n缺陷1（多删非有害字节，改变了格式）：/app/filter.py 的 _extend_script_removal() 切除 <script> 元素时额外吞掉元素后的换行，并把脚本所在行的行首缩进一并删除（start 回退到行首、stop 越过换行）。任务明确要求「Do not alter the formatting of the HTML content in any way」「output functionally identical except for the removal of harmful substrings」，被删的换行与缩进不属于有害片段。机械验收只覆盖「存在性 + 自测脚本自证退出 0」，未覆盖逐字节保留语义，属未验证项。\n\n缺陷2（过度删除，未保留非危险内容）：(2a) /app/filter.py 的 _SCRIPT_SCHEMES 含 'data:image/svg+xml' 且 _attribute_removal_spans() 命中即整属性删除，导致 <img src=\"data:image/svg+xml,...\"> 这类不执行脚本的良性内联图被删；(2b) 代码中 srcdoc 被无条件判定 dangerous（name == \"srcdoc\" → dangerous = True），良性 srcdoc 内容整体丢失。两者都违反「preserve non-dangerous-attributes / preserve as much of the HTML as possible」。\n\n我已尝试在卡内返修：pao_minister_rework_cards(卡0001) 被流程控制拒绝（\"当前节点已确认、判定或完成；原卡返修只修未完成节点的失败或验收缺陷，其它情况须走审核回边\"）；随后按补卡路径 pao_minister_submit_cards 被拒（\"拆解已结束或本批没有卡\"）。因此本节点既不能自行返修也不能自行补卡。\n\n请裁定其中之一：(A) 走审核回边，由审核节点对上述两处出 change 并派工修订（修订范围：_extend_script_removal 改为严格最小切除、data: 仅在 iframe/object/embed 等可执行上下文判危险、srcdoc 仅在解码后含脚本时处理，并扩充 selftest 逐字节比对）；(B) 认可当前交付为完成，缺陷记入未验证项/建议，不再改动。我倾向 (A)，因为两处缺陷都直接落在「保留格式与良性内容」的验收语义上，但流程上需要主控开启通道。",
+    "requester_identity": {
+      "pid": 3247,
+      "role": "部长",
+      "department": "实施",
+      "session": "8bd7ca26-7ea6-4439-89c4-be1d10b6d04d",
+      "source": "/proc/3247/environ；/app/.pao/benchmark/部长会话/00cdea8c-bb1d-46b5-b4f7-463310a274ba/2026-10-26T07-21-09-995Z_8bd7ca26-7ea6-4439-89c4-be1d10b6d04d.jsonl"
+    },
+    "accepted_or_resolved": false,
+    "manual_action_required": true
+  },
+  "audit": {
+    "node": "审核",
+    "round": 1,
+    "session": "c343bcd1-5004-40a3-9e7b-9fde94cee0d5",
+    "session_created_at": "2026-10-26T07:30:56.712Z",
+    "bound_user_message_at": "2026-10-26T07:30:56.855Z",
+    "first_model_tool_call_at": "2026-10-26T07:31:16.350Z",
+    "started_before_ruling": true,
+    "final_assistant_at": "2026-10-26T07:37:27.696Z",
+    "final_stop": "stop",
+    "final_summary": "审核节点第1轮被流程闸门阻断，未提交判定；仅完成只读证据读取",
+    "session_mtime": "2026-10-26T07:37:27.689Z",
+    "session_bytes": 271994,
+    "source": "/app/.pao/benchmark/部长会话/00cdea8c-bb1d-46b5-b4f7-463310a274ba/2026-10-26T07-30-56-712Z_c343bcd1-5004-40a3-9e7b-9fde94cee0d5.jsonl",
+    "identity": {
+      "pid": 5295,
+      "role": "部长",
+      "department": "审核",
+      "verified_from": "/proc/5295/environ",
+      "process_start_epoch": 1792999855
+    },
+    "attempts": [
+      {
+        "at": "2026-10-26T07:34:37.316Z",
+        "tool": "pao_minister_submit_cards",
+        "ok": false,
+        "result": "task.boundaries 与旧边界字段冲突：两处内容必须一致；请只保留一处或改成同一内容"
+      },
+      {
+        "at": "2026-10-26T07:34:37.316Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "替代节点地图必须同时提供 previous_ref 与 supersession_reason"
+      },
+      {
+        "at": "2026-10-26T07:35:00.409Z",
+        "tool": "pao_minister_submit_cards",
+        "ok": false,
+        "result": "[FLOW_CONTROL] 实例已暂停或前置未完成"
+      },
+      {
+        "at": "2026-10-26T07:35:00.409Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "受控引用格式错误：实施节点第1轮交付（卡0001，attempt 1，机械验收全过、owner 已接受未达项 #8）"
+      },
+      {
+        "at": "2026-10-26T07:35:13.033Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "previous_ref 必须指向当前节点、当前轮次最新保存的节点地图"
+      },
+      {
+        "at": "2026-10-26T07:35:42.716Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "受控引用格式错误：卡0001"
+      },
+      {
+        "at": "2026-10-26T07:35:52.162Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "地图覆盖路径不存在或没有受跟踪内容（会话原始结果见 JSONL）"
+      },
+      {
+        "at": "2026-10-26T07:35:59.052Z",
+        "tool": "pao_minister_save_node_map",
+        "ok": false,
+        "result": "真实部长会话与工作流绑定不符"
+      },
+      {
+        "at": "2026-10-26T07:36:10.662Z",
+        "tool": "pao_minister_submit_cards",
+        "ok": false,
+        "result": "[FLOW_CONTROL] 实例已暂停或前置未完成"
+      },
+      {
+        "at": "2026-10-26T07:36:14.641Z",
+        "tool": "read",
+        "ok": false,
+        "result": "EISDIR: illegal operation on a directory, read"
+      },
+      {
+        "at": "2026-10-26T07:36:35.743Z",
+        "tool": "pao_minister_submit_cards",
+        "ok": false,
+        "result": "task.goal 与旧目标字段冲突：两处内容必须一致；请只保留一处或改成同一内容"
+      },
+      {
+        "at": "2026-10-26T07:36:42.715Z",
+        "tool": "pao_minister_submit_cards",
+        "ok": false,
+        "result": "[FLOW_CONTROL] 实例已暂停或前置未完成"
+      },
+      {
+        "at": "2026-10-26T07:36:55.559Z",
+        "tool": "pao_request_ruling",
+        "ok": false,
+        "result": "[FLOW_CONTROL] 实例已暂停或前置未完成"
+      },
+      {
+        "at": "2026-10-26T07:37:10.276Z",
+        "tool": "pao_minister_decision_pack",
+        "ok": false,
+        "result": "[FLOW_CONTROL] 实例已暂停或前置未完成"
+      }
+    ]
+  },
+  "current": {
+    "observed_at": "2026-10-26T07:38:13.565Z",
+    "control_node": "审核",
+    "control_queued_cards": 0,
+    "control_mtime": "2026-10-26T07:33:35.551Z",
+    "control_bytes": 17958,
+    "mechanism_observed_at": "2026-10-26T07:38:22.987082+00:00",
+    "needs_manual_check": true,
+    "responsible_party": "人工",
+    "active_execution": null,
+    "active_execution_status": "unknown",
+    "controller_process": {
+      "pid": 1408,
+      "state": "S"
+    },
+    "minister_processes": {
+      "pid_1448": "exited",
+      "pid_2365": "exited",
+      "pid_3247": "exited",
+      "pid_5295": "exited"
+    },
+    "identifiable_processes_before_exit": [
+      {
+        "pid": 1448,
+        "role": "部长",
+        "department": "侦察",
+        "verified_from": "/proc/1448/environ",
+        "process_start_epoch": 1792998374
+      },
+      {
+        "pid": 2365,
+        "role": "部长",
+        "department": "规划",
+        "verified_from": "/proc/2365/environ",
+        "process_start_epoch": 1792998885
+      },
+      {
+        "pid": 3247,
+        "role": "部长",
+        "department": "实施",
+        "verified_from": "/proc/3247/environ",
+        "process_start_epoch": 1792999269
+      },
+      {
+        "pid": 5295,
+        "role": "部长",
+        "department": "审核",
+        "verified_from": "/proc/5295/environ",
+        "process_start_epoch": 1792999855
+      }
+    ],
+    "locks": {
+      "active_lock_found": false,
+      "lock_timeout_found": false
+    },
+    "controller_container": {
+      "id": "be5d0c6d096ffcd5e81a1771962dab53c25382bd520c1edf85ac1b41b6cf121c",
+      "state": "running"
+    },
+    "environment_container": {
+      "id": "117815f4d2f23a0abc3aa1e133d625ec71db01a81d885569bd7ea7e940390d43",
+      "state": "running"
+    }
+  },
+  "scoring": {
+    "official_reward": null,
+    "score_state": "unknown",
+    "note": "尚无官方终局，不将缺失评分填为0"
+  },
+  "writer_boundaries": {
+    "stopped_run": false,
+    "modified_code": false,
+    "modified_frozen_input": false,
+    "started_model": false,
+    "stopped_healthy_process": false
+  }
+}

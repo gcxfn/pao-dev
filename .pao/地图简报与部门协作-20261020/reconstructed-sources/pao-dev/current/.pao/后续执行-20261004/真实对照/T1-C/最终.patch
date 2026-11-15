@@ -1,0 +1,46 @@
+diff --git a/packages/coding-agent/src/pao/workflow/recipe.ts b/packages/coding-agent/src/pao/workflow/recipe.ts
+index a7b693470..ff3b1bae2 100644
+--- a/packages/coding-agent/src/pao/workflow/recipe.ts
++++ b/packages/coding-agent/src/pao/workflow/recipe.ts
+@@ -107,13 +107,13 @@ export function recipePath(paoHome: string, 名字: string): string {
+ 	return join(paoHome, "工作流", `${名字}.md`);
+ }
+ 
+-/** 列出可用配方名字（文件名去 .md，按名字排序）。目录不存在视为空。 */
++/** 列出可用配方名字（仅 .md 文件，文件名去 .md，按名字排序；名为 *.md 的目录不算）。目录不存在视为空。 */
+ export function listRecipes(paoHome: string): string[] {
+ 	const dir = join(paoHome, "工作流");
+ 	if (!existsSync(dir)) return [];
+-	return readdirSync(dir)
+-		.filter((name) => name.endsWith(".md"))
+-		.map((name) => name.slice(0, -3))
++	return readdirSync(dir, { withFileTypes: true })
++		.filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
++		.map((entry) => entry.name.slice(0, -3))
+ 		.sort();
+ }
+ 
+diff --git a/packages/coding-agent/test/pao/workflow-recipe.test.ts b/packages/coding-agent/test/pao/workflow-recipe.test.ts
+index 304f15a84..5852c235a 100644
+--- a/packages/coding-agent/test/pao/workflow-recipe.test.ts
++++ b/packages/coding-agent/test/pao/workflow-recipe.test.ts
+@@ -83,6 +83,19 @@ describe("合法配方解析", () => {
+ 		expect(listRecipes(paoHome)).toEqual(["大活流程", "小活流程"]);
+ 	});
+ 
++	test("listRecipes：*.md 目录不算配方，非 .md 文件不算，结果有序", () => {
++		writeFileSync(recipePath(paoHome, "z"), "# z\n", "utf8");
++		writeFileSync(recipePath(paoHome, "a"), "# a\n", "utf8");
++		mkdirSync(join(paoHome, "工作流", "fake.md"));
++		writeFileSync(join(paoHome, "工作流", "note.txt"), "x", "utf8");
++		expect(listRecipes(paoHome)).toEqual(["a", "z"]);
++	});
++
++	test("listRecipes：工作流目录不存在返回空", () => {
++		rmSync(join(paoHome, "工作流"), { recursive: true, force: true });
++		expect(listRecipes(paoHome)).toEqual([]);
++	});
++
+ 	test("substituteParams：代入声明参数，缺值原样保留", () => {
+ 		expect(substituteParams("侦察 {仓库}（期限 {期限}）", { 仓库: "pao" })).toBe("侦察 pao（期限 {期限}）");
+ 	});

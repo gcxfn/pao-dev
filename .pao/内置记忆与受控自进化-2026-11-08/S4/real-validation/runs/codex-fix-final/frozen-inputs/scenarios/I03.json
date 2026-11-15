@@ -1,0 +1,61 @@
+{
+  "id": "I03",
+  "description": "理由未说，模型推测",
+  "sessions": [
+    {
+      "sessionId": "sess-d",
+      "messages": [
+        {
+          "role": "user",
+          "content": "记忆保留期限定多久？",
+          "timestamp": "2026-11-08T13:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "常见做法：永久保留、按时间衰减、或按空间淘汰。",
+          "timestamp": "2026-11-08T13:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "先不定淘汰策略。",
+          "timestamp": "2026-11-08T13:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "记忆不自动淘汰",
+          "confirmation": "tentative",
+          "evidenceKind": "model_inference",
+          "rationale": "用户说'先不定'，模型推测为暂不淘汰",
+          "conditions": "先不定淘汰策略"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "淘汰策略",
+          "mustContain": ["mem-no-eviction"],
+          "mustNotContain": []
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-no-eviction",
+        "kind": "decision",
+        "conclusion": "记忆不自动淘汰",
+        "confirmation": "tentative",
+        "usageState": "active"
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-d-001",
+        "sessionId": "sess-d",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

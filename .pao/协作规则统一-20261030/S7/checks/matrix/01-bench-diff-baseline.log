@@ -1,0 +1,134 @@
+﻿# --scenario 改动记账 2026-11-01T15:53:45.2611977+08:00
+
+## git diff --stat (bench)
+
+ bench/rehearsal/run-rehearsal.mjs   | 20 ++++++++++++--------
+ bench/rehearsal/verify-evidence.mjs |  7 ++++++-
+ 2 files changed, 18 insertions(+), 9 deletions(-)
+
+## git status --porcelain (bench)
+
+ M bench/rehearsal/run-rehearsal.mjs
+ M bench/rehearsal/verify-evidence.mjs
+?? bench/rehearsal/cli-args.mjs
+?? bench/rehearsal/run-rehearsal.test.mjs
+
+## sha256 changed files
+
+B741743167C511C84BDABBAF78DE6E8D84AA0654508B1A1C0A208414585BE83E  D:\AI\workspace\pao-dev\bench\rehearsal\run-rehearsal.mjs
+60F978DE23CAA6046223D024C3425FC6300138D9F52B433CB7BF8A0BE4A7715D  D:\AI\workspace\pao-dev\bench\rehearsal\verify-evidence.mjs
+937BD2B85E4394634E21EE86D91772BE18F8E92079349508DB56CB9238752322  D:\AI\workspace\pao-dev\bench\rehearsal\cli-args.mjs
+FBAF22D7461EA4CC73BDBD86C5DD4368952D9FF96F546B7A3AD7AD2C38AACC0C  D:\AI\workspace\pao-dev\bench\rehearsal\run-rehearsal.test.mjs
+
+## diff run-rehearsal.mjs
+
+diff --git a/bench/rehearsal/run-rehearsal.mjs b/bench/rehearsal/run-rehearsal.mjs
+index 113770ba..b00d0a4d 100644
+--- a/bench/rehearsal/run-rehearsal.mjs
++++ b/bench/rehearsal/run-rehearsal.mjs
+@@ -1,5 +1,5 @@
+ // 用途：用固定 kit、真实产品 CLI、真实 Git 与回环脚本模型运行隔离正常链。
+-// 输入：可选 --output；输出：运行、模型、控制正本、进程和核验证据。
++// 输入：可选 --output 与 --scenario（缺省 bench/rehearsal/scenarios/normal.json）；输出：运行、模型、控制正本、进程和核验证据。
+ // 边界：不构建、不联网、不访问正式 PAO_HOME、不使用 Docker 或真实模型。
+ import { spawn, spawnSync } from "node:child_process";
+ import { createHash, randomUUID } from "node:crypto";
+@@ -17,6 +17,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+ import { createInterface } from "node:readline";
+ import { fileURLToPath, pathToFileURL } from "node:url";
+ import { parseArgs } from "node:util";
++import { resolveScenarioPath } from "./cli-args.mjs";
+ import { verifyEvidence } from "./verify-evidence.mjs";
+ 
+ const HERE = dirname(fileURLToPath(import.meta.url));
+@@ -28,7 +29,6 @@ const SOURCE_ROOT = join(REPO_ROOT, "PAO");
+ const PACKAGE_ROOT = join(REPO_ROOT, "PAO/packages/coding-agent");
+ const KIT = join(REPO_ROOT, "bench/organized-post/kit.json");
+ const SETUP = join(REPO_ROOT, "bench/organized-post/setup.mjs");
+-const SCENARIO = join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
+ const PROVIDER = "harbor-endpoint";
+ const MODEL = "minimax-code/MiniMax-M3.1-Flash";
+ const THINKING = "high";
+@@ -363,9 +363,13 @@ async function main() {
+   const args = parseArgs({
+     options: {
+       output: { type: "string" },
++      scenario: { type: "string" },
+     },
+     allowPositionals: false,
+   }).values;
++  // 场景参数先于运行目录创建解析：坏参数快速失败，不建半截证据目录。
++  const scenarioPath = resolveScenarioPath(args.scenario, { repoRoot: REPO_ROOT });
++  const scenarioManifestRoot = relative(REPO_ROOT, scenarioPath).replaceAll("\\", "/");
+   const runId = new Date().toISOString().replaceAll(":", "-").replace(/\.\d{3}Z$/, "Z");
+   const runRoot = resolve(args.output ?? join(WORKSPACE_TEMP, `I5-2-${runId}`));
+   if (!isWithin(WORKSPACE_TEMP, runRoot)) {
+@@ -410,10 +414,10 @@ async function main() {
+   ]);
+   const kitManifest = captureManifest(join(manifestsDir, "kit-manifest.json"), [
+     "bench/organized-post",
+-    "bench/rehearsal/scenarios/normal.json",
++    scenarioManifestRoot,
+   ]);
+   const cliSha256 = sha256File(CLI);
+-  const scenarioSha256 = sha256File(SCENARIO);
++  const scenarioSha256 = sha256File(scenarioPath);
+   const snapshotSha256 = createHash("sha256")
+     .update(
+       [
+@@ -446,7 +450,7 @@ async function main() {
+     capturedAt: new Date().toISOString(),
+     kitPath: KIT,
+     kitSha256: sha256File(KIT),
+-    scenarioPath: SCENARIO,
++    scenarioPath,
+     scenarioSha256,
+     node: NODE,
+     nodeVersion: process.version,
+@@ -464,13 +468,13 @@ async function main() {
+ 
+   const startedAt = new Date();
+   const suiteStarted = Date.now();
+-  const scenario = JSON.parse(readFileSync(SCENARIO, "utf8"));
++  const scenario = JSON.parse(readFileSync(scenarioPath, "utf8"));
+   if (scenario.kitSha256 !== preflight.kitSha256) throw new Error("场景冻结的 kit 哈希与当前 kit 不一致");
+   const { createScriptedModelServer } = await import(
+     pathToFileURL(join(HERE, "scripted-model-server.mjs")).href
+   );
+   const server = await createScriptedModelServer({
+-    scenarioPath: SCENARIO,
++    scenarioPath,
+     evidenceDir: modelEvidence,
+     port: 0,
+   });
+@@ -792,7 +796,7 @@ async function main() {
+       kitFileCount: kitManifest.fileCount,
+       snapshotSha256,
+       kitSha256: sha256File(KIT),
+-      scenarioSha256: sha256File(SCENARIO),
++      scenarioSha256: sha256File(scenarioPath),
+       syntheticUsage: true,
+     });
+     process.stderr.write(`${JSON.stringify(failure)}\n`);
+
+## diff verify-evidence.mjs
+
+diff --git a/bench/rehearsal/verify-evidence.mjs b/bench/rehearsal/verify-evidence.mjs
+index 03b3be75..0051d994 100644
+--- a/bench/rehearsal/verify-evidence.mjs
++++ b/bench/rehearsal/verify-evidence.mjs
+@@ -303,7 +303,12 @@ export function verifyEvidence(outputDir) {
+   const projectRoot =
+     typeof run.projectRoot === "string" ? resolve(run.projectRoot) : join(runRoot, "project");
+   const kit = readJson(join(REPO_ROOT, "bench/organized-post/kit.json"));
+-  const scenario = readJson(join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json"));
++  // 旧证据目录可能没有 scenarioPath（或指向已清理的临时文件）：退回 S6/S0 基线默认场景，保持历史可复核。
++  const scenarioPath =
++    typeof preflight.scenarioPath === "string" && existsSync(preflight.scenarioPath)
++      ? resolve(preflight.scenarioPath)
++      : join(REPO_ROOT, "bench/rehearsal/scenarios/normal.json");
++  const scenario = readJson(scenarioPath);
+   const controlPath = join(projectRoot, ".pao", `工作流实例-${kit.workflow.名字}.md`);
+   const control = existsSync(controlPath) ? parseFrontmatter(controlPath).data : null;
+   const cardsDir = control?.卡目录 ? resolve(control.卡目录) : join(projectRoot, ".pao", "卡");
+exit=0

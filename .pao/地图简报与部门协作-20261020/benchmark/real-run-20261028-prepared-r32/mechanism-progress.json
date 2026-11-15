@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-27T20:02:28.820856+00:00",
+  "instance": "0fb6d724-268d-480e-9852-b4e5bae8e324",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "0fb6d724-268d-480e-9852-b4e5bae8e324",
+      "owner": "01a17ee8-adc6-77bb-b948-212697a827cf",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "请求主控裁定卡0001 的回执格式失败处置与后续推进方式。事实（均有可核证据）：\n\n1) 卡0001 尝试1、尝试2 的机械验收与产物均未被判失败。判定包显示工作区新增未跟踪文件 /app/filter.py 与 /app/filter_check.py；尝试2 基线 diff 为 M filter.py、M filter_check.py。两次回执摘要均为“无有效回执：最终输出缺少有效 JSON 回执（result、artifact_path、summary）”。\n\n2) 根因已定位（读 worker 证据 .live.jsonl.gz 末条助手消息）：worker 最后一条消息在 JSON 前加了一行散文“修复完成，验收命令均退出码 0，61 项断言全 OK。”，回执解析器要求整条消息可解析为 JSON，故判无效。JSON 本身字段齐全（result=success、artifact_path、summary、任务态=completed、verification 10 项、changes 2 项），且所报 61 项断言与独立交叉校验 T1–T4 均标注 pass。\n\n3) 卡面/流程通道均无法注入“回执只能是纯 JSON”这条约束：pao_dispatch_brief 在本节点被拦截；pao_minister_rework_cards 对卡0001 返回“unclaimed 已排队，无需重复返修”，对卡0002 返回“没有 owner，无法确认返修写者”；pao_minister_submit_cards 返回“拆解已结束或本批没有卡”，本节点已调用 pao_breakdown_done，无法再交新卡。\n\n4) 卡面 owner 已把同轮尝试上限从 2 提到 4，卡0001 将以尝试3/4 重跑，卡0002 仍为 attempt 0 待认领；两卡继续下去有再次撞上同一回执格式失败的风险（同一模型、同一简报、同一失败点已连续两次）。\n\n请裁定以下之一：\nA. 依据卡0001 尝试2 的证据（产物已落盘 + 61 项断言 pass + 交叉校验 pass）直接判定该卡通过/降级通过，解除下游暂停，并授权我把“最终回执只能是纯 JSON 对象、不得带任何前后散文”作为卡面硬约束随卡0001/卡0002 简报下发；\nB. 由主控在卡0001 尝试3、卡0002 的执行简报中注入同一条回执硬约束（末条助手消息只含一个 JSON 对象，首字符 {、尾字符 }，无前后文与代码块围栏），我不新增卡；\nC. 重新开放本节点的拆解（允许我交一张“整合终验卡”：确保 filter.py / filter_check.py / filter_selftest.py 齐备、三条命令实跑退出码均为 0、卡面写入回执硬约束），以产出可解析回执并补齐仍缺的 /app/filter_selftest.py。\n\n在收到裁定前，我不改动卡状态、不新增卡、不自行改业务文件；当前现场保持为：/app/filter.py（已修 </noscript> 误删与良性 @import 过度删除两处缺陷）、/app/filter_check.py（61 项真实断言）、/app/filter_selftest.py 尚不存在。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T20:01:06.144Z",
+    "事件": "节点交接地图",
+    "节点": "规划",
+    "轮次": 1,
+    "理由": "pao-map://wf-0fb6d724-268d-480e-9852-b4e5bae8e324----1-244d7369-cea0-4e41-b9ab-1a465357c358?digest=sha256%3A174f322ab9d50fc5299a527b4fdc5b6c6bb3e7435316c7acf811071f486b288a&status=valid"
+  },
+  "latest_business_event_at": "2026-10-27T20:01:06.144Z",
+  "business_event_key": "{\"事件\": \"节点交接地图\", \"时间\": \"2026-10-27T20:01:06.144Z\", \"理由\": \"pao-map://wf-0fb6d724-268d-480e-9852-b4e5bae8e324----1-244d7369-cea0-4e41-b9ab-1a465357c358?digest=sha256%3A174f322ab9d50fc5299a527b4fdc5b6c6bb3e7435316c7acf811071f486b288a&status=valid\", \"节点\": \"规划\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-27T20:01:11.407201+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

@@ -1,0 +1,68 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-e49425c6-6188-4527-b6c8-302b9f0296fa----1-55110e76-b9f8-459a-80ca-c0a8c8857618",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"."
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao"
+		]
+	},
+	"facts": [
+		"目标产物：/app/filter.py，当前不存在（read → ENOENT）；/app 下无 requirements.txt、pyproject.toml、setup.py、Makefile、README、任何 .html 样例文件",
+		"/app 是 git 仓库：.git/refs/heads/master = cfdb0d8168da9f69c1595df975baf7e8dfebb1b6，首提交 message = 'benchmark input baseline'，作者 PAO-benchmark <benchmark@local>；基线为空，无既有实现可复用",
+		"Python 环境：CPython 3.12（解释器与 site-packages 路径 /usr/local/lib/python3.12/site-packages）",
+		"已安装且可用（证据来自 site-packages 内源码与 dist-info）：beautifulsoup4 4.13.4（bs4/__init__.py 中 __version__=\"4.13.4\"）、lxml 6.1.1（lxml/__init__.py 中 __version__=\"6.1.1\"）、soupsieve（bs4 依赖，bs4/builder/__init__.py 导入 soupsieve）、typing_extensions、pip 25.0.1",
+		"未安装：html5lib（bs4/builder/_html5lib.py 存在但 /usr/local/lib/python3.12/site-packages/html5lib 目录不存在）、lxml_html_clean（lxml/html/clean.py 是兼容 shim，import 失败即 raise ImportError 提示安装 lxml[html-clean]）、bleach、nh3、pytest（_pytest 包不存在）",
+		"结论：可靠解析路径仅 bs4 + 内置 html.parser，或 bs4 + lxml 的 etree.HTMLParser；不能依赖 lxml.html.clean.Cleaner、bleach、nh3",
+		"格式保持关键点（bs4 源码核实）：bs4/formatter.py 的 Formatter.attributes() 默认对 tag.attrs.items() 做 sorted()，默认格式化按字母序重排属性；HTMLFormatter 还做实体替换。需用 formatter=None 或覆写 attributes 以保留原始顺序",
+		"bs4/element.py 中 Tag.smooth() 会合并相邻 NavigableString，改变文本节点边界；不调用可避免不必要的文本重写",
+		"bs4 对 <script>/<style> 内容使用 Script/Stylesheet 子类（bs4/element.py），decompose()/extract() 可整体移除 script 标签",
+		"bs4 内置 html.parser builder 会把无值属性值转为空字符串（bs4/builder/_htmlparser.py handle_starttag 注释：Change None attribute values to the empty string），输出可能把 <input disabled> 写成 <input disabled=\"\">，属解析归一化风险",
+		"任务口径：argv[1] 取 HTML 文件路径，原地修改写回同一路径；除移除 JavaScript 外输出应与输入功能等价，保留表格、标题、标准属性与格式"
+	],
+	"unknowns": [
+		"隐藏测试集 HTML 样例形态未知（禁读 /tests），无法确定是否含 svg/math/xlink、iframe srcdoc、meta refresh 等边界用例",
+		"无法确认评测是否严格要求逐字节保留属性顺序、引号风格（单/双）、自闭合写法（<br/> vs <br>）",
+		"无法确认期望对 javascript: URL 的处理：删除整个属性、清空值、还是替换为 about:blank",
+		"无法确认文件编码约定（UTF-8 假设 vs 需保留 BOM）",
+		"无网络与包安装授权信息，不应尝试 pip install lxml_html_clean 或 bleach"
+	],
+	"relations": [],
+	"risks": [
+		"若用默认 str(soup)，属性按字母序重排、实体被转义、可能补全 html/body，违反“不得改动格式”要求",
+		"若用 lxml.html.clean 会直接 ImportError（lxml_html_clean 未安装），属环境硬限制",
+		"危险面不止 <script>：还需覆盖 on* 事件属性、javascript:/vbscript: 协议的 href/src/action/formaction、<iframe srcdoc>、<meta http-equiv=refresh> 中的 javascript:、<svg>/<math> 内脚本与 xlink:href、<object>/<embed>、<frameset>；只删 <script> 会漏 XSS",
+		"大小写与空白混淆：HREF=\"JaVaScRiPt:...\"、属性值前导空白/换行/制表符、&#106;avascript: 数字实体、\\x00 控制字符",
+		"读文件应保留原编码（或 UTF-8 errors='surrogateescape'），否则写回破坏非 UTF-8 字节",
+		"写回若用 open(w) 会改变换行符或丢末尾换行；应读字节→解码→处理→按相同编码写回",
+		"无样例 HTML，验收只能自建用例；/tests 禁读，不得依赖其断言"
+	],
+	"integrationOwner": "实施",
+	"previousRef": "pao-map://wf-e49425c6-6188-4527-b6c8-302b9f0296fa----1-582e6607-3b1e-4e75-8293-be34a956b81f?digest=sha256%3A9488fb8d31ac45f4e46293b143fefa95f5da23338d42a827f6bd6eaa62a3caf6&status=valid",
+	"supersessionReason": "修正 coverage 越界与不存在路径：收敛为项目根 /app，环境依赖证据保留在 facts，替代前两版",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"/app 实际文件系统与 git 基线状态",
+		"site-packages 内 bs4/lxml 实际源码与 dist-info 元数据",
+		"原始公开任务全文（filter.py 命令行接口、原地修改、保留 HTML 结构与格式）"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+	},
+	"files": [],
+	"capturedAt": "2026-10-23T17:44:30.688Z",
+	"mapDigest": "sha256:c0c73d993dd8689892bb42749bcd8cba8d256cd9e984917ed097b5edc20e1997"
+}

@@ -1,0 +1,45 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D1 同项目整理完成后，新变化仍能再次整理 66ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D2 两个正式决定条件互斥时，不自动合并并丢弃条件 41ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D3 合并待定与已确认决定时，不把已确认决定降成待定 41ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D4 settled 后异步登记的整理任务，无需另一次用户回合即可消费 46ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D5 rebuild 接受带空格的项目路径，不静默重建错误范围 105ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D6 backup 接受带空格的目录参数，并登记真实维护队列 38ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D7 同项目作业运行期间登记新变化，当前批次结束后仍继续整理 67ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D8 同 PAO_HOME 的另一调度实例在运行期间登记新变化，工作仍被消费 76ms
+ × o06-independent.test.ts > O06 独立完成审核 > D9 批末事务边界登记的新工作仍被消费 1163ms
+   → expected 2 to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D9 批末事务边界登记的新工作仍被消费
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ o06-independent.test.ts:217:88
+    215|       }
+    216|       try {
+    217|         await expect.poll(() => f.canonical().length, { timeout: 1000,…
+       |                                                                                        ^
+    218|       } finally {
+    219|         f.store.transaction = transaction;
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ o06-independent.test.ts:217:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  22:28:14
+   Duration  4.23s (transform 1.84s, setup 0ms, import 2.44s, tests 1.65s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o06-r5-shared-review-vitest.json

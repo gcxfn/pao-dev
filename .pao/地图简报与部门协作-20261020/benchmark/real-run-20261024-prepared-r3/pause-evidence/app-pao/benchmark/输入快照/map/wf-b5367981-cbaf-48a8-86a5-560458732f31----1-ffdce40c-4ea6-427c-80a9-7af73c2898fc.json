@@ -1,0 +1,90 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"filter.py",
+			"selftest/run_checks.py"
+		],
+		"excludes": [
+			".git",
+			".pao",
+			"solution",
+			"tests"
+		]
+	},
+	"facts": [
+		"任务契约（唯一需求来源）：/app/filter.py 必须 (a) 取 argv[1] 为 HTML 路径，(b) 就地改写该文件，(c) 移除全部 JavaScript 载体，(d) 除被移除的有害子串外与输入功能等价，(e) 不得改变 HTML 内容格式（仅允许解析过程自然产生的规范化），(f) 只用环境已装包——即标准库。",
+		"现状：/app/filter.py 存在且完整（793 行），仅 import codecs/html/os/re/sys/tempfile，无第三方依赖，满足约束 (f)；入口 main(argv) 校验 len(argv)<2、os.path.isfile，失败写 stderr 返回 2，成功返回 0，满足 (a)(b)。",
+		"实现架构：不重新序列化文档；用 TAGNAME_RE/parse_start_tag 容错词法化，定位需删除的源码区间后切片拼接，因此未触碰的字节（缩进、换行、属性顺序、引号风格、实体、注释、CRLF）逐字节保留，比任务要求的『仅允许解析规范化』更严格。",
+		"字节处理：decode_bytes/encode_text 走 BOM 探测 + utf-8 + surrogateescape；write_atomic 用 mkstemp + os.replace 原子替换并保留原 st_mode；清洗结果等于原文时直接 return False 不落盘（mtime 不变），这是保真与幂等的基础。",
+		"JS 载体覆盖面：strip_js 定点至多 8 轮至不动点；_strip_js_once 处理 <script>（含 svg:script、大小写、属性、自闭合、孤立 </script>、未闭合删至 EOF）、事件属性（classify_attr 的 base.startswith('on')）、URL 属性（URL_ATTRS: href/src/action/formaction/xlink:href/background/poster/data/cite/longdesc/codebase/profile/usemap）、多值 URL 容器（srcset/ping/archive/manifest/imagesrcset）、style 属性与 <style> 块的危险 CSS 声明（expression(/javascript:/vbscript:/behavior:/-moz-binding，含 _css_unescape 反混淆）、iframe[srcdoc] 递归清洗、meta[http-equiv=refresh][content]、SVG 动画元素（SVG_ANIM_TAGS + _svg_anim_targets_event）。",
+		"反混淆：_decode_entities_deep 最多 4 轮 html.unescape，_IGNORABLE_RE 剥除 C0/C1/DEL/Unicode 空白（含 U+00A0、U+2000-U+200F、U+FEFF）后小写比对，可识别 jav&#x61;script:、java<tab>script:、JaVaScRiPt: 等变形。",
+		"误删控制：URL 属性仅在值确为 javascript:/vbscript:/危险 data: 时整属性丢弃；data: 仅丢 media 含 html/svg 者，data:image/png 保留；style 只丢危险声明，删空才丢属性。",
+		"既有自测：/app/selftest/run_checks.py（577 行）提供 core/fidelity/edge/perf + all；含独立于实现的残留检测（_DEAD_PATTERNS/residual_js）、结构等价比较（html.parser 树 + drop_dangerous）、字节保真 10 例、幂等 7 例、边界 24 例、CLI 契约、py_compile、400 例固定种子 fuzz、8000 块性能用例；全部落 mkdtemp 临时目录。",
+		"计划 S1（实施·必做）：先跑真实基线再改代码——python3 -m py_compile /app/filter.py 与 python3 /app/selftest/run_checks.py all，记录退出码与失败项；崩溃优先于能力扩展。",
+		"计划 S2（实施）：按 R1/R2/R3 做定点修补（命名空间 script 的结束标签回退、data: 白名单化、on* 误删收敛到真实事件名），每项改完立即重跑 S1 两条命令并贴输出。",
+		"计划 S3（实施·独立黑盒）：用任务原文隐含判据自建一次性语料：(i) 纯 HTML（表格/标题/实体/CRLF/属性顺序/无尾换行）前后字节全等；(ii) 含 <script>/on*/javascript:/vbscript:/CSS expression/meta refresh 的语料处理后正则扫描 <script、\\son[a-z]+\\s*=、javascript\\s*:、vbscript\\s*:、expression\\s*\\( 全无命中；(iii) 同文件跑两遍第二遍 no-op；(iv) 表格/标题/图片/链接按原文保留。",
+		"计划 S4（实施）：把 S3 语料与断言固化为可复跑入口（复用或扩展 run_checks 的 core/fidelity/edge），让审核节点一条命令复现。",
+		"计划 S5（审核·独立）：审核不得以实施自报输出为证据，须在只读副本用自建语料复跑，至少覆盖实体/制表符/换行混淆的 javascript:、<SCRIPT SRC=...> 与 <script/> 变体、属性内含 > 的正常标签，并核对未改动区域逐字节相同。",
+		"计划 S6（交付判据）：仅当 py_compile 通过、自测 0 失败、独立黑盒扫描无残留、纯 HTML 字节全等、幂等成立 五条同时成立才判交付。",
+		"可复用验收命令：跑: python3 -m py_compile /app/filter.py；跑: python3 /app/selftest/run_checks.py all；跑: python3 -c \"import subprocess,sys;print(subprocess.run([sys.executable,'/app/filter.py'],capture_output=True).returncode)\"（期望非 0 且 stderr 非空）。",
+		"证据边界：本轮为只读规划节点，未执行任何 Python、未运行 filter.py、未修改 /app 任何文件；上述行为均来自逐行阅读源码，属静态证据，运行时结论待实施/审核实测。"
+	],
+	"unknowns": [
+		"运行时行为全部未验证：本轮只读，未执行 python3 /app/filter.py，py_compile、自测四子命令与 fuzz 的实际退出码/失败项均未知。",
+		"filter.py 是否能真正跑通未验证；代码用 from __future__ import annotations 与 dict[str, str] 注解，更早的 Python 版本需实测确认。",
+		"评分侧语料形态未知：是否含 SVG/MathML 或 srcdoc、是否要求 <script> 内部文本一并消失、是否允许注释内残留字面 <script>——决定 R4/R5 取舍方向。",
+		"/app 下是否还有其他文件（样例 HTML、配置、__pycache__、软链）未确认：本轮只读到两个文件，目录枚举受限，不能断言 /app 只有这两个文件。",
+		"评分是否对 stdout、多参数、相对路径调用有额外要求；任务原文只写 argv[1]，当前返回 2/1 的行为未被外部规范确认。",
+		"无历史运行证据可引用：仓库无 CI 日志、无上次自测输出，『曾经通过』不可采信。"
+	],
+	"relations": [],
+	"risks": [
+		"R1 过度删除（高）：_strip_js_once 对 script 元素用 element_end(text, tag_end, name)，name 保留原始串（如 svg:script）；若文档以 <svg:script> 开、以普通 </script> 收，_endtag_re 找不到结束标签 → 返回 len(text)，把剩余整段文本删光，直接违反『保留尽量多 HTML』。修补方向：结束标签匹配回退到 base name（script）。",
+		"R2 漏删（中）：is_dangerous_url 对 data: 走黑名单（仅含 html/svg 才丢），data:text/javascript、data:application/javascript 会被保留；若进入可执行上下文即为真实 JS 载体。修补方向：改白名单，仅保留 data:image/(png|jpeg|gif|webp|bmp)。",
+		"R3 误删（中）：classify_attr 以 base.startswith('on') and len(base)>2 判事件属性，凡 on 开头且长度>2 的属性名都被整属性删除，违反保真。修补方向：仅在已知事件处理器名集合内删除，否则保守保留。",
+		"R4 内容改动（待裁定）：RAW_VERBATIM(textarea/title/xmp/plaintext) 内字面 <script>...</script> 文本会被切掉；浏览器中该处不执行，删除属内容变更。若评分用朴素 <script 子串扫描则保留会直接失败。需审核明确裁定并记录理由。",
+		"R5 内容改动（低-中）：HTML 注释逐字节保留，注释内字面 <script> 会留在输出中，朴素扫描器可能误判。与 R4 同一权衡轴，需一致裁定。",
+		"R6 自证风险（高）：selftest/run_checks.py 与 filter.py 同批产出，断言可能同源（residual_js 只扫已知模式、结构比较排除 style）。只复跑该自测等于用被检方的尺子量被检方，必须叠加独立语料与独立断言。",
+		"R7 格式改动（低）：_render_css_items 丢弃危险声明后会补插分号分隔符，仅发生在含危险 CSS 的 style 属性/<style> 内；需确认未波及安全 CSS 段。",
+		"R8 编码/文件属性（低）：write_atomic 用 os.replace，目标为符号链接时会被替换成普通文件；UTF-16 输入只解码正文不调整 meta charset。记录为已知边界。",
+		"R9 幂等上限（低）：strip_js 最多 8 轮，极端嵌套 srcdoc 理论上可能不达不动点；既有 fuzz 仅 400 例固定种子，不能证明全空间幂等。",
+		"R10 未跟踪产物（流程风险）：/app 下另有自建 selftest/ 目录，属任务未要求的附加产物，判定包已标注两文件变化未能归因；需核查其不夹带按路径特判、读环境变量或向项目外写盘等有害行为。"
+	],
+	"integrationOwner": "实施",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"判定包显示两文件基线已跟踪而当前工作树状态未能归因，故计划强制独立核查，不采信其自带自测结论作为唯一证据",
+		"原始公开任务只要求产出 /app/filter.py：以 argv[1] 接收 HTML、就地移除 JavaScript、尽量保留结构格式、只用已安装包",
+		"实测 /app/filter.py（793 行）与 /app/selftest/run_checks.py（577 行）已存在，故本轮边界为「独立核查既有实现 + 定点修补」而非从零重写",
+		"覆盖范围按任务字面闭合：一个脚本文件 + 一份自测工具，无其他调用方需检出"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:5c810667e1fcbd7651508d8efb59b80ca604f0303e42ca33a6f930d93ae2d0b5"
+	},
+	"files": [
+		{
+			"path": "filter.py",
+			"workingDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"contentDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"size": 25144
+		},
+		{
+			"path": "selftest/run_checks.py",
+			"workingDigest": "sha256:bcc85f018ed1e6b49d06354dd726eaa4690d8c7cfc803492542b52b0f3124214",
+			"contentDigest": "sha256:bcc85f018ed1e6b49d06354dd726eaa4690d8c7cfc803492542b52b0f3124214",
+			"size": 23087
+		}
+	],
+	"capturedAt": "2026-10-23T18:24:20.301Z",
+	"mapDigest": "sha256:e17c8a7cc18eb12a49ed10464150d063d49a062226b8e23ad6372df297199d0a"
+}

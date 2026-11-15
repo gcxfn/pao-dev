@@ -1,0 +1,37 @@
+== T09 环境事件：PAO/packages/coding-agent/node_modules 被外部 pnpm install 重装 ==
+发现时间：2026-10-06 18:1x（本轮 build:offline 失败后定位）
+事件时间：.modules.yaml/.pnpm mtime=2026-10-06 17:49:49（本轮开工前，非本轮子代理所为；本轮全部命令自 18:05 起，日志为准）
+安装器：pnpm@11.18.0 storeDir=D:\.pnpm-store\v11 layoutVersion=5
+后果：coding-agent/node_modules 顶层全部变为指向 .pnpm 内 registry 副本的符号链接；
+  @earendil-works/* 解析到 registry 1.0.3（fork 本地包为 1.0.2），覆盖根 node_modules 的 workspace 链接（pi-ai→packages/ai）；
+  build-coding-agent-bundle.mjs 的 suffix 断言 fail-closed 拦截（正确行为）：Could not locate bundled output containing packages/ai/dist/api/bedrock-converse-stream.lazy.js
+  探针证据：ai-inputs-count=0、has-amazon-bedrock=true（来自 .pnpm 路径）、total-inputs=2215（probe-bundle-meta.mjs 留本目录）
+波及面：仅 coding-agent；desktop 仓 node_modules（10-05 15:27）、PAO 根 node_modules（10-05 05:27）、其余包 node_modules 均未动
+处置：node_modules 整体改名为 node_modules.pnpm-外部重装留证-20261006（保留可回退），PAO 根 npm install 按根 package-lock.json（10-04 20:27，即 T00—T12 验证史所用布局）重建，随后重跑 build:offline
+
+== 被改名的目录顶层快照（前 30 项）==
+@anthropic-ai
+@earendil-works
+@silvia-odwyer
+@types
+brace-expansion
+chalk
+cross-spawn
+diff
+grok-mermaid
+highlight.js
+hosted-git-info
+ignore
+jiti
+marked
+minimatch
+proper-lockfile
+quickjs-wasi
+semver
+shx
+typebox
+undici
+vitest
+yaml
+
+订正（18:4x）：留证目录原放 packages/coding-agent/ 下会 electron-builder 依赖收集器误扫（目录名以 node_modules 开头），已整体移至本目录；环境事件其余记录不变。

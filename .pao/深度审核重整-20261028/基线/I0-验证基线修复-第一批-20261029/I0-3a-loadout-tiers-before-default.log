@@ -1,0 +1,99 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ × packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 配置文件存在(交付物,缺失即失败) 5ms
+   → expected false to be true // Object.is equality
+ × packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 两档:快/主力;GLM 映射正确;思考档有差异(快=low,主力=high) 1ms
+   → 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ × packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 真实配置经 registerTiers 注册成两个虚拟模型,推荐思考档排首位;守卫已挂 1ms
+   → 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ × packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > route 映射到配置声明的 GLM 物理模型;模型不在目录时报错不回退 0ms
+   → 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ × packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > resolveTier 按名取档;查无此档列出真实档位名 0ms
+   → 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ ✓ packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 校验器对残缺配置仍逐字段报错(守住'配置失效不静默') 1ms
+ ✓ packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 重复档名报错并指明档名(档位名即虚拟模型 id,不静默覆盖丢档) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 配置文件存在(交付物,缺失即失败)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ packages/coding-agent/test/pao/loadout-tiers-config.test.ts:55:34
+     53| describe("真实两档配置(pao配置/档位.json,与生产同源)", () => {
+     54|  it("配置文件存在(交付物,缺失即失败)", () => {
+     55|   expect(existsSync(configPath)).toBe(true);
+       |                                  ^
+     56|   if (process.env.PAO_HOME) {
+     57|    expect(resolveTierConfigPath(process.env.PAO_HOME)).toBe(configPath…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 两档:快/主力;GLM 映射正确;思考档有差异(快=low,主力=high)
+Error: 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ ❯ loadTierConfig packages/coding-agent/src/pao/routing/config.ts:57:9
+     55|   raw = readFileSync(configPath, "utf8");
+     56|  } catch (error) {
+     57|   throw new Error(`无法读取档位配置文件 ${configPath}:${(error as Error).message…
+       |         ^
+     58|  }
+     59|  let parsed: unknown;
+ ❯ packages/coding-agent/test/pao/loadout-tiers-config.test.ts:62:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > 真实配置经 registerTiers 注册成两个虚拟模型,推荐思考档排首位;守卫已挂
+Error: 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ ❯ loadTierConfig packages/coding-agent/src/pao/routing/config.ts:57:9
+     55|   raw = readFileSync(configPath, "utf8");
+     56|  } catch (error) {
+     57|   throw new Error(`无法读取档位配置文件 ${configPath}:${(error as Error).message…
+       |         ^
+     58|  }
+     59|  let parsed: unknown;
+ ❯ registerTiers packages/coding-agent/src/pao/routing/index.ts:41:17
+ ❯ packages/coding-agent/test/pao/loadout-tiers-config.test.ts:78:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > route 映射到配置声明的 GLM 物理模型;模型不在目录时报错不回退
+Error: 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ ❯ loadTierConfig packages/coding-agent/src/pao/routing/config.ts:57:9
+     55|   raw = readFileSync(configPath, "utf8");
+     56|  } catch (error) {
+     57|   throw new Error(`无法读取档位配置文件 ${configPath}:${(error as Error).message…
+       |         ^
+     58|  }
+     59|  let parsed: unknown;
+ ❯ registerTiers packages/coding-agent/src/pao/routing/index.ts:41:17
+ ❯ packages/coding-agent/test/pao/loadout-tiers-config.test.ts:89:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  packages/coding-agent/test/pao/loadout-tiers-config.test.ts > 真实两档配置(pao配置/档位.json,与生产同源) > resolveTier 按名取档;查无此档列出真实档位名
+Error: 无法读取档位配置文件 D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json:ENOENT: no such file or directory, open 'D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-3a-loadout-tiers-config\PAO_HOME\pao配置\档位.json'
+ ❯ loadTierConfig packages/coding-agent/src/pao/routing/config.ts:57:9
+     55|   raw = readFileSync(configPath, "utf8");
+     56|  } catch (error) {
+     57|   throw new Error(`无法读取档位配置文件 ${configPath}:${(error as Error).message…
+       |         ^
+     58|  }
+     59|  let parsed: unknown;
+ ❯ packages/coding-agent/test/pao/loadout-tiers-config.test.ts:105:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  00:48:25
+   Duration  355ms (transform 109ms, setup 0ms, import 148ms, tests 10ms, environment 0ms)
+
+
+VITEST_EXIT=1

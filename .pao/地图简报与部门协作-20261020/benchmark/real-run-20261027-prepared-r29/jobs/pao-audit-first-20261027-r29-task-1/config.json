@@ -1,0 +1,70 @@
+{
+    "job_name": "pao-audit-first-20261027-r29-task-1",
+    "jobs_dir": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/jobs",
+    "n_concurrent_trials": 1,
+    "quiet": true,
+    "environment": {
+        "type": "docker",
+        "force_build": true,
+        "delete": false,
+        "env": {
+            "PAO_HOME": "/tmp/harbor-pao-home",
+            "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PI_SKIP_VERSION_CHECK": "1",
+            "TMP": "/tmp",
+            "TEMP": "/tmp",
+            "TMPDIR": "/tmp"
+        },
+        "kwargs": {
+            "keep_containers": true,
+            "extra_docker_compose": [
+                "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/network-override.yaml"
+            ]
+        }
+    },
+    "agents": [
+        {
+            "import_path": "map_bench_pao_organized:OrganizedPAOAgent",
+            "model_name": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+            "model_base_url": "http://host.docker.internal:3425",
+            "model_api_key_name": "PAO_BENCH_API_KEY",
+            "model_api_format": "anthropic_messages",
+            "kwargs": {
+                "profile": "post-pao",
+                "source_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/source.zip",
+                "source_sha256": "04c22d4ba21cba816800fd0b607a58ee85ed46ffd11b518c408e049b3649d639",
+                "archive_format": "zip",
+                "thinking": "high",
+                "tools": "read,bash,edit,write",
+                "no_extensions": false,
+                "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+                "model_data_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/model-data.zip",
+                "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a",
+                "organization_manifest_sha256": "778a6eac50b6ac1b669775472c77ebaa56b855ee61b94a6feca9e2c7fcf05b12",
+                "node_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/node-v24.18.0-linux-x64.tar.xz",
+                "node_sha256": "55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742",
+                "system_dependencies_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/git-system-dependencies.zip",
+                "system_dependencies_sha256": "c744583041598f7b80c9cd2c904f8352024b356f3a2e7314d54c0dfd30125b21",
+                "configuration_root": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29",
+                "model_metadata_path": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261027-prepared-r29/model-metadata.json",
+                "model_metadata_sha256": "c552a3c51bda1a8cdd7c6f3bce735e7cac8f3f5b72881630e642f931121f30e4"
+            },
+            "env": {
+                "PAO_HOME": "/tmp/harbor-pao-home",
+                "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "TMP": "/tmp",
+                "TEMP": "/tmp",
+                "TMPDIR": "/tmp"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "name": "terminal-bench/html-js-filter",
+            "ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3"
+        }
+    ]
+}

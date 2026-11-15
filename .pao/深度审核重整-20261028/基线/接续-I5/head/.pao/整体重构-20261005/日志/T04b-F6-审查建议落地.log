@@ -1,0 +1,51 @@
+# T04b-F6 审查建议落地 运行日志
+
+日期:2026-10-06
+执行者:T04 小修复子代理 F6
+代码根:D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+落地内容:R11 五条审查建议(停止本树改名 / 删零调用 cancel / 删 executionId / 删 buildDispatchTool 未用参数 / 静默分钟算式复用)
+
+──────────────────────────────────────────────────────────────
+[一] 类型检查·build tsconfig(第 1 次跑)
+命令原文:
+  npx tsc -p tsconfig.build.json --noEmit
+  (cwd = D:\AI\workspace\pao-dev\PAO\packages\coding-agent)
+结果:零输出零错误
+退出码实录:exit=0
+
+──────────────────────────────────────────────────────────────
+[二] 类型检查·根级 tsconfig(第 1 次跑,核查触碰文件)
+命令原文:
+  npx tsc -p tsconfig.json --noEmit
+  (cwd = D:\AI\workspace\pao-dev\PAO)
+结果:本次触碰的 5 个文件(parent-lifecycle.ts / lifecycle.ts / silence.ts / worker/index.ts / worker-dispatch-background.test.ts)零错误;
+全仓共 5 条存量错误,全部位于本任务未触碰文件:
+  - packages/ai/test/stream.test.ts(705,50) TS2345 模型名 "claude-sonnet-4-5" 不在联合类型(与 worker 无关)
+  - packages/coding-agent/test/pao/friction-drafts.test.ts(423,19) TS2339 '尝试号' 不在 FanoutCardResult(fanout 区,并行改动)
+  - packages/coding-agent/test/pao/results-aggregate.test.ts(194,20)(305,20)(306,20) TS2339 '原因' 不在 NodeDiffSection(results 区,并行改动)
+退出码实录:exit=1(由上述存量错误导致,非本次改动引入)
+
+──────────────────────────────────────────────────────────────
+[三] 定向测试(第 1 次跑,单文件串行)
+命令原文:
+  npx vitest run test/pao/worker-cancel.test.ts test/pao/parent-lifecycle.test.ts test/pao/worker-tools.test.ts test/pao/worker-dispatch-background.test.ts --maxWorkers=1
+  (cwd = D:\AI\workspace\pao-dev\PAO\packages\coding-agent)
+结果:Test Files 4 passed (4);Tests 25 passed (25);Duration 24.58s
+退出码实录:TARGETED_EXIT=0
+
+──────────────────────────────────────────────────────────────
+[四] 全模块终态门(第 1 次跑)
+命令原文:
+  npx vitest run test/pao/ --maxWorkers=4
+  (cwd = D:\AI\workspace\pao-dev\PAO\packages\coding-agent)
+结果:Test Files 149 passed (149);Tests 1382 passed (1382);Duration 199.08s
+退出码实录:GATE_EXIT=0
+
+──────────────────────────────────────────────────────────────
+[附] 改动文件与净行数
+  - src/pao/worker/parent-lifecycle.ts:36 行(原 36,±0;标识符 停止本树→stopOwnTree,3 处)
+  - src/pao/worker/lifecycle.ts:63 行(原 67,-4;删零调用 cancel() 及 StopProof 类型导入,模块头注释同步)
+  - src/pao/worker/silence.ts:141 行(原 140,+1;删 executionId 字段与赋值,提 silentMinutes 局部函数复用两处算式)
+  - src/pao/worker/index.ts:658 行(原 659,-1;buildDispatchTool 删 _runner 形参与调用点实参)
+  - test/pao/worker-dispatch-background.test.ts:-2 行(删 executionId 断言行与对象字面量属性行)
+  净行数合计:-6 行

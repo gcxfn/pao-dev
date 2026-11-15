@@ -1,0 +1,74 @@
+packages\coding-agent\src\pao\worker\receipt.ts:489:7 lint/suspicious/noPrototypeBuiltins  FIXABLE  ━━━━━━━━━━
+
+  ! Do not access Object.prototype method 'hasOwnProperty' from target object.
+  
+    487 │ 	const normalized: Record<string, unknown> = {};
+    488 │ 	for (const field of WORKER_RESULT_FIELDS) {
+  > 489 │ 		if (Object.prototype.hasOwnProperty.call(source, field)) normalized[field] = source[field];
+        │ 		    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    490 │ 	}
+    491 │ 	if (!Array.isArray(normalized.artifact_path)) return normalized;
+  
+  i It's recommended using Object.hasOwn() instead of using Object.hasOwnProperty().
+  
+  i See MDN web docs for more details.
+  
+  i Safe fix: Use 'Object.hasOwn()' instead.
+  
+    487 487 │   	const normalized: Record<string, unknown> = {};
+    488 488 │   	for (const field of WORKER_RESULT_FIELDS) {
+    489     │ - → → if·(Object.prototype.hasOwnProperty.call(source,·field))·normalized[field]·=·source[field];
+        489 │ + → → if·(Object.hasOwn(source,·field))·normalized[field]·=·source[field];
+    490 490 │   	}
+    491 491 │   	if (!Array.isArray(normalized.artifact_path)) return normalized;
+  
+
+packages\coding-agent\src\pao\worker\evidence-facts.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    122 122 │   }
+    123 123 │   
+    124     │ - function·collectCommands(
+    125     │ - → events:·readonly·unknown[],
+    126     │ - ):·{·commands:·WorkerCommandFact[];·issues:·string[]·}·{
+        124 │ + function·collectCommands(events:·readonly·unknown[]):·{·commands:·WorkerCommandFact[];·issues:·string[]·}·{
+    127 125 │   	const issues: string[] = [];
+    128 126 │   	const states: CommandState[] = [];
+    ······· │ 
+    134 132 │   		const parsed = parseWorkerToolExecutionEvent(raw);
+    135 133 │   		if (!parsed) {
+    136     │ - → → → if·(isShellToolName(raw.toolName)·&&·(raw.type·===·"tool_execution_start"·||·raw.type·===·"tool_execution_end"))·{
+        134 │ + → → → if·(
+        135 │ + → → → → isShellToolName(raw.toolName)·&&
+        136 │ + → → → → (raw.type·===·"tool_execution_start"·||·raw.type·===·"tool_execution_end")
+        137 │ + → → → )·{
+    137 138 │   				issues.push(`第 ${index + 1} 行 shell 工具事件字段损坏`);
+    138 139 │   			}
+  
+
+packages\coding-agent\test\pao\worker-evidence-facts.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     86  86 │   }
+     87  87 │   
+     88     │ - function·end(
+     89     │ - → callId:·string,
+     90     │ - → result:·unknown,
+     91     │ - → isError:·boolean,
+     92     │ - → toolName·=·"bash",
+     93     │ - ):·Record<string,·unknown>·{
+         88 │ + function·end(callId:·string,·result:·unknown,·isError:·boolean,·toolName·=·"bash"):·Record<string,·unknown>·{
+     94  89 │   	return { type: "tool_execution_end", toolCallId: callId, toolName, result, isError };
+     95  90 │   }
+  
+
+Checked 3 files in 212ms. No fixes applied.
+Found 2 errors.
+Found 1 warning.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

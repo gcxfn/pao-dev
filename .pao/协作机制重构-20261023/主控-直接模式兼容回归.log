@@ -1,0 +1,65 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+··········································································································································xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/workflow-templates.test.ts > 出厂模板与冻结参数（离线，不调用模型） > 项目/范围/部门/预算进入真实任务书，审查节点机械拒绝交卡
+AssertionError: promise resolved "[ '卡0452' ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  "卡0452",
+]
+
+ ❯ test/pao/workflow-templates.test.ts:61:3
+     59|     { goal: "绕过只读", acceptance: "文件存在" },
+     60|    ]),
+     61|   ).rejects.toThrow("只读节点");
+       |   ^
+     62|  });
+     63|  it("改安装配方不能改变 v2 卡的冻结技能，旧轮次卡拒派", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/workflow-templates.test.ts > 出厂模板与冻结参数（离线，不调用模型） > 改安装配方不能改变 v2 卡的冻结技能，旧轮次卡拒派
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:93:8
+     91| }
+     92| function fail(message: string): never {
+     93|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+     94| }
+     95| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:623:65
+ ❯ src/pao/workflow/control.ts:532:24
+ ❯ withFileLock src/pao/shared/lock.ts:73:16
+ ❯ test/pao/workflow-templates.test.ts:91:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 138 passed (140)
+   Start at  21:17:05
+   Duration  126.95s (transform 1.88s, setup 0ms, import 3.35s, tests 122.73s, environment 0ms)
+

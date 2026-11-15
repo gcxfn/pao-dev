@@ -1,0 +1,526 @@
+.main.main--with-task-status {
+  container: task-layout / inline-size;
+  grid-template-columns:
+    minmax(0, 1fr)
+    calc(var(--task-status-width, 320px) + var(--task-status-lane-gap, 24px));
+}
+
+.main.main--with-task-status.main--with-side-panel {
+  grid-template-columns:
+    minmax(0, 1fr)
+    min(
+      calc(var(--task-status-width, 320px) + var(--task-status-lane-gap, 24px)),
+      calc((100% - min(var(--workbench-width, 360px), 55%)) / 2)
+    )
+    min(var(--workbench-width, 360px), 55%);
+}
+
+/* 概况展开时是独立的右上列；收起后以浮层让出正文宽度。 */
+.main--with-task-status > :not(.task-status-dock):not(.task-status-workbench-host) {
+  grid-column: 1;
+}
+
+.main--with-task-status > .task-status-dock {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+.main--with-task-status > .task-status-workbench-host {
+  grid-column: 3;
+  grid-row: 1 / -1;
+}
+
+/*
+ * 短条始终悬浮，不占网格列。打开工具时，右偏移复用工具列同一宽度表达式，
+ * 因而正文、输入和顶栏继续占满工具左侧，也不会给 260px 短条长期保留空列。
+ */
+.main--with-task-status > .task-status-compact {
+  position: absolute;
+  z-index: 5;
+  top: 56px;
+  right: 12px;
+  width: min(260px, calc(100% - 24px));
+}
+
+.main.main--with-task-status.main--with-side-panel:has(> .task-status-compact) {
+  grid-template-columns: minmax(0, 1fr) min(var(--workbench-width, 360px), 55%);
+}
+
+.main.main--with-task-status.main--with-side-panel:has(> .task-status-compact)
+  > .task-status-compact {
+  width: min(260px, calc(100% - min(var(--workbench-width, 360px), 55%) - 36px));
+  right: calc(min(var(--workbench-width, 360px), 55%) + 12px);
+}
+
+/*
+ * 短条在顶部占据真实空间，正文滚动区整体从它下方开始。只给顶部留位，
+ * 不占独立网格列，也不压缩输入区；贴顶滚动时消息操作同样不会经过短条下方。
+ */
+.main.main--with-task-status:has(> .task-status-compact) > .canvas--thread {
+  padding-top: 56px;
+}
+
+.main.main--with-task-status.main--with-side-panel:has(> .task-status-compact)
+  > .task-status-workbench-host {
+  grid-column: 2;
+}
+
+.main.main--with-task-status:has(> .task-status-compact) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.task-status-dock {
+  width: calc(100% - var(--task-status-lane-gap, 24px));
+  height: auto;
+  max-height: min(480px, calc(100dvh - 24px));
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  justify-self: end;
+  margin: 12px 12px 12px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.task-status-workbench-host {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  box-shadow: inset 1px 0 0 var(--line);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.task-status-workbench-host > .workbench {
+  flex: 1 1 auto;
+}
+
+/*
+ * 工具关闭只退出网格并隐藏，不卸载 Workbench。
+ * TerminalPanel 的终端会话由宿主持有，组件继续接收输出；重新打开是同一
+ * React 实例和同一个 xterm 容器恢复显示，不执行停止或重建。
+ */
+.main > .task-status-workbench-host--hidden {
+  display: none;
+}
+
+.task-status-compact__button {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-overlay-muted);
+  box-shadow: var(--shadow-md);
+  color: var(--text-strong);
+  text-align: left;
+}
+
+.task-status-compact__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.task-status-compact--failed .task-status-compact__dot {
+  background: var(--status-warning);
+}
+
+.task-status-compact--review .task-status-compact__dot {
+  background: var(--status-warning);
+}
+
+.task-status-compact--running .task-status-compact__dot {
+  background: var(--status-running);
+}
+
+.task-status-compact__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.task-status {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto repeat(3, auto);
+  color: var(--text-strong);
+}
+.task-status__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.task-status__header > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.task-status__header strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.task-status__header > .task-status__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.task-status__icon-button {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  /* 给底色，免得和旁边的「刷新」文字链接连成一片、看起来像同一个箭头。 */
+  background: var(--surface-overlay-muted);
+}
+.task-status__icon-button svg {
+  width: 14px;
+  height: 14px;
+}
+/* 收起方向朝右：复用同一箭头，避免为 14px 图标新画一条。 */
+.task-status-dock .task-status__icon-button svg {
+  transform: rotate(180deg);
+}
+.task-status__header span {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.task-status__section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  max-height: 180px;
+  border-bottom: 1px solid var(--line);
+}
+.task-status__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 6px;
+}
+.task-status__section-head h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.task-status__link {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 3px 0;
+  white-space: nowrap;
+}
+.task-status__link:hover {
+  color: var(--accent);
+}
+.task-status__link:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.task-status__scroll {
+  overflow: auto;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overscroll-behavior: contain;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.task-status__empty {
+  color: var(--muted);
+  margin: 8px 4px;
+  font-size: 12px;
+}
+.task-status__warning {
+  color: var(--status-warning);
+}
+.task-status__files {
+  display: grid;
+  gap: 5px;
+  padding: 2px 4px;
+}
+.task-status__files strong {
+  font-size: 13px;
+}
+.task-status__files small {
+  color: var(--muted);
+}
+.task-status__stat-add {
+  color: var(--status-success);
+}
+.task-status__stat-del {
+  color: var(--status-warning);
+}
+.task-status__long {
+  min-width: 0;
+}
+.task-status__long > summary {
+  cursor: pointer;
+}
+.task-status__long > p {
+  margin: 6px 0 0;
+  max-height: 140px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.task-status__plan {
+  margin: 3px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.task-status__plan[data-active="true"] {
+  border-color: var(--accent);
+}
+.task-status__plan > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+.task-status__plan > summary > span:last-child {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--muted);
+}
+.task-status__plan > summary > span[data-state="failed"] {
+  color: var(--status-warning);
+}
+.task-status__plan > summary > span[data-state="review"] {
+  color: var(--status-warning);
+}
+.task-status__plan > summary > span[data-state="running"] {
+  color: var(--status-running);
+}
+.task-status__plan-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.task-status__plan-body {
+  padding: 0 8px 8px;
+}
+.task-status__todo-group {
+  margin-bottom: 10px;
+}
+.task-status__todo-group h3 {
+  margin: 6px 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.task-status__todo-group select {
+  width: 100%;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 7px;
+  color: inherit;
+  font: inherit;
+  margin-bottom: 8px;
+}
+.task-status__todo-group ul,
+.task-status__todo-group ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.task-status__todo {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 4px;
+}
+.task-status__todo > span:first-child {
+  flex: 0 0 16px;
+  color: var(--muted);
+  text-align: center;
+}
+.task-status__todo[data-state="completed"] {
+  color: var(--muted);
+}
+.task-status__todo[data-state="in_progress"] > span:first-child {
+  color: var(--accent);
+}
+.task-status__todo[data-state="cancelled"] {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.task-status__progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 0 4px 5px;
+}
+.task-status__step {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 5px;
+  border-radius: 7px;
+  display: flex;
+  gap: 9px;
+  text-align: left;
+  color: inherit;
+}
+.task-status__step:hover,
+.task-status__department:hover {
+  background: var(--overlay-hover);
+}
+.task-status__step > span:first-child {
+  flex: 0 0 18px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+.task-status__step > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.task-status__step strong {
+  font-size: 12px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.task-status__step small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.task-status__step[data-state="review"] small,
+.task-status__step[data-state="failed"] small,
+.task-status__step[data-state="budget"] small {
+  color: var(--status-warning);
+}
+.task-status__step[data-state="done"] > span:first-child {
+  color: var(--status-success);
+}
+.task-status__department {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 5px 0 8px;
+  color: inherit;
+}
+.task-status__department-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.task-status__department-head strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.task-status__department-head > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.task-status__department-head > span[data-state="blocked"] {
+  color: var(--status-warning);
+}
+.task-status__department-head > span[data-state="running"] {
+  color: var(--status-running);
+}
+.task-status__department small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.task-status__department .task-status__warning {
+  color: var(--status-warning);
+}
+.task-status__line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.task-status__finished {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.task-status__finished > summary {
+  cursor: pointer;
+  padding: 5px;
+}
+@media (max-width: 1100px) {
+  .task-status__header {
+    padding: 12px;
+  }
+  .task-status__section-head {
+    padding: 10px 12px 6px;
+  }
+}
+/* 980px 下概况和工作台都受既有上限约束；短条额外收取视觉余量。 */
+@media (max-width: 980px) {
+  .main.main--with-task-status {
+    --task-status-width: min(320px, 55%);
+  }
+  .main.main--with-task-status.main--with-side-panel {
+    grid-template-columns: minmax(0, 1fr) min(var(--workbench-width, 360px), 320px, 55%);
+  }
+  /*
+   * 自动短条时概况不占列；用户手动展开后，主区、概况和工具各占一列。
+ * 两栏各自负责视觉间距和内容，主区保留一份同样的宽度：
+ * 在 980px 内约等于三列均分，避免工具与概况同格叠放或把正文压成零宽。
+   */
+  .main.main--with-task-status.main--with-side-panel:has(> .task-status-dock) {
+    grid-template-columns:
+      minmax(0, 1fr)
+      min(calc(var(--task-status-width, 320px) + var(--task-status-lane-gap, 24px)), 33%)
+      min(calc(var(--workbench-width, 320px) + var(--task-status-lane-gap, 24px)), 33%);
+  }
+  .task-status-dock {
+    margin-right: calc(var(--task-status-lane-gap, 24px) - 12px);
+  }
+  .main--with-task-status > .task-status-dock {
+    grid-column: 2;
+  }
+  .main--with-task-status > .task-status-workbench-host {
+    grid-column: 3;
+  }
+  .main.main--with-task-status.main--with-side-panel:has(> .task-status-compact) {
+    grid-template-columns: minmax(0, 1fr) min(var(--workbench-width, 320px), 320px, 55%);
+  }
+  .main.main--with-task-status.main--with-side-panel:has(> .task-status-compact)
+    > .task-status-compact {
+    width: min(260px, calc(100% - min(var(--workbench-width, 320px), 320px, 55%) - 36px));
+    right: calc(min(var(--workbench-width, 320px), 320px, 55%) + 12px);
+  }
+  .main.main--with-task-status.main--with-side-panel:has(> .task-status-compact)
+    > .task-status-workbench-host {
+    grid-column: 2;
+  }
+}

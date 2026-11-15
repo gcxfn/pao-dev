@@ -1,0 +1,61 @@
+[I0-4a] cwd=D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[I0-4a] PAO_HOME=D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-4a-behavior-groups\PAO_HOME
+[I0-4a] PI_OFFLINE=1
+[I0-4a] PI_NO_LOCAL_LLM=1
+[I0-4a] command=node ../../node_modules/vitest/vitest.mjs run test/pao/patrol-shell-guard-wire.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：env 门控注册 > 显式 env 未设值与空串都不装（零行为：不挂 tool_call 钩子） 4ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：env 门控注册 > 生产形态（不传 options）：env 缺省回退 process.env——未设不装，设了才装 1ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：env 门控注册 > env 设了才装：装上返回 true 并挂 tool_call 钩子 0ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：env 门控注册 > 工作区直供优先于 env（测试注入口） 0ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：门禁行为（真调 审查Shell命令） > 工作区内命令放行（返回 undefined 不拦截） 3ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：门禁行为（真调 审查Shell命令） > 越界与敏感命令 block，reason 带 pao 巡库护栏口径 1ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > registerShellGuard：门禁行为（真调 审查Shell命令） > powershell 同门；非 shell 工具（read）不拦 1ms
+ × test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > 巡库卡：锁定工作区＝解析后的 cwd（公共参数优先于 process.cwd） 8ms
+   → Cannot read properties of undefined (reading 'includes')
+ × test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > 非巡库卡不注入（有人盯的日常派发零行为） 1ms
+   → Cannot read properties of undefined (reading 'includes')
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > runner 把锁定工作区转进子进程 env（PAO_SHELL_GUARD_WORKSPACE） 127ms
+ ✓ test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > runner 未设锁定工作区时不注入 env（键缺席而非空串） 108ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > 巡库卡：锁定工作区＝解析后的 cwd（公共参数优先于 process.cwd）
+TypeError: Cannot read properties of undefined (reading 'includes')
+ ❯ buildWorkerPrompt src/pao/worker/dispatch-core.ts:115:17
+    113|     ]
+    114|    : []),
+    115|   ...(card.body.includes("<!-- pao-dispatch-result -->") ||
+       |                 ^
+    116|   (card.frontmatter.inputs ?? []).some((ref) => ref.includes("侦察-"))
+    117|    ? [
+ ❯ buildDispatchRunOptions src/pao/worker/dispatch-core.ts:508:8
+ ❯ test/pao/patrol-shell-guard-wire.test.ts:145:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/patrol-shell-guard-wire.test.ts > 派发链接线：巡库卡注入锁定工作区 > 非巡库卡不注入（有人盯的日常派发零行为）
+TypeError: Cannot read properties of undefined (reading 'includes')
+ ❯ buildWorkerPrompt src/pao/worker/dispatch-core.ts:115:17
+    113|     ]
+    114|    : []),
+    115|   ...(card.body.includes("<!-- pao-dispatch-result -->") ||
+       |                 ^
+    116|   (card.frontmatter.inputs ?? []).some((ref) => ref.includes("侦察-"))
+    117|    ? [
+ ❯ buildDispatchRunOptions src/pao/worker/dispatch-core.ts:508:8
+ ❯ test/pao/patrol-shell-guard-wire.test.ts:153:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  02:08:01
+   Duration  2.07s (transform 1.10s, setup 0ms, import 1.55s, tests 257ms, environment 0ms)
+
+
+[I0-4a] exitCode=1

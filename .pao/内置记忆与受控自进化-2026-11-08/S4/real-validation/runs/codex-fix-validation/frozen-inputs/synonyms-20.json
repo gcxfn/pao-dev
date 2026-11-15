@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "description": "S3 同义召回质量查询；期望独立于任何模型运行结果。",
+  "queries": [
+    {
+      "id": "syn-01",
+      "scenarioId": "I01",
+      "query": "轻量内嵌数据库存储",
+      "expectedAlias": "mem-sqlite"
+    },
+    {
+      "id": "syn-02",
+      "scenarioId": "I01",
+      "query": "需要后台服务的关系数据库",
+      "expectedAlias": "mem-postgres-rejected"
+    },
+    {
+      "id": "syn-03",
+      "scenarioId": "I02",
+      "query": "兼容 OpenAI 的文本向量服务",
+      "expectedAlias": "mem-embed-openai"
+    },
+    {
+      "id": "syn-04",
+      "scenarioId": "I02",
+      "query": "尚未拍板的嵌入方案",
+      "expectedAlias": "mem-embed-openai"
+    },
+    {
+      "id": "syn-05",
+      "scenarioId": "I03",
+      "query": "旧记忆不会被自动清理",
+      "expectedAlias": "mem-no-eviction"
+    },
+    {
+      "id": "syn-06",
+      "scenarioId": "I03",
+      "query": "淘汰机制以后再说",
+      "expectedAlias": "mem-no-eviction"
+    },
+    {
+      "id": "syn-07",
+      "scenarioId": "I04",
+      "query": "最终每轮自动召回的条数",
+      "expectedAlias": "mem-recall-top3",
+      "mustNotAlias": [
+        "mem-recall-top5"
+      ]
+    },
+    {
+      "id": "syn-08",
+      "scenarioId": "I04",
+      "query": "最初设定每轮取出五条",
+      "expectedAlias": "mem-recall-top5",
+      "mustNotAlias": [
+        "mem-recall-top3"
+      ]
+    },
+    {
+      "id": "syn-09",
+      "scenarioId": "I05",
+      "query": "所有向量都在本地直接比较",
+      "expectedAlias": "mem-local-cosine"
+    },
+    {
+      "id": "syn-10",
+      "scenarioId": "I05",
+      "query": "十万条数据以后再讨论 pgvector",
+      "expectedAlias": "mem-pgvector-reeval"
+    },
+    {
+      "id": "syn-11",
+      "scenarioId": "I05",
+      "query": "PostgreSQL 向量扩展此前因太重被否",
+      "expectedAlias": "mem-pgvector-rejected"
+    },
+    {
+      "id": "syn-12",
+      "scenarioId": "I06",
+      "query": "pao-dev 项目最终选择的数据库",
+      "expectedAlias": "mem-pao-dev-sqlite",
+      "mustNotAlias": [
+        "mem-pao-home-sqlite"
+      ]
+    },
+    {
+      "id": "syn-13",
+      "scenarioId": "I06",
+      "query": "当前工作树沿用的 SQLite 决定",
+      "expectedAlias": "mem-pao-dev-sqlite",
+      "mustNotAlias": [
+        "mem-pao-home-sqlite"
+      ]
+    },
+    {
+      "id": "syn-14",
+      "scenarioId": "I07",
+      "query": "稍后仍不自动删除旧内容",
+      "expectedAlias": "mem-no-eviction"
+    },
+    {
+      "id": "syn-15",
+      "scenarioId": "I07",
+      "query": "压缩之后被再次取回的淘汰决定",
+      "expectedAlias": "mem-no-eviction"
+    },
+    {
+      "id": "syn-16",
+      "scenarioId": "I09",
+      "query": "数据库并发写入采用预写日志",
+      "expectedAlias": "mem-wal"
+    },
+    {
+      "id": "syn-17",
+      "scenarioId": "I09",
+      "query": "重启后仍可查到的 WAL 配置",
+      "expectedAlias": "mem-wal"
+    },
+    {
+      "id": "syn-18",
+      "scenarioId": "I10",
+      "query": "完全内置的记忆后端",
+      "expectedAlias": "mem-builtin-sqlite"
+    },
+    {
+      "id": "syn-19",
+      "scenarioId": "I10",
+      "query": "没有外部依赖时关键词仍能命中的存储",
+      "expectedAlias": "mem-builtin-sqlite"
+    },
+    {
+      "id": "syn-20",
+      "scenarioId": "I10",
+      "query": "向量服务不可用时改走本地文本检索",
+      "expectedAlias": "mem-builtin-sqlite"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+
+Running 3 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\workflow-control.spec.ts:29:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (26.5s)
+  x  2 apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） (40.8s)
+  x  3 apps\desktop\tests\core\workflow-control.spec.ts:176:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (17.8s)
+
+
+  1) apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workflow-wizard').getByRole('button', { name: '下一步', exact: true })[22m
+
+
+      142 |     await expect(wizard).toBeVisible();
+      143 |     // 无参数配方：参数步直接下一步到节点步，再下一步进预检（预检自动运行）。
+    > 144 |     await wizard.getByRole("button", { name: "下一步", exact: true }).click();
+          |                                                                    ^
+      145 |     await wizard.getByRole("button", { name: "下一步", exact: true }).click();
+      146 |     await expect(page.getByTestId("wizard-blocked")).toBeVisible();
+      147 |     await page.getByTestId("wizard-master-tier").selectOption("标准");
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workflow-control.spec.ts:144:68
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workflow-control.spec.ts:176:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: not [32m"确认:"[39m
+    Received string:        [31m"---[39m
+    [31m版本: 2[39m
+    [31m实例: 514a2ba2-7229-468a-8c7c-e5103eb66f1b[39m
+    [31mowner: 01a10eb9-5e98-7259-968f-10584122c461[39m
+    [31m脉络: 514a2ba2-7229-468a-8c7c-e5103eb66f1b[39m
+    [31m工作流: 过期请求[39m
+    [31m卡目录: C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-QyZHQ4\\workflow-stale-project\\.pao\\过期测试\\卡[39m
+    [31m启动: 2026-10-06T00:59:52.358Z[39m
+    [31m状态: 运行中[39m
+    [31m冻结配方:[39m
+    [31m  版本: 2[39m
+    [31m  名字: 过期请求[39m
+    [31m  自动执行: false[39m
+    [31m  参数: [][39m
+    [31m  节点:[39m
+    [31m    - 只读: false[39m
+    [31m      工人数量: 1[39m
+    [31m      审核: false[39m
+    [31m      允许请求主控裁定: false[39m
+    [31m      回边: [][39m
+    [31m      名字: 任务[39m
+    [31m      目标: 检查[39m
+    [31m      部门: 工程[39m
+    [31m      验收: 检查[39m
+    [31m      depends_on: [][39m
+    [31m      人工[7m确认:[27m true[39m
+    [31m  说明: \"\"[39m
+    [31m  文件路径: C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-Bc60Hy\\workflow-stale-home\\工作流\\过期请求.md[39m
+    [31m  占位符: [][39m
+    [31m  拓扑序:[39m
+    [31m    - 任务[39m
+    [31m参数: {}[39m
+    [31m节点:[39m
+    [31m  - 名字: 任务[39m
+    [31m    轮次: 2[39m
+    [31m    卡: [][39m
+    [31m    拆解结束: false[39m
+    [31m    历史: [][39m
+    [31m回边次数: {}[39m
+    [31m记录: [][39m
+    [31m---[39m
+    [31m<!-- v2 流程控制正本，不得从卡重建或当缓存删除 -->[39m
+    [31m"[39m
+
+      241 |     const after = await readFile(controlPath, "utf8");
+      242 |     expect(after).toContain("轮次: 2");
+    > 243 |     expect(after).not.toContain("确认:");
+          |                       ^
+      244 |   } finally {
+      245 |     await app.close();
+      246 |   }
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workflow-control.spec.ts:243:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+    apps\desktop\tests\core\workflow-control.spec.ts:176:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ─────────
+  1 passed (1.4m)

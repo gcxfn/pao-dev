@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-27T23:55:29.972184+00:00",
+  "instance": "1e1a7920-0afe-4f78-98f9-376cf533964a",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "1e1a7920-0afe-4f78-98f9-376cf533964a",
+      "owner": "01a17f9e-ea49-728c-882c-195a8c447ec8",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "审核",
+    "轮次": 1,
+    "理由": "审核判定内容已备妥且已通过格式/长度/回边校验，但流程门要求“全部卡机械交付后”方可提交，而卡0003 尝试2 仍为 in_progress（其自报未达项：严格模式退出 1 属探针设计使然、4 项 not_run 为环境客观不可验证），需 owner 逐项裁决后转 delivered。已完成的独立复核（二次复验，受管副本 selftest/audit_probe.py 79 条断言 passed=70 failed=9，filter.py sha256 617b746d…9f70 前后未变）：B 组 36 条含 19 条复解析全绿、C 组 13 条格式保全全过、E/F 全过，无任何 JS 残留或 XSS 可执行面；范围内过度删除缺陷仍在 filter.py:397（style 整属性删除连带丢 color:red）、filter.py:141（文本属性仅含空白才豁免，alt=\"javascript:x\" 被删）、filter.py:373（on 前缀匹配误删 only/once/onward 与 onclick!x）；D4 filter.py:285 与 D6 filter.py:521 经 owner 23:41 口径裁决保留现状，审核侧不再争 D4、对 D6 保留异议（文本区字面 \"<script\" 属可见内容丢失）。裁决请求：请 owner 对卡0003 尝试2 的自报未达项逐项处理并将卡转 delivered；一旦转交付，我立即提交 change 判定（含 3 项返修验收口径：返修后两套自测仍全绿、54 条向量仍清除且幂等、三项 before/after 字节输出复验），并附未验证项（隐藏判据与浏览器语义、GBK/UTF-16 filter.py:616、并发与 inode filter.py:642、异常留痕无自然触发路径）。本节点全程只读，未执行任何命令。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T23:50:10.626Z",
+    "事件": "自动链停因",
+    "节点": "审核",
+    "轮次": 1,
+    "理由": "节点 审核：卡0003 第 2 次尝试有 3 条自报未达项（not_run 1，fail 2），待 owner 裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，并按自报未达项填写 accepted_deviations；或由原部长调用 pao_minister_rework_cards 返修并重新执行。"
+  },
+  "latest_business_event_at": "2026-10-27T23:50:10.626Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-27T23:50:10.626Z\", \"理由\": \"节点 审核：卡0003 第 2 次尝试有 3 条自报未达项（not_run 1，fail 2），待 owner 裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，并按自报未达项填写 accepted_deviations；或由原部长调用 pao_minister_rework_cards 返修并重新执行。\", \"节点\": \"审核\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-27T23:50:10.950677+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

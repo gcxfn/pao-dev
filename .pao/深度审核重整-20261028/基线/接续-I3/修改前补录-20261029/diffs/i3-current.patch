@@ -1,0 +1,909 @@
+diff --git a/packages/coding-agent/src/pao/worker/dispatch-core.ts b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+index 9e3ce0ada..3fea77406 100644
+--- a/packages/coding-agent/src/pao/worker/dispatch-core.ts
++++ b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+@@ -121,6 +121,8 @@ export function buildWorkerPrompt(
+ 		"核对目标、限制与验收；可读取依赖文件、必要定义及直接调用点，限任务影响范围。简报、地图或契约与源码冲突时停止并报告。延续会话中的旧现场仅作背景，以本次任务、权限和认领基线为准。",
+ 		'最后一条助手消息只输出 JSON 回执：{"result":"success","artifact_path":[],"summary":"不超过 3 行","任务态":"completed","verification":[],"changes":[]}。失败/未知加 failure_type（transient/missing_input/insufficient_capability/unknown_outcome），不得用退出码或普通说明代替回执。',
+ 		'任务态：completed=验收全达标；completed_with_deviations=有未达项但可交付；blocked=缺用户输入；checkpoint=到决策点须指引。verification 逐项记录 {"条件":"…","结论":"pass|fail|not_run","证据":"…"}，没跑写 not_run。changes 记录 {"路径":"…","类型":"created|modified|deleted|moved","说明":"…"}，含源码等本次所有写操作。artifact_path 仅列本次新增或改写且真实存在的文件产物，相对项目根；没有则 []。认领前及前次成果、只读复验只能作证据，不列为本次 changes 或 artifact_path。交回前与认领基线核对；自报不代替程序验收。',
++		"verification 记录本次由你负责的检查：必做却未做的检查必须写 not_run，失败必须写 fail。明确交给后续部长或独立审核员的复核职责，留在任务要求中并在 summary 注明待审，不混入你的自检结果，也不得冒称已通过。自检未达由主控逐项裁决；后续审核由系统另行发起。",
++		"verification 每项都须含非空条件和合法结论；补充说明放 summary，不在数组中插入说明对象，否则整份回执无效。",
+ 		...(process.platform === "win32"
+ 			? ["含中文的 .ps1 用 UTF-8 BOM 保存，并实际运行验证（兼容 PowerShell 5.1）。"]
+ 			: []),
+@@ -839,6 +841,11 @@ async function queueProjectWrite(root: string, signal?: AbortSignal): Promise<()
+ export interface ExecuteDispatchOptions {
+ 	运行器: WorkerRunner;
+ 	paoHome?: string;
++	/**
++	 * 在共享短锁内、正式认领前执行调用方的原子事务。
++	 * 工作流自动链用它同时完成实例额度预留与卡认领；普通派发不传时行为不变。
++	 */
++	claimTransaction?: (claim: () => Promise<DispatchClaimResult>) => Promise<DispatchClaimResult>;
+ 	/**
+ 	 * 宿主解析本次执行的权威工作树证明。正式派发必须提供；单根 CLI 显式安装
+ 	 * createSingleRootWorktreeHost，桌面通过 PaoWorktreeHost 的 RPC 代理注入。
+@@ -1264,10 +1271,12 @@ export async function executeDispatch<T>(
+ 					? ({ 可派: false as const, 原因: takeoverBlocked } as const)
+ 					: gateRefusal !== undefined
+ 						? ({ 可派: false as const, 原因: `总预算门禁拒绝派发：${gateRefusal}` } as const)
+-						: await claimCardForDispatch({ ...input, deferBaseline: true });
++						: await (options.claimTransaction ?? ((claim) => claim()))(() =>
++								claimCardForDispatch({ ...input, deferBaseline: true }),
++							);
+ 			if (!claimed.可派) {
+ 				// 门禁已放行但最终没认领成功（依赖未放行/状态不允许/并发变更）:没有开跑,
+-				// 预留由 finally 统一归还,这里只如实给出拒派原因。
++				// 执行名额由 finally 归还；调用方的认领事务自行结算其额度。这里只给出拒派原因。
+ 				outcome = claimed;
+ 			} else {
+ 				dispatchIdentity = claimed.card.path;
+diff --git a/packages/coding-agent/src/pao/worker/receipt.ts b/packages/coding-agent/src/pao/worker/receipt.ts
+index a2cfe1bc2..53a12fc94 100644
+--- a/packages/coding-agent/src/pao/worker/receipt.ts
++++ b/packages/coding-agent/src/pao/worker/receipt.ts
+@@ -73,10 +73,12 @@ export interface WorkerReceipt {
+ 	changes?: ReceiptChange[];
+ 	/** 派发链对外部声明的收窄告警（技能忽略/工具截严，S5 包2）；随回执送达 owner。 */
+ 	派发告警?: string[];
+-	/** 严格入口拒收后，仅凭唯一完整 json 围栏与严格 schema 恢复的审计标记；不表示放宽解析或直接成功。 */
++	/** 严格入口拒收后，仅凭唯一完整 json 围栏或唯一裸 JSON 对象与严格 schema 恢复的审计标记；不表示直接成功。 */
+ 	receipt_format_recovery?: {
+ 		/** 原始严格解析错误，原样留痕。 */
+ 		strict_error: string;
++		/** 实际命中的恢复外壳；缺省只为兼容旧调用方。 */
++		recognized_by?: "fenced" | "bare";
+ 		/**
+ 		 * 格式恢复审计文件；写方须在同一原始证据目录留档唯一候选规则、严格错误和原证据引用。
+ 		 * 缺省表示调用方尚未落审计文件，不能把它当成已验证恢复。
+@@ -256,7 +258,7 @@ export type WorkerFinalReceiptDiagnostic =
+ 			receiptText: string;
+ 	  }
+ 	| {
+-			kind: "fenced";
++			kind: "fenced" | "bare";
+ 			parsed: WorkerFinalResult;
+ 			rawText: string;
+ 			receiptText: string;
+@@ -264,20 +266,21 @@ export type WorkerFinalReceiptDiagnostic =
+ 	  };
+ 
+ /**
+- * runner 的受控格式恢复：先确认正式解析失败，再且仅再接受唯一完整 json 围栏。
+- * 无唯一围栏、重复围栏或错误 schema 都返回 undefined；原错误与原文由诊断对象原样带回。
++ * runner 的受控格式恢复：先确认正式解析失败，再且仅再接受唯一完整 json 围栏，
++ * 或普通说明文字中唯一完整裸 JSON 对象。错误 schema 仍返回 undefined；
++ * 原错误与原文由诊断对象原样带回。
+  */
+ export function recoverWorkerFinalReceiptFormat(
+ 	text: string,
+ 	cwd: string,
+-): Extract<WorkerFinalReceiptDiagnostic, { kind: "fenced" }> | undefined {
++): Extract<WorkerFinalReceiptDiagnostic, { kind: "fenced" | "bare" }> | undefined {
+ 	let diagnosis: WorkerFinalReceiptDiagnostic;
+ 	try {
+ 		diagnosis = diagnoseWorkerFinalReceipt(text, cwd);
+ 	} catch {
+ 		return undefined;
+ 	}
+-	return diagnosis.kind === "fenced" ? diagnosis : undefined;
++	return diagnosis.kind === "strict" ? undefined : diagnosis;
+ }
+ 
+ const TASK_STATE_SET = new Set<string>(["completed", "completed_with_deviations", "blocked", "checkpoint"]);
+@@ -376,6 +379,185 @@ function legacyStrictReceiptBody(text: string): string {
+ 		.replace(/\n?```$/, "");
+ }
+ 
++interface ReceiptEnvelopeCandidate {
++	kind: "fenced" | "bare";
++	receiptText: string;
++}
++
++interface MarkdownFenceBlock {
++	language: string;
++	body: string;
++}
++
++interface OpenedMarkdownFence {
++	markerChar: "`" | "~";
++	markerLength: number;
++	language: string;
++	bodyStart: number;
++}
++
++/** 以 Markdown 行语义配对代码围栏；围栏内容不参与裸 JSON 候选扫描。 */
++function scanMarkdownFences(text: string): { blocks: MarkdownFenceBlock[]; outsideSegments: string[] } {
++	const blocks: MarkdownFenceBlock[] = [];
++	const outsideSegments: string[] = [];
++	let opened: OpenedMarkdownFence | undefined;
++	let lineStart = 0;
++	let outsideStart = 0;
++	while (lineStart < text.length) {
++		const newline = text.indexOf("\n", lineStart);
++		const contentEnd = newline < 0 ? text.length : newline;
++		const lineEnd = newline < 0 ? text.length : newline + 1;
++		const line = text.slice(lineStart, contentEnd).replace(/\r$/, "");
++		const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
++		if (opened) {
++			if (
++				marker &&
++				marker[1]![0] === opened.markerChar &&
++				marker[1]!.length >= opened.markerLength &&
++				/^[ \t]*$/.test(marker[2]!)
++			) {
++				const body = text.slice(opened.bodyStart, lineStart);
++				if (/^ {0,3}(?:`{3,}|~{3,})/m.test(body)) {
++					throw new Error("最终回执不接受嵌套代码围栏");
++				}
++				blocks.push({ language: opened.language, body });
++				opened = undefined;
++				outsideStart = lineEnd;
++			}
++		} else if (marker) {
++			const markerText = marker[1]!;
++			if (markerText[0] === "`" && marker[2]!.includes("`")) {
++				throw new Error("最终回执代码围栏信息串无效");
++			}
++			outsideSegments.push(text.slice(outsideStart, lineStart));
++			opened = {
++				markerChar: markerText[0] as "`" | "~",
++				markerLength: markerText.length,
++				language: marker[2]!.trim(),
++				bodyStart: lineEnd,
++			};
++		}
++		lineStart = lineEnd;
++	}
++	if (opened) throw new Error("最终回执代码围栏未闭合");
++	outsideSegments.push(text.slice(outsideStart));
++	if (outsideSegments.some((segment) => /```|~~~/.test(segment))) {
++		throw new Error("最终回执不接受伪代码围栏");
++	}
++	return { blocks, outsideSegments };
++}
++
++/**
++ * 判断一段文本是否像在尝试写 JSON 值。这里只决定“是否计入候选”，不解析 JSON；
++ * 围栏外默认不把空对象当候选，围栏内保留原语义，真正合法性仍由后置
++ * JSON.parse 与严格 schema 判断。
++ */
++function quotedStringEnd(text: string, start: number): number {
++	const quote = text[start];
++	let escaped = false;
++	for (let index = start + 1; index < text.length; index++) {
++		const char = text[index];
++		if (escaped) escaped = false;
++		else if (char === "\\") escaped = true;
++		else if (char === quote) return index;
++	}
++	return -1;
++}
++
++function followsArrayElement(text: string, start: number): boolean {
++	const next = text.slice(start).trimStart()[0];
++	return next === "," || next === "]";
++}
++
++function looksLikeJsonArrayElement(text: string): boolean {
++	const body = text.trimStart();
++	const first = body[0];
++	if (first === undefined || first === "]") return true;
++	if (first === "{" || first === "[") return true;
++	if (first === '"' || first === "'") {
++		const end = quotedStringEnd(body, 0);
++		return end < 0 || followsArrayElement(body, end + 1);
++	}
++	return first === "-" || first === "," || /[0-9tfn]/.test(first);
++}
++
++function looksLikeAttemptedJson(text: string, allowEmptyObject = false): boolean {
++	const trimmed = text.trimStart();
++	if (trimmed.startsWith("{")) {
++		const body = trimmed.slice(1).trimStart();
++		if (body.startsWith("}")) return allowEmptyObject;
++		if (!body.startsWith('"') && !body.startsWith("'")) return false;
++		const keyEnd = quotedStringEnd(body, 0);
++		return keyEnd < 0 || /^\s*:/.test(body.slice(keyEnd + 1));
++	}
++	if (trimmed.startsWith("[")) return looksLikeJsonArrayElement(trimmed.slice(1));
++	return false;
++}
++
++function balancedJsonEnd(text: string, start: number): { end?: number; error?: string } {
++	const expectedClosers: string[] = [];
++	let inString = false;
++	let escaped = false;
++	for (let index = start; index < text.length; index++) {
++		const char = text[index];
++		if (inString) {
++			if (escaped) escaped = false;
++			else if (char === "\\") escaped = true;
++			else if (char === '"') inString = false;
++			continue;
++		}
++		if (char === '"') {
++			inString = true;
++			continue;
++		}
++		if (char === "{") expectedClosers.push("}");
++		else if (char === "[") expectedClosers.push("]");
++		else if (char === "}" || char === "]") {
++			if (expectedClosers.at(-1) !== char) return { error: "JSON 候选结构符不配对" };
++			expectedClosers.pop();
++			if (expectedClosers.length === 0) return { end: index };
++		}
++	}
++	return { error: "JSON 候选结构未闭合" };
++}
++
++function bareReceiptCandidates(segment: string): ReceiptEnvelopeCandidate[] {
++	const candidates: ReceiptEnvelopeCandidate[] = [];
++	let index = 0;
++	while (index < segment.length) {
++		if (segment[index] !== "{" && segment[index] !== "[") {
++			index++;
++			continue;
++		}
++		if (!looksLikeAttemptedJson(segment.slice(index))) {
++			index++;
++			continue;
++		}
++		const balanced = balancedJsonEnd(segment, index);
++		if (balanced.end === undefined) {
++			throw new Error(`最终回执 ${balanced.error}，拒绝猜测回执边界`);
++		}
++		const receiptText = segment.slice(index, balanced.end + 1);
++		candidates.push({ kind: "bare", receiptText });
++		index = balanced.end + 1;
++	}
++	return candidates;
++}
++
++function receiptEnvelopeCandidates(text: string): ReceiptEnvelopeCandidate[] {
++	const { blocks, outsideSegments } = scanMarkdownFences(text);
++	const candidates: ReceiptEnvelopeCandidate[] = [];
++	for (const block of blocks) {
++		const language = block.language.split(/\s+/, 1)[0]?.toLowerCase() ?? "";
++		const body = block.body.trim();
++		if (language.startsWith("json") || (language === "" && looksLikeAttemptedJson(body, true))) {
++			candidates.push({ kind: "fenced", receiptText: body });
++		}
++	}
++	for (const segment of outsideSegments) candidates.push(...bareReceiptCandidates(segment));
++	return candidates;
++}
++
+ /**
+  * 正式派发只采信最后一条助手消息中的 JSON 回执；退出码 0 本身不代表完成。
+  * 为避免放宽正式契约，保留“说明包着 JSON”仍拒收；恢复走 diagnoseWorkerFinalReceipt。
+@@ -385,7 +567,8 @@ export function parseWorkerFinalResult(text: string, cwd: string): WorkerFinalRe
+ }
+ 
+ /**
+- * 回执格式诊断：正式解析失败时，仅接受“说明文字 + 唯一完整 ```json 围栏 + 说明文字”。
++ * 回执格式诊断：正式解析失败时，只接受普通说明中的唯一完整 JSON 回执候选。
++ * 非 JSON 代码块不参与候选计数；候选正文仍交现有严格 schema 与产物检查。
+  * runner 仅在同一 dispatch、首次落回执前使用该结果；它本身不改卡状态，也不代替机械验收。
+  */
+ export function diagnoseWorkerFinalReceipt(text: string, cwd: string): WorkerFinalReceiptDiagnostic {
+@@ -400,26 +583,22 @@ export function diagnoseWorkerFinalReceipt(text: string, cwd: string): WorkerFin
+ 	} catch (error) {
+ 		strictError = error instanceof Error ? error.message : String(error);
+ 	}
+-	const fenceStarts = [...text.matchAll(/```json[ \t]*(?:\r?\n|$)/gi)];
+-	const fenceEnds = [...text.matchAll(/(?:^|\r?\n)```[ \t]*(?=\r?\n|$)/g)];
+-	if (fenceStarts.length !== 1 || fenceEnds.length !== 1) {
+-		throw new Error(`最终回执格式不唯一：严格解析失败（${strictError}），且未找到唯一完整 json 围栏`);
++	const candidates = receiptEnvelopeCandidates(text);
++	if (candidates.length !== 1) {
++		throw new Error(
++			`最终回执格式不唯一：严格解析失败（${strictError}），找到 ${candidates.length} 个完整 JSON 回执候选`,
++		);
+ 	}
+-	const start = fenceStarts[0]!;
+-	const end = fenceEnds[0]!;
+-	const fenceStart = start.index! + start[0].length;
+-	const fenceEnd = end.index! + (end[0].startsWith("\r\n") ? 2 : end[0].startsWith("\n") ? 1 : 0);
+-	if (fenceEnd < fenceStart) throw new Error(`最终回执围栏顺序损坏（${strictError}）`);
+-	const receiptText = text.slice(fenceStart, fenceEnd).trim();
++	const candidate = candidates[0]!;
+ 	let parsed: WorkerFinalResult;
+ 	try {
+-		parsed = parseJsonReceiptBody(receiptText, cwd);
++		parsed = parseJsonReceiptBody(candidate.receiptText, cwd);
+ 	} catch (error) {
+ 		throw new Error(
+-			`最终回执围栏内容未通过严格 schema（${error instanceof Error ? error.message : String(error)}；严格解析原错误：${strictError}）`,
++			`最终回执${candidate.kind === "fenced" ? "围栏内容" : "裸 JSON 对象"}未通过严格 schema（${error instanceof Error ? error.message : String(error)}；严格解析原错误：${strictError}）`,
+ 		);
+ 	}
+-	return { kind: "fenced", parsed, rawText: text, receiptText, strictError };
++	return { kind: candidate.kind, parsed, rawText: text, receiptText: candidate.receiptText, strictError };
+ }
+ 
+ /** 回执摘要:最终输出前 ≤3 行;空则退回 stderr 前 3 行;再空则占位 */
+diff --git a/packages/coding-agent/src/pao/worker/runner.ts b/packages/coding-agent/src/pao/worker/runner.ts
+index eaa34ef19..76906f637 100644
+--- a/packages/coding-agent/src/pao/worker/runner.ts
++++ b/packages/coding-agent/src/pao/worker/runner.ts
+@@ -1040,7 +1040,10 @@ export class WorkerRunner {
+ 					taskState = result.任务态;
+ 					selfVerification = result.verification;
+ 					selfChanges = result.changes;
+-					receiptFormatRecovery = { strict_error: recovery.strictError };
++					receiptFormatRecovery = {
++						strict_error: recovery.strictError,
++						recognized_by: recovery.kind,
++					};
+ 				} else {
+ 					status = "failed";
+ 					summary = `无有效回执：${error instanceof Error ? error.message : String(error)}`;
+@@ -1096,7 +1099,10 @@ export class WorkerRunner {
+ 							attempt,
+ 							run_id: runId,
+ 							strict_error: receiptFormatRecovery.strict_error,
+-							recognized_by: "严格解析失败后，唯一完整 JSON 围栏",
++							recognized_by:
++								receiptFormatRecovery.recognized_by === "bare"
++									? "严格解析失败后，说明文字中的唯一完整裸 JSON 对象"
++									: "严格解析失败后，唯一完整 JSON 围栏",
+ 							original_evidence_path: evidencePath,
+ 						},
+ 						null,
+diff --git a/packages/coding-agent/test/pao/worker-receipt-retry.test.ts b/packages/coding-agent/test/pao/worker-receipt-retry.test.ts
+index 791e7f328..76eade782 100644
+--- a/packages/coding-agent/test/pao/worker-receipt-retry.test.ts
++++ b/packages/coding-agent/test/pao/worker-receipt-retry.test.ts
+@@ -145,9 +145,9 @@ describe("worker 重试回执：本次尝试与整卡累计成果分开", () =>
+ 		expect(prompt).toContain("尝试 2");
+ 		expect(prompt).toContain(`本次尝试的认领基线：${attemptTwoBaseline}`);
+ 		expect(prompt).toMatch(/认领时已有 \d+ 条改动/);
+-		expect(prompt).toContain("只声明本次尝试真正发生的写操作");
+-		expect(prompt).toContain("读取旧文件不要写 changes");
+-		expect(prompt).toContain("整卡此前尝试留下的成果属于累计背景");
++		expect(prompt).toContain("含源码等本次所有写操作");
++		expect(prompt).toContain("认领前及前次成果、只读复验只能作证据，不列为本次 changes 或 artifact_path");
++		expect(prompt).toContain("交回前与认领基线核对");
+ 
+ 		expect(received.artifact_path).toEqual([]);
+ 		expect(received.changes).toEqual([{ 路径: "本次修改.txt", 类型: "created", 说明: "第二次尝试新写入" }]);
+diff --git a/packages/coding-agent/test/pao/worker-receipt.test.ts b/packages/coding-agent/test/pao/worker-receipt.test.ts
+index 2d59443be..e9d63708f 100644
+--- a/packages/coding-agent/test/pao/worker-receipt.test.ts
++++ b/packages/coding-agent/test/pao/worker-receipt.test.ts
+@@ -1,4 +1,7 @@
+-import { describe, expect, it } from "vitest";
++import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, describe, expect, it } from "vitest";
+ 
+ import {
+ 	absorbEvent,
+@@ -12,6 +15,18 @@ import {
+ 	type WorkerReceipt,
+ } from "../../src/pao/worker/receipt.ts";
+ 
++const tempDirs: string[] = [];
++
++afterEach(() => {
++	for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
++});
++
++function tempDir(): string {
++	const dir = mkdtempSync(join(tmpdir(), "pao-receipt-"));
++	tempDirs.push(dir);
++	return dir;
++}
++
+ function eventLine(overrides: Record<string, unknown> = {}): string {
+ 	return JSON.stringify({
+ 		type: "message_end",
+@@ -172,10 +187,235 @@ describe("最终回执格式诊断:严格入口不放宽", () => {
+ 		expect(diagnosis.parsed).toMatchObject({ result: "success", summary: "完成", 任务态: "completed" });
+ 	});
+ 
+-	it("两个围栏、围栏 schema 错误或缺少围栏都拒绝恢复", () => {
++	it("唯一 json 回执围栏可以与普通命令代码块并存", () => {
++		const raw = `检查命令：\n\`\`\`\ncd /app && npm test\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\`\n以上。`;
++		expect(() => parseWorkerFinalResult(raw, process.cwd())).toThrow("缺少有效 JSON");
++		const diagnosis = diagnoseWorkerFinalReceipt(raw, process.cwd());
++		expect(diagnosis).toMatchObject({
++			kind: "fenced",
++			rawText: raw,
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成", 任务态: "completed" },
++			strictError: expect.stringContaining("缺少有效 JSON"),
++		});
++	});
++
++	it("普通说明里的 CSS 花括号和命令示例 JSON 不算额外回执候选", () => {
++		const raw = `检查片段：<style>a{color:red} /* url(javascript:x) */ b{margin:0}</style>；属性 [onerror]。\n命令：\n\`\`\`sh\necho '{"ok":true}'\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++	});
++
++	it("普通说明和行内代码中的多个 CSS 空规则不计候选，唯一 json 围栏仍可恢复", () => {
++		const raw = `规则边界 \`{}\`，片段 <style>a{}</style>，另一处 \`b{}\`。\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++		expect(() => diagnoseWorkerFinalReceipt("```json\n{}\n```", process.cwd())).toThrow("严格 schema");
++		expect(() => diagnoseWorkerFinalReceipt("```\n{}\n```", process.cwd())).toThrow("严格 schema");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`空对象 {"result":success}\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`\n{"result":success}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++	});
++
++	it("普通说明、多个非回执代码块和唯一裸 JSON 可以并存", () => {
++		const raw = `先看命令：\n\`\`\`sh\nprintf '%s\\n' ok\n\`\`\`\n再看向量：\n~~~text\n[不是 JSON]\n~~~\n最终：\n${strict}\n以上。`;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++	});
++
++	it("普通说明文字包着唯一完整裸对象时，严格入口仍拒收，同次诊断按 bare 恢复全部自报字段", () => {
++		const rich = {
++			result: "success",
++			artifact_path: [],
++			summary: '完成 {花括号}、[方括号] 与 "转义引号" 检查',
++			任务态: "completed",
++			verification: [
++				{
++					条件: "核对嵌套对象 {verification}",
++					结论: "pass",
++					证据: '证据含 "{大括号}"、[]、\\反斜杠\\ 和 "引号"',
++				},
++			],
++			changes: [{ 路径: "src/[demo]/{demo}.ts", 类型: "modified", 说明: '改动说明含 [] 和 "引号"' }],
++		};
++		const receiptText = JSON.stringify(rich);
++		const raw = `执行结果如下：\n${receiptText}\n以上为回执。`;
++		expect(() => parseWorkerFinalResult(raw, process.cwd())).toThrow("缺少有效 JSON");
++		const diagnosis = diagnoseWorkerFinalReceipt(raw, process.cwd());
++		expect(diagnosis).toMatchObject({
++			kind: "bare",
++			rawText: raw,
++			receiptText,
++			strictError: expect.stringContaining("缺少有效 JSON"),
++		});
++		expect(diagnosis.parsed).toEqual(rich);
++		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			parsed: rich,
++			receiptText,
++		});
++	});
++
++	it("围栏外每个明确像 JSON 的尝试都计候选，坏候选不能因解析失败被跳过；内层字段数组不重复计数", () => {
++		const inlineRaw = `执行结果如下。${strict}以上为回执。`;
++		expect(diagnoseWorkerFinalReceipt(inlineRaw, process.cwd())).toMatchObject({
++			kind: "bare",
++			rawText: inlineRaw,
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++		const malformed = [
++			'说明{"result":success}',
++			"说明{'result':success}",
++			"说明[{result:success}]",
++			'说明[,"result"]',
++			"说明[1e,2]",
++			"说明[truex]",
++		];
++		for (const beforeFence of malformed) {
++			expect(() =>
++				diagnoseWorkerFinalReceipt(`${beforeFence}\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++			).toThrow("找到 2 个");
++		}
++		const cwd = tempDir();
++		writeFileSync(join(cwd, "a.txt"), "a", "utf8");
++		writeFileSync(join(cwd, "b.txt"), "b", "utf8");
++		const rich = {
++			result: "success",
++			artifact_path: ["a.txt", "b.txt"],
++			summary: "嵌套结构",
++			verification: [{ 条件: "检查", 结论: "pass", 证据: "证据" }],
++			changes: [
++				{ 路径: "a.txt", 类型: "created" },
++				{ 路径: "b.txt", 类型: "modified" },
++			],
++		};
++		const receiptText = JSON.stringify(rich);
++		const raw = `执行结果：${receiptText}以上。`;
++		expect(diagnoseWorkerFinalReceipt(raw, cwd)).toMatchObject({
++			kind: "bare",
++			receiptText,
++			parsed: rich,
++		});
++	});
++
++	it("普通说明中的 CSS、HTML 花括号和未标语言 shell 判断不计候选，并测试围栏边界", () => {
++		const shellRaw = `检查命令：\n\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(shellRaw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const raw = `<style>.a{color:red}.b{margin:0}</style><div data-x="{demo}">x</div> 普通数组 [demo] 和对象 {demo}。\n\`\`\`\n[ "$status" -eq 0 ] && { echo ok; }\n\`\`\`\n回执：${strict}`;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			receiptText: strict,
++		});
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`json\nnot-json\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``,
++				process.cwd(),
++			),
++		).toMatchObject({ kind: "fenced", receiptText: strict });
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`\n{"result":success}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++	});
++
++	it("围栏外明确像 JSON 的数组尝试都计候选，普通括号说明不计，残缺值直接失败", () => {
++		expect(() => diagnoseWorkerFinalReceipt(`说明[[1,2]]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toThrow(
++			"找到 2 个",
++		);
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`说明[{"nested":true}]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(() => diagnoseWorkerFinalReceipt(`说明[1,2]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toThrow(
++			"找到 2 个",
++		);
++		expect(diagnoseWorkerFinalReceipt(`说明[方括号]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		expect(() => diagnoseWorkerFinalReceipt(`说明{"result":"success"`, process.cwd())).toThrow("结构未闭合");
++		expect(() => diagnoseWorkerFinalReceipt(`说明{"result":"success"]`, process.cwd())).toThrow("结构符不配对");
++	});
++
++	it("围栏边界只计数完整且明确的回执候选", () => {
++		const nested = `\`\`\`json\n\`\`\`json\n${strict}\n\`\`\`\n\`\`\``;
++		expect(() => diagnoseWorkerFinalReceipt(nested, process.cwd())).toThrow("嵌套代码围栏");
++		const unclosed = `完成：\n\`\`\`json\n${strict}`;
++		expect(() => diagnoseWorkerFinalReceipt(unclosed, process.cwd())).toThrow("围栏未闭合");
++		const malformedDollar = `\`\`\`\n$status\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(malformedDollar, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const unlabelledShell = `\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(unlabelledShell, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const pseudo = `完成：\`\`\`json ${strict} \`\`\``;
++		expect(() => diagnoseWorkerFinalReceipt(pseudo, process.cwd())).toThrow("伪代码围栏");
++	});
++
++	it.each([
++		["多个裸对象", `完成：\n${strict}\n另一个：\n${strict}`, "找到 2 个"],
++		["同一行两个裸对象", `${strict} ${strict}`, "找到 2 个"],
++		["数组包装", `完成：[${strict}]`, "最终回执必须为对象"],
++		["数组说明在前", `完成：["说明", ${strict}]`, "最终回执必须为对象"],
++		["数组说明在后", `完成：[${strict}, "说明"]`, "最终回执必须为对象"],
++		["嵌套数组", `完成：[["说明", ${strict}]]`, "最终回执必须为对象"],
++		["残缺对象", '完成：{"result":"success","artifact_path":[],"summary":"未闭合"', "结构未闭合"],
++		["未闭合围栏", `完成：\n\`\`\`json\n${strict}`, "围栏未闭合"],
++		["嵌套围栏", `\`\`\`json\n\`\`\`json\n${strict}\n\`\`\`\n\`\`\``, "嵌套代码围栏"],
++		["伪围栏", `完成：\`\`\`json ${strict} \`\`\`。`, "伪代码围栏"],
++		["坏 JSON", '完成：{"result":success,"artifact_path":[],"summary":"键未加引号"}', "缺少有效 JSON"],
++		["坏 schema", '完成：{"result":"success","artifact_path":[],"summary":"x","changes":"bad"}', "严格 schema"],
++		["缺字段", '完成：{"result":"success","artifact_path":[]}', "summary"],
++		["额外结构化包装", `完成：{"receipt":${strict}}`, "result"],
++		[
++			"声明产物不存在",
++			'完成：{"result":"success","artifact_path":["不存在-r32-裸对象.txt"],"summary":"虚报"}',
++			"产物不存在",
++		],
++		["failed 缺失败事实", '完成：{"result":"failed","artifact_path":[],"summary":"失败"}', "failure_type"],
++		["unknown 缺失败事实", '完成：{"result":"unknown","artifact_path":[],"summary":"未知"}', "failure_type"],
++	])("%s时拒绝裸对象恢复", (_name, raw, message) => {
++		expect(() => diagnoseWorkerFinalReceipt(raw, process.cwd())).toThrow(message);
++		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toBeUndefined();
++	});
++
++	it("多个 JSON 候选、围栏 schema 错误或缺少回执都拒绝恢复", () => {
+ 		expect(() =>
+ 			diagnoseWorkerFinalReceipt(`\`\`\`json\n${strict}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
+-		).toThrow("未找到唯一完整 json 围栏");
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`json\n${strict}\n\`\`\`\n\`\`\`json\n{"result":success}\n\`\`\``,
++				process.cwd(),
++			),
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`json\n${strict}\n\`\`\`\n伪回执：{"result":success,"artifact_path":[],"summary":"坏"}`,
++				process.cwd(),
++			),
++		).toThrow("找到 2 个");
+ 		expect(() =>
+ 			diagnoseWorkerFinalReceipt(
+ 				'```json\n{"result":"success","artifact_path":[],"summary":"x","changes":"bad"}\n```',
+@@ -185,7 +425,41 @@ describe("最终回执格式诊断:严格入口不放宽", () => {
+ 		expect(diagnoseWorkerFinalReceipt(strict, process.cwd())).toMatchObject({ kind: "strict", rawText: strict });
+ 	});
+ 
+-	it("runner 恢复 helper 只返回围栏候选及原错误，不把严格成功或坏 schema 当恢复", () => {
++	it("恢复时仍核验声明产物真实存在；字符串中的括号、转义引号和嵌套结构原样解析", () => {
++		const cwd = tempDir();
++		writeFileSync(join(cwd, "真实产物.txt"), "ok", "utf8");
++		const rich = {
++			result: "success",
++			artifact_path: ["真实产物.txt"],
++			summary: '完成 {花括号}、[方括号] 与 "转义引号"',
++			任务态: "completed",
++			verification: [
++				{
++					条件: "核对 {verification:[嵌套]}",
++					结论: "pass",
++					证据: '证据含 "引号"、[]、{花括号}、\\\\反斜杠\\\\',
++				},
++				{ 条件: "changes 嵌套", 结论: "pass", 证据: '{"路径":"demo"}' },
++			],
++			changes: [
++				{
++					路径: "src/[demo]/{demo}.ts",
++					类型: "modified",
++					说明: '改动含 []、{} 与 "引号"',
++				},
++			],
++		};
++		const raw = `命令：\n\`\`\`sh\nnpm test\n\`\`\`\n回执：\n\`\`\`json\n${JSON.stringify(rich)}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, cwd)).toMatchObject({
++			kind: "fenced",
++			parsed: rich,
++		});
++		rmSync(join(cwd, "真实产物.txt"));
++		expect(() => diagnoseWorkerFinalReceipt(raw, cwd)).toThrow("产物不存在");
++		expect(recoverWorkerFinalReceiptFormat(raw, cwd)).toBeUndefined();
++	});
++
++	it("runner 恢复 helper 只返回唯一围栏或唯一裸对象候选及原错误，不把严格成功或坏 schema 当恢复", () => {
+ 		const raw = `执行结果如下：\n\`\`\`json\n${strict}\n\`\`\`\n以上为回执。`;
+ 		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toMatchObject({
+ 			kind: "fenced",
+diff --git a/packages/coding-agent/test/pao/worker-run.test.ts b/packages/coding-agent/test/pao/worker-run.test.ts
+index 202e5477d..73098465e 100644
+--- a/packages/coding-agent/test/pao/worker-run.test.ts
++++ b/packages/coding-agent/test/pao/worker-run.test.ts
+@@ -184,6 +184,19 @@ describe("worker 拉起与回执收集(假进程,不依赖模型端点)", () =>
+ 				name: "唯一严格围栏",
+ 				output: `执行结果如下：\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n以上为回执。`,
+ 				recovered: true,
++				recognizedBy: "严格解析失败后，唯一完整 JSON 围栏",
++			},
++			{
++				name: "唯一 JSON 围栏加命令代码块",
++				output: `检查命令：\n\`\`\`\ncd /app && npm test\n\`\`\`\n最终回执：\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n以上为回执。`,
++				recovered: true,
++				recognizedBy: "严格解析失败后，唯一完整 JSON 围栏",
++			},
++			{
++				name: "说明包唯一裸 JSON",
++				output: `执行结果如下：\n${JSON.stringify(valid)}\n以上为回执。`,
++				recovered: true,
++				recognizedBy: "严格解析失败后，说明文字中的唯一完整裸 JSON 对象",
+ 			},
+ 			{
+ 				name: "普通说明无围栏",
+@@ -200,6 +213,16 @@ describe("worker 拉起与回执收集(假进程,不依赖模型端点)", () =>
+ 				output: `\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``,
+ 				recovered: false,
+ 			},
++			{
++				name: "说明后第二个损坏回执",
++				output: `另一个回执 {"result":success}\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``,
++				recovered: false,
++			},
++			{
++				name: "未标语言第二个损坏回执",
++				output: `\`\`\`\n{"result":success}\n\`\`\`\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``,
++				recovered: false,
++			},
+ 		];
+ 		for (const [index, item] of cases.entries()) {
+ 			const runner = new WorkerRunner();
+@@ -219,6 +242,14 @@ describe("worker 拉起与回执收集(假进程,不依赖模型端点)", () =>
+ 				expect(result.status, item.name).toBe("success");
+ 				expect(result.artifact_path, item.name).toEqual(["产物.txt"]);
+ 				expect(result.任务态, item.name).toBe("completed");
++				expect(result.usage, item.name).toEqual({
++					input: 1,
++					output: 1,
++					cacheRead: 0,
++					cacheWrite: 0,
++					cost: 0,
++					turns: 1,
++				});
+ 				expect(result.receipt_format_recovery?.strict_error, item.name).toContain("缺少有效 JSON");
+ 				const recoveryPath = result.receipt_format_recovery?.evidence_path;
+ 				expect(recoveryPath, item.name).toBeTruthy();
+@@ -228,8 +259,9 @@ describe("worker 拉起与回执收集(假进程,不依赖模型端点)", () =>
+ 					type: "pao_worker_receipt_format_recovery",
+ 					card_no: String(index + 11),
+ 					attempt: 1,
++					run_id: result.run_id,
+ 					strict_error: expect.stringContaining("缺少有效 JSON"),
+-					recognized_by: "严格解析失败后，唯一完整 JSON 围栏",
++					recognized_by: item.recognizedBy,
+ 					original_evidence_path: result.evidence_path,
+ 				});
+ 				expect(dirname(recoveryPath!), item.name).toBe(dirname(result.evidence_path));
+@@ -252,6 +284,110 @@ describe("worker 拉起与回执收集(假进程,不依赖模型端点)", () =>
+ 			}
+ 		}
+ 	});
++	it("模型错误或取消时，可恢复的回执正文不会把失败/取消翻成成功", async () => {
++		const cwd = tempDir();
++		const valid = {
++			result: "success",
++			artifact_path: [],
++			summary: "只应作为正文，不应越过执行状态",
++			任务态: "completed",
++		};
++		const recoverableOutput = `执行结果如下：\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``;
++		const errorScript = writeScript(
++			`console.log(JSON.stringify({type:"message_end",message:{role:"assistant",content:[{type:"text",text:${JSON.stringify(recoverableOutput)}}],usage:{input:1,output:1,cost:0},stopReason:"error",errorMessage:"模拟 provider 错误"}}));`,
++		);
++		const errored = await new WorkerRunner().run({
++			卡号: "0041",
++			提示词: "",
++			命令: process.execPath,
++			参数: [errorScript],
++			cwd,
++			证据目录: cwd,
++			要求回执: true,
++		});
++		expect(errored.status).toBe("failed");
++		expect(errored.stopReason).toBe("error");
++		expect(errored.receipt_format_recovery).toBeUndefined();
++
++		const marker = join(cwd, "cancel-ready");
++		const cancelScript = writeScript(`
++			const fs = require("node:fs");
++			console.log(JSON.stringify({type:"message_end",message:{role:"assistant",content:[{type:"text",text:${JSON.stringify(recoverableOutput)}}],usage:{input:1,output:1,cost:0},stopReason:"end"}}));
++			fs.writeFileSync(${JSON.stringify(marker)}, "ready");
++			setInterval(() => {}, 1000);
++		`);
++		const runner = new WorkerRunner();
++		const pending = runner.run({
++			卡号: "0042",
++			提示词: "",
++			命令: process.execPath,
++			参数: [cancelScript],
++			cwd,
++			证据目录: cwd,
++			要求回执: true,
++		});
++		try {
++			const deadline = Date.now() + 5_000;
++			while (Date.now() < deadline && !existsSync(marker)) {
++				await new Promise((resolve) => setTimeout(resolve, 10));
++			}
++			expect(existsSync(marker)).toBe(true);
++			await runner.cancel("0042");
++			const cancelled = await pending;
++			expect(cancelled.status).toBe("canceled");
++			expect(cancelled.receipt_format_recovery).toBeUndefined();
++		} finally {
++			await runner.stopAll();
++		}
++	});
++	it("裸对象恢复审计写入失败时降级为失败，不把恢复候选当交付", async () => {
++		const cwd = tempDir();
++		const marker = join(cwd, "worker-ready");
++		const release = join(cwd, "worker-release");
++		const valid = {
++			result: "success",
++			artifact_path: [],
++			summary: "裸对象恢复",
++			任务态: "completed",
++		};
++		const script = writeScript(`
++			const fs = require("node:fs");
++			fs.writeFileSync(${JSON.stringify(marker)}, "ready");
++			const timer = setInterval(() => {
++				if (!fs.existsSync(${JSON.stringify(release)})) return;
++				clearInterval(timer);
++				const text = "执行结果如下：\\n" + ${JSON.stringify(JSON.stringify(valid))} + "\\n以上为回执。";
++				console.log(JSON.stringify({type:"message_end",message:{role:"assistant",content:[{type:"text",text}],usage:{input:7,output:3,cost:0.25},stopReason:"end"}}));
++			}, 20);
++		`);
++		const runner = new WorkerRunner();
++		const run = runner.run({
++			卡号: "0040",
++			提示词: "",
++			命令: process.execPath,
++			参数: [script],
++			cwd,
++			证据目录: cwd,
++			要求回执: true,
++		});
++		const deadline = Date.now() + 5_000;
++		while (Date.now() < deadline && !existsSync(marker)) {
++			await new Promise((resolve) => setTimeout(resolve, 10));
++		}
++		expect(existsSync(marker)).toBe(true);
++		const livePath = runner.listActive()[0]?.中途输出路径;
++		expect(livePath).toBeTruthy();
++		const recoveryPath = livePath!.replace(/\.live\.jsonl$/, ".live.jsonl.receipt-format-recovery.json");
++		writeFileSync(recoveryPath, "审计路径已被占用\n", "utf8");
++		writeFileSync(release, "go", "utf8");
++		const result = await run;
++
++		expect(result.status).toBe("failed");
++		expect(result.failure_type).toBe("unknown_outcome");
++		expect(result.summary).toContain("回执格式恢复审计写入失败");
++		expect(result.receipt_format_recovery).toBeUndefined();
++		expect(readFileSync(recoveryPath, "utf8")).toBe("审计路径已被占用\n");
++	});
+ 	it("最后一轮费用恰好触顶但已给有效回执时保留成功", async () => {
+ 		const cwd = tempDir();
+ 		const script = writeScript(
+diff --git a/packages/coding-agent/test/pao/worker-tools.test.ts b/packages/coding-agent/test/pao/worker-tools.test.ts
+index 6171f90fc..6f7c9bd3c 100644
+--- a/packages/coding-agent/test/pao/worker-tools.test.ts
++++ b/packages/coding-agent/test/pao/worker-tools.test.ts
+@@ -7,6 +7,7 @@ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+ import { MinisterHost } from "../../src/pao/host/host.ts";
+ import { formatDispatchResult, installExitHooks, registerWorkerTools } from "../../src/pao/worker/index.ts";
+ import { type StopProof, WorkerRunner } from "../../src/pao/worker/runner.ts";
++import { fireSessionShutdownHandlers } from "./fixtures/session-shutdown.ts";
+ 
+ const tempDirs: string[] = [];
+ const scripts: string[] = [];
+@@ -14,7 +15,7 @@ const shutdowns: (() => unknown)[] = [];
+ const disposers: (() => void)[] = [];
+ 
+ afterEach(async () => {
+-	for (const shutdown of shutdowns.splice(0)) await shutdown();
++	await fireSessionShutdownHandlers(shutdowns.splice(0));
+ 	for (const dispose of disposers.splice(0)) dispose();
+ 	for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+ 	scripts.length = 0;
+@@ -73,7 +74,7 @@ function capturePi(): Captured {
+ 		registerTool: (tool: { name: string }) => captured.tools.push(tool as never),
+ 		on: (event: string, handler: (...args: unknown[]) => unknown) => {
+ 			captured.handlers.set(event, handler);
+-			if (event === "session_shutdown") shutdowns.push(() => handler());
++			if (event === "session_shutdown") shutdowns.push(handler);
+ 			return () => {};
+ 		},
+ 		sendMessage: (message: Captured["sent"][number]["message"], options: Captured["sent"][number]["options"]) =>
+@@ -120,7 +121,7 @@ describe("registerWorkerTools:工具 + 主会话退出钩子", () => {
+ 		const before = process.listenerCount("beforeExit");
+ 		registerWorkerTools(captured.pi, { runner: new DelayedRunner(), signals: false });
+ 		let completed = false;
+-		const shutdown = Promise.resolve(captured.handlers.get("session_shutdown")!()).then(() => {
++		const shutdown = fireSessionShutdownHandlers([captured.handlers.get("session_shutdown")!]).then(() => {
+ 			completed = true;
+ 		});
+ 		await Promise.resolve();
+@@ -160,7 +161,7 @@ describe("registerWorkerTools:工具 + 主会话退出钩子", () => {
+ 		expect(runner.stopAllCalls).toBe(0);
+ 
+ 		// 主会话退出(quit/reload/new/resume/fork)→ 停本轮进程树
+-		await captured.handlers.get("session_shutdown")!({ type: "session_shutdown", reason: "quit" }, {} as never);
++		await fireSessionShutdownHandlers([captured.handlers.get("session_shutdown")!]);
+ 		expect(runner.stopAllCalls).toBe(1);
+ 	});
+ 

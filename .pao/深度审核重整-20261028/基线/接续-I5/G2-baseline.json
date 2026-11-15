@@ -1,0 +1,46 @@
+{
+  "status": "methodology_locked_measurement_pending",
+  "source": ".pao/深度审核重整-20261028/目标架构与实施分路.md#7.1",
+  "lockedAt": "2026-10-29",
+  "counts": {
+    "crossRoleBoundaryHandoffs": {
+      "status": "not_yet_measured",
+      "definition": "工具或 RPC 跟踪中发送角色与接收角色不同的业务交接；按业务事件计数，不按消息与确认拆成两笔",
+      "declaredBefore": null,
+      "declaredAfter": null
+    },
+    "crossProcessBoundaryHandoffs": {
+      "status": "not_yet_measured",
+      "definition": "工具或 RPC 跟踪中发送进程与接收进程不同的业务交接；同角色跨进程也必须计入",
+      "declaredBefore": null,
+      "declaredAfter": null
+    },
+    "deduplicatedBoundaryHandoffTotal": {
+      "status": "not_yet_measured",
+      "definition": "跨角色与跨进程两个集合的并集；同一业务事件同时跨角色和跨进程只计一次",
+      "declaredBefore": null,
+      "declaredAfter": null
+    },
+    "persistentStateFileKinds": {
+      "status": "not_yet_measured",
+      "definition": "运行期间承担可恢复业务状态的持久化文件种类；原始日志、瞬时锁和可重建缓存单列",
+      "declaredBefore": null,
+      "declaredAfter": null
+    },
+    "modelRequiredFixedSteps": {
+      "status": "not_yet_measured",
+      "definition": "只能由模型按固定顺序调用才能推进的业务手续；程序自动校验、交付、交卷和续跑不计",
+      "declaredBefore": null,
+      "declaredAfter": null
+    }
+  },
+  "deduplicationKey": "优先使用 trace/event id；缺失时使用发送事件、发送角色、接收角色、发送进程、接收进程和业务对象组合，不能只按文本摘要去重。",
+  "separatelyReported": [
+    "重试",
+    "地图召回",
+    "模型调用",
+    "纯日志或遥测"
+  ],
+  "sameInputRule": "前后必须使用同一冻结 kit、同一任务输入、同一宿主类型和同一计数组件。",
+  "evidenceRule": "历史报告不作为旧实现基线；旧值只采信从本快照运行的回放产物。"
+}

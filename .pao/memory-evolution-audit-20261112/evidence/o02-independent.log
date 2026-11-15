@@ -1,0 +1,80 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o02-independent.test.ts > I1：同一批讨论后明确确认，最终应保留确认及其来源 96ms
+   → expected 'tentative' to be 'confirmed' // Object.is equality
+ × o02-independent.test.ts > I2：同批同结论的新条件进入重议，不能按纯重复丢弃 68ms
+   → expected undefined to be true // Object.is equality
+ × o02-independent.test.ts > I3：只有助手工具调用，不能自动成为已确认的用户陈述 70ms
+   → expected 'confirmed' not to be 'confirmed' // Object.is equality
+ × o02-independent.test.ts > I4：模型推断的条件变化不自动重议用户已确认决定 71ms
+   → expected true not to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o02-independent.test.ts > I1：同一批讨论后明确确认，最终应保留确认及其来源
+AssertionError: expected 'tentative' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "tentative"
+
+ ❯ o02-independent.test.ts:67:43
+     65|   const out=await commit(f,[proposal,confirmed],[raw(proposal,{confirm…
+     66|   const got=await saved(f); results.push({id:"I1",out,got});
+     67|   expect(got.memory.content.confirmation).toBe("confirmed");
+       |                                           ^
+     68|   expect(got.sourceSummaries.map((s:any)=>s.sourceId)).toContain(confi…
+     69| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  o02-independent.test.ts > I2：同批同结论的新条件进入重议，不能按纯重复丢弃
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ o02-independent.test.ts:75:48
+     73|   const out=await commit(f,[original,changed],[raw(original),raw(chang…
+     74|   const got=await saved(f); results.push({id:"I2",out,got});
+     75|   expect(got.memory.content.needsReDiscussion).toBe(true);
+       |                                                ^
+     76|   expect(got.sourceSummaries.map((s:any)=>s.sourceId)).toContain(chang…
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  o02-independent.test.ts > I3：只有助手工具调用，不能自动成为已确认的用户陈述
+AssertionError: expected 'confirmed' not to be 'confirmed' // Object.is equality
+ ❯ o02-independent.test.ts:91:47
+     89|   if(out.isError){results.push({id:"I3",out});return;}
+     90|   const got=await saved(f); results.push({id:"I3",out,got});
+     91|   expect(got.memory.content.confirmation).not.toBe("confirmed");
+       |                                               ^
+     92| });
+     93|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  o02-independent.test.ts > I4：模型推断的条件变化不自动重议用户已确认决定
+AssertionError: expected true not to be true // Object.is equality
+ ❯ o02-independent.test.ts:103:52
+    101|       confirmation:before.memory.content.confirmation,usageState:befor…
+    102|   const got=await saved(f); results.push({id:"I4",out,got});
+    103|   expect(got.memory.content.needsReDiscussion).not.toBe(true);
+       |                                                    ^
+    104|   expect(got.memory.currentRevision).toBe(before.memory.currentRevisio…
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  10:19:26
+   Duration  10.76s (transform 7.68s, setup 0ms, import 10.00s, tests 308ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o02-independent-vitest.json

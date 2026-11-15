@@ -1,0 +1,868 @@
+diff --git a/apps/desktop/electron/platform/pao/canvas-query.ts b/apps/desktop/electron/platform/pao/canvas-query.ts
+index 0037ceeb..50abf454 100644
+--- a/apps/desktop/electron/platform/pao/canvas-query.ts
++++ b/apps/desktop/electron/platform/pao/canvas-query.ts
+@@ -901,7 +901,7 @@ export function createCanvasQuery(options: CanvasQueryOptions = {}): CanvasQuery
+       if (!projectRoot) throw new Error("运行记录路径不在项目的 .pao 目录下，无法定位运行态数据。");
+       const root = realpathOf(projectRoot);
+       const cardPath = detail.card?.path;
+-      const snapshot = reader.readDesktopProject(root, "桌面只读；owner 见卡面");
++      const snapshot = await reader.readDesktopProject(root, "桌面只读；owner 见卡面");
+       const card = cardPath
+         ? snapshot.cards.find((item) => pathKey(item.path) === pathKey(cardPath))
+         : undefined;
+diff --git a/apps/desktop/electron/platform/pao/ephemeral-sweep.ts b/apps/desktop/electron/platform/pao/ephemeral-sweep.ts
+index 25738876..c11ec0c6 100644
+--- a/apps/desktop/electron/platform/pao/ephemeral-sweep.ts
++++ b/apps/desktop/electron/platform/pao/ephemeral-sweep.ts
+@@ -16,33 +16,41 @@ export type EphemeralFlowStatuses = ReadonlyMap<string, readonly EphemeralOwnerF
+ /** 最小 store 面：清扫只需要工作区清单与清扫入口（main 启动接线用）。 */
+ export interface EphemeralSweepStore {
+   readonly snapshot: () => { readonly workspaces: readonly { id: string; path: string }[] };
+-  readonly sweepEphemeralSessions: (
+-    flowsByWorkspace: EphemeralFlowStatuses,
+-  ) => Promise<number>;
++  readonly sweepEphemeralSessions: (flowsByWorkspace: EphemeralFlowStatuses) => Promise<number>;
++}
++
++export interface EphemeralSweepOptions {
++  /** Overrides the lazy driver import (tests). */
++  readonly loadModule?: () => Promise<PaoDesktopFlowControlModule>;
+ }
+ 
+ /** 启动接线：读各工作区控制正本 → 判定 → 删除；返回删除条数。 */
+-export async function sweepEphemeralWorkflowSessions(store: EphemeralSweepStore): Promise<number> {
+-  const flowsByWorkspace = await readEphemeralFlowStatuses(store.snapshot().workspaces);
++export async function sweepEphemeralWorkflowSessions(
++  store: EphemeralSweepStore,
++  options: EphemeralSweepOptions = {},
++): Promise<number> {
++  const flowsByWorkspace = await readEphemeralFlowStatuses(store.snapshot().workspaces, options);
+   return store.sweepEphemeralSessions(flowsByWorkspace);
+ }
+ 
+ /** 每桥只加载一次；主进程启动期调用，失败＝全部工作区不可判。 */
+ export async function readEphemeralFlowStatuses(
+   workspaces: readonly { readonly id: string; readonly path: string }[],
++  options: EphemeralSweepOptions = {},
+ ): Promise<EphemeralFlowStatuses> {
+   const flowsByWorkspace = new Map<string, readonly EphemeralOwnerFlow[] | undefined>();
+   if (workspaces.length === 0) return flowsByWorkspace;
+   let bridge: PaoDesktopFlowControlModule;
+   try {
+-    bridge = await (await loadDriver("loadPaoDesktopFlowControl"))();
++    const loadModule = options.loadModule ?? (await loadDriver("loadPaoDesktopFlowControl"));
++    bridge = await loadModule();
+   } catch {
+     for (const workspace of workspaces) flowsByWorkspace.set(workspace.id, undefined);
+     return flowsByWorkspace;
+   }
+   for (const workspace of workspaces) {
+     try {
+-      const read = bridge.readDesktopFlows(workspace.path);
++      const read = await bridge.readDesktopFlows(workspace.path);
+       if (!Array.isArray(read.问题) || read.问题.length > 0) {
+         flowsByWorkspace.set(workspace.id, undefined);
+         continue;
+diff --git a/apps/desktop/electron/platform/pao/flow-control-query.ts b/apps/desktop/electron/platform/pao/flow-control-query.ts
+index d04be24f..3c7722eb 100644
+--- a/apps/desktop/electron/platform/pao/flow-control-query.ts
++++ b/apps/desktop/electron/platform/pao/flow-control-query.ts
+@@ -133,8 +133,11 @@ function toFlowRow(value: unknown): PaoDesktopFlow {
+ }
+ 
+ /** 读控制清单；只认 fork 的真实返回形状，坏形状显式失败。 */
+-function readFlows(bridge: PaoDesktopFlowControlModule, project: string): PaoDesktopFlowReadResult {
+-  const value = record(bridge.readDesktopFlows(project), "控制清单返回");
++async function readFlows(
++  bridge: PaoDesktopFlowControlModule,
++  project: string,
++): Promise<PaoDesktopFlowReadResult> {
++  const value = record(await bridge.readDesktopFlows(project), "控制清单返回");
+   return {
+     工作流: list(value.工作流, "控制清单").map(toFlowRow),
+     问题: list(value.问题, "控制清单问题").map((row) => {
+@@ -201,7 +204,7 @@ export function createFlowControlQuery(options: FlowControlQueryOptions = {}): F
+     async collect(project, instanceName, instancePath): Promise<WorkflowControlResult> {
+       try {
+         const bridge = await module();
+-        const found = locateFlow(readFlows(bridge, project), instanceName, instancePath);
++        const found = locateFlow(await readFlows(bridge, project), instanceName, instancePath);
+         if (!found.flow) return { state: "failed", message: found.message ?? "运行记录不可用。" };
+         return { state: "ok", control: normalizeFlowControl(found.flow) };
+       } catch (error) {
+@@ -212,7 +215,7 @@ export function createFlowControlQuery(options: FlowControlQueryOptions = {}): F
+       try {
+         const bridge = await module();
+         const found = pickFlow(
+-          readFlows(bridge, project),
++          await readFlows(bridge, project),
+           `运行记录 ${command.instanceId}`,
+           (flow) => flow.控制?.实例 === command.instanceId,
+         );
+diff --git a/apps/desktop/electron/platform/pao/temporary-plans-query.ts b/apps/desktop/electron/platform/pao/temporary-plans-query.ts
+index 4c5cbe61..f2991d59 100644
+--- a/apps/desktop/electron/platform/pao/temporary-plans-query.ts
++++ b/apps/desktop/electron/platform/pao/temporary-plans-query.ts
+@@ -95,7 +95,12 @@ function normalizeBudget(value: unknown): TemporaryPlanBudgetRow | undefined {
+   const toolCalls = optionalPositiveInt(row.toolCalls, "预算工具调用");
+   const cost = optionalPositiveInt(row.cost, "预算费用");
+   const collabQuota = optionalPositiveInt(row.collab_quota, "预算协作额度");
+-  if (turns === undefined && toolCalls === undefined && cost === undefined && collabQuota === undefined)
++  if (
++    turns === undefined &&
++    toolCalls === undefined &&
++    cost === undefined &&
++    collabQuota === undefined
++  )
+     return undefined;
+   return {
+     ...(turns === undefined ? {} : { turns }),
+@@ -282,7 +287,9 @@ function normalizeProgress(value: unknown): TemporaryPlanStepProgressRow {
+   const readProblems =
+     rawProblems.length > 0
+       ? rawProblems.map((problem) =>
+-          problem.stepId === undefined ? { ...problem, stepId: text(row.步骤ID, "进度步骤ID") } : problem,
++          problem.stepId === undefined
++            ? { ...problem, stepId: text(row.步骤ID, "进度步骤ID") }
++            : problem,
+         )
+       : readProblem === undefined
+         ? []
+@@ -329,7 +336,11 @@ function referencedCards(plan: TemporaryPlanRow): readonly string[] {
+  * 每张读不出来的卡单独上报，声明了步骤的挂到那一步，没有的只做计划级提示——
+  * 不合成一句「控制清单读取失败」，也不因为其中一张卡坏掉就让整份计划变成不可读。
+  */
+-function extractReadProblems(bridge: PaoDesktopPlanModule, project: string, plan: TemporaryPlanRow): {
++function extractReadProblems(
++  bridge: PaoDesktopPlanModule,
++  project: string,
++  plan: TemporaryPlanRow,
++): {
+   readonly planProblems: readonly TemporaryPlanReadProblemRow[];
+   readonly byStep: ReadonlyMap<string, readonly TemporaryPlanReadProblemRow[]>;
+ } {
+@@ -426,7 +437,8 @@ function normalizeFeedback(value: unknown): TemporaryPlanFeedbackRow {
+   const detail = optionalText(delivery?.结果, "意见投递结果") ?? optionalText(row.正文, "意见正文");
+   const stepId = kind === "文件" ? optionalText(target.步骤ID, "意见文件步骤ID") : undefined;
+   const round = kind === "文件" ? positiveInt(target.轮次, "意见文件轮次") : undefined;
+-  const versionBasis = kind === "文件" ? optionalText(target.版本依据, "意见文件版本依据") : undefined;
++  const versionBasis =
++    kind === "文件" ? optionalText(target.版本依据, "意见文件版本依据") : undefined;
+   const appliedBasis = optionalText(application?.依据, "意见应用依据");
+   return {
+     feedbackId: text(row.意见ID, "意见ID"),
+@@ -515,7 +527,7 @@ export function createTemporaryPlansQuery(
+     async collect(project, input): Promise<TemporaryPlansResult> {
+       try {
+         const bridge = await module();
+-        const read = record(bridge.readDesktopPlans(project), "临时计划返回");
++        const read = record(await bridge.readDesktopPlans(project), "临时计划返回");
+         const issues: TemporaryPlansIssueRow[] = list(read.问题, "临时计划问题").map((value) => {
+           const row = record(value, "临时计划问题行");
+           return { path: text(row.路径, "问题路径"), message: text(row.说明, "问题说明") };
+@@ -606,7 +618,8 @@ function readCodeOf(error: unknown): { code: TemporaryPlanArtifactReadCode; mess
+   const code = (error as { code?: string } | null | undefined)?.code;
+   const raw = reasonOf(error);
+   if (code === "ENOENT") return { code: "missing", message: `文件不存在：${raw}` };
+-  if (code === "EACCES" || code === "EPERM") return { code: "permission-denied", message: `没有读取权限：${raw}` };
++  if (code === "EACCES" || code === "EPERM")
++    return { code: "permission-denied", message: `没有读取权限：${raw}` };
+   if (code === "EISDIR") return { code: "unsupported", message: `这是目录不是文件：${raw}` };
+   if (code === "ELOOP") return { code: "symlink", message: `路径是符号链接：${raw}` };
+   return { code: "unknown", message: raw };
+@@ -635,7 +648,9 @@ function findArtifact(
+   const artifact = matches[0]!;
+   if (!artifact.exists) return { problem: `内核记录这份产物不存在：${artifact.relativePath}` };
+   if (artifact.versionBasis !== input.versionBasis)
+-    return { problem: `版本依据对不上：界面显示 ${input.versionBasis}，内核记录 ${artifact.versionBasis}` };
++    return {
++      problem: `版本依据对不上：界面显示 ${input.versionBasis}，内核记录 ${artifact.versionBasis}`,
++    };
+   return { artifact };
+ }
+ 
+@@ -654,7 +669,7 @@ async function readArtifactContent(
+     ({ state: "failed", code, message }) as const;
+   try {
+     const bridge = await loadDefaultModule(options);
+-    const read = record(bridge.readDesktopPlans(project), "临时计划返回");
++    const read = record(await bridge.readDesktopPlans(project), "临时计划返回");
+     const planRow = list(read.计划, "临时计划").find((value) => {
+       try {
+         return record(value, "计划").计划ID === input.planId;
+@@ -714,7 +729,10 @@ async function readArtifactContent(
+       return failWith("unsupported", `不是常规文件（可能是设备或管道）：${relative}`);
+     const extension = extensionOf(relative);
+     if (!TEXT_EXTENSIONS.has(extension))
+-      return failWith("unsupported", `不支持读取这类文件：${extension || "无扩展名"}（${relative}）`);
++      return failWith(
++        "unsupported",
++        `不支持读取这类文件：${extension || "无扩展名"}（${relative}）`,
++      );
+ 
+     const truncated = stats.size > ARTIFACT_CONTENT_LIMIT_BYTES;
+     let buffer: Buffer;
+diff --git a/apps/desktop/electron/platform/pao/workboard-session-query.ts b/apps/desktop/electron/platform/pao/workboard-session-query.ts
+index b0c05e18..97401ce5 100644
+--- a/apps/desktop/electron/platform/pao/workboard-session-query.ts
++++ b/apps/desktop/electron/platform/pao/workboard-session-query.ts
+@@ -14,16 +14,15 @@ export function createWorkboardSessionQuery(
+           : await (
+               await loadDriver("loadPaoWorkboardSessionReader")
+             )();
+-        const result =
+-          input.kind === "worker"
+-            ? reader.readDesktopExecution(project, "", input.executionId, input.offset ?? 0)
+-            : reader.readDesktopWorkflowMinister(
+-                project,
+-                input.instanceId,
+-                input.nodeName,
+-                input.round,
+-                input.offset ?? 0,
+-              );
++        const result = await (input.kind === "worker"
++          ? reader.readDesktopExecution(project, "", input.executionId, input.offset ?? 0)
++          : reader.readDesktopWorkflowMinister(
++              project,
++              input.instanceId,
++              input.nodeName,
++              input.round,
++              input.offset ?? 0,
++            ));
+         return {
+           state: "ok",
+           nextOffset: result.下次偏移,
+diff --git a/apps/desktop/tests/unit/canvas-node-detail.spec.ts b/apps/desktop/tests/unit/canvas-node-detail.spec.ts
+index 6dddefc7..0c184e5a 100644
+--- a/apps/desktop/tests/unit/canvas-node-detail.spec.ts
++++ b/apps/desktop/tests/unit/canvas-node-detail.spec.ts
+@@ -390,7 +390,7 @@ describe("createCanvasQuery.readNodeDetail（失败面不抛顶层）", () => {
+         执行: [{ 执行标识: "exec-9", 来源: "卡回执" }],
+       }),
+       loadRuntimeReader: async () => ({
+-        readDesktopProject: (root: string) => ({
++        readDesktopProject: async (root: string) => ({
+           projectRoot: root,
+           cards: [
+             {
+diff --git a/apps/desktop/tests/unit/ephemeral-sessions.spec.ts b/apps/desktop/tests/unit/ephemeral-sessions.spec.ts
+index 9df64091..4d11d6be 100644
+--- a/apps/desktop/tests/unit/ephemeral-sessions.spec.ts
++++ b/apps/desktop/tests/unit/ephemeral-sessions.spec.ts
+@@ -9,6 +9,7 @@ import {
+   findReusableEphemeralSession,
+   type EphemeralWorkspaceRow,
+ } from "../../electron/application/ephemeral-sessions";
++import { readEphemeralFlowStatuses } from "../../electron/platform/pao/ephemeral-sweep";
+ 
+ /** workspaceId 就是工作区路径（Windows 下含冒号）：锁住「绝不反解 sessionKey」的口径。 */
+ const WS_A = "D:\\projects\\主项目";
+@@ -98,3 +99,37 @@ test("清扫计划：名下实例全部已完成才删；运行中/挂起/无实
+   // 数据不可读（flows 缺失）→ 空计划。
+   expect(ephemeralSweepPlan(workspaces, registry, new Map())).toEqual([]);
+ });
++
++test("启动清扫等待异步控制清单，坏清单保留为不可判", async () => {
++  let finishGood!: (value: { 工作流: { 控制: { owner: string; 状态: string } }[]; 问题: [] }) => void;
++  const goodRead = new Promise<{
++    工作流: { 控制: { owner: string; 状态: string } }[];
++    问题: [];
++  }>((resolve) => {
++    finishGood = resolve;
++  });
++  const statuses = readEphemeralFlowStatuses(
++    [
++      { id: "good", path: "D:\\projects\\好项目" },
++      { id: "bad", path: "D:\\projects\\坏项目" },
++    ],
++    {
++      loadModule: async () => ({
++        readDesktopFlows: async (project) =>
++          project.endsWith("好项目")
++            ? goodRead
++            : { 工作流: [], 问题: [{ 路径: "坏清单", 说明: "解析失败" }] },
++        runDesktopFlowCommand: async () => undefined,
++      }),
++    },
++  );
++
++  await Promise.resolve();
++  finishGood({
++    工作流: [{ 控制: { owner: "s-done", 状态: "已完成" } }],
++    问题: [],
++  });
++  const result = await statuses;
++  expect(result.get("good")).toEqual([{ owner: "s-done", status: "已完成" }]);
++  expect(result.get("bad")).toBeUndefined();
++});
+diff --git a/apps/desktop/tests/unit/flow-control-query.spec.ts b/apps/desktop/tests/unit/flow-control-query.spec.ts
+index 0f36d545..8c9fca57 100644
+--- a/apps/desktop/tests/unit/flow-control-query.spec.ts
++++ b/apps/desktop/tests/unit/flow-control-query.spec.ts
+@@ -50,9 +50,13 @@ function moduleWith(
+   flows: readonly PaoDesktopFlow[],
+   issues: readonly { readonly 路径: string; readonly 说明: string }[] = [],
+   onRun?: (call: RunCall) => void,
++  onRead?: () => void,
+ ): PaoDesktopFlowControlModule {
+   return {
+-    readDesktopFlows: () => ({ 工作流: [...flows], 问题: [...issues] }),
++    readDesktopFlows: async () => {
++      onRead?.();
++      return { 工作流: [...flows], 问题: [...issues] };
++    },
+     runDesktopFlowCommand: async (sessionId, project, params) => {
+       onRun?.({ sessionId, project, params: { ...params } });
+     },
+@@ -73,6 +77,20 @@ test("动作集合只有内核支持的三类，暂停文案是暂停推进", ()
+   expect(Object.values(WORKFLOW_CONTROL_ACTION_LABELS).join("")).not.toContain("停止");
+ });
+ 
++test("collect 与 run 都等待控制清单核对完成后再使用同一份返回", async () => {
++  let reads = 0;
++  const query = createFlowControlQuery({
++    loadModule: async () => moduleWith([desktopFlow()], [], undefined, () => {
++      reads += 1;
++    }),
++  });
++
++  expect((await query.collect("/project", "安装")).state).toBe("ok");
++  expect(reads).toBe(1);
++  expect((await query.run("/project", { ...baseCommand, action: "confirm" })).state).toBe("ok");
++  expect(reads).toBe(2);
++});
++
+ test("normalizeFlowControl 整形真值行，缺字段显式失败", () => {
+   expect(normalizeFlowControl(desktopFlow())).toEqual({
+     instanceId: "ins-1",
+@@ -143,7 +161,9 @@ test("collect 找不到、坏清单或不唯一都显式 failed，不谎报空
+ 
+   const malformed = createFlowControlQuery({
+     loadModule: async () =>
+-      ({ readDesktopFlows: () => ({ 工作流: "坏", 问题: [] }) }) as unknown as PaoDesktopFlowControlModule,
++      ({
++        readDesktopFlows: async () => ({ 工作流: "坏", 问题: [] }),
++      }) as unknown as PaoDesktopFlowControlModule,
+   });
+   expect((await malformed.collect("/project", "安装")).message).toContain("列表字段缺失");
+ });
+diff --git a/apps/desktop/tests/unit/temporary-plans-query.spec.ts b/apps/desktop/tests/unit/temporary-plans-query.spec.ts
+index a38e7fc2..dafcc99e 100644
+--- a/apps/desktop/tests/unit/temporary-plans-query.spec.ts
++++ b/apps/desktop/tests/unit/temporary-plans-query.spec.ts
+@@ -3,7 +3,7 @@ import { createTemporaryPlansQuery } from "../../electron/platform/pao/temporary
+ import type { PaoDesktopPlanModule } from "@pi-gui/pi-sdk-driver";
+ 
+ /** fork 侧的返回形状（中文键）：本用例只验桌面桥的收窄与规范化，不读真实磁盘。 */
+-function fakeModule(read: () => unknown): PaoDesktopPlanModule {
++function fakeModule(read: () => Promise<unknown>): PaoDesktopPlanModule {
+   return { readDesktopPlans: read } as unknown as PaoDesktopPlanModule;
+ }
+ 
+@@ -126,7 +126,7 @@ const 一份计划 = {
+ test("计划投影收窄：步骤 ID 稳定、启动关联与意见状态如实、问题一并交出", async () => {
+   const query = createTemporaryPlansQuery({
+     loadModule: async () =>
+-      fakeModule(() => ({
++      fakeModule(async () => ({
+         计划: [一份计划],
+         问题: [{ 路径: "/p/.pao/临时工作流/p-bad/计划.md", 说明: "缺「计划ID」" }],
+       })),
+@@ -189,7 +189,7 @@ test("计划投影收窄：步骤 ID 稳定、启动关联与意见状态如实
+ 
+ test("按稳定计划 ID 过滤：查不到就是「不在当前项目」，不返回空列表冒充还没有计划", async () => {
+   const query = createTemporaryPlansQuery({
+-    loadModule: async () => fakeModule(() => ({ 计划: [一份计划], 问题: [] })),
++    loadModule: async () => fakeModule(async () => ({ 计划: [一份计划], 问题: [] })),
+   });
+   const found = await query.collect("/p", { workspaceId: "ws-a", planId: "p-20261014-abc123" });
+   expect(found.state).toBe("ok");
+@@ -213,7 +213,7 @@ test("读失败落成可展示的失败，不抛到主进程顶层，也不伪
+ test("坏形状显式失败：步骤缺标题不算空计划", async () => {
+   const query = createTemporaryPlansQuery({
+     loadModule: async () =>
+-      fakeModule(() => ({
++      fakeModule(async () => ({
+         计划: [{ ...一份计划, 步骤: [{ 步骤ID: "s1", 部门: "策划部", 要求: "x", 依赖: [] }] }],
+         问题: [],
+       })),
+@@ -226,7 +226,7 @@ test("坏形状显式失败：步骤缺标题不算空计划", async () => {
+ test("坏形状显式失败：产物缺版本依据不静默补默认值", async () => {
+   const query = createTemporaryPlansQuery({
+     loadModule: async () =>
+-      fakeModule(() => ({
++      fakeModule(async () => ({
+         计划: [
+           {
+             ...一份计划,
+@@ -263,7 +263,7 @@ test("坏形状显式失败：产物缺版本依据不静默补默认值", async
+ test("意见版本绑定与流程级意见都投影给界面：空步骤 ID 不连累整份查询", async () => {
+   const query = createTemporaryPlansQuery({
+     loadModule: async () =>
+-      fakeModule(() => ({
++      fakeModule(async () => ({
+         计划: [
+           {
+             ...一份计划,
+diff --git a/packages/pi-sdk-driver/extensions/pao/flow-backend.ts b/packages/pi-sdk-driver/extensions/pao/flow-backend.ts
+index 8bd8b7c4..2007ddf1 100644
+--- a/packages/pi-sdk-driver/extensions/pao/flow-backend.ts
++++ b/packages/pi-sdk-driver/extensions/pao/flow-backend.ts
+@@ -3,7 +3,7 @@ import { defineFacet, type Facet } from "@earendil-works/chord";
+ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+ import {
+   readDesktopEditor,
+-  readDesktopProject,
++  readDesktopProjectFresh,
+   previewDesktopWorkflow,
+   saveDesktopRecipe,
+   startDesktopWorkflow,
+@@ -70,7 +70,7 @@ export function registerFlowDesktop(
+               const id = ctx.sessionManager.getSessionId();
+               return wireValue({
+                 ...readDesktopEditor(id, ctx.cwd),
+-                snapshot: readDesktopProject(ctx.cwd, id),
++                snapshot: await readDesktopProjectFresh(ctx.cwd, id),
+               });
+             },
+             async preview(request, requestContext) {
+diff --git a/packages/pi-sdk-driver/extensions/pao/index.ts b/packages/pi-sdk-driver/extensions/pao/index.ts
+index d1869641..f0b96fd6 100644
+--- a/packages/pi-sdk-driver/extensions/pao/index.ts
++++ b/packages/pi-sdk-driver/extensions/pao/index.ts
+@@ -3,13 +3,13 @@ import { realpathSync } from "node:fs";
+ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+ import {
+   readDesktopExecution,
+-  readDesktopProject,
+-  readDesktopPending,
++  readDesktopProjectFresh,
++  readDesktopPendingFresh,
+   resolvePaoHome,
+   runDesktopMemoryCommand,
+   readDesktopMinisters,
+   readDesktopMinister,
+-  readDesktopFlows,
++  readDesktopFlowsFresh,
+   readDesktopDiff,
+   readDesktopResults,
+   runDesktopFlowCommand,
+@@ -58,8 +58,10 @@ export default function paoDesktop(pi: ExtensionAPI): void {
+           async refresh(requestContext) {
+             requestContext.abortSignal?.throwIfAborted();
+             const ctx = context();
+-            const project = readDesktopProject(ctx.cwd, ctx.sessionManager.getSessionId());
+-            const pending = readDesktopPending(resolvePaoHome(), ctx.cwd);
++            const [project, pending] = await Promise.all([
++              readDesktopProjectFresh(ctx.cwd, ctx.sessionManager.getSessionId()),
++              readDesktopPendingFresh(resolvePaoHome(), ctx.cwd),
++            ]);
+             const result: PaoView = {
+               项目: project,
+               待处理: pending,
+@@ -100,7 +102,7 @@ export default function paoDesktop(pi: ExtensionAPI): void {
+             requestContext.abortSignal?.throwIfAborted();
+             const ctx = context(request);
+             return wireValue(
+-              readDesktopMinister(request.sessionId, ctx.cwd, request.id, request.offset),
++              await readDesktopMinister(request.sessionId, ctx.cwd, request.id, request.offset),
+             );
+           },
+           async diff(request, requestContext) {
+@@ -108,7 +110,7 @@ export default function paoDesktop(pi: ExtensionAPI): void {
+             const ctx = context(request);
+             let baseline: string | undefined;
+             if (request.instance) {
+-              const flow = readDesktopFlows(ctx.cwd).工作流.find(
++              const flow = (await readDesktopFlowsFresh(ctx.cwd)).工作流.find(
+                 (entry) => entry.控制.实例 === request.instance,
+               );
+               const node = flow?.控制.节点.find((entry) => entry.名字 === request.node);
+@@ -141,13 +143,15 @@ export default function paoDesktop(pi: ExtensionAPI): void {
+           async deptDetail(request, requestContext) {
+             requestContext.abortSignal?.throwIfAborted();
+             const ctx = context(request);
+-            return wireValue(readDesktopDeptDetail(request.sessionId, ctx.cwd, request.deptName));
++            return wireValue(
++              await readDesktopDeptDetail(request.sessionId, ctx.cwd, request.deptName),
++            );
+           },
+           async flow(request, requestContext) {
+             requestContext.abortSignal?.throwIfAborted();
+             const ctx = context(request);
+             if (busy) throw new Error("已有动作待返回，请先核对状态，不重复发送");
+-            const flow = readDesktopFlows(ctx.cwd).工作流.find(
++            const flow = (await readDesktopFlowsFresh(ctx.cwd)).工作流.find(
+               (entry) => entry.控制.实例 === request.instance,
+             )?.控制;
+             const node = flow?.节点.find((entry) => entry.名字 === request.node);
+diff --git a/packages/pi-sdk-driver/src/pao-canvas.ts b/packages/pi-sdk-driver/src/pao-canvas.ts
+index fdd08dbb..397ee448 100644
+--- a/packages/pi-sdk-driver/src/pao-canvas.ts
++++ b/packages/pi-sdk-driver/src/pao-canvas.ts
+@@ -103,8 +103,8 @@ export interface PaoCanvasView {
+   readonly 错误?: string;
+ }
+ 
+-/** fork readDesktopCanvas 的纯读签名（同步聚合）。 */
+-export type PaoDesktopCanvasReader = (paoHome: string) => PaoCanvasView;
++/** fork readDesktopCanvasFresh 的纯读签名（读取异步并核对当前内容树）。 */
++export type PaoDesktopCanvasReader = (paoHome: string) => Promise<PaoCanvasView>;
+ 
+ /** fork canvas.ts 的 D8d 回执轮次行（中文键，redact 后直返）。 */
+ export interface PaoNodeReceiptRound {
+@@ -165,10 +165,10 @@ export type PaoDesktopNodeDetailReader = (
+ /** 动态加载 fork 构建产物里的 readDesktopCanvas；加载失败抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopCanvas(): Promise<PaoDesktopCanvasReader> {
+   const module = await loadPaoDesktopModule();
+-  if (typeof module.readDesktopCanvas !== "function") {
+-    throw new Error("PAO 构建产物缺少画布入口 readDesktopCanvas。");
++  if (typeof module.readDesktopCanvasFresh !== "function") {
++    throw new Error("PAO 构建产物缺少画布入口 readDesktopCanvasFresh。");
+   }
+-  return module.readDesktopCanvas as unknown as PaoDesktopCanvasReader;
++  return module.readDesktopCanvasFresh as unknown as PaoDesktopCanvasReader;
+ }
+ 
+ /** 动态加载 D8d 节点详情深读（与 loadPaoDesktopCanvas 同一公开模块）。 */
+@@ -270,7 +270,7 @@ export interface PaoDesktopRuntimeReader {
+   readonly readDesktopProject: (
+     projectRoot: string,
+     sessionId: string,
+-  ) => PaoDesktopProjectSnapshot;
++  ) => Promise<PaoDesktopProjectSnapshot>;
+   readonly readDesktopSessionIncrement: (
+     path: string,
+     offset?: number,
+@@ -280,17 +280,20 @@ export interface PaoDesktopRuntimeReader {
+ /** 动态加载运行态只读桥（与 canvas.js 同属公开 pao/desktop 入口）。 */
+ export async function loadPaoDesktopRuntimeReader(): Promise<PaoDesktopRuntimeReader> {
+   const module = await loadPaoDesktopModule();
+-  const { readDesktopProject, readDesktopSessionIncrement } = module;
++  const { readDesktopProjectFresh, readDesktopSessionIncrement } = module;
+   if (
+-    typeof readDesktopProject !== "function" ||
++    typeof readDesktopProjectFresh !== "function" ||
+     typeof readDesktopSessionIncrement !== "function"
+   ) {
+-    if (typeof readDesktopProject !== "function") {
+-      throw new Error("PAO 构建产物缺少运行态入口 readDesktopProject。");
++    if (typeof readDesktopProjectFresh !== "function") {
++      throw new Error("PAO 构建产物缺少运行态入口 readDesktopProjectFresh。");
+     }
+     throw new Error("PAO 构建产物缺少运行态入口 readDesktopSessionIncrement。");
+   }
+   // 公开类型保留历史最小投影；真实内核函数接受完整卡/执行结构并返回更丰富字段。
+   // 两者已在项目快照和会话增量的真实读取流程中核对，断言只发生在这一加载边界。
+-  return { readDesktopProject, readDesktopSessionIncrement } as unknown as PaoDesktopRuntimeReader;
++  return {
++    readDesktopProject: readDesktopProjectFresh,
++    readDesktopSessionIncrement,
++  } as unknown as PaoDesktopRuntimeReader;
+ }
+diff --git a/packages/pi-sdk-driver/src/pao-dept.ts b/packages/pi-sdk-driver/src/pao-dept.ts
+index ae692fc9..f5cf95a3 100644
+--- a/packages/pi-sdk-driver/src/pao-dept.ts
++++ b/packages/pi-sdk-driver/src/pao-dept.ts
+@@ -182,7 +182,7 @@ export interface PaoDeptDetail {
+   readonly 读取问题: readonly PaoDeptReadIssue[];
+ }
+ 
+-/** fork desktop 桥的部门面纯签名（只读同步）。 */
++/** fork desktop 桥的部门面纯签名（详情异步并核对当前内容树）。 */
+ export interface PaoDesktopDeptModule {
+   readonly readDesktopDeptCatalog: (
+     sessionId: string,
+@@ -194,7 +194,7 @@ export interface PaoDesktopDeptModule {
+     project: string,
+     deptName: string,
+     options?: PaoDeptViewOptions,
+-  ) => PaoDeptDetail;
++  ) => Promise<PaoDeptDetail>;
+ }
+ 
+ /** 动态加载 fork 构建产物里的部门桥；缺函数即抛错，由调用方降级为不可用。 */
+diff --git a/packages/pi-sdk-driver/src/pao-flow-control.ts b/packages/pi-sdk-driver/src/pao-flow-control.ts
+index 8d22ac31..c50c840d 100644
+--- a/packages/pi-sdk-driver/src/pao-flow-control.ts
++++ b/packages/pi-sdk-driver/src/pao-flow-control.ts
+@@ -56,7 +56,7 @@ export interface PaoDesktopFlow {
+   readonly 进度: PaoFlowProgress;
+ }
+ 
+-/** fork readDesktopFlows 的返回；问题行是坏清单，不当空实例。 */
++/** fork readDesktopFlowsFresh 的返回；问题行是坏清单，不当空实例。 */
+ export interface PaoDesktopFlowReadResult {
+   readonly 工作流: readonly PaoDesktopFlow[];
+   readonly 问题: readonly { readonly 路径: string; readonly 说明: string }[];
+@@ -75,9 +75,9 @@ export interface PaoFlowCommandParams {
+   readonly [extra: string]: unknown;
+ }
+ 
+-/** fork desktop 桥的控制面纯签名（读同步、动作异步且带 owner 校验）。 */
++/** fork desktop 桥的控制面纯签名（读取与动作都异步，读取核对当前内容树）。 */
+ export interface PaoDesktopFlowControlModule {
+-  readonly readDesktopFlows: (project: string) => PaoDesktopFlowReadResult;
++  readonly readDesktopFlows: (project: string) => Promise<PaoDesktopFlowReadResult>;
+   readonly runDesktopFlowCommand: (
+     sessionId: string,
+     project: string,
+@@ -89,12 +89,15 @@ export interface PaoDesktopFlowControlModule {
+ /** 动态加载 fork 构建产物里的控制桥；缺函数即抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopFlowControl(): Promise<PaoDesktopFlowControlModule> {
+   const module = await loadPaoDesktopModule();
+-  const { readDesktopFlows, runDesktopFlowCommand } = module;
+-  if (typeof readDesktopFlows !== "function")
+-    throw new Error("PAO 构建产物缺少控制入口 readDesktopFlows。");
++  const { readDesktopFlowsFresh, runDesktopFlowCommand } = module;
++  if (typeof readDesktopFlowsFresh !== "function")
++    throw new Error("PAO 构建产物缺少控制入口 readDesktopFlowsFresh。");
+   if (typeof runDesktopFlowCommand !== "function")
+     throw new Error("PAO 构建产物缺少控制入口 runDesktopFlowCommand。");
+   // 内核入口返回完整 native 类型；公开层仍以历史最小投影声明同一真实函数。
+   // 加载边界只跨越投影差异，函数行为和参数已由真实控制流程测试核实。
+-  return { readDesktopFlows, runDesktopFlowCommand } as unknown as PaoDesktopFlowControlModule;
++  return {
++    readDesktopFlows: readDesktopFlowsFresh,
++    runDesktopFlowCommand,
++  } as unknown as PaoDesktopFlowControlModule;
+ }
+diff --git a/packages/pi-sdk-driver/src/pao-kanban.ts b/packages/pi-sdk-driver/src/pao-kanban.ts
+index a0893b02..da45a76c 100644
+--- a/packages/pi-sdk-driver/src/pao-kanban.ts
++++ b/packages/pi-sdk-driver/src/pao-kanban.ts
+@@ -2,13 +2,13 @@ import type { PaoDesktopSessionIncrement } from "./pao-canvas.js";
+ import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ /** 复用内核卡读取与项目清单聚合；不在桌面重写解析器。 */
+-export type PaoKanbanReader = (paoHome: string, currentProject: string) => unknown;
++export type PaoKanbanReader = (paoHome: string, currentProject: string) => Promise<unknown>;
+ 
+ export async function loadPaoKanbanReader(): Promise<PaoKanbanReader> {
+   const module = await loadPaoDesktopModule();
+-  if (typeof module.readDesktopPending !== "function")
++  if (typeof module.readDesktopPendingFresh !== "function")
+     throw new Error("PAO 构建产物缺少卡聚合入口。");
+-  return module.readDesktopPending;
++  return module.readDesktopPendingFresh;
+ }
+ 
+ export interface PaoWorkboardSessionReader {
+@@ -24,13 +24,16 @@ export interface PaoWorkboardSessionReader {
+     nodeName: string,
+     round: number,
+     offset: number,
+-  ): PaoDesktopSessionIncrement;
++  ): PaoDesktopSessionIncrement | Promise<PaoDesktopSessionIncrement>;
+ }
+ 
+ export async function loadPaoWorkboardSessionReader(): Promise<PaoWorkboardSessionReader> {
+   const module = await loadPaoDesktopModule();
+   const { readDesktopExecution, readDesktopWorkflowMinister } = module;
+-  if (typeof readDesktopExecution !== "function" || typeof readDesktopWorkflowMinister !== "function")
++  if (
++    typeof readDesktopExecution !== "function" ||
++    typeof readDesktopWorkflowMinister !== "function"
++  )
+     throw new Error("PAO 构建产物缺少执行会话读取入口。");
+   return { readDesktopExecution, readDesktopWorkflowMinister };
+ }
+diff --git a/packages/pi-sdk-driver/src/pao-plans.ts b/packages/pi-sdk-driver/src/pao-plans.ts
+index ab26c4ef..a302d021 100644
+--- a/packages/pi-sdk-driver/src/pao-plans.ts
++++ b/packages/pi-sdk-driver/src/pao-plans.ts
+@@ -111,17 +111,17 @@ export interface PaoPlanReadResult {
+   readonly 问题: readonly { readonly 路径: string; readonly 说明: string }[];
+ }
+ 
+-/** fork desktop 桥的计划面纯签名（只读同步）。 */
++/** fork desktop 桥的计划面纯签名（读取异步并核对当前内容树）。 */
+ export interface PaoDesktopPlanModule {
+-  readonly readDesktopPlans: (projectRoot: string) => PaoPlanReadResult;
++  readonly readDesktopPlans: (projectRoot: string) => Promise<PaoPlanReadResult>;
+ }
+ 
+ /** 动态加载 fork 构建产物里的计划桥；缺函数即抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopPlans(): Promise<PaoDesktopPlanModule> {
+   const module = await loadPaoDesktopModule();
+-  if (typeof module.readDesktopPlans !== "function") {
+-    throw new Error("PAO 构建产物缺少计划入口 readDesktopPlans。");
++  if (typeof module.readDesktopPlansFresh !== "function") {
++    throw new Error("PAO 构建产物缺少计划入口 readDesktopPlansFresh。");
+   }
+   // 内核返回完整计划视图；公开层保留历史最小投影。真实计划读取流程已覆盖这些字段。
+-  return { readDesktopPlans: module.readDesktopPlans } as unknown as PaoDesktopPlanModule;
++  return { readDesktopPlans: module.readDesktopPlansFresh } as unknown as PaoDesktopPlanModule;
+ }
+diff --git a/packages/pi-sdk-driver/src/pao-workboard.ts b/packages/pi-sdk-driver/src/pao-workboard.ts
+index 3504bba4..42486d58 100644
+--- a/packages/pi-sdk-driver/src/pao-workboard.ts
++++ b/packages/pi-sdk-driver/src/pao-workboard.ts
+@@ -1,5 +1,5 @@
+ /**
+- * PAO 工作看板只读聚合出口（桌面 P3 首件）：把本地 PAO fork 已有的同步聚合函数
++ * PAO 工作看板只读聚合出口（桌面 P3 首件）：把本地 PAO fork 已有的聚合函数
+  * 收拢成一个加载点，桌面壳一次 IPC 拉取三段数据（部门积压／挂起与异常工作流实例／
+  * 待处理事项），不在桌面层重造解析。
+  *
+@@ -63,16 +63,16 @@ export interface PaoWorkboardAggregates {
+ /** 动态加载公开入口并返回三个只读聚合；加载失败抛错，由调用方降级为不可用。 */
+ export async function loadPaoWorkboardAggregates(): Promise<PaoWorkboardAggregates> {
+   const module = await loadPaoDesktopModule();
+-  const { scanWorkflowInstances, collectPending } = module;
++  const { scanWorkflowInstancesFresh, collectPendingFresh } = module;
+   if (typeof deptBacklogSnapshot !== "function")
+     throw new Error("PAO 构建产物缺少看板入口 deptBacklogSnapshot。");
+-  if (typeof scanWorkflowInstances !== "function")
+-    throw new Error("PAO 构建产物缺少看板入口 scanWorkflowInstances。");
+-  if (typeof collectPending !== "function")
+-    throw new Error("PAO 构建产物缺少看板入口 collectPending。");
++  if (typeof scanWorkflowInstancesFresh !== "function")
++    throw new Error("PAO 构建产物缺少看板入口 scanWorkflowInstancesFresh。");
++  if (typeof collectPendingFresh !== "function")
++    throw new Error("PAO 构建产物缺少看板入口 collectPendingFresh。");
+   return {
+     deptBacklog: async (home) => deptBacklogSnapshot(home),
+-    workflowInstances: async (home) => scanWorkflowInstances(home),
+-    pending: async (home, limits) => collectPending(home, limits),
++    workflowInstances: async (home) => scanWorkflowInstancesFresh(home),
++    pending: async (home, limits) => collectPendingFresh(home, limits),
+   };
+ }
+diff --git a/packages/pi-sdk-driver/test/pao-canvas.test.mts b/packages/pi-sdk-driver/test/pao-canvas.test.mts
+index 264d92c6..415c6c8a 100644
+--- a/packages/pi-sdk-driver/test/pao-canvas.test.mts
++++ b/packages/pi-sdk-driver/test/pao-canvas.test.mts
+@@ -147,7 +147,7 @@ test("加载器取到 fork 构建产物的 readDesktopCanvas", async () => {
+ test("好/坏配方段隔离：坏配方显 RECIPE_CYCLE 错误不拖好配方", async (t) => {
+   const home = setup(t);
+   const readDesktopCanvas = await loadPaoDesktopCanvas();
+-  const view = readDesktopCanvas(home);
++  const view = await readDesktopCanvas(home);
+   assert.equal(view.配方.length, 2);
+   const good = view.配方.find((entry) => entry.名字 === "好流");
+   assert.ok(good && good.可用);
+@@ -163,7 +163,7 @@ test("好/坏配方段隔离：坏配方显 RECIPE_CYCLE 错误不拖好配方",
+ test("实例节点卡状态现读＋坏清单进异常行不拖好实例", async (t) => {
+   const home = setup(t);
+   const readDesktopCanvas = await loadPaoDesktopCanvas();
+-  const view = readDesktopCanvas(home);
++  const view = await readDesktopCanvas(home);
+   assert.equal(view.实例.length, 1);
+   const instance = view.实例[0];
+   assert.equal(instance.状态, "运行中");
+@@ -212,7 +212,7 @@ test("卡缺失如实报读取异常；清单卡号不作数", async (t) => {
+     "utf8",
+   );
+   const readDesktopCanvas = await loadPaoDesktopCanvas();
+-  const view = readDesktopCanvas(home);
++  const view = await readDesktopCanvas(home);
+   const instance = view.实例.find((row) => row.名字 === "幽灵");
+   assert.ok(instance);
+   assert.equal(instance.节点[0].状态, "读取异常");
+diff --git a/packages/pi-sdk-driver/test/pao-plans.test.mts b/packages/pi-sdk-driver/test/pao-plans.test.mts
+index 3beeec90..1a2b1958 100644
+--- a/packages/pi-sdk-driver/test/pao-plans.test.mts
++++ b/packages/pi-sdk-driver/test/pao-plans.test.mts
+@@ -61,14 +61,14 @@ function writePlan(项目根: string, 计划ID: string, extra: string[] = []): v
+ test("没有临时计划目录时是空结果，不是读失败", async () => {
+   const 项目根 = tempDir("pao-plan-bridge-empty-");
+   const bridge = await loadPaoDesktopPlans();
+-  assert.deepEqual(bridge.readDesktopPlans(项目根), { 计划: [], 问题: [] });
++  assert.deepEqual(await bridge.readDesktopPlans(项目根), { 计划: [], 问题: [] });
+ });
+ 
+ test("读到计划定义与步骤摘要：步骤 ID 稳定、人工门与依赖如实、未启动不带关联", async () => {
+   const 项目根 = tempDir("pao-plan-bridge-read-");
+   writePlan(项目根, "p-20261014-abc123");
+   const bridge = await loadPaoDesktopPlans();
+-  const result = bridge.readDesktopPlans(项目根);
++  const result = await bridge.readDesktopPlans(项目根);
+   assert.deepEqual(result.问题, []);
+   assert.equal(result.计划.length, 1);
+   const plan = result.计划[0]!;
+@@ -94,7 +94,7 @@ test("坏定义点名进问题，计划列表不冒充完整", async () => {
+   mkdirSync(坏目录, { recursive: true });
+   writeFileSync(join(坏目录, "计划.md"), "---\n显示名: 缺计划ID\n---\n正文\n", "utf8");
+   const bridge = await loadPaoDesktopPlans();
+-  const result = bridge.readDesktopPlans(项目根);
++  const result = await bridge.readDesktopPlans(项目根);
+   assert.equal(result.计划.length, 1);
+   assert.equal(result.计划[0]!.计划ID, "p-20261014-good01");
+   assert.ok(result.问题.length >= 1);
+diff --git a/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts b/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts
+index 28eba760..ca16669e 100644
+--- a/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts
++++ b/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts
+@@ -79,8 +79,8 @@ test("migrated bridges load real functions from the native public PAO entries",
+   const { tmpdir } = await import("node:os");
+   const home = await fs.mkdtemp(`${tmpdir()}/pao-public-bridge-`);
+   try {
+-    assert.deepEqual(canvas(home).配方, []);
+-    const project = runtime.readDesktopProject(home, "missing-session");
++    assert.deepEqual((await canvas(home)).配方, []);
++    const project = await runtime.readDesktopProject(home, "missing-session");
+     assert.equal(resolve(project.projectRoot), resolve(home));
+     assert.deepEqual(project.cards, []);
+     assert.deepEqual(project.execution, []);
+@@ -89,8 +89,8 @@ test("migrated bridges load real functions from the native public PAO entries",
+     assert.ok(Array.isArray(catalog.recipes));
+     assert.ok(Array.isArray(catalog.departments));
+     assert.ok(Array.isArray(catalog.tiers));
+-    assert.deepEqual(flowControl.readDesktopFlows(home), { 工作流: [], 问题: [] });
+-    assert.deepEqual(plans.readDesktopPlans(home), { 计划: [], 问题: [] });
++    assert.deepEqual(await flowControl.readDesktopFlows(home), { 工作流: [], 问题: [] });
++    assert.deepEqual(await plans.readDesktopPlans(home), { 计划: [], 问题: [] });
+     assert.throws(
+       () => dept.readDesktopDeptCatalog("missing-session", home, { paoHome: home }),
+       /原会话 owner 不可用或已切换/,
+diff --git a/packages/pi-sdk-driver/test/public-contract.compat.mts b/packages/pi-sdk-driver/test/public-contract.compat.mts
+index adcf8a81..4ebaab50 100644
+--- a/packages/pi-sdk-driver/test/public-contract.compat.mts
++++ b/packages/pi-sdk-driver/test/public-contract.compat.mts
+@@ -73,7 +73,7 @@ const canvas: PaoCanvasView = {
+   实例: [],
+   异常: [],
+ };
+-const canvasReader: PaoDesktopCanvasReader = () => canvas;
++const canvasReader: PaoDesktopCanvasReader = async () => canvas;
+ const nodeDetailReader: PaoDesktopNodeDetailReader = (_home, _instance, node) => ({
+   节点: node,
+   实例: "最小实例",
+@@ -90,7 +90,7 @@ const sessionIncrement: PaoDesktopSessionIncrement = {
+   本段统计: { 响应: 0, 工具: 0, token: 0, 未知用量: 0 },
+ };
+ const runtimeReader: PaoDesktopRuntimeReader = {
+-  readDesktopProject: () => ({
++  readDesktopProject: async () => ({
+     projectRoot: ".",
+     cards: [],
+     execution: [],
+@@ -109,7 +109,7 @@ const flow: PaoFlowControlManifest = {
+   节点: [{ 名字: "实现", 轮次: 1 }],
+ };
+ const flowControl: PaoDesktopFlowControlModule = {
+-  readDesktopFlows: () => ({ 工作流: [], 问题: [] }),
++  readDesktopFlows: async () => ({ 工作流: [], 问题: [] }),
+   runDesktopFlowCommand: async () => {},
+ };
+ void flow.owner;
+@@ -202,7 +202,7 @@ const planRead: PaoPlanReadResult = {
+   问题: [],
+ };
+ const plans: PaoDesktopPlanModule = {
+-  readDesktopPlans: () => planRead,
++  readDesktopPlans: async () => planRead,
+ };
+ void plans.readDesktopPlans(".");
+ void planStepProgress;
+@@ -247,7 +247,7 @@ const dept: PaoDesktopDeptModule = {
+     void options;
+     return deptCatalog;
+   },
+-  readDesktopDeptDetail: (_session, _project, _dept, options) => {
++  readDesktopDeptDetail: async (_session, _project, _dept, options) => {
+     void options;
+     return deptDetail;
+   },

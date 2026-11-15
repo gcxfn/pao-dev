@@ -1,0 +1,123 @@
+
+Running 23 tests using 1 worker
+
+  x   1 tests\unit\checkpoint-store.spec.ts:89:5 › captures raw bytes, modes, symlink targets and deletions without changing source Git state (281ms)
+  ok  2 tests\unit\checkpoint-store.spec.ts:148:5 › a queued-input transition shares one capture and pins exact transcript entries on an unborn checkout (1.2s)
+  ok  3 tests\unit\checkpoint-store.spec.ts:200:5 › linked worktree captures preserve the source pointer, per-worktree index and common objects (1.5s)
+  ok  4 tests\unit\checkpoint-store.spec.ts:228:5 › an untracked nested repository is skipped with a coverage note instead of failing capture (939ms)
+  x   5 tests\unit\checkpoint-store.spec.ts:246:5 › private batching handles spaces and newlines in storage roots and source filenames (119ms)
+  ok  6 tests\unit\checkpoint-store.spec.ts:264:5 › marks both overlapping intervals even for different workspace IDs and reports stopped outcomes truthfully (1.2s)
+  ok  7 tests\unit\checkpoint-store.spec.ts:295:5 › relaunch marks unfinished intervals interrupted and a missing or aborted baseline stays unavailable (1.1s)
+  ok  8 tests\unit\checkpoint-store.spec.ts:322:5 › replayed boundaries cannot replace baselines, finalize twice, or repair aborted captures (1.5s)
+  ok  9 tests\unit\checkpoint-store.spec.ts:362:5 › recovery does not promote an older interrupted interval above a newer completed turn (1.3s)
+  ok 10 tests\unit\checkpoint-store.spec.ts:391:5 › size, file-count and cancellation limits cannot produce an apparently complete snapshot (538ms)
+  ok 11 tests\unit\checkpoint-store.spec.ts:416:5 › cancellation during first initialization does not poison subsequent captures (622ms)
+  ok 12 tests\unit\checkpoint-store.spec.ts:427:5 › an interrupted repository initialization does not block a fresh attempt or erase its files (615ms)
+  -  13 tests\unit\checkpoint-store.spec.ts:437:5 › invalid UTF-8 filenames cannot silently disappear from complete captures
+  ok 14 tests\unit\checkpoint-store.spec.ts:448:5 › submodules remain explicitly unavailable (599ms)
+  x  15 tests\unit\checkpoint-store.spec.ts:456:5 › sparse, conflicted and directory-symlink checkouts remain explicitly unavailable (822ms)
+  ok 16 tests\unit\checkpoint-store.spec.ts:488:5 › unknown metadata is rejected without replacement (115ms)
+  ok 17 tests\unit\checkpoint-store.spec.ts:500:5 › a failed metadata read is retried instead of disabling captures until restart (526ms)
+Checkpoint capture metrics: {"durationMs":1799,"fileCount":500,"bytes":53900}
+  ok 18 tests\unit\checkpoint-store.spec.ts:515:5 › reports measured capture cost for a 500-file checkout (2.1s)
+Large checkpoint capture metrics: {"default":{"state":"unavailable","durationMs":2003,"fileCount":2000,"bytes":228900},"extended":{"state":"available","durationMs":5091,"fileCount":2000,"bytes":228900}}
+  ok 19 tests\unit\checkpoint-store.spec.ts:532:5 › reports default and extended capture budgets on a 2,000-file checkout (9.2s)
+  -  20 tests\unit\checkpoint-store.spec.ts:586:5 › a boundary in one checkout does not wait for a slow capture in another checkout
+  x  21 tests\unit\checkpoint-store.spec.ts:631:5 › incremental captures reread only changed files and still see same-size rewrites (4.0s)
+  ok 22 tests\unit\checkpoint-store.spec.ts:693:5 › a checkout too slow for its first boundary builds its inventory in the background (3.1s)
+  ok 23 tests\unit\checkpoint-store.spec.ts:716:5 › retention caps records, deletes unneeded refs and prunes their objects (4.3s)
+
+
+  1) tests\unit\checkpoint-store.spec.ts:89:5 › captures raw bytes, modes, symlink targets and deletions without changing source Git state 
+
+    Error: EPERM: operation not permitted, symlink 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-ndXtng\outside-secret' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-ndXtng\source\external-link'
+
+      112 |   const outside = join(directory, "outside-secret");
+      113 |   await writeFile(outside, "external contents must never enter a snapshot");
+    > 114 |   await symlink(outside, join(workspace, "external-link"));
+          |   ^
+      115 |
+      116 |   const indexBefore = await readFile(join(workspace, ".git", "index"));
+      117 |   const headBefore = await readFile(join(workspace, ".git", "HEAD"));
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\checkpoint-store.spec.ts:114:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\unit-checkpoint-store-capt-820cc-t-changing-source-Git-state\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\unit-checkpoint-store-capt-820cc-t-changing-source-Git-state\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\unit\checkpoint-store.spec.ts:246:5 › private batching handles spaces and newlines in storage roots and source filenames 
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-J0atZ8\source\ source	"quoted"
+    file.txt'
+
+      249 |   const store = new TurnCheckpointStore(userData, { timeoutMs: 10_000 });
+      250 |   const path = ' source\t"quoted"\nfile.txt';
+    > 251 |   await writeFile(join(workspace, path), "raw content\r\n");
+          |   ^
+      252 |   const capture = await store.capture(workspace);
+      253 |   available(capture);
+      254 |   expect(await git(store.repositoryPath, ["show", `${capture.treeOid}:${path}`])).toEqual(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\checkpoint-store.spec.ts:251:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\unit-checkpoint-store-priv-7c8c1--roots-and-source-filenames\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\unit-checkpoint-store-priv-7c8c1--roots-and-source-filenames\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests\unit\checkpoint-store.spec.ts:456:5 › sparse, conflicted and directory-symlink checkouts remain explicitly unavailable 
+
+    Error: EPERM: operation not permitted, symlink 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-UzkWwy\outside' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-UzkWwy\source\nested'
+
+      479 |   await git(workspace, ["add", "nested/file.txt"]);
+      480 |   await rename(join(workspace, "nested"), join(directory, "outside"));
+    > 481 |   await symlink(join(directory, "outside"), join(workspace, "nested"));
+          |   ^
+      482 |   expect(await store.capture(workspace)).toMatchObject({
+      483 |     state: "unavailable",
+      484 |     code: "unsafe-symlink",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\checkpoint-store.spec.ts:481:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\unit-checkpoint-store-spar-75e61-main-explicitly-unavailable\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\unit-checkpoint-store-spar-75e61-main-explicitly-unavailable\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests\unit\checkpoint-store.spec.ts:631:5 › incremental captures reread only changed files and still see same-size rewrites 
+
+    Error: EPERM: operation not permitted, symlink 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-tqHSvK\moved-nested' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-checkpoint-tqHSvK\source\nested'
+
+      684 |   // A tracked directory replaced by a symlink is refused even though its file is unchanged.
+      685 |   await rename(join(workspace, "nested"), join(workspace, "..", "moved-nested"));
+    > 686 |   await symlink(join(workspace, "..", "moved-nested"), join(workspace, "nested"));
+          |   ^
+      687 |   expect(await store.capture(workspace)).toMatchObject({
+      688 |     state: "unavailable",
+      689 |     code: "unsafe-symlink",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\checkpoint-store.spec.ts:686:3
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\unit-checkpoint-store-incr-f08af-till-see-same-size-rewrites\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\unit-checkpoint-store-incr-f08af-till-see-same-size-rewrites\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests\unit\checkpoint-store.spec.ts:89:5 › captures raw bytes, modes, symlink targets and deletions without changing source Git state 
+    tests\unit\checkpoint-store.spec.ts:246:5 › private batching handles spaces and newlines in storage roots and source filenames 
+    tests\unit\checkpoint-store.spec.ts:456:5 › sparse, conflicted and directory-symlink checkouts remain explicitly unavailable 
+    tests\unit\checkpoint-store.spec.ts:631:5 › incremental captures reread only changed files and still see same-size rewrites 
+  2 skipped
+  17 passed (40.5s)
+CKPT_EXIT=1

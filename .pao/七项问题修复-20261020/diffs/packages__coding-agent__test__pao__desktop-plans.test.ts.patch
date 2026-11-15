@@ -1,0 +1,76 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\desktop-plans.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\desktop-plans.test.ts"
+index 933b684..2887529 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\desktop-plans.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\desktop-plans.test.ts"
+@@ -1,11 +1,11 @@
+-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+-import { changeCardStatus, createCard, loadCard, parseCardRef } from "../../src/pao/cards/index.ts";
+ import { formatCardNumber } from "../../src/pao/cards/counter.ts";
++import { changeCardStatus, createCard, loadCard, parseCardRef } from "../../src/pao/cards/index.ts";
+ import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+-import { readDesktopPlans, stepProgress } from "../../src/pao/desktop/plans.ts";
++import { artifactOf, readDesktopPlans, stepProgress } from "../../src/pao/desktop/plans.ts";
+ import { readDesktopFlows } from "../../src/pao/desktop/workflow.ts";
+ import { addNodeCards, bindMinister, type FlowControl } from "../../src/pao/workflow/control.ts";
+ import { startWorkflow } from "../../src/pao/workflow/driver.ts";
+@@ -342,6 +342,56 @@ describe("步骤真实产物投影（阶段 5 第 4 项：产物点击来自真
+ 		expect(progress[0]!.产出).toEqual([]);
+ 	});
+ 
++	it("产物判定以项目根和目标双侧真实路径为准：根为链接不误拒，根内链接一律拒绝", () => {
++		const base = tempDir();
++		const project = join(base, "project");
++		const projectLink = join(base, "project-link");
++		const outside = join(base, "outside");
++		mkdirSync(join(project, "成果"), { recursive: true });
++		mkdirSync(outside);
++		writeFileSync(join(project, "成果", "内部.md"), "# 内部\n");
++		writeFileSync(join(outside, "外部.md"), "# 外部\n");
++		const linkType = process.platform === "win32" ? "junction" : "dir";
++		symlinkSync(project, projectLink, linkType);
++		symlinkSync(join(project, "成果"), join(project, "内部链接"), linkType);
++		symlinkSync(outside, join(project, "外部链接"), linkType);
++
++		const linkedRootArtifact = artifactOf(projectLink, "成果/内部.md", 1, "卡0001", true);
++		expect(linkedRootArtifact.存在).toBe(true);
++		expect(linkedRootArtifact.说明).toBeUndefined();
++		expect(linkedRootArtifact.相对路径).toBe("成果/内部.md");
++
++		const canonicalTargetArtifact = artifactOf(
++			projectLink,
++			join(realpathSync(project), "成果", "内部.md"),
++			1,
++			"卡0001",
++			true,
++		);
++		expect(canonicalTargetArtifact.存在).toBe(true);
++		expect(canonicalTargetArtifact.说明).toBeUndefined();
++
++		const internalLinkArtifact = artifactOf(project, "内部链接/内部.md", 1, "卡0001", true);
++		expect(internalLinkArtifact.存在).toBe(false);
++		expect(internalLinkArtifact.说明).toContain("项目内链接");
++
++		const externalLinkArtifact = artifactOf(project, "外部链接/外部.md", 1, "卡0001", true);
++		expect(externalLinkArtifact.存在).toBe(false);
++		expect(externalLinkArtifact.说明).toContain("真实路径越出项目");
++		expect(realpathSync(projectLink)).toBe(realpathSync(project));
++		expect(realpathSync(join(project, "外部链接", "外部.md"))).toBe(realpathSync(join(outside, "外部.md")));
++	});
++
++	it("产物为目录时明确报 EISDIR", () => {
++		const project = tempDir();
++		mkdirSync(join(project, "成果"), { recursive: true });
++
++		const artifact = artifactOf(project, "成果", 1, "卡0001", true);
++
++		expect(artifact.存在).toBe(false);
++		expect(artifact.说明).toBe("目标是目录（EISDIR）");
++	});
++
+ 	it("卡读不出来时记进读取问题，不当作「没有产物」静默略过", async () => {
+ 		const base = tempDir();
+ 		const 工作区 = join(base, "项目");

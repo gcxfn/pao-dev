@@ -1,0 +1,51 @@
+
+Running 19 tests using 1 worker
+
+  ok  1 apps\desktop\tests\unit\pao-home.spec.ts:14:5 › paoHome round-trips through ui-state (15ms)
+  ok  2 apps\desktop\tests\unit\pao-home.spec.ts:29:5 › empty paoHome is not persisted and falls back to undefined (5ms)
+  ok  3 apps\desktop\tests\unit\pao-home.spec.ts:40:7 › rejects invalid ui-state paoHome {"paoHome":42} and retains the file (16ms)
+  ok  4 apps\desktop\tests\unit\pao-home.spec.ts:40:7 › rejects invalid ui-state paoHome {"paoHome":["D:\\PAO"]} and retains the file (4ms)
+  ok  5 apps\desktop\tests\unit\pao-home.spec.ts:40:7 › rejects invalid ui-state paoHome {"paoHome":{"path":"D:\\PAO"}} and retains the file (6ms)
+  ok  6 apps\desktop\tests\unit\pao-home.spec.ts:55:5 › ui-state with an unknown paoHome-adjacent field is rejected (9ms)
+  ok  7 apps\desktop\tests\unit\pao-home.spec.ts:63:5 › a configured paoHome fills the missing environment variable (1ms)
+  ok  8 apps\desktop\tests\unit\pao-home.spec.ts:73:5 › an existing PAO_HOME environment variable wins over the setting (1ms)
+  ok  9 apps\desktop\tests\unit\pao-home.spec.ts:83:5 › no setting and no environment variable injects nothing (1ms)
+  ok 10 apps\desktop\tests\unit\pao-home.spec.ts:100:5 › saving a new paoHome replaces the value this session injected (0ms)
+  ok 11 apps\desktop\tests\unit\pao-home.spec.ts:110:5 › clearing the setting removes the value this session injected (0ms)
+  ok 12 apps\desktop\tests\unit\pao-home.spec.ts:120:5 › portable fallback survives empty settings and yields to an explicit config (1ms)
+  ok 13 apps\desktop\tests\unit\pao-home.spec.ts:142:5 › an environment variable that appears after injection is left alone (0ms)
+  ok 14 apps\desktop\tests\unit\pao-home.spec.ts:154:5 › portable home resolves when a marker directory sits beside the exe (1ms)
+  ok 15 apps\desktop\tests\unit\pao-home.spec.ts:162:5 › a fresh installation defaults to data without requiring existing markers (1ms)
+  ok 16 apps\desktop\tests\unit\pao-home.spec.ts:169:5 › an empty data directory does not hide a legacy home (1ms)
+  ok 17 apps\desktop\tests\unit\pao-home.spec.ts:174:5 › clearing a custom setting restores the packaged default (1ms)
+  x  18 apps\desktop\tests\unit\pao-home.spec.ts:185:5 › applyPortablePaoHome injects only when packaged and unconfigured (4ms)
+  ok 19 apps\desktop\tests\unit\pao-home.spec.ts:210:5 › portable launcher data survives extraction directory changes and setting changes (8ms)
+
+
+  1) apps\desktop\tests\unit\pao-home.spec.ts:185:5 › applyPortablePaoHome injects only when packaged and unconfigured 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"D:\\install-pao"[39m
+    Received: [31m"D:\\install-pao[7m\\data[27m"[39m
+
+      199 |         dirExists: (dir) => dir.endsWith("部门"),
+      200 |       });
+    > 201 |       if (scenario.expectInjected) expect(process.env.PAO_HOME).toBe("D:\\install-pao");
+          |                                                                 ^
+      202 |       else expect(process.env.PAO_HOME).toBe(scenario.env ?? undefined);
+      203 |     }
+      204 |   } finally {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\pao-home.spec.ts:201:65
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-pao-home-applyPortabl-27f62-n-packaged-and-unconfigured\trace.zip
+    Usage:
+
+        npx playwright show-trace apps\desktop\test-results\unit-pao-home-applyPortabl-27f62-n-packaged-and-unconfigured\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\pao-home.spec.ts:185:5 › applyPortablePaoHome injects only when packaged and unconfigured 
+  18 passed (2.5s)

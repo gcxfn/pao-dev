@@ -1,0 +1,1072 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "id": "I09",
+    "path": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\fixtures\\memory\\scenarios\\I09.json",
+    "input": {
+      "id": "I09",
+      "description": "关闭重启后回读原文",
+      "sessions": [
+        {
+          "sessionId": "sess-j",
+          "messages": [
+            {
+              "role": "user",
+              "content": "记忆库的并发策略？",
+              "timestamp": "2026-11-08T20:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "WAL 模式：单写多读，写不阻塞读。",
+              "timestamp": "2026-11-08T20:00:05Z"
+            },
+            {
+              "role": "user",
+              "content": "就用 WAL。",
+              "timestamp": "2026-11-08T20:01:00Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "记忆库使用 WAL 模式",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement"
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "并发策略",
+              "mustContain": [
+                "mem-wal"
+              ],
+              "mustNotContain": []
+            }
+          ]
+        },
+        {
+          "sessionId": "sess-j-restart",
+          "messages": [
+            {
+              "role": "user",
+              "content": "刚才定的并发策略是什么？",
+              "timestamp": "2026-11-09T09:00:00Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "记忆库使用 WAL 模式",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement"
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "并发策略",
+              "mustContain": [
+                "mem-wal"
+              ],
+              "mustNotContain": []
+            },
+            {
+              "query": "readMemorySource src-sess-j-001",
+              "mustContain": [
+                "就用 WAL"
+              ],
+              "mustNotContain": []
+            }
+          ]
+        }
+      ],
+      "expectedFinalState": {
+        "memories": [
+          {
+            "id": "mem-wal",
+            "kind": "decision",
+            "conclusion": "记忆库使用 WAL 模式",
+            "confirmation": "confirmed",
+            "usageState": "active"
+          }
+        ],
+        "sources": [
+          {
+            "sourceId": "src-sess-j-001",
+            "sessionId": "sess-j",
+            "entryId": "entry-003",
+            "readable": true
+          }
+        ]
+      }
+    }
+  },
+  "mode": "real",
+  "status": "real_evidence_collected",
+  "acceptance": {
+    "realAcceptanceClaimed": false,
+    "eligibleForS4Review": true,
+    "reason": "本轮收集真实入口证据；是否通过由 S4-17 主对话判定"
+  },
+  "runRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109",
+  "workRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz",
+  "inputs": {
+    "authPath": "C:\\Users\\ASUS\\.pi\\agent\\auth.json",
+    "modelsPath": "C:\\Users\\ASUS\\.pi\\agent\\models.json",
+    "tierConfigSource": "options.tierConfig",
+    "executeReal": true,
+    "processEnvIsolation": {
+      "embeddingEnv": "disabled_for_run",
+      "envFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\embedding-disabled.env",
+      "outboundConfig": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\outbound-disabled.json",
+      "restoredAfterRun": true
+    }
+  },
+  "network": {
+    "modelRequests": 1,
+    "cloudEmbeddingRequests": 0,
+    "localFailureEndpointRequests": 0,
+    "cloudEmbeddingBasis": "EMBED_* 与 .env 在 adapter 运行期间隔离"
+  },
+  "scenarioEvidence": {
+    "inputSourceAlias": "src-sess-j-001",
+    "actualSource": {
+      "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+      "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+      "logicalSessionId": "sess-j",
+      "entryId": "083c2a3e",
+      "segment": {
+        "segment_id": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+        "original_path": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\home\\memory\\archives\\01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\\seg-a1f429f0-6592-409a-8370-1669d2f68fc7.jsonl",
+        "compressed_path": null,
+        "status": "sealed"
+      },
+      "journalMode": "wal"
+    },
+    "aliases": {
+      "memory": {
+        "expected": "mem-wal",
+        "actual": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb"
+      },
+      "source": {
+        "expected": "src-sess-j-001",
+        "actual": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user"
+      },
+      "writtenToDatabase": false
+    },
+    "extractions": [
+      {
+        "job": {
+          "created": {
+            "jobId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969",
+            "sourceScope": "{\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"sourceIds\":[\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user\",\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\",\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\"]}",
+            "scopeKey": "session:01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+            "status": "pending",
+            "attemptCount": 0,
+            "createdAt": "2026-11-09T15:48:42.759Z",
+            "updatedAt": "2026-11-09T15:48:42.759Z"
+          },
+          "claim": {
+            "job": {
+              "jobId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969",
+              "sourceScope": "{\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"sourceIds\":[\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user\",\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\",\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\"]}",
+              "scopeKey": "session:01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+              "status": "running",
+              "attemptCount": 1,
+              "ownerProcess": "boundary-adapter:37392",
+              "createdAt": "2026-11-09T15:48:42.759Z",
+              "updatedAt": "2026-11-09T15:48:42.760Z"
+            },
+            "attemptId": "att-0d50e631-75fd-488f-98df-63ca278c49a1"
+          }
+        },
+        "request": {
+          "input": {
+            "jobId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969",
+            "sourceSessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+            "entries": [
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user",
+                "entryId": "6000c656",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"6000c656\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.750Z\",\"capturedAt\":\"2026-11-09T15:48:42.752Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆库的并发策略？\",\"timestamp\":1794168000000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+              },
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "entryId": "485d57f1",
+                "eventType": "assistant",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+              },
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+              }
+            ],
+            "signal": {}
+          },
+          "output": {
+            "ok": true,
+            "requestId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969:extract:ed3c3752-1d70-43e5-a5f9-288b6ae1b53d",
+            "candidates": [
+              {
+                "kind": "decision",
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed",
+                "sourceIds": [
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                    "text": "就用 WAL。"
+                  },
+                  {
+                    "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                    "text": "WAL 模式：单写多读，写不阻塞读。"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                    "match": "exact",
+                    "offset": 235
+                  },
+                  {
+                    "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                    "match": "exact",
+                    "offset": 268
+                  }
+                ]
+              }
+            ],
+            "rejected": [],
+            "usage": {
+              "input": 1558,
+              "output": 424,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 126,
+              "totalTokens": 1982,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            }
+          },
+          "modelRequests": [
+            {
+              "requestIndex": 1,
+              "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+              "callerSessionId": "unknown",
+              "startedAt": "2026-11-09T15:48:42.761Z",
+              "observerLatencyMs": 13104.7461,
+              "model": {
+                "provider": "magpie",
+                "id": "group/deepseek"
+              },
+              "requestContext": {
+                "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user entryId=6000c656 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"6000c656\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.750Z\",\"capturedAt\":\"2026-11-09T15:48:42.752Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆库的并发策略？\",\"timestamp\":1794168000000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant entryId=485d57f1 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user entryId=083c2a3e eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n\n请输出候选 JSON 数组。",
+                    "timestamp": 1794239322761
+                  }
+                ]
+              },
+              "payload": {
+                "status": "observed",
+                "raw": {
+                  "model": "group/deepseek",
+                  "messages": [
+                    {
+                      "role": "developer",
+                      "content": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。"
+                    },
+                    {
+                      "role": "user",
+                      "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user entryId=6000c656 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"6000c656\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.750Z\",\"capturedAt\":\"2026-11-09T15:48:42.752Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆库的并发策略？\",\"timestamp\":1794168000000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant entryId=485d57f1 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n--- 条目 sourceId=src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user entryId=083c2a3e eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}\n\n请输出候选 JSON 数组。"
+                    }
+                  ],
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "store": false,
+                  "max_completion_tokens": 4096,
+                  "reasoning_effort": "low"
+                },
+                "error": "unknown"
+              },
+              "response": {
+                "status": 200,
+                "raw": {
+                  "status": 200,
+                  "headers": {
+                    "content-type": "text/event-stream; charset=utf-8",
+                    "date": "Mon, 09 Nov 2026 15:48:53 GMT",
+                    "transfer-encoding": "chunked",
+                    "x-magpie-model": "opencode-go/deepseek-v4.1-flash",
+                    "x-magpie-provider": "opencode-go"
+                  }
+                },
+                "headers": {
+                  "content-type": "text/event-stream; charset=utf-8",
+                  "date": "Mon, 09 Nov 2026 15:48:53 GMT",
+                  "transfer-encoding": "chunked",
+                  "x-magpie-model": "opencode-go/deepseek-v4.1-flash",
+                  "x-magpie-provider": "opencode-go"
+                },
+                "requestId": "unknown",
+                "rawHTTPBody": "unavailable_public_surface",
+                "error": "unknown"
+              },
+              "output": {
+                "status": "observed",
+                "rawAssistantMessage": {
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "thinking",
+                      "thinking": "用户明确说\"就用 WAL\"，这是 confirmed decision。证据来源：src-...-083c2a3e-user。也可以引用 assistant 说明 WAL 特性（execution? 其实是 model_inference/陈述，非执行）。decision 证据用 user_statement confirmed。\n\n另外一条 experience：WAL 模式单写多读，写不阻塞读——由 assistant 陈述，evidenceKind=model_inference？它是回答，不是执行。可作为 decision 的 rationale 而不是单独候选。我就提炼一条 decision，rationale 记 WAL 单写多读写不阻塞读。",
+                      "thinkingSignature": "reasoning_content"
+                    },
+                    {
+                      "type": "text",
+                      "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"记忆库的并发策略采用 WAL 模式。\",\n    \"conditions\": \"适用于记忆库的 SQLite 存储并发访问场景\",\n    \"rationale\": \"WAL 模式为单写多读，写操作不阻塞读操作。\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\", \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\", \"text\": \"就用 WAL。\"},\n      {\"sourceId\": \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\", \"text\": \"WAL 模式：单写多读，写不阻塞读。\"}\n    ]\n  }\n]\n```"
+                    }
+                  ],
+                  "api": "openai-completions",
+                  "provider": "magpie",
+                  "model": "group/deepseek",
+                  "usage": {
+                    "input": 1558,
+                    "output": 424,
+                    "cacheRead": 0,
+                    "cacheWrite": 0,
+                    "reasoning": 126,
+                    "totalTokens": 1982,
+                    "cost": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "total": 0
+                    }
+                  },
+                  "stopReason": "stop",
+                  "timestamp": 1794239322843,
+                  "responseId": "chatcmpl-202611091548524697311188268d9d6OYHOOsVK",
+                  "rawStopReason": "stop"
+                },
+                "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"记忆库的并发策略采用 WAL 模式。\",\n    \"conditions\": \"适用于记忆库的 SQLite 存储并发访问场景\",\n    \"rationale\": \"WAL 模式为单写多读，写操作不阻塞读操作。\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\", \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user\", \"text\": \"就用 WAL。\"},\n      {\"sourceId\": \"src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant\", \"text\": \"WAL 模式：单写多读，写不阻塞读。\"}\n    ]\n  }\n]\n```",
+                "provider": "magpie",
+                "model": "group/deepseek",
+                "responseModel": "unknown",
+                "responseId": "chatcmpl-202611091548524697311188268d9d6OYHOOsVK",
+                "stopReason": "stop",
+                "errorMessage": "unknown",
+                "usage": {
+                  "input": 1558,
+                  "output": 424,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "cacheWrite1h": "unknown",
+                  "reasoning": 126,
+                  "totalTokens": 1982,
+                  "cost": {
+                    "input": "unknown",
+                    "output": "unknown",
+                    "cacheRead": "unknown",
+                    "cacheWrite": "unknown",
+                    "total": "unknown"
+                  },
+                  "costBasis": "unknown",
+                  "costSource": "unknown"
+                }
+              },
+              "iteratorEvents": [],
+              "failure": "unknown"
+            }
+          ],
+          "mockModelRecords": [],
+          "ledgerEntries": [
+            {
+              "type": "custom",
+              "customType": "pao-memory-extraction-attempt",
+              "data": {
+                "requestId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969:extract:ed3c3752-1d70-43e5-a5f9-288b6ae1b53d",
+                "jobId": "job-409fa1f3-6de0-47ce-8689-f8ceb828a969",
+                "sourceSessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryCount": 3
+              },
+              "id": "7cc66810",
+              "parentId": null,
+              "timestamp": "2026-11-09T15:48:42.760Z"
+            },
+            {
+              "type": "usage",
+              "id": "c564edef",
+              "parentId": "7cc66810",
+              "timestamp": "2026-11-09T15:48:55.866Z",
+              "kind": "memory_extraction",
+              "provider": "magpie",
+              "model": "group/deepseek",
+              "usage": {
+                "input": 1558,
+                "output": 424,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 126,
+                "totalTokens": 1982,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "note": "jobId=job-409fa1f3-6de0-47ce-8689-f8ceb828a969 sourceSessionId=01a1c0ff-5a7c-740e-a84a-457bd08fc6c1 requestId=job-409fa1f3-6de0-47ce-8689-f8ceb828a969:extract:ed3c3752-1d70-43e5-a5f9-288b6ae1b53d"
+            }
+          ],
+          "usage": {
+            "mode": "real_model_request",
+            "raw": {
+              "input": 1558,
+              "output": 424,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 126,
+              "totalTokens": 1982,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "normalized": {
+              "input": 1558,
+              "output": 424,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "cacheWrite1h": "unknown",
+              "reasoning": 126,
+              "totalTokens": 1982,
+              "cost": {
+                "input": "unknown",
+                "output": "unknown",
+                "cacheRead": "unknown",
+                "cacheWrite": "unknown",
+                "total": "unknown"
+              },
+              "costBasis": "unknown",
+              "costSource": "unknown"
+            },
+            "costBasis": "unknown",
+            "costSource": "unknown",
+            "zeroIsRealCost": false
+          },
+          "latencyMs": 13112.419
+        },
+        "commit": {
+          "output": {
+            "outcomes": [
+              {
+                "status": "submitted",
+                "candidateIndex": 0,
+                "memoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+                "revision": 1
+              }
+            ],
+            "submitted": 1,
+            "duplicates": 0,
+            "flagged": 0,
+            "skipped": 0,
+            "rejected": 0
+          },
+          "latencyMs": 11.039
+        },
+        "entries": {
+          "entries": [
+            {
+              "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-6000c656-user",
+              "entryId": "6000c656",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"6000c656\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.750Z\",\"capturedAt\":\"2026-11-09T15:48:42.752Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆库的并发策略？\",\"timestamp\":1794168000000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+            },
+            {
+              "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+              "entryId": "485d57f1",
+              "eventType": "assistant",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"485d57f1\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.755Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"WAL 模式：单写多读，写不阻塞读。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794168005000}}\n{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+            },
+            {
+              "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+              "entryId": "083c2a3e",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}"
+            }
+          ],
+          "skipped": []
+        },
+        "actualMemoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+        "memory": {
+          "ok": true,
+          "memory": {
+            "id": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+            "kind": "decision",
+            "scope": {
+              "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+              "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+              "branch": "main",
+              "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+            },
+            "currentRevision": 1,
+            "content": {
+              "conclusion": "记忆库的并发策略采用 WAL 模式。",
+              "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+              "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+              "evidenceKind": "user_statement",
+              "confirmation": "confirmed"
+            },
+            "usageState": "active",
+            "createdAt": "2026-11-09T15:48:55.873Z",
+            "updatedAt": "2026-11-09T15:48:55.873Z"
+          },
+          "revisions": [
+            {
+              "revision": 1,
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "sourceIds": [
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant"
+              ],
+              "createdAt": "2026-11-09T15:48:55.873Z",
+              "createdBy": "model"
+            }
+          ],
+          "sourceSummaries": [
+            {
+              "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+              "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+              "entryId": "485d57f1",
+              "eventType": "assistant",
+              "capturedAt": "2026-11-09T15:48:42.755Z",
+              "readable": true
+            },
+            {
+              "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+              "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+              "entryId": "083c2a3e",
+              "eventType": "user",
+              "capturedAt": "2026-11-09T15:48:42.757Z",
+              "readable": true
+            }
+          ],
+          "supersessionChain": [
+            {
+              "revision": 1
+            }
+          ]
+        },
+        "status": "committed",
+        "latencyMs": 13132.959
+      }
+    ],
+    "seal": {
+      "ok": true,
+      "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+      "outcome": "uncompressed"
+    },
+    "hostClose": {
+      "sessions": [
+        {
+          "actualSessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+          "status": "flushed"
+        },
+        {
+          "actualSessionId": "01a1c0ff-8dd3-740e-a84a-457cd5687496",
+          "status": "flushed"
+        }
+      ],
+      "service": "closed",
+      "store": "closed",
+      "modelRuntime": {
+        "status": "unavailable_public_surface",
+        "error": "unknown"
+      },
+      "ledger": "flushed"
+    },
+    "childRead": {
+      "sealed": {
+        "spec": {
+          "home": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\home",
+          "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+          "memoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+          "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+          "entryId": "083c2a3e",
+          "expectedText": "就用 WAL"
+        },
+        "result": {
+          "ok": true,
+          "pid": 38712,
+          "parentPid": 37392,
+          "latencyMs": 20.167,
+          "read": {
+            "ok": true,
+            "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+            "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+            "entryId": "083c2a3e",
+            "eventType": "user",
+            "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}",
+            "metadata": {
+              "source": {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "location": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7#3",
+                "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+                "capturedAt": "2026-11-09T15:48:42.757Z"
+              },
+              "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+              "lineNo": 3,
+              "startLine": 3,
+              "endLine": 3,
+              "eventCount": 1,
+              "events": [
+                {
+                  "entryId": "083c2a3e",
+                  "eventType": "user",
+                  "entryType": "message",
+                  "timestamp": "2026-11-09T15:48:42.751Z",
+                  "capturedAt": "2026-11-09T15:48:42.757Z"
+                }
+              ]
+            },
+            "archived": false,
+            "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+            "hasMore": false,
+            "startLine": 3,
+            "endLine": 3
+          },
+          "memory": {
+            "ok": true,
+            "memory": {
+              "id": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+              },
+              "currentRevision": 1,
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "createdAt": "2026-11-09T15:48:55.873Z",
+              "updatedAt": "2026-11-09T15:48:55.873Z"
+            },
+            "revisions": [
+              {
+                "revision": 1,
+                "content": {
+                  "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                  "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                  "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                  "evidenceKind": "user_statement",
+                  "confirmation": "confirmed"
+                },
+                "sourceIds": [
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant"
+                ],
+                "createdAt": "2026-11-09T15:48:55.873Z",
+                "createdBy": "model"
+              }
+            ],
+            "sourceSummaries": [
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "485d57f1",
+                "eventType": "assistant",
+                "capturedAt": "2026-11-09T15:48:42.755Z",
+                "readable": true
+              },
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "capturedAt": "2026-11-09T15:48:42.757Z",
+                "readable": true
+              }
+            ],
+            "supersessionChain": [
+              {
+                "revision": 1
+              }
+            ]
+          },
+          "identityMatches": true,
+          "contentMatches": true
+        },
+        "stderr": ""
+      },
+      "missing": {
+        "spec": {
+          "home": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\home",
+          "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+          "memoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+          "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+          "entryId": "083c2a3e",
+          "expectedText": "就用 WAL"
+        },
+        "result": {
+          "ok": false,
+          "pid": 21200,
+          "parentPid": 37392,
+          "latencyMs": 4.306,
+          "read": {
+            "ok": false,
+            "error": {
+              "code": "source_missing",
+              "message": "段文件缺失:D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\home\\memory\\archives\\01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\\seg-a1f429f0-6592-409a-8370-1669d2f68fc7.jsonl",
+              "refId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user"
+            }
+          },
+          "memory": {
+            "ok": true,
+            "memory": {
+              "id": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+              },
+              "currentRevision": 1,
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "createdAt": "2026-11-09T15:48:55.873Z",
+              "updatedAt": "2026-11-09T15:48:55.873Z"
+            },
+            "revisions": [
+              {
+                "revision": 1,
+                "content": {
+                  "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                  "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                  "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                  "evidenceKind": "user_statement",
+                  "confirmation": "confirmed"
+                },
+                "sourceIds": [
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant"
+                ],
+                "createdAt": "2026-11-09T15:48:55.873Z",
+                "createdBy": "model"
+              }
+            ],
+            "sourceSummaries": [
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "485d57f1",
+                "eventType": "assistant",
+                "capturedAt": "2026-11-09T15:48:42.755Z",
+                "readable": true
+              },
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "capturedAt": "2026-11-09T15:48:42.757Z",
+                "readable": true
+              }
+            ],
+            "supersessionChain": [
+              {
+                "revision": 1
+              }
+            ]
+          },
+          "identityMatches": false,
+          "contentMatches": false,
+          "error": {
+            "code": "source_missing",
+            "message": "段文件缺失:D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\home\\memory\\archives\\01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\\seg-a1f429f0-6592-409a-8370-1669d2f68fc7.jsonl",
+            "refId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user"
+          }
+        },
+        "stderr": ""
+      }
+    },
+    "searches": [
+      {
+        "query": "并发策略",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+          "sessionId": "01a1c0ff-8dd3-740e-a84a-457cd5687496",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 22.797
+      },
+      {
+        "query": "WAL",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+          "sessionId": "01a1c0ff-8dd3-740e-a84a-457cd5687496",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 10.694
+      }
+    ],
+    "sourceActions": [
+      {
+        "action": "readMemorySource",
+        "requestedAlias": "src-sess-j-001",
+        "actualSourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+        "result": {
+          "ok": true,
+          "pid": 38712,
+          "parentPid": 37392,
+          "latencyMs": 20.167,
+          "read": {
+            "ok": true,
+            "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+            "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+            "entryId": "083c2a3e",
+            "eventType": "user",
+            "content": "{\"v\":1,\"sessionId\":\"01a1c0ff-5a7c-740e-a84a-457bd08fc6c1\",\"entryId\":\"083c2a3e\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:48:42.751Z\",\"capturedAt\":\"2026-11-09T15:48:42.757Z\",\"content\":{\"role\":\"user\",\"content\":\"就用 WAL。\",\"timestamp\":1794168060000}}",
+            "metadata": {
+              "source": {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "location": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7#3",
+                "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+                "capturedAt": "2026-11-09T15:48:42.757Z"
+              },
+              "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+              "lineNo": 3,
+              "startLine": 3,
+              "endLine": 3,
+              "eventCount": 1,
+              "events": [
+                {
+                  "entryId": "083c2a3e",
+                  "eventType": "user",
+                  "entryType": "message",
+                  "timestamp": "2026-11-09T15:48:42.751Z",
+                  "capturedAt": "2026-11-09T15:48:42.757Z"
+                }
+              ]
+            },
+            "archived": false,
+            "segmentId": "seg-a1f429f0-6592-409a-8370-1669d2f68fc7",
+            "hasMore": false,
+            "startLine": 3,
+            "endLine": 3
+          },
+          "memory": {
+            "ok": true,
+            "memory": {
+              "id": "mem-ed9cd771-f6fd-4735-9c5f-df695f3eaafb",
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i09-20261109\\i09-1794239322252-evrpwz\\projects\\pao-dev",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\projects\\pao-dev"
+              },
+              "currentRevision": 1,
+              "content": {
+                "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "createdAt": "2026-11-09T15:48:55.873Z",
+              "updatedAt": "2026-11-09T15:48:55.873Z"
+            },
+            "revisions": [
+              {
+                "revision": 1,
+                "content": {
+                  "conclusion": "记忆库的并发策略采用 WAL 模式。",
+                  "conditions": "适用于记忆库的 SQLite 存储并发访问场景",
+                  "rationale": "WAL 模式为单写多读，写操作不阻塞读操作。",
+                  "evidenceKind": "user_statement",
+                  "confirmation": "confirmed"
+                },
+                "sourceIds": [
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                  "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant"
+                ],
+                "createdAt": "2026-11-09T15:48:55.873Z",
+                "createdBy": "model"
+              }
+            ],
+            "sourceSummaries": [
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-485d57f1-assistant",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "485d57f1",
+                "eventType": "assistant",
+                "capturedAt": "2026-11-09T15:48:42.755Z",
+                "readable": true
+              },
+              {
+                "sourceId": "src-01a1c0ff-5a7c-740e-a84a-457bd08fc6c1-083c2a3e-user",
+                "sessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+                "entryId": "083c2a3e",
+                "eventType": "user",
+                "capturedAt": "2026-11-09T15:48:42.757Z",
+                "readable": true
+              }
+            ],
+            "supersessionChain": [
+              {
+                "revision": 1
+              }
+            ]
+          },
+          "identityMatches": true,
+          "contentMatches": true
+        }
+      }
+    ],
+    "observations": {
+      "sourceReadAfterRestart": true,
+      "missingArchiveAccurate": true,
+      "expectedSearchRan": true,
+      "semanticUnavailableRecorded": true,
+      "restartSearchFindsMemory": true,
+      "sourceActionNotSearch": true
+    }
+  },
+  "cleanup": {
+    "sessions": [
+      {
+        "actualSessionId": "01a1c0ff-5a7c-740e-a84a-457bd08fc6c1",
+        "status": "flushed"
+      },
+      {
+        "actualSessionId": "01a1c0ff-8dd3-740e-a84a-457cd5687496",
+        "status": "flushed"
+      }
+    ],
+    "service": "closed",
+    "store": "closed",
+    "modelRuntime": {
+      "status": "unavailable_public_surface",
+      "error": "unknown"
+    },
+    "ledger": "flushed"
+  },
+  "error": "unknown",
+  "evidencePath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I09-20261109\\I09-1794239322252-EvrpWz\\boundary-result.json"
+}

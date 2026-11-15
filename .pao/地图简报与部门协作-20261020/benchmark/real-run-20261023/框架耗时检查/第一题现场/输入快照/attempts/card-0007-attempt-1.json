@@ -1,0 +1,76 @@
+{
+	"schemaVersion": 1,
+	"kind": "dispatch-input-snapshot",
+	"cardsDir": "/app/.pao/benchmark/卡",
+	"card": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardPath": "/app/.pao/benchmark/卡/卡0007-独立审核appfilter.py是否满足.md",
+		"cardNo": 7,
+		"attempt": 1,
+		"owner": "主控",
+		"sourceHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b"
+	},
+	"execution": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardNo": 7,
+		"attempt": 1,
+		"projectRoot": "/app",
+		"repositoryRoot": "/app",
+		"executionRoot": "/app",
+		"commonGitDir": "/app/.git",
+		"versionControl": "git",
+		"baseHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b",
+		"baseTreeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"inputVersion": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"bindingDigest": "sha256:b8bca25f69037306eb624854a6dd04b428d51b20cffb7a2947c297e76349067a"
+	},
+	"cardDefinition": {
+		"goal": "独立审核 /app/filter.py 是否满足公开任务要求，把逐项判定写入 /app/.pao/benchmark/审核报告.md。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。",
+		"dept": "审核",
+		"inputs": [
+			"/app/filter.py",
+			"/app/.pao/benchmark/规划地图.md",
+			"/app/.pao/benchmark/侦察地图.md"
+		],
+		"constraints": "独立审核，不修改 /app/filter.py 与 app 项目内其他业务文件；测试夹具只能建在 /tmp 下；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；不把自测当官方验收。\n\n必须逐项核查（每项给真实命令+输出+判定）：\n1. 命令行接口：python3 /app/filter.py <file> 能工作；无参/多参退出码 2；不存在路径退出码 1；文件是否被误改。\n2. 就地修改：运行后原路径内容被替换，且不产生 .bak/临时文件（运行前后 ls 目录比对）。\n3. 彻底性：自造夹具覆盖 <script>（内联、外链 src、type=text/template、大写 SCRIPT、svg/math/template/noscript 内）、on* 事件属性（含大小写混合 ONLOAD）、javascript: 与 vbscript: 与 data:text/html 载荷（含实体编码双层、前导空格/控制字符、混合大小写）、style 内 expression()/javascript:、<style> 危险声明、meta http-equiv=refresh、srcdoc、注释内脚本。清洗后断言无残留。\n4. 保留性：同一夹具中非危险内容必须保留：表格、标题、列表、表单、class/id/style 等普通属性、实体、无害注释、文本空白。给出清洗前后对照。\n5. 格式保持：对不含危险内容的普通 HTML，运行后与输入的差异是否仅限解析规范化（逐行 diff，逐条解释是否属 bs4 解析必然产物）。\n6. 幂等性：对输出再跑一次，字节级完全不变（cmp）。\n7. 健壮性：空文件、仅空白、无 DOCTYPE 片段、深层嵌套、GBK 编码、带 BOM、非 HTML 文本，均不得崩溃且行为可解释。\n8. 只用已安装的包：检查 import 列表，确认无未安装依赖。\n9. 用 py_compile 确认语法正确。\n\n报告须设「判定」总表与「未验证」段；缺陷须给最小复现命令、期望与实际输出，并标严重级别（阻断/一般）。",
+		"acceptance": "1. 存在:/app/.pao/benchmark/审核报告.md\n2. 包含:/app/.pao/benchmark/审核报告.md :: 判定\n3. 包含:/app/.pao/benchmark/审核报告.md :: 未验证\n4. 报告对每条需求给出通过/不通过判定并附 file:line 或测试命令与真实输出；不通过的必须给出可复现的输入与期望/实际",
+		"depends_on": [],
+		"tier": "primary",
+		"budget": {
+			"toolCalls": 200,
+			"turns": 150
+		},
+		"priority": "high",
+		"created": "2026-10-23 05:06",
+		"definitionDigest": "sha256:631939f91eef513be669cf4654cae5a65f16c9f3904030d2f88c4b974094cb3f"
+	},
+	"briefMarkdown": "# 卡0007 执行简报\n\n## 任务目标\n独立审核 /app/filter.py 是否满足公开任务要求，把逐项判定写入 /app/.pao/benchmark/审核报告.md。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。\n\n- 部门：审核\n- owner：主控\n- 卡与尝试：/app/.pao/benchmark/卡/卡0007-独立审核appfilter.py是否满足.md，尝试 1\n- 执行根：/app\n- 仓库根：/app\n\n## 范围与限制\n独立审核，不修改 /app/filter.py 与 app 项目内其他业务文件；测试夹具只能建在 /tmp 下；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；不把自测当官方验收。\n\n必须逐项核查（每项给真实命令+输出+判定）：\n1. 命令行接口：python3 /app/filter.py <file> 能工作；无参/多参退出码 2；不存在路径退出码 1；文件是否被误改。\n2. 就地修改：运行后原路径内容被替换，且不产生 .bak/临时文件（运行前后 ls 目录比对）。\n3. 彻底性：自造夹具覆盖 <script>（内联、外链 src、type=text/template、大写 SCRIPT、svg/math/template/noscript 内）、on* 事件属性（含大小写混合 ONLOAD）、javascript: 与 vbscript: 与 data:text/html 载荷（含实体编码双层、前导空格/控制字符、混合大小写）、style 内 expression()/javascript:、<style> 危险声明、meta http-equiv=refresh、srcdoc、注释内脚本。清洗后断言无残留。\n4. 保留性：同一夹具中非危险内容必须保留：表格、标题、列表、表单、class/id/style 等普通属性、实体、无害注释、文本空白。给出清洗前后对照。\n5. 格式保持：对不含危险内容的普通 HTML，运行后与输入的差异是否仅限解析规范化（逐行 diff，逐条解释是否属 bs4 解析必然产物）。\n6. 幂等性：对输出再跑一次，字节级完全不变（cmp）。\n7. 健壮性：空文件、仅空白、无 DOCTYPE 片段、深层嵌套、GBK 编码、带 BOM、非 HTML 文本，均不得崩溃且行为可解释。\n8. 只用已安装的包：检查 import 列表，确认无未安装依赖。\n9. 用 py_compile 确认语法正确。\n\n报告须设「判定」总表与「未验证」段；缺陷须给最小复现命令、期望与实际输出，并标严重级别（阻断/一般）。\n输入入口：`/app/filter.py`、`/app/.pao/benchmark/规划地图.md`、`/app/.pao/benchmark/侦察地图.md`\n\n## 已确认事实\n- 卡面给出的目标、范围和验收视为已确认；地图未贡献额外事实。\n\n## 未知与待复核\n- 未列出的行为只能通过目标任务内定点核查确认，不能猜为事实。\n\n## 按任务目的装配\n- 执行者携带本卡目标、范围、验收和必要事实，并允许读取目标代码及直接调用点核验。\n- 不得遍历整个目录，也不得把未知项当作既定事实。\n\n## 上游必要结论\n- 本卡没有声明已保存的上游简报。\n\n## 相关地图\n- 本卡没有声明结构化地图；以下按卡面任务和证据入口开工。\n\n- 本卡没有声明外部接口契约。\n\n## 前置成果\n- 本卡没有声明前置成果。\n\n## 验收\n- 卡面验收原文：1. 存在:/app/.pao/benchmark/审核报告.md\n2. 包含:/app/.pao/benchmark/审核报告.md :: 判定\n3. 包含:/app/.pao/benchmark/审核报告.md :: 未验证\n4. 报告对每条需求给出通过/不通过判定并附 file:line 或测试命令与真实输出；不通过的必须给出可复现的输入与期望/实际\n- 执行者逐项给出 pass/fail/not_run 与证据；程序仍按机械验收规则复核。\n\n## 风险\n- 地图未另列风险；仍按卡面限制和未知项核查。\n\n## 证据入口\n- [input] `/app/filter.py`；任务输入或证据入口\n- [input] `/app/.pao/benchmark/规划地图.md`；任务输入或证据入口\n- [input] `/app/.pao/benchmark/侦察地图.md`；任务输入或证据入口\n\n## 整合责任\n由 owner 按任务卡和并行计划指定；worker 不自行整合其他任务成果。\n\n## 输入有效性\n- 启动前仍须由程序重核地图、契约和执行身份。\n",
+	"brief": {
+		"ref": "pao-brief://brief-card-0007-attempt-1?digest=sha256%3A2ea7a04ea8067d47d351b4491b9123977947ca969b9949f4e47946cb4fcf2106",
+		"digest": "sha256:2ea7a04ea8067d47d351b4491b9123977947ca969b9949f4e47946cb4fcf2106"
+	},
+	"evidence": [
+		{
+			"kind": "input",
+			"path": "/app/filter.py",
+			"ref": "/app/filter.py",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "input",
+			"path": "/app/.pao/benchmark/规划地图.md",
+			"ref": "/app/.pao/benchmark/规划地图.md",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "input",
+			"path": "/app/.pao/benchmark/侦察地图.md",
+			"ref": "/app/.pao/benchmark/侦察地图.md",
+			"purpose": "任务输入或证据入口"
+		}
+	],
+	"contracts": [],
+	"warnings": [],
+	"frozenAt": "2026-10-23T05:06:08.583Z",
+	"snapshotDigest": "sha256:5f53bb881a541723bf55855e213b14f9f0bf44d668a376c702f25cd935051bed"
+}

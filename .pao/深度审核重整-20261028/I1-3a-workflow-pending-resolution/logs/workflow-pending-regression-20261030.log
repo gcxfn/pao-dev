@@ -1,0 +1,149 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts (9 tests | 6 failed) 44077ms
+     × 同一 instance/node/round/card/attempt 生成稳定 key，并写入真实控制正本 5013ms
+     × 同 key 重复只保留同一暂停事实，不叠加 flow.暂停 或审计项 5017ms
+     × 新无人值守实例的普通请求走主控，即使冻结配方禁止主控裁定 5005ms
+     × 旧有人值守实例保持原通道：未授权走人工，授权且 owner 在场走主控 5004ms
+     × 旧 attempt、旧节点轮次和已启动下游后的迟到请求均在落盘前拒绝 5006ms
+     × 另一节点的新请求不能覆盖已有待决 5005ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 同一 instance/node/round/card/attempt 生成稳定 key，并写入真实控制正本
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:184:2
+    182|
+    183| describe("I1-2 结构化待决与普通裁定路由", () => {
+    184|  it("同一 instance/node/round/card/attempt 生成稳定 key，并写入真实控制正本", async ()…
+       |  ^
+    185|   const s = scenario();
+    186|   const { identity, ref, card } = await cardAtAttemptOne(s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 同 key 重复只保留同一暂停事实，不叠加 flow.暂停 或审计项
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:206:2
+    204|  });
+    205|
+    206|  it("同 key 重复只保留同一暂停事实，不叠加 flow.暂停 或审计项", async () => {
+       |  ^
+    207|   const s = scenario();
+    208|   const { identity, ref, card } = await cardAtAttemptOne(s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 新无人值守实例的普通请求走主控，即使冻结配方禁止主控裁定
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:225:2
+    223|  });
+    224|
+    225|  it("新无人值守实例的普通请求走主控，即使冻结配方禁止主控裁定", async () => {
+       |  ^
+    226|   const s = scenario({ runMode: "unattended", allowMainRuling: false }…
+    227|   await startControl(s.recipe, {}, s.options);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 旧有人值守实例保持原通道：未授权走人工，授权且 owner 在场走主控
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:280:2
+    278|  });
+    279|
+    280|  it("旧有人值守实例保持原通道：未授权走人工，授权且 owner 在场走主控", async () => {
+       |  ^
+    281|   const manual = scenario({ allowMainRuling: false });
+    282|   await startControl(manual.recipe, {}, manual.options);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 旧 attempt、旧节点轮次和已启动下游后的迟到请求均在落盘前拒绝
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:294:2
+    292|  });
+    293|
+    294|  it("旧 attempt、旧节点轮次和已启动下游后的迟到请求均在落盘前拒绝", async () => {
+       |  ^
+    295|   const attemptCase = scenario();
+    296|   const { identity, ref, card } = await cardAtAttemptOne(attemptCase);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending.test.ts > I1-2 结构化待决与普通裁定路由 > 另一节点的新请求不能覆盖已有待决
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/workflow-pending.test.ts:328:2
+    326|  });
+    327|
+    328|  it("另一节点的新请求不能覆盖已有待决", async () => {
+       |  ^
+    329|   const s = scenario({
+    330|    allowMainRuling: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 5 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, stat 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-4iMN1m\project\.pao\工作流实例-待决样例-4iMN1m.md.lock'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ECOMPROMISED', syscall: 'stat', path: 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-4iMN1m\project\.pao\工作流实例-待决样例-4iMN1m.md.lock' }
+This error originated in "packages/coding-agent/test/pao/workflow-pending.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "同 key 重复只保留同一暂停事实，不叠加 flow.暂停 或审计项". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, stat 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-kdxlT6\project\.pao\工作流实例-待决样例-kdxlT6.md.lock'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ECOMPROMISED', syscall: 'stat', path: 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-kdxlT6\project\.pao\工作流实例-待决样例-kdxlT6.md.lock' }
+This error originated in "packages/coding-agent/test/pao/workflow-pending.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "新无人值守实例的普通请求走主控，即使冻结配方禁止主控裁定". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, stat 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-6glGU5\project\.pao\工作流实例-待决样例-6glGU5.md.lock'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ECOMPROMISED', syscall: 'stat', path: 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-6glGU5\project\.pao\工作流实例-待决样例-6glGU5.md.lock' }
+This error originated in "packages/coding-agent/test/pao/workflow-pending.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "明确人工确认门仍走人工；无人值守在启动前拒绝含人工门的配方". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, stat 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-NkrMfA\project\.pao\工作流实例-待决样例-NkrMfA.md.lock'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ECOMPROMISED', syscall: 'stat', path: 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-NkrMfA\project\.pao\工作流实例-待决样例-NkrMfA.md.lock' }
+This error originated in "packages/coding-agent/test/pao/workflow-pending.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "另一节点的新请求不能覆盖已有待决". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, stat 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-jdTEKJ\project\.pao\工作流实例-待决样例-jdTEKJ.md.lock'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ECOMPROMISED', syscall: 'stat', path: 'D:\AI\workspace\pao-dev\.pao\深度审核重整-20261028\I1-3a-workflow-pending-resolution\pao-workflow-pending-jdTEKJ\project\.pao\工作流实例-待决样例-jdTEKJ.md.lock' }
+This error originated in "packages/coding-agent/test/pao/workflow-pending.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "query 与报告从结构化待决读取同一 key，不从暂停文案反解析". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+     Errors  5 errors
+   Start at  01:40:00
+   Duration  45.90s (transform 1.20s, setup 0ms, import 1.66s, tests 44.08s, environment 0ms)
+

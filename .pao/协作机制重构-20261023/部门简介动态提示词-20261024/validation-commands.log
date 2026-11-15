@@ -1,0 +1,20 @@
+部门简介动态提示词：验证命令与已观察结果（最终轮）
+1. 修改文件格式检查：PASS（退出码 0）
+   .\node_modules\.bin\biome.CMD check packages/coding-agent/src/pao/dept/catalog.ts packages/coding-agent/src/pao/dept/render.ts packages/coding-agent/src/pao/dept/index.ts packages/coding-agent/test/pao/dept-tools.test.ts
+   工作目录：PAO；输出：Checked 4 files，No fixes applied。
+2. dept 定向测试：PASS（退出码 0；4 个测试文件，58 项）
+   npx vitest --run test/pao/dept-tools.test.ts test/pao/dept-catalog.test.ts test/pao/dept-recipe.test.ts test/pao/loadout-role.test.ts
+   工作目录：PAO\packages\coding-agent。
+   测试运行时使用任务目录 test-pao-home 下的独立 PAO_HOME，afterEach 清理其子目录。
+3. 生产包类型检查：PASS（退出码 0；types-build.log 为空）
+   ..\..\node_modules\.bin\tsc.CMD --noEmit --pretty false -p tsconfig.build.json
+   工作目录：PAO\packages\coding-agent。
+4. 仓库根整体类型检查：FAIL（退出码 1；types-root.log，90 行 error TS）
+   ..\node_modules\.bin\tsc.CMD --noEmit --pretty false -p tsconfig.json
+   已检查该日志不含本次 dept/catalog.ts、dept/render.ts、dept/index.ts 或 dept-tools.test.ts 的报错。
+   失败点来自既有 f-novel-loop.test.ts、runtime-shutdown-window.test.ts、workflow-auto-chain.test.ts，以及 desktop 的多条 CommonJS/verbatimModuleSyntax 配置错误。
+未验证：未在正式 PAO_HOME、真实模型端点、桌面应用或 r11 运行中验证。未触发任何模型请求、Docker、全库测试或重新评分。
+5. baseline 校验：PASS（6 个保存文件的 SHA256 与 baseline-sha256.txt 全部一致）
+6. 修改差异空白检查：PASS（git diff --check，退出码 0）
+7. 文件可读性检查：PASS（4 个修改文件均可读取，无嵌入 NUL 字节）
+8. 路径边界检查：PASS（增量未新增 process.cwd()、用户主目录、正式 PAO_HOME 或 r11 路径；测试已从 tmpdir 改用任务目录隔离现场）

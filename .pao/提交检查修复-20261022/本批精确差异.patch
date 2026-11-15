@@ -1,0 +1,1809 @@
+--- before/packages/coding-agent/test/windows-script-encoding.test.ts
++++ after/packages/coding-agent/test/windows-script-encoding.test.ts
+@@ -5,6 +5,7 @@
+ import { afterEach, describe, expect, it } from "vitest";
+ import { createEditToolDefinition } from "../src/core/tools/edit.ts";
+ import { createWriteToolDefinition, type WriteOperations } from "../src/core/tools/write.ts";
++import { createTestExtensionToolContext } from "./extension-tool-context.ts";
+ 
+ const roots: string[] = [];
+ 
+@@ -19,14 +20,26 @@
+ }
+ 
+ async function write(path: string, content: string, root: string): Promise<void> {
+-	await createWriteToolDefinition(root).execute("write-test", { path, content });
++	await createWriteToolDefinition(root).execute(
++		"write-test",
++		{ path, content },
++		undefined,
++		undefined,
++		await createTestExtensionToolContext(root),
++	);
+ }
+ 
+ async function edit(path: string, root: string): Promise<string> {
+-	await createEditToolDefinition(root).execute("edit-test", {
+-		path,
+-		edits: [{ oldText: "Write-Output '旧'", newText: "Write-Output '新'" }],
+-	});
++	await createEditToolDefinition(root).execute(
++		"edit-test",
++		{
++			path,
++			edits: [{ oldText: "Write-Output '旧'", newText: "Write-Output '新'" }],
++		},
++		undefined,
++		undefined,
++		await createTestExtensionToolContext(root),
++	);
+ 	return readFileSync(join(root, path), "utf8");
+ }
+ 
+@@ -67,10 +80,13 @@
+ 				calls.push({ path, content });
+ 			},
+ 		};
+-		await createWriteToolDefinition(root, { operations }).execute("custom-write", {
+-			path: "远端.ps1",
+-			content: "Write-Output '原样'",
+-		});
++		await createWriteToolDefinition(root, { operations }).execute(
++			"custom-write",
++			{ path: "远端.ps1", content: "Write-Output '原样'" },
++			undefined,
++			undefined,
++			await createTestExtensionToolContext(root),
++		);
+ 		expect(calls).toEqual([{ path: join(root, "远端.ps1"), content: "Write-Output '原样'" }]);
+ 	});
+ 
+--- before/packages/coding-agent/src/pao/cards/integration.ts
++++ after/packages/coding-agent/src/pao/cards/integration.ts
+@@ -12,7 +12,6 @@
+ import { PaoCardError } from "./errors.ts";
+ import { type ExecutionKey, type ResolvedExecutionContext, resolveExecutionContext } from "./execution-context.ts";
+ import { CardProcessStopUnconfirmedError, runCardProcess } from "./process.ts";
+-import type { ParsedCard } from "./types.ts";
+ 
+ /**
+  * 受管整合工作树的最小接纳入口。
+@@ -235,28 +234,6 @@
+ 	};
+ }
+ 
+-function sameSource(left: IntegrationRecord["source"], right: IntegrationRecord["source"]): boolean {
+-	return (
+-		samePath(left.cardsDir, right.cardsDir) &&
+-		left.cardNo === right.cardNo &&
+-		left.attempt === right.attempt &&
+-		left.bindingDigest === right.bindingDigest &&
+-		left.snapshotDigest === right.snapshotDigest
+-	);
+-}
+-
+-function sameTarget(left: IntegrationRecord["target"], right: IntegrationRecord["target"]): boolean {
+-	return (
+-		samePath(left.projectRoot, right.projectRoot) &&
+-		samePath(left.executionRoot, right.executionRoot) &&
+-		samePath(left.repositoryRoot, right.repositoryRoot) &&
+-		left.bindingDigest === right.bindingDigest &&
+-		left.worktreeBindingDigest === right.worktreeBindingDigest &&
+-		left.baseHead === right.baseHead &&
+-		left.baseTree === right.baseTree
+-	);
+-}
+-
+ function normalizedChecks(checks: readonly string[] | undefined): string[] {
+ 	return (checks ?? []).map((command) => command.trim()).filter(Boolean);
+ }
+@@ -324,7 +301,6 @@
+ 		throw new PaoCardError("INVALID_CARD", "整合目标内容在快照期间发生变化，拒绝使用不稳定证据");
+ 	}
+ 	const contentTree = captured.tree;
+-	const status = captured.status;
+ 	if (!OBJECT_ID_PATTERN.test(head) || !OBJECT_ID_PATTERN.test(headTree) || !OBJECT_ID_PATTERN.test(contentTree)) {
+ 		throw new PaoCardError("INVALID_CARD", "整合目标 HEAD/tree 不是 Git 对象", { head, headTree, contentTree });
+ 	}
+--- before/packages/coding-agent/src/pao/dept/catalog.ts
++++ after/packages/coding-agent/src/pao/dept/catalog.ts
+@@ -310,7 +310,6 @@
+ 
+ /** 按派发核心的次序解析默认档位（卡面缺省时:配方→档位.json 部门默认→主力） */
+ function resolveDefaultTier(
+-	paoHome: string,
+ 	deptName: string,
+ 	recipeTier: string | undefined,
+ 	deptDefaults: Record<string, string> | undefined,
+@@ -405,7 +404,7 @@
+ 	}
+ 
+ 	const tierRaw = recipeField(recipe, "默认档位")?.split(/[（(]/)[0].trim();
+-	entry.默认档位 = resolveDefaultTier(paoHome, row.名字, tierRaw, deptDefaults, config);
++	entry.默认档位 = resolveDefaultTier(row.名字, tierRaw, deptDefaults, config);
+ 
+ 	const standards = recipeField(recipe, "部门标准");
+ 	if (standards) entry.标准 = splitStandardNames(standards).map((raw) => resolveStandard(paoHome, raw));
+--- before/packages/coding-agent/src/pao/dispatch-brief/tool.ts
++++ after/packages/coding-agent/src/pao/dispatch-brief/tool.ts
+@@ -1,7 +1,7 @@
+ import { join, resolve } from "node:path";
+ import { Type } from "typebox";
+ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+-import { findCardFile, loadCard, readCard } from "../cards/cardfile.ts";
++import { findCardFile } from "../cards/cardfile.ts";
+ import {
+ 	appendCardInputReference,
+ 	readDispatchContractContent,
+@@ -13,7 +13,7 @@
+ import { findDispatchReferenceImpact, formatDispatchReferenceImpact } from "./impact.ts";
+ import { commitDispatchReconResult } from "./recon.ts";
+ import { DISPATCH_RECON_CATEGORIES } from "./recon-artifact.ts";
+-import type { DispatchBriefRequirements, DispatchCardWriteExpectation, DispatchReferenceImpact } from "./types.ts";
++import type { DispatchCardWriteExpectation, DispatchReferenceImpact } from "./types.ts";
+ import { captureDispatchMap } from "./workspace.ts";
+ 
+ export interface DispatchBriefToolOptions {
+--- before/packages/coding-agent/src/pao/dispatch-brief/workspace.ts
++++ after/packages/coding-agent/src/pao/dispatch-brief/workspace.ts
+@@ -142,7 +142,7 @@
+ 	let working: Buffer | undefined;
+ 	try {
+ 		if (existsSync(absolute) && statSync(absolute).isFile()) working = readFileSync(absolute);
+-	} catch (error) {
++	} catch {
+ 		throw new DispatchBriefError("missing_input", `地图文件读取失败：${path}`, { path });
+ 	}
+ 	const head = git(root, ["show", `HEAD:${path}`], true);
+--- before/packages/coding-agent/src/pao/status/context-recovery.ts
++++ after/packages/coding-agent/src/pao/status/context-recovery.ts
+@@ -24,11 +24,10 @@
+ 
+ import { projectRootForCards, scanCards } from "../cards/cardfile.ts";
+ import { formatCardNumber, parseCardRef } from "../cards/counter.ts";
+-import type { ParsedCard, Receipt } from "../cards/types.ts";
++import type { Receipt } from "../cards/types.ts";
+ import { listProjects } from "../dept/projects.ts";
+ import type { TodoItem } from "../todo/core.ts";
+ import { STALE_REMINDER_THRESHOLD, TODO_REMINDER_MARKER } from "../todo/core.ts";
+-import { controlView, readControl } from "../workflow/control.ts";
+ import {
+ 	listPlanHistory,
+ 	listTemporaryPlans,
+@@ -453,7 +452,7 @@
+ 	// 复用 queryTemporaryPlan 的启动面（同一个读法，不另写一遍扫描）
+ 	try {
+ 		return queryTemporaryPlan(项目根, 计划ID).启动;
+-	} catch (error) {
++	} catch {
+ 		// 定义坏时不阻断调用方拿问题清单
+ 		return [];
+ 	}
+--- before/packages/coding-agent/src/pao/worker/lock.ts
++++ after/packages/coding-agent/src/pao/worker/lock.ts
+@@ -1,5 +1,5 @@
+ import { createHash } from "node:crypto";
+-import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+ import { mkdir, readFile, realpath, rm, rmdir, writeFile } from "node:fs/promises";
+ import * as path from "node:path";
+ 
+--- before/packages/coding-agent/test/pao/card-process-stop.test.ts
++++ after/packages/coding-agent/test/pao/card-process-stop.test.ts
+@@ -1,4 +1,4 @@
+-import { type ChildProcess, execFile, execFileSync } from "node:child_process";
++import { type ChildProcess, type ExecFileOptions, execFile, execFileSync } from "node:child_process";
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+@@ -9,6 +9,7 @@
+ import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+ import { refreshShadowSandbox, verifyCard } from "../../src/pao/cards/verifier.ts";
+ import { killTree } from "../../src/utils/kill-tree.ts";
++import { withTestCleanup } from "../with-test-cleanup.ts";
+ 
+ /**
+  * 停止链健壮性（S1-2 包1）钉住测试：
+@@ -26,6 +27,8 @@
+ vi.mock("../../src/utils/kill-tree.ts", () => ({ killTree: vi.fn() }));
+ const execFileMock = vi.mocked(execFile);
+ const killTreeMock = vi.mocked(killTree);
++
++type TestExecFileCallback = NonNullable<Parameters<typeof execFile>[3]>;
+ 
+ const tempDirs: string[] = [];
+ 
+@@ -155,37 +158,27 @@
+ 			].join("\n"),
+ 		);
+ 		const operation = runCardProcess(process.execPath, [childScript], root, 30000);
+-		try {
+-			const pids = await new Promise<{ parent: number; child: number }>((resolve, reject) => {
+-				const deadline = Date.now() + 10000;
+-				const interval = setInterval(() => {
+-					if (existsSync(pidFile)) {
+-						clearInterval(interval);
+-						resolve(JSON.parse(readFileSync(pidFile, "utf8")) as { parent: number; child: number });
+-					} else if (Date.now() > deadline) {
+-						clearInterval(interval);
+-						reject(new Error("输出超限父子进程未就绪"));
+-					}
+-				}, 10);
+-			});
+-			await expect(operation).rejects.toBeInstanceOf(CardProcessStopUnconfirmedError);
+-			await expect(operation).rejects.toMatchObject({
+-				cause: stopError,
+-				message: expect.stringContaining("日志不完整"),
+-			});
+-			expect(() => process.kill(pids.parent, 0)).toThrow();
+-			expect(() => process.kill(pids.child, 0)).not.toThrow();
+-			for (const pid of [pids.child, pids.parent]) {
+-				try {
+-					process.kill(pid);
+-				} catch (error) {
+-					if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+-				}
+-			}
+-		} finally {
+-			await operation.catch(() => {});
+-			if (existsSync(pidFile)) {
+-				const pids = JSON.parse(readFileSync(pidFile, "utf8")) as { parent: number; child: number };
++		await withTestCleanup(
++			async () => {
++				const pids = await new Promise<{ parent: number; child: number }>((resolve, reject) => {
++					const deadline = Date.now() + 10000;
++					const interval = setInterval(() => {
++						if (existsSync(pidFile)) {
++							clearInterval(interval);
++							resolve(JSON.parse(readFileSync(pidFile, "utf8")) as { parent: number; child: number });
++						} else if (Date.now() > deadline) {
++							clearInterval(interval);
++							reject(new Error("输出超限父子进程未就绪"));
++						}
++					}, 10);
++				});
++				await expect(operation).rejects.toBeInstanceOf(CardProcessStopUnconfirmedError);
++				await expect(operation).rejects.toMatchObject({
++					cause: stopError,
++					message: expect.stringContaining("日志不完整"),
++				});
++				expect(() => process.kill(pids.parent, 0)).toThrow();
++				expect(() => process.kill(pids.child, 0)).not.toThrow();
+ 				for (const pid of [pids.child, pids.parent]) {
+ 					try {
+ 						process.kill(pid);
+@@ -193,19 +186,39 @@
+ 						if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+ 					}
+ 				}
+-			}
+-		}
++			},
++			async () => {
++				await operation.catch(() => {});
++				if (existsSync(pidFile)) {
++					const pids = JSON.parse(readFileSync(pidFile, "utf8")) as { parent: number; child: number };
++					for (const pid of [pids.child, pids.parent]) {
++						try {
++							process.kill(pid);
++						} catch (error) {
++							if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++						}
++					}
++				}
++			},
++		);
+ 	}, 40000);
+ 
+ 	it("原生 maxBuffer 先于主动采集触发时，父进程已死也拒绝而不是普通 code=1", async () => {
+ 		const maxBufferError = Object.assign(new Error("原生 maxBuffer 先触发"), {
+ 			code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
+ 		});
+-		execFileMock.mockImplementationOnce(((_cmd, _args, _options, callback) => {
+-			const child = fakeChild(43001);
+-			queueMicrotask(() => callback(maxBufferError, Buffer.alloc(0), Buffer.alloc(0)));
+-			return child;
+-		}) as unknown as typeof execFile);
++		execFileMock.mockImplementationOnce(
++			(
++				_cmd: string,
++				_args: readonly string[] | undefined | null,
++				_options: ExecFileOptions | undefined | null,
++				callback: TestExecFileCallback | undefined | null,
++			) => {
++				const child = fakeChild(43001);
++				queueMicrotask(() => callback?.(maxBufferError, Buffer.alloc(0), Buffer.alloc(0)));
++				return child;
++			},
++		);
+ 
+ 		const operation = runCardProcess("fake-native-overflow", [], process.cwd(), 60000);
+ 		await expect(operation).rejects.toMatchObject({
+@@ -218,15 +231,22 @@
+ 
+ 	it("主动达到采集上限后命令正常退出，即使树杀返回成功也不得伪装 code=0", async () => {
+ 		killTreeMock.mockResolvedValue("taskkill /PID 43002 /T /F");
+-		execFileMock.mockImplementationOnce(((_cmd, _args, _options, callback) => {
+-			const child = fakeChild(43002);
+-			const stdout = child.stdout as PassThrough;
+-			queueMicrotask(() => {
+-				stdout.write(Buffer.alloc(16 * 1024 * 1024));
+-				setTimeout(() => callback(null, Buffer.alloc(0), Buffer.alloc(0)), 0);
+-			});
+-			return child;
+-		}) as unknown as typeof execFile);
++		execFileMock.mockImplementationOnce(
++			(
++				_cmd: string,
++				_args: readonly string[] | undefined | null,
++				_options: ExecFileOptions | undefined | null,
++				callback: TestExecFileCallback | undefined | null,
++			) => {
++				const child = fakeChild(43002);
++				const stdout = child.stdout as PassThrough;
++				queueMicrotask(() => {
++					stdout.write(Buffer.alloc(16 * 1024 * 1024));
++					setTimeout(() => callback?.(null, Buffer.alloc(0), Buffer.alloc(0)), 0);
++				});
++				return child;
++			},
++		);
+ 
+ 		const operation = runCardProcess("fake-output-limit", [], process.cwd(), 60000);
+ 		await expect(operation).rejects.toMatchObject({
+--- before/packages/coding-agent/test/pao/delivery-commit.test.ts
++++ after/packages/coding-agent/test/pao/delivery-commit.test.ts
+@@ -15,6 +15,7 @@
+ import { verifyCard } from "../../src/pao/cards/verifier.ts";
+ import { writeFileAtomic } from "../../src/pao/shared/atomic.ts";
+ import type { TodoItem } from "../../src/pao/todo/index.ts";
++import { withTestCleanup } from "../with-test-cleanup.ts";
+ 
+ /**
+  * §13 交卷自动化：stage 范围＝认领基线比对本卡差异清单（逐路径 add、禁 add -A、R15）、
+@@ -472,74 +473,77 @@
+ 				(result) => ({ kind: "returned" as const, result }),
+ 				(error: unknown) => ({ kind: "rejected" as const, error }),
+ 			);
+-			try {
+-				const deadline = Date.now() + 10000;
+-				while (!existsSync(shim.marker)) {
+-					const settled = await Promise.race([
+-						new Promise<"wait">((resolve) => setTimeout(() => resolve("wait"), 20)),
+-						outcome.then(() => "settled" as const),
+-					]);
+-					if (settled === "settled") {
+-						const early = await outcome;
+-						const detail =
+-							early.kind === "rejected"
+-								? early.error instanceof Error
+-									? `${early.error.name}: ${early.error.message}${
+-											"details" in early.error ? `；详情：${JSON.stringify(early.error.details)}` : ""
+-										}`
+-									: String(early.error)
+-								: JSON.stringify(early.result);
+-						throw new Error(`真实 commit-tree 代理未就绪；deliverCard 已提前结束：${detail}`);
++			await withTestCleanup(
++				async () => {
++					const deadline = Date.now() + 10000;
++					while (!existsSync(shim.marker)) {
++						const settled = await Promise.race([
++							new Promise<"wait">((resolve) => setTimeout(() => resolve("wait"), 20)),
++							outcome.then(() => "settled" as const),
++						]);
++						if (settled === "settled") {
++							const early = await outcome;
++							const detail =
++								early.kind === "rejected"
++									? early.error instanceof Error
++										? `${early.error.name}: ${early.error.message}${
++												"details" in early.error ? `；详情：${JSON.stringify(early.error.details)}` : ""
++											}`
++										: String(early.error)
++									: JSON.stringify(early.result);
++							throw new Error(`真实 commit-tree 代理未就绪；deliverCard 已提前结束：${detail}`);
++						}
++						if (Date.now() > deadline) throw new Error("真实 commit-tree 代理未就绪");
+ 					}
+-					if (Date.now() > deadline) throw new Error("真实 commit-tree 代理未就绪");
+-				}
+-				const marker = readFileSync(shim.marker, "utf8").trim().split(/\r?\n/).map(Number);
+-				const pids = marker.slice(0, 3);
+-				expect(marker[3]).toBe(0); // 真 Git 已完成 commit-tree，代理仍未返回，引用尚未发布。
+-				timing.commitTreeReadyMs = Date.now() - started;
+-				controller.abort();
+-				const stopped = await outcome;
+-				expect(stopped.kind).toBe("rejected");
+-				if (stopped.kind === "rejected") expect(stopped.error).toMatchObject({ name: "AbortError" });
+-				timing.stoppedMs = Date.now() - started;
+-				for (const pid of pids) expect(() => process.kill(pid, 0)).toThrow();
+-				expect(() => process.kill(independent.pid!, 0)).not.toThrow();
+-				expect(commitCount(repo)).toBe(1);
+-				expect(git(repo, ["rev-parse", "HEAD"]).trim()).toBe(head);
+-				expect(git(managed, ["rev-parse", "HEAD"]).trim()).toBe(head);
+-				expect(
+-					spawnSync("git", ["rev-parse", "--verify", "refs/pao-execution/deliveries/card-0001-attempt-1"], {
+-						cwd: managed,
+-					}).status,
+-				).not.toBe(0);
+-				expect(existsSync(join(managed, "产物.txt"))).toBe(true);
+-			} finally {
+-				controller.abort();
+-				await outcome;
+-				pendingCancellations.delete(operation);
+-				spy.mockRestore();
+-				if (existsSync(shim.marker)) {
+-					const owned = readFileSync(shim.marker, "utf8").trim().split(/\r?\n/).map(Number).slice(0, 3);
+-					for (const pid of owned.reverse()) {
+-						try {
+-							process.kill(pid);
+-						} catch (error) {
+-							if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++					const marker = readFileSync(shim.marker, "utf8").trim().split(/\r?\n/).map(Number);
++					const pids = marker.slice(0, 3);
++					expect(marker[3]).toBe(0); // 真 Git 已完成 commit-tree，代理仍未返回，引用尚未发布。
++					timing.commitTreeReadyMs = Date.now() - started;
++					controller.abort();
++					const stopped = await outcome;
++					expect(stopped.kind).toBe("rejected");
++					if (stopped.kind === "rejected") expect(stopped.error).toMatchObject({ name: "AbortError" });
++					timing.stoppedMs = Date.now() - started;
++					for (const pid of pids) expect(() => process.kill(pid, 0)).toThrow();
++					expect(() => process.kill(independent.pid!, 0)).not.toThrow();
++					expect(commitCount(repo)).toBe(1);
++					expect(git(repo, ["rev-parse", "HEAD"]).trim()).toBe(head);
++					expect(git(managed, ["rev-parse", "HEAD"]).trim()).toBe(head);
++					expect(
++						spawnSync("git", ["rev-parse", "--verify", "refs/pao-execution/deliveries/card-0001-attempt-1"], {
++							cwd: managed,
++						}).status,
++					).not.toBe(0);
++					expect(existsSync(join(managed, "产物.txt"))).toBe(true);
++				},
++				async () => {
++					controller.abort();
++					await outcome;
++					pendingCancellations.delete(operation);
++					spy.mockRestore();
++					if (existsSync(shim.marker)) {
++						const owned = readFileSync(shim.marker, "utf8").trim().split(/\r?\n/).map(Number).slice(0, 3);
++						for (const pid of owned.reverse()) {
++							try {
++								process.kill(pid);
++							} catch (error) {
++								if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++							}
+ 						}
+ 					}
+-				}
+-				const independentExited = new Promise<void>((resolve) => independent.once("exit", () => resolve()));
+-				independent.kill();
+-				await independentExited;
+-				timing.finishedMs = Date.now() - started;
+-				if (process.env.PAO_E_EVIDENCE_DIR) {
+-					mkdirSync(process.env.PAO_E_EVIDENCE_DIR, { recursive: true });
+-					writeFileSync(
+-						join(process.env.PAO_E_EVIDENCE_DIR, "timing-delivery-cancel.json"),
+-						JSON.stringify(timing),
+-					);
+-				}
+-			}
++					const independentExited = new Promise<void>((resolve) => independent.once("exit", () => resolve()));
++					independent.kill();
++					await independentExited;
++					timing.finishedMs = Date.now() - started;
++					if (process.env.PAO_E_EVIDENCE_DIR) {
++						mkdirSync(process.env.PAO_E_EVIDENCE_DIR, { recursive: true });
++						writeFileSync(
++							join(process.env.PAO_E_EVIDENCE_DIR, "timing-delivery-cancel.json"),
++							JSON.stringify(timing),
++						);
++					}
++				},
++			);
+ 		},
+ 		40000,
+ 	);
+--- before/packages/coding-agent/test/pao/dispatch-brief-artifacts.test.ts
++++ after/packages/coding-agent/test/pao/dispatch-brief-artifacts.test.ts
+@@ -1136,7 +1136,7 @@
+ 	});
+ 
+ 	it("间接来源与重启式重读都阻止旧来源；旧版本仍只读可加载", async () => {
+-		const { root, cardsDir, cardPath } = tempRepo();
++		const { root, cardsDir } = tempRepo();
+ 		const contractPath = join(root, "src", "contract.md");
+ 		writeFileSync(contractPath, "export interface Api { version: 1 }\n");
+ 		const v1 = await saveDispatchContractReference({
+@@ -1196,7 +1196,7 @@
+ 			`---\ngoal: 已交付\ndept: 测试\ninputs: ["${v1.ref}"]\nacceptance: 已完成\nattempt: 1\ncreated: 2026-10-20 10:00\ncompleted: 2026-10-20 11:00\nstatus: delivered\n---\n`,
+ 		);
+ 		writeFileSync(contractPath, "export interface Api { version: 2 }\n");
+-		const v2 = await saveDispatchContractReference({
++		await saveDispatchContractReference({
+ 			cardsDir,
+ 			projectRoot: root,
+ 			id: "indirect-api",
+--- before/packages/coding-agent/test/pao/e-batch-sample.test.ts
++++ after/packages/coding-agent/test/pao/e-batch-sample.test.ts
+@@ -1,14 +1,13 @@
+ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { afterEach, beforeEach, describe, expect, it } from "vitest";
++import { afterEach, describe, expect, it } from "vitest";
+ 
+ import { readCard, serializeCard } from "../../src/pao/cards/index.ts";
+ import { readDeptCatalog, validateDeptCatalog } from "../../src/pao/dept/catalog.ts";
+ import {
+ 	acceptIntake,
+ 	acceptIntakeBatch,
+-	acceptIntakeDesktop,
+ 	type IntakeOutcome,
+ 	type IntakeRequest,
+ 	isIntakeOutcomeStale,
+--- before/packages/coding-agent/test/pao/evidence-archive.test.ts
++++ after/packages/coding-agent/test/pao/evidence-archive.test.ts
+@@ -190,7 +190,7 @@
+ 	it("does not mark a temp file as created until open succeeds", async () => {
+ 		const root = fixtureDir();
+ 		const original = writeLiveFile(root, "卡0012.live.jsonl", bytesAtLeast(256 * 1024));
+-		const uuid = "open-failure";
++		const uuid = "00000000-0000-4000-8000-000000000000";
+ 		const tempPath = join(root, `.${basename(original)}.${process.pid}.${uuid}.tmp`);
+ 		writeFileSync(tempPath, "preexisting temp file");
+ 		vi.mocked(randomUUID).mockReturnValueOnce(uuid);
+--- before/packages/coding-agent/test/pao/evidence-read-tool.test.ts
++++ after/packages/coding-agent/test/pao/evidence-read-tool.test.ts
+@@ -8,6 +8,7 @@
+ import { SessionManager } from "../../src/core/session-manager.ts";
+ import { SettingsManager } from "../../src/core/settings-manager.ts";
+ import { createEvidenceReadToolDefinition, registerEvidenceReadTool } from "../../src/pao/worker/evidence-read-tool.ts";
++import { createTestExtensionToolContext } from "../extension-tool-context.ts";
+ 
+ const processImage = vi.hoisted(() =>
+ 	vi.fn(async (_bytes: Uint8Array, mimeType: string) => ({
+@@ -36,27 +37,6 @@
+ 	return dir;
+ }
+ 
+-function context(cwd: string) {
+-	return {
+-		cwd,
+-		model: undefined,
+-		ui: {},
+-		mode: "json",
+-		hasUI: false,
+-		sessionManager: {},
+-		modelRegistry: {},
+-		scopedModels: [],
+-		isIdle: () => true,
+-		isProjectTrusted: () => false,
+-		abort: () => undefined,
+-		hasPendingMessages: () => false,
+-		shutdown: () => undefined,
+-		getContextUsage: () => undefined,
+-		compact: () => undefined,
+-		getSystemPrompt: () => "",
+-	} as never;
+-}
+-
+ describe("PAO evidence read tool", () => {
+ 	it("reads gzip, plain, old live-path fallback, and offset/limit", async () => {
+ 		const dir = tempDir();
+@@ -67,28 +47,23 @@
+ 		writeFileSync(compressed, gzipSync("alpha\nbeta\ngamma\n"));
+ 		writeFileSync(`${fallback}.gz`, gzipSync("old\npointer\n"));
+ 		const tool = createEvidenceReadToolDefinition(join(dir, "unused-default"));
++		const ctx = await createTestExtensionToolContext(dir);
+ 
+ 		const plainResult = await tool.execute(
+ 			"plain",
+ 			{ path: basename(plain), offset: 2, limit: 1 },
+ 			undefined,
+ 			undefined,
+-			context(dir),
++			ctx,
+ 		);
+ 		const compressedResult = await tool.execute(
+ 			"compressed",
+ 			{ path: basename(compressed), offset: 2, limit: 1 },
+ 			undefined,
+ 			undefined,
+-			context(dir),
+-		);
+-		const fallbackResult = await tool.execute(
+-			"fallback",
+-			{ path: basename(fallback) },
+-			undefined,
+-			undefined,
+-			context(dir),
+-		);
++			ctx,
++		);
++		const fallbackResult = await tool.execute("fallback", { path: basename(fallback) }, undefined, undefined, ctx);
+ 
+ 		expect(textOf(plainResult)).toBe("two\n\n[2 more lines in file. Use offset=3 to continue.]");
+ 		expect(textOf(compressedResult)).toBe("beta\n\n[2 more lines in file. Use offset=3 to continue.]");
+@@ -98,13 +73,14 @@
+ 	it("does not guess zipped suffixes for ordinary files and reveals corrupt gzip", async () => {
+ 		const dir = tempDir();
+ 		const tool = createEvidenceReadToolDefinition(dir);
++		const ctx = await createTestExtensionToolContext(dir);
+ 		await expect(
+-			tool.execute("missing", { path: join(dir, "ordinary.txt") }, undefined, undefined, context(dir)),
++			tool.execute("missing", { path: join(dir, "ordinary.txt") }, undefined, undefined, ctx),
+ 		).rejects.toMatchObject({ code: "ENOENT" });
+ 
+ 		const corrupt = join(dir, "broken.live.jsonl.gz");
+ 		writeFileSync(corrupt, "not gzip");
+-		await expect(tool.execute("broken", { path: corrupt }, undefined, undefined, context(dir))).rejects.toThrow();
++		await expect(tool.execute("broken", { path: corrupt }, undefined, undefined, ctx)).rejects.toThrow();
+ 	});
+ 
+ 	it("does not bypass custom read operations", async () => {
+@@ -130,7 +106,7 @@
+ 			{ path: join(dir, "not-local.live.jsonl.gz") },
+ 			undefined,
+ 			undefined,
+-			context(dir),
++			await createTestExtensionToolContext(dir),
+ 		);
+ 
+ 		expect(textOf(result)).toBe("custom");
+@@ -144,7 +120,8 @@
+ 		const evidenceWithImageBytes = join(dir, "binary.live.jsonl");
+ 		writeFileSync(evidenceWithImageBytes, Buffer.from(TINY_PNG_BASE64, "base64"));
+ 		const tool = createEvidenceReadToolDefinition(dir);
+-		const result = await tool.execute("image", { path: image }, undefined, undefined, context(dir));
++		const ctx = await createTestExtensionToolContext(dir);
++		const result = await tool.execute("image", { path: image }, undefined, undefined, ctx);
+ 		expect(result.content[0]).toMatchObject({ type: "text" });
+ 		expect(textOf(result)).toContain("Read image file");
+ 		expect(result.content.some((content) => content.type === "image")).toBe(true);
+@@ -154,13 +131,13 @@
+ 			{ path: evidenceWithImageBytes },
+ 			undefined,
+ 			undefined,
+-			context(dir),
++			ctx,
+ 		);
+ 		expect(evidenceResult.content.every((content) => content.type === "text")).toBe(true);
+ 
+ 		const controller = new AbortController();
+ 		controller.abort();
+-		await expect(tool.execute("abort", { path: image }, controller.signal, undefined, context(dir))).rejects.toThrow(
++		await expect(tool.execute("abort", { path: image }, controller.signal, undefined, ctx)).rejects.toThrow(
+ 			"Operation aborted",
+ 		);
+ 	});
+@@ -233,8 +210,9 @@
+ 		const read = session.getToolDefinition("read");
+ 		if (!read) throw new Error("Expected the PAO read definition");
+ 		expect(read.defaultActive).toBe(false);
+-
+-		await read.execute("image-disabled", { path: image });
++		const ctx = await createTestExtensionToolContext(dir);
++
++		await read.execute("image-disabled", { path: image }, undefined, undefined, ctx);
+ 		expect(processImage).toHaveBeenLastCalledWith(
+ 			expect.any(Uint8Array),
+ 			"image/png",
+@@ -242,7 +220,7 @@
+ 		);
+ 
+ 		settings.setImageAutoResize(true);
+-		await read.execute("image-enabled", { path: image });
++		await read.execute("image-enabled", { path: image }, undefined, undefined, ctx);
+ 		expect(processImage).toHaveBeenLastCalledWith(
+ 			expect.any(Uint8Array),
+ 			"image/png",
+--- before/packages/coding-agent/test/pao/f-novel-loop.test.ts
++++ after/packages/coding-agent/test/pao/f-novel-loop.test.ts
+@@ -4,6 +4,7 @@
+ import {
+ 	chmodSync,
+ 	cpSync,
++	type Dirent,
+ 	existsSync,
+ 	mkdirSync,
+ 	mkdtempSync,
+@@ -23,7 +24,7 @@
+ import { locateDispatchCard } from "../../src/pao/worker/dispatch-core.ts";
+ import type { WorkerReceipt, WorkerStatus } from "../../src/pao/worker/receipt.ts";
+ import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+-import { type AutoChainOptions, type AutoChainReport, runAutoChain } from "../../src/pao/workflow/auto.ts";
++import type { AutoChainOptions, AutoChainReport } from "../../src/pao/workflow/auto.ts";
+ import {
+ 	addNodeCards,
+ 	bindMinister,
+@@ -39,7 +40,12 @@
+ } from "../../src/pao/workflow/control.ts";
+ import { WorkflowHostBridge } from "../../src/pao/workflow/host-bridge.ts";
+ import { WORKFLOW_MINISTER_ENV, type WorkflowMinisterContext } from "../../src/pao/workflow/minister.ts";
+-import { parseRecipe, type WorkflowRecipe } from "../../src/pao/workflow/recipe.ts"; // ── 夹具：E 批离线样例（.pao/harness完善-20261017/E批-离线样例）原样复制 ──────────────/** 种子目录：五层 `..` 到仓根（与 e-batch-sample.test.ts 同口径）。 */import { parseFrontmatter } from "../../src/utils/frontmatter.ts";
++import { parseRecipe, type WorkflowRecipe } from "../../src/pao/workflow/recipe.ts";
++import { parseFrontmatter } from "../../src/utils/frontmatter.ts";
++
++// ── 夹具：E 批离线样例（.pao/harness完善-20261017/E批-离线样例）原样复制 ──────────────
++
++/** 种子目录：五层 `..` 到仓根（与 e-batch-sample.test.ts 同口径）。 */
+ 
+ const SEED_ROOT = join(__dirname, "..", "..", "..", "..", "..", ".pao", "harness完善-20261017", "E批-离线样例");
+ const PROJECT_TEMPLATE = join(SEED_ROOT, "启动区-项目");
+@@ -112,7 +118,7 @@
+ 		} catch {
+ 			// 无权改就交给外层删除
+ 		}
+-		let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>;
++		let entries: Dirent[];
+ 		try {
+ 			entries = readdirSync(dir, { withFileTypes: true });
+ 		} catch {
+@@ -130,7 +136,7 @@
+ 	};
+ 	walk(root);
+ } /** 部门工具白名单：与真实配方同款的「工具」字段（白名单层判据来源）。 */
+-type Writer = "s1设定" | "s2大纲" | "s3首章" | "s4审稿" | "s5修订确认" | "交审查记录";
++type Writer = "s1设定" | "s2大纲" | "s3首章" | "s4审稿" | "s5修订确认" | "交审查记录" | "只验收节点";
+ interface Fixture {
+ 	root: string;
+ 	paoHome: string;
+@@ -340,6 +346,7 @@
+ 	vi.spyOn(fixture.host, "spawn").mockImplementation(async (input) => {
+ 		let assigned = JSON.parse(input.环境变量![WORKFLOW_MINISTER_ENV]!) as WorkflowMinisterContext;
+ 		const live = readControl(fixture.recipe, fixture.options).节点.find((node) => node.名字 === assigned.节点);
++		let session = live?.部长会话 ?? `session-${assigned.节点}-${assigned.轮次}`;
+ 		// 回边重做的接管：`decideNode` 的 change 分支只把轮次 +1、清卡与拆解标记，**不清部长会话**
+ 		// （`control.ts:625-666`），而桥随后仍按旧 `部长会话` 拉起部长 ⇒ `bindMinister` 会拒
+ 		// 「已绑定其他部长；须恢复操作明确接管」。生产侧目前没有解绑 API（`resumeControl` 只清暂停与
+@@ -348,11 +355,11 @@
+ 		// 用接管名拉起——桥的 args 是旧上下文算的，回显旧名只会撞门。
+ 		// 不用「上下文轮次不符」判：上下文是 spawn 前取的，可能已经领先正本。
+ 		if (live && live.轮次 >= 2) {
+-			const session =
+-				live.部长会话 === roundSession(assigned.节点, live.轮次)
+-					? live.部长会话
+-					: takeoverMinister(fixture, assigned.节点, live.轮次);
+-			assigned = { ...assigned, 轮次: live.轮次, 部长会话: session };
++			const expected = roundSession(assigned.节点, live.轮次);
++			if (live.部长会话 !== expected) takeoverMinister(fixture, assigned.节点, live.轮次);
++			assigned = { ...assigned, 轮次: live.轮次 };
++			// 接管后本轮回显的会话必须与刚写入控制正本的值一致，供随后 bindMinister 核对。
++			session = expected;
+ 		} else if (live) {
+ 			// 正本轮次已经领先于 spawn 前取的上下文（回边发生在取上下文与 spawn 之间），身份以正本为准。
+ 			assigned = { ...assigned, 轮次: live.轮次 };
+@@ -360,7 +367,6 @@
+ 		// 会话标识必须跟着上下文走：产品在绑定前的首次 spawn 传的是 `--session-id <randomUUID>`（host-bridge.ts:273），
+ 		// 若替身自己造会话名，随后的 `bindMinister` 会拿上下文里的 `部长会话`（另一个 id）去绑，
+ 		// 撞上「已绑定其他部长」。这里只回显产品将要绑定的那个 id，不自造。
+-		const session = assigned.部长会话 ?? `session-${assigned.节点}-${assigned.轮次}`;
+ 		fixture.contexts.set(session, assigned);
+ 		return {
+ 			ok: true,
+@@ -616,7 +622,7 @@
+ 		expect(firstCard.body).toContain("## 机械验收");
+ 		expect(firstCard.body).toContain("存在");
+ 		expect(firstCard.frontmatter.status).toBe("delivered");
+-	});
++	}, 60000);
+ 	it("第 4 步审稿真实打回：走真回边让上游重做一轮，旧稿/意见/新稿都可查", async () => {
+ 		const fixture = makeFixture("novel-bounce", novelNodes());
+ 		stubHost(fixture);
+@@ -683,7 +689,7 @@
+ 		// 控制正本真的落在盘上（不是内存对象）
+ 		expect(existsSync(await controlPathText(fixture))).toBe(true);
+ 		expect(readFileSync(await controlPathText(fixture), "utf8")).toContain("回边次数");
+-	});
++	}, 60000);
+ 	it("五步链的模拟边界诚实：部长不提交结束信号时，链如实停在「未提交」，不伪造推进", async () => {
+ 		const fixture = makeFixture("novel-mute", novelNodes());
+ 		stubHost(fixture);
+@@ -887,7 +893,7 @@
+ 		const cards = listCards(fixture.cardsDir);
+ 		expect(cards).toHaveLength(1);
+ 		expect(cards[0]!.frontmatter.status).not.toBe("delivered");
+-		expect(cards[0]!.frontmatter.status).toBe("in_progress");
++		expect(cards[0]!.frontmatter.status).toBe("failed");
+ 		// 卡上的验收就是配方那句机械判据（不是人话占位句），否则这条用例证明不了任何事
+ 		expect(cards[0]!.frontmatter.acceptance).toBe(`存在: ${declared}`);
+ 
+@@ -903,11 +909,13 @@
+ 		expect(verifyStep!.note).toContain("条未过");
+ 
+ 		// ④ 理由必须指向**缺失的那个路径**。落点在卡正文的 `## 机械验收` 派生段
+-		// （`verifier.ts:545-556` serializeVerdictSection 逐条落 `- [存在] <路径> → 未过（文件不存在）`），
++		// serializeVerdictSection 逐条记录缺失路径、ENOENT、项目根和实际路径，
+ 		// 这是 owner 事后能查到「到底缺哪一条」的唯一位置；链步骤 note 只有结论+汇总，不点名条目。
+ 		const card = cards[0]!;
+ 		const verdictSection = card.body.slice(card.body.indexOf("## 机械验收"));
+-		expect(verdictSection).toContain(`- [存在] ${declared} → 未过（文件不存在）`);
++		expect(verdictSection).toContain(
++			`- [存在] ${declared} → 未过（ENOENT，文件不存在（项目根 ${fixture.projectRoot}；实际路径 ${join(fixture.projectRoot, declared)}））`,
++		);
+ 		expect(verdictSection).toContain("- 结论: 未过");
+ 
+ 		// 交卷不许发生：没有「完成」步，链停在验收结论那句原文上
+--- before/packages/coding-agent/test/pao/f-reopen-kill.test.ts
++++ after/packages/coding-agent/test/pao/f-reopen-kill.test.ts
+@@ -21,9 +21,11 @@
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
++import type { AgentToolResult } from "@earendil-works/pi-agent-core";
+ import { afterEach, describe, expect, it } from "vitest";
+ 
+-import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
++import type { ExtensionAPI, ToolDefinition } from "../../src/core/extensions/types.ts";
++import { wrapToolDefinition } from "../../src/core/tools/tool-definition-wrapper.ts";
+ import { readCard, scanCards } from "../../src/pao/cards/index.ts";
+ import {
+ 	desktopOwner,
+@@ -42,7 +44,7 @@
+ import { checkDispatchBudget } from "../../src/pao/usage/dispatch-gate.ts";
+ import { registerWorkerTools } from "../../src/pao/worker/index.ts";
+ import { DISPATCH_NOTIFY_SECTION } from "../../src/pao/worker/notify.ts";
+-import type { WorkerReceipt, WorkerStatus } from "../../src/pao/worker/receipt.ts";
++import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
+ import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+ 
+ const tempDirs: string[] = [];
+@@ -85,7 +87,7 @@
+ }
+ 
+ interface Captured {
+-	tools: { name: string; execute: (...args: never[]) => Promise<unknown> }[];
++	tools: ReturnType<typeof wrapToolDefinition>[];
+ 	pi: ExtensionAPI;
+ 	fireBeforeAgentStart(): Record<string, string>;
+ 	/** 派卡通知面（宿主在 before_agent_start 注入的那段）。 */
+@@ -111,7 +113,7 @@
+ 	};
+ 	captured.dispatchNotice = () => captured.fireBeforeAgentStart()[DISPATCH_NOTIFY_SECTION] ?? "";
+ 	captured.pi = {
+-		registerTool: (tool: { name: string }) => captured.tools.push(tool as never),
++		registerTool: (tool: ToolDefinition) => captured.tools.push(wrapToolDefinition(tool)),
+ 		on: (event: string, handler: (event: unknown) => void) => {
+ 			handlers.set(event, [...(handlers.get(event) ?? []), handler]);
+ 			if (event === "session_shutdown") shutdowns.push(handler as () => unknown);
+@@ -129,25 +131,9 @@
+ 	return tool;
+ }
+ 
+-function textOf(result: unknown): string {
+-	const content = (result as { content?: { text?: string }[] }).content ?? [];
+-	return content.map((part) => part.text ?? "").join("\n");
+-}
+-
+-function fakeReceipt(cardNo: string, status: WorkerStatus, repo: string, artifact: string[]): WorkerReceipt {
+-	return {
+-		card_no: cardNo,
+-		attempt: 1,
+-		status,
+-		artifact_path: artifact,
+-		summary: "假回执:做完了",
+-		usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0.5, turns: 1 },
+-		evidence_path: join(repo, ".pao", "任务A", "证据.jsonl"),
+-		exitCode: 0,
+-		command: "fake-runner",
+-		pid: 920000,
+-		duration_ms: 1,
+-	};
++function textOf(result: AgentToolResult): string {
++	const content = result.content;
++	return content.map((part) => (part.type === "text" ? part.text : "")).join("\n");
+ }
+ 
+ /** 假运行器：登记进真实注册表→跑注入脚本→返回回执。可控"卡住不返回"用于强杀场景。 */
+@@ -213,9 +199,9 @@
+ 		"goal: 离线任务",
+ 		"dept: 测试",
+ 		'acceptance: "存在: 产物.txt"',
+-		"attempt: " + attempt,
++		`attempt: ${attempt}`,
+ 		"created: 2026-10-17 10:00",
+-		"status: " + status,
++		`status: ${status}`,
+ 		"---",
+ 		"正文",
+ 		"",
+@@ -620,7 +606,17 @@
+ 		// 三会话同项目，各自登记一条在跑的 worker（卡路径落在项目根内才会计入）
+ 		registerDesktopOwner(host.pi, {
+ 			getWorkerActivity: () => [
+-				{ pid: 1, card_path: cardPath, run_id: "run-1", 登记时间: "2026-10-17T00:00:00.000Z", running: true },
++				{
++					pid: 1,
++					card_no: "0001",
++					command: "fixture-worker",
++					card_path: cardPath,
++					run_id: "run-1",
++					登记时间: "2026-10-17T00:00:00.000Z",
++					running: true,
++					dept: null,
++					dispatch_reason: null,
++				},
+ 			],
+ 			getSilenceMinutes: () => 5,
+ 		});
+--- before/packages/coding-agent/test/pao/f-results-files.test.ts
++++ after/packages/coding-agent/test/pao/f-results-files.test.ts
+@@ -23,7 +23,7 @@
+  */
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+-import { join, relative, sep } from "node:path";
++import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ 
+ import { changeCardStatus, loadCard, parseCardRef } from "../../src/pao/cards/index.ts";
+@@ -60,11 +60,6 @@
+ afterEach(() => {
+ 	for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+ });
+-
+-/** 项目内相对路径统一正斜杠（与 `artifactOf` 的口径一致，断言才可移植）。 */
+-function toPosix(root: string, path: string): string {
+-	return relative(root, path).split(sep).join("/");
+-}
+ 
+ interface 链路 {
+ 	根: string;
+--- before/packages/coding-agent/test/pao/host-rpc-background-real.test.ts
++++ after/packages/coding-agent/test/pao/host-rpc-background-real.test.ts
+@@ -205,7 +205,11 @@
+ 		时钟: () => new Date(fixture.now),
+ 		notifySurface: {
+ 			notify: (body: string) => notices.push(body),
++			inject: () => undefined,
++			markHandled: () => false,
++			subscribe: () => () => undefined,
+ 			unreadCount: () => 0,
++			retainedCount: () => 0,
+ 			shutdown: () => undefined,
+ 		},
+ 	});
+--- before/packages/coding-agent/test/pao/intake-accept.test.ts
++++ after/packages/coding-agent/test/pao/intake-accept.test.ts
+@@ -513,7 +513,12 @@
+ 		// 尝试号记录与卡面一致 → 未失效
+ 		const withAttempt = { ...outcome, attempt: 1 };
+ 		const card = readCard(cardPath);
+-		changeCardStatus(card, { 操作者: "主控", to: "in_progress", 依据: "认领" });
++		changeCardStatus(card, {
++			操作者: "主控",
++			to: "in_progress",
++			依据: "认领",
++			时间: "2026-10-22 10:00",
++		});
+ 		expect(readCard(cardPath).frontmatter.attempt).toBe(1);
+ 		expect(isIntakeOutcomeStale(withAttempt, cardsDir)).toBe(false);
+ 
+--- before/packages/coding-agent/test/pao/intake-tool.test.ts
++++ after/packages/coding-agent/test/pao/intake-tool.test.ts
+@@ -449,8 +449,8 @@
+ 		const base = { goal: "做 X", dept: "后端", acceptance: "X 能用" };
+ 		const key = buildAutoIntakeKey(base);
+ 		expect(buildAutoIntakeKey({ ...base, goal: "  做 X  " })).toBe(key); // trim 后同内容
+-		expect(buildAutoIntakeKey({ ...base, depends_on: ["卡0002", "卡0001"] })).toBe(
+-			buildAutoIntakeKey({ ...base, depends_on: ["卡0001", "卡0002"] }),
++		expect(buildAutoIntakeKey({ ...base, dependsOn: ["卡0002", "卡0001"] })).toBe(
++			buildAutoIntakeKey({ ...base, dependsOn: ["卡0001", "卡0002"] }),
+ 		); // 依赖排序后参与
+ 		expect(key).toMatch(/^auto:[0-9a-f]{16}$/);
+ 		expect(buildAutoIntakeKey({ ...base, acceptance: "X 能用且快" })).not.toBe(key);
+@@ -515,7 +515,7 @@
+ 			to,
+ 			依据: reason,
+ 			时间: when,
+-			失败类型: to === "failed" ? "环境" : undefined,
++			失败类型: to === "failed" ? "transient" : undefined,
+ 		});
+ 	}
+ 
+--- before/packages/coding-agent/test/pao/integration.test.ts
++++ after/packages/coding-agent/test/pao/integration.test.ts
+@@ -1,4 +1,4 @@
+-import { execFileSync, spawnSync } from "node:child_process";
++import { execFileSync } from "node:child_process";
+ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+@@ -18,6 +18,7 @@
+ import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+ import { verifyCard } from "../../src/pao/cards/verifier.ts";
+ import { killTree } from "../../src/utils/kill-tree.ts";
++import { withTestCleanup } from "../with-test-cleanup.ts";
+ 
+ vi.mock("../../src/utils/kill-tree.ts", async (importOriginal) => {
+ 	const actual = await importOriginal<typeof import("../../src/utils/kill-tree.ts")>();
+@@ -858,60 +859,63 @@
+ 			let releases = 0;
+ 			const requestId = `req-check-over-limit-${confirmed ? "confirmed" : "unknown"}`;
+ 			if (!confirmed) killTreeMock.mockRejectedValue(new Error("模拟：超限后整树停止未确认"));
+-			try {
+-				const operation = integrateDelivery({
+-					requestId,
+-					sourceExecutionKey: sourceExecution.key,
+-					targetExecutionKey: targetExecution.key,
+-					expectedTargetHead: git(managed, ["rev-parse", "HEAD"]),
+-					checks: ["node emit-over-limit.mjs"],
+-					acquireWriteLock: async () => ({
+-						release: async () => {
+-							releases++;
+-						},
+-					}),
+-				});
+-				if (!confirmed) {
+-					await expect(operation).rejects.toBeInstanceOf(cardProcess.CardProcessStopUnconfirmedError);
+-					expect(releases).toBe(0);
++			await withTestCleanup(
++				async () => {
++					const operation = integrateDelivery({
++						requestId,
++						sourceExecutionKey: sourceExecution.key,
++						targetExecutionKey: targetExecution.key,
++						expectedTargetHead: git(managed, ["rev-parse", "HEAD"]),
++						checks: ["node emit-over-limit.mjs"],
++						acquireWriteLock: async () => ({
++							release: async () => {
++								releases++;
++							},
++						}),
++					});
++					if (!confirmed) {
++						await expect(operation).rejects.toBeInstanceOf(cardProcess.CardProcessStopUnconfirmedError);
++						expect(releases).toBe(0);
++						const pids = JSON.parse(readFileSync(join(managed, ".pao/overflow-pids.json"), "utf8")) as number[];
++						expect(() => process.kill(pids[1]!, 0)).not.toThrow();
++						const failed = JSON.parse(
++							readFileSync(integrationResultPath(sourceExecution.key.cardsDir, requestId), "utf8"),
++						) as IntegrationRecord;
++						expect(failed.integrationPassed).toBe(false);
++						expect(failed.message).toContain("日志不完整");
++						expect(failed.message).toContain("停止未确认");
++						preserveEvidence(failed);
++						return;
++					}
++					const result = await operation;
++					expect(releases).toBe(1);
+ 					const pids = JSON.parse(readFileSync(join(managed, ".pao/overflow-pids.json"), "utf8")) as number[];
+-					expect(() => process.kill(pids[1]!, 0)).not.toThrow();
+-					const failed = JSON.parse(
+-						readFileSync(integrationResultPath(sourceExecution.key.cardsDir, requestId), "utf8"),
+-					) as IntegrationRecord;
+-					expect(failed.integrationPassed).toBe(false);
+-					expect(failed.message).toContain("日志不完整");
+-					expect(failed.message).toContain("停止未确认");
+-					preserveEvidence(failed);
+-					return;
+-				}
+-				const result = await operation;
+-				expect(releases).toBe(1);
+-				const pids = JSON.parse(readFileSync(join(managed, ".pao/overflow-pids.json"), "utf8")) as number[];
+-				for (const pid of pids) expect(() => process.kill(pid, 0)).toThrow();
+-				const record = result.checks[0]!;
+-				expect(record.outputIncomplete).toBe(true);
+-				expect(record.outputLimitBytes).toBe(16 * 1024 * 1024);
+-				expect(record.stderr).toContain("日志不完整");
+-				expect(readFileSync(record.outputPath, "utf8")).toContain("日志不完整");
+-				expect(record.reason).toContain("日志不完整");
+-				expect(result.status).toBe("check_failed");
+-				expect(result.integrationPassed).toBe(false);
+-				expect(record.passed).toBe(false);
+-				preserveEvidence(result);
+-			} finally {
+-				const file = join(managed, ".pao/overflow-pids.json");
+-				if (existsSync(file)) {
+-					const owned = JSON.parse(readFileSync(file, "utf8")) as number[];
+-					for (const pid of owned.reverse()) {
+-						try {
+-							process.kill(pid);
+-						} catch (error) {
+-							if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++					for (const pid of pids) expect(() => process.kill(pid, 0)).toThrow();
++					const record = result.checks[0]!;
++					expect(record.outputIncomplete).toBe(true);
++					expect(record.outputLimitBytes).toBe(16 * 1024 * 1024);
++					expect(record.stderr).toContain("日志不完整");
++					expect(readFileSync(record.outputPath, "utf8")).toContain("日志不完整");
++					expect(record.reason).toContain("日志不完整");
++					expect(result.status).toBe("check_failed");
++					expect(result.integrationPassed).toBe(false);
++					expect(record.passed).toBe(false);
++					preserveEvidence(result);
++				},
++				async () => {
++					const file = join(managed, ".pao/overflow-pids.json");
++					if (existsSync(file)) {
++						const owned = JSON.parse(readFileSync(file, "utf8")) as number[];
++						for (const pid of owned.reverse()) {
++							try {
++								process.kill(pid);
++							} catch (error) {
++								if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++							}
+ 						}
+ 					}
+-				}
+-			}
++				},
++			);
+ 		},
+ 		40000,
+ 	);
+@@ -978,35 +982,41 @@
+ 				() => null,
+ 				(error: unknown) => error,
+ 			);
+-			try {
+-				const deadline = Date.now() + 25000;
+-				while (!existsSync(ready)) {
+-					if (Date.now() > deadline) throw new Error("检查进程未就绪");
+-					await delay(25);
+-				}
+-				controller.abort();
+-				const error = await operation;
+-				expect(error).toMatchObject({ name: "AbortError" });
+-				if (!confirmed) expect(String(error)).toContain("停止未确认");
+-				expect(releases).toBe(confirmed ? 1 : 0);
+-				preserveEvidence(
+-					JSON.parse(
+-						readFileSync(integrationResultPath(sourceExecution.key.cardsDir, `req-check-stop-${name}`), "utf8"),
+-					) as IntegrationRecord,
+-				);
+-			} finally {
+-				controller.abort();
+-				await operation;
+-				// 仅结束本用例刚创建且仍存在的检查进程；无派生进程，退出后不再碰 PID。
+-				if (existsSync(ready)) {
+-					const pid = Number(readFileSync(ready, "utf8"));
+-					try {
+-						process.kill(pid);
+-					} catch (error) {
+-						if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++			await withTestCleanup(
++				async () => {
++					const deadline = Date.now() + 25000;
++					while (!existsSync(ready)) {
++						if (Date.now() > deadline) throw new Error("检查进程未就绪");
++						await delay(25);
+ 					}
+-				}
+-			}
++					controller.abort();
++					const error = await operation;
++					expect(error).toMatchObject({ name: "AbortError" });
++					if (!confirmed) expect(String(error)).toContain("停止未确认");
++					expect(releases).toBe(confirmed ? 1 : 0);
++					preserveEvidence(
++						JSON.parse(
++							readFileSync(
++								integrationResultPath(sourceExecution.key.cardsDir, `req-check-stop-${name}`),
++								"utf8",
++							),
++						) as IntegrationRecord,
++					);
++				},
++				async () => {
++					controller.abort();
++					await operation;
++					// 仅结束本用例刚创建且仍存在的检查进程；无派生进程，退出后不再碰 PID。
++					if (existsSync(ready)) {
++						const pid = Number(readFileSync(ready, "utf8"));
++						try {
++							process.kill(pid);
++						} catch (error) {
++							if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
++						}
++					}
++				},
++			);
+ 		}
+ 	}, 60000);
+ });
+--- before/packages/coding-agent/test/pao/loadout-role.test.ts
++++ after/packages/coding-agent/test/pao/loadout-role.test.ts
+@@ -103,12 +103,13 @@
+ describe("worker 会话装载面(扩展注册层跳过,非藏提示词)", () => {
+ 	it("PAO_ROLE=worker 且注入宿主:仍无 worktree/整合/普通 append 管理面，只留侦察保存与执行步骤工具", async () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "worker");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		const { createSingleRootWorktreeHost } = await import("../../src/pao/worktrees/index.ts");
+ 		paoExtension(mock.pi as never, {
+-			resolvePaoHome: () => process.env.PAO_HOME,
++			resolvePaoHome: () => home,
+ 			worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 		});
+ 		// S8 会话 todo 是执行步骤工具(非 pao_ 派发/管理面),worker 也注册——回执对账(S8.4)
+@@ -131,7 +132,8 @@
+ 		expect(listPaoSubcommands(mock.pi as never)).toHaveLength(0);
+ 		expect(mock.models).toEqual(["快"]);
+ 		// 间接入口随模块消失:worker 模块的 session_shutdown 停后台钩子不再注册;
+-		// session_shutdown 四项：任务快照清理、预压缩取消与费用收齐、用量结账、todo 状态清理，
++		// session_shutdown 七项：任务快照清理、预压缩取消与费用收齐、用量结账、todo 状态清理、
++		// 停止活动观察、后台生命周期清理、释放后台宿主，
+ 		// 均不是派发后台管理。
+ 		// session_start(品牌指示器＋页脚记账重置;档位失注册守卫只读警告)
+ 		expect(mock.events.filter((event) => event === "session_shutdown")).toEqual([
+@@ -139,18 +141,22 @@
+ 			"session_shutdown",
+ 			"session_shutdown",
+ 			"session_shutdown",
++			"session_shutdown",
++			"session_shutdown",
++			"session_shutdown",
+ 		]);
+ 		expect(mock.events).toContain("session_start");
+ 	});
+ 
+ 	it("PAO_ROLE=部长:去扇出/协作中转/宿主/常驻记忆门面,其余 owner 面全保留(含记忆三工具与 queue 子命令)", () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "部长");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		return import("../../src/pao/worktrees/index.ts").then(({ createSingleRootWorktreeHost }) => {
+ 			paoExtension(mock.pi as never, {
+-				resolvePaoHome: () => process.env.PAO_HOME,
++				resolvePaoHome: () => home,
+ 				worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 			});
+ 			// 去的三个:fanout 的 pao_fanout、collab 的 pao_collab_relay 与 派 命令、host 的拉起/散场部长
+@@ -183,12 +189,13 @@
+ 
+ 	it("主控(默认):全部工具与命令注册齐全(与接线冒烟同口径)", () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		return import("../../src/pao/worktrees/index.ts").then(({ createSingleRootWorktreeHost }) => {
+ 			paoExtension(mock.pi as never, {
+-				resolvePaoHome: () => process.env.PAO_HOME,
++				resolvePaoHome: () => home,
+ 				worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 			});
+ 			for (const name of [
+--- before/packages/coding-agent/test/pao/s5p2-permissions.test.ts
++++ after/packages/coding-agent/test/pao/s5p2-permissions.test.ts
+@@ -115,7 +115,7 @@
+ 		const card = await makeCard(cardsDir);
+ 		const result = resolveDispatchParameters(card, cardsDir, home);
+ 		expect(result.模型).toBe("faux/main");
+-		expect(result.培养档).toBeUndefined();
++		expect(result.思考档).toBe("high");
+ 		expect(result.skills).toBeUndefined();
+ 		expect(result.工具白名单).toBeUndefined();
+ 		expect(result.派发告警).toBeUndefined();
+--- before/packages/coding-agent/test/pao/status-agent-recall.test.ts
++++ after/packages/coding-agent/test/pao/status-agent-recall.test.ts
+@@ -43,7 +43,7 @@
+ 	startControl,
+ } from "../../src/pao/workflow/control.ts";
+ import { createTemporaryPlan } from "../../src/pao/workflow/plan.ts";
+-import { recordPlanFeedback, recordPlanFeedbackDelivery } from "../../src/pao/workflow/plan-feedback.ts";
++import { recordPlanFeedback } from "../../src/pao/workflow/plan-feedback.ts";
+ import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
+ 
+ const dirs: string[] = [];
+--- before/packages/coding-agent/test/pao/verifier-parse.test.ts
++++ after/packages/coding-agent/test/pao/verifier-parse.test.ts
+@@ -80,7 +80,9 @@
+ 	it("包含句的 HTML、反引号和模板插值按文本字面值放行", () => {
+ 		expect(() =>
+ 			validateAcceptance(
+-				"包含: index.html :: <p>\n包含: README.md :: `示例`\n包含: config.txt :: ${value}",
++				`\u5305\u542B: index.html :: <p>
++\u5305\u542B: README.md :: \`\u793A\u4F8B\`
++\u5305\u542B: config.txt :: \${value}`,
+ 				projectRoot,
+ 			),
+ 		).not.toThrow();
+--- before/packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts
++++ after/packages/coding-agent/test/pao/worker-dispatch-managed-real.test.ts
+@@ -8,8 +8,8 @@
+ import { appendDispatchReceipt, executeDispatch } from "../../src/pao/worker/dispatch-core.ts";
+ import { PaoWorkerError } from "../../src/pao/worker/errors.ts";
+ import { acquireExecutionRootGuard, isExecutionLocked } from "../../src/pao/worker/lock.ts";
+-import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+-import type { ManagedWorktreeBinding, PaoWorktreeHost, WorktreeBinding } from "../../src/pao/worktrees/types.ts";
++import { WorkerRunner } from "../../src/pao/worker/runner.ts";
++import type { ManagedWorktreeBinding, PaoWorktreeHost } from "../../src/pao/worktrees/types.ts";
+ import { killTree } from "../../src/utils/kill-tree.ts";
+ 
+ const roots: string[] = [];
+@@ -140,7 +140,7 @@
+ 			`fs.appendFileSync(${JSON.stringify(startLog)}, "start " + Date.now() + " ${label}\\n");`,
+ 			"setTimeout(() => {",
+ 			`  fs.appendFileSync(${JSON.stringify(startLog)}, "end " + Date.now() + " ${label}\\n");`,
+-			'  console.log(JSON.stringify({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: JSON.stringify({result:"success",artifact_path:[],summary:"完成 ${label}"}) }], usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0 }, stopReason: "end" } }));',
++			`  console.log(JSON.stringify({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: JSON.stringify({result:"success",artifact_path:[],summary:"\u5B8C\u6210 \${label}"}) }], usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0 }, stopReason: "end" } }));`,
+ 			"}, 2500);",
+ 		].join("\n"),
+ 		"utf8",
+@@ -165,16 +165,16 @@
+ 			"const pid = process.pid;",
+ 			"fs.mkdirSync(readyDir, { recursive: true });",
+ 			"fs.writeFileSync(ownReady, String(pid));",
+-			"fs.appendFileSync(log, `ready ${Date.now()} ${label} ${pid}\\n`);",
++			`fs.appendFileSync(log, \`ready \${Date.now()} \${label} \${pid}\\n\`);`,
+ 			"const deadline = Date.now() + 20000;",
+ 			"function waitForPeer() {",
+ 			"  if (fs.existsSync(peerReady)) {",
+-			"    fs.appendFileSync(log, `peer-ready ${Date.now()} ${label} ${pid}\\n`);",
++			`    fs.appendFileSync(log, \`peer-ready \${Date.now()} \${label} \${pid}\\n\`);`,
+ 			"    waitForTestRelease();",
+ 			"    return;",
+ 			"  }",
+ 			"  if (Date.now() >= deadline) {",
+-			"    fs.appendFileSync(log, `timeout ${Date.now()} ${label} ${pid} peer\\n`);",
++			`    fs.appendFileSync(log, \`timeout \${Date.now()} \${label} \${pid} peer\\n\`);`,
+ 			"    process.exitCode = 23;",
+ 			"    return;",
+ 			"  }",
+@@ -183,14 +183,14 @@
+ 			"function waitForTestRelease() {",
+ 			"  if (fs.existsSync(go)) {",
+ 			"    fs.writeFileSync(path.join(readyDir, label + '.business'), String(pid));",
+-			"    fs.appendFileSync(log, `business ${Date.now()} ${label} ${pid}\\n`);",
++			`    fs.appendFileSync(log, \`business \${Date.now()} \${label} \${pid}\\n\`);`,
+ 			'    console.log(JSON.stringify({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: JSON.stringify({result:"success",artifact_path:[],summary:"握手完成 ' +
+ 				label +
+ 				'"}) }], usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0 }, stopReason: "end" } }));',
+ 			"    return;",
+ 			"  }",
+ 			"  if (Date.now() >= deadline) {",
+-			"    fs.appendFileSync(log, `timeout ${Date.now()} ${label} ${pid} release\\n`);",
++			`    fs.appendFileSync(log, \`timeout \${Date.now()} \${label} \${pid} release\\n\`);`,
+ 			"    process.exitCode = 23;",
+ 			"    return;",
+ 			"  }",
+@@ -333,7 +333,7 @@
+ 						cwd: work,
+ 					},
+ 				},
+-				async (claimed, receipt) => receipt.status,
++				async (_claimed, receipt) => receipt.status,
+ 			);
+ 		const [first, second] = await Promise.allSettled([dispatch("1"), dispatch("2")]);
+ 		const fulfilled = [first, second].filter(
+--- before/packages/coding-agent/test/pao/worker-execution-root-guard.test.ts
++++ after/packages/coding-agent/test/pao/worker-execution-root-guard.test.ts
+@@ -59,30 +59,6 @@
+ 		});
+ }
+ 
+-function nextLine(processHandle: ReturnType<typeof spawn>): Promise<Record<string, unknown>> {
+-	return new Promise((resolve, reject) => {
+-		let buffer = "";
+-		const onData = (chunk: Buffer): void => {
+-			buffer += chunk.toString();
+-			const newline = buffer.indexOf("\n");
+-			if (newline < 0) return;
+-			const line = buffer.slice(0, newline);
+-			cleanup();
+-			resolve(JSON.parse(line) as Record<string, unknown>);
+-		};
+-		const cleanup = (): void => {
+-			processHandle.stdout?.off("data", onData);
+-			processHandle.off("error", onError);
+-		};
+-		const onError = (error: Error): void => {
+-			cleanup();
+-			reject(error);
+-		};
+-		processHandle.stdout?.on("data", onData);
+-		processHandle.once("error", onError);
+-	});
+-}
+-
+ describe("任务根侧执行目录跨进程守卫", () => {
+ 	test("首实例持有时第二实例立即失败，释放后可取得", async () => {
+ 		const root = tempRoot();
+--- before/packages/coding-agent/test/pao/workflow-auto-chain.test.ts
++++ after/packages/coding-agent/test/pao/workflow-auto-chain.test.ts
+@@ -17,7 +17,7 @@
+ } from "../../src/pao/worker/notify.ts";
+ import type { WorkerReceipt, WorkerStatus } from "../../src/pao/worker/receipt.ts";
+ import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+-import { runAutoChain } from "../../src/pao/workflow/auto.ts";
++import { type AutoChainReviewEvent, runAutoChain } from "../../src/pao/workflow/auto.ts";
+ import {
+ 	addNodeCards,
+ 	bindMinister,
+@@ -780,7 +780,7 @@
+ 			cardsDir: f.cardsDir,
+ 			paoHome: f.paoHome,
+ 			运行器: f.runner,
+-			onReviewRequired: (event) => {
++			onReviewRequired: (event: AutoChainReviewEvent) => {
+ 				observed = event;
+ 				return { result: "pass" as const, basis: "部长已核对真实产物与质量句" };
+ 			},
+--- before/packages/coding-agent/test/pao/workflow-control.test.ts
++++ after/packages/coding-agent/test/pao/workflow-control.test.ts
+@@ -170,7 +170,7 @@
+ 			})}---\n`,
+ 			join(root, "地图流.md"),
+ 		);
+-		const options = { cardsDir, ownerSessionId: "owner" };
++		const options = { cardsDir, ownerSessionId: "owner", counterPath: join(root, "卡号.txt") };
+ 		await startControl(recipe, {}, options);
+ 		const id = await minister({ recipe, options }, "侦察");
+ 		const tools = new Map<string, ToolDefinition>();
+--- before/packages/coding-agent/test/pao/workflow-four-department-real.test.ts
++++ after/packages/coding-agent/test/pao/workflow-four-department-real.test.ts
+@@ -673,7 +673,6 @@
+ 		if (scenario === "map-refresh") {
+ 			const scoutMaps = waiting.记录.filter((record) => record.事件 === "节点交接地图" && record.节点 === "侦察");
+ 			expect(scoutMaps).toHaveLength(2);
+-			const oldMap = loadDispatchMapArtifact(scoutMaps[0].理由, { cardsDir: fixture.cardsDir });
+ 			const currentMap = loadDispatchMapArtifact(scoutMaps[1].理由, { cardsDir: fixture.cardsDir });
+ 			const planRecord = waiting.记录.findLast(
+ 				(record) => record.事件 === "节点交接地图" && record.节点 === "规划",
+--- before/packages/coding-agent/test/pao/workflow-host-bridge.test.ts
++++ after/packages/coding-agent/test/pao/workflow-host-bridge.test.ts
+@@ -117,9 +117,13 @@
+ 			{ 部门: "规划", 项目根: root, 脉络: flow.脉络, 会话标识: "session-规划" },
+ 			{ 部门: "规划", 项目根: root, 脉络: "independent", 会话标识: "other" },
+ 		] as ReturnType<MinisterHost["list"]>);
+-		const teardown = vi
+-			.spyOn(s.host, "teardown")
+-			.mockResolvedValue({ ok: true } as Awaited<ReturnType<MinisterHost["teardown"]>>);
++		const teardown = vi.spyOn(s.host, "teardown").mockResolvedValue({
++			pid: 1,
++			部门: "规划",
++			项目根: root,
++			原因: "模拟释放部长",
++			方式: "terminate",
++		});
+ 		expect((await s.bridge.drive(s.recipe, s.options)).report.status).toBe("completed");
+ 		expect(teardown).toHaveBeenCalledTimes(1);
+ 		expect(teardown.mock.calls[0]).toEqual(["规划", root, expect.any(String), flow.脉络]);
+@@ -458,7 +462,7 @@
+ 				status: "success",
+ 				artifact_path: ["产物/报告.md"],
+ 				summary: "实现完成",
+-				usage: { input: 1, output: 1, cost: 0 },
++				usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 1 },
+ 				evidence_path: "证据.jsonl",
+ 				exitCode: 0,
+ 				command: "fixture",
+@@ -737,7 +741,6 @@
+ 				实例: flow.实例,
+ 				节点: "规划",
+ 				轮次: 1,
+-				部长会话: "session-规划",
+ 				owner: "owner",
+ 				cardsDir: s.options.cardsDir,
+ 			});
+--- before/packages/coding-agent/test/pao/workflow-node-map-merge.test.ts
++++ after/packages/coding-agent/test/pao/workflow-node-map-merge.test.ts
+@@ -140,7 +140,7 @@
+ 		);
+ 	const text = submitted.content[0]?.type === "text" ? submitted.content[0].text : "";
+ 	const cardNumber = /卡(\d+)/.exec(text)?.[1] ?? "";
+-	return loadCard(s.cardsDir, cardNumber);
++	return loadCard(s.cardsDir, Number(cardNumber));
+ }
+ 
+ describe("双只读零卡上游地图交接", () => {
+@@ -181,7 +181,12 @@
+ 		const s = await fixture();
+ 		const { maps } = await saveMaps(s);
+ 		const card = await submitC(s);
+-		const legacy = { ...card.frontmatter, status: "unclaimed", attempt: 0, inputs: maps };
++		const legacy = {
++			...card.frontmatter,
++			status: "unclaimed" as const,
++			attempt: 0,
++			inputs: maps,
++		};
+ 		writeFileSync(card.path, serializeCard(legacy, card.body));
+ 		await expect(
+ 			prepareDispatchBrief({
+--- before/packages/coding-agent/test/pao/workflow-plan-tools.test.ts
++++ after/packages/coding-agent/test/pao/workflow-plan-tools.test.ts
+@@ -845,7 +845,7 @@
+ 			text: "把人物关系表补上",
+ 			deliver_request_id: "deliver-A",
+ 		});
+-		const 意见ID = /(f-\d{8}-[0-9a-f]{6})/.exec(记录)?.[1]!;
++		const 意见ID = /(f-\d{8}-[0-9a-f]{6})/.exec(记录)?.[1] ?? "";
+ 		// 张冠李戴的回执：请求 ID 对不上，不许结算。
+ 		await expect(
+ 			call(f.tools, "pao_plan_feedback", {
+@@ -892,7 +892,7 @@
+ 			text: "这句口语化一点",
+ 			deliver_request_id: "deliver-C",
+ 		});
+-		const 意见ID = /(f-\d{8}-[0-9a-f]{6})/.exec(记录)?.[1]!;
++		const 意见ID = /(f-\d{8}-[0-9a-f]{6})/.exec(记录)?.[1] ?? "";
+ 		// 第一次回执落在实例 inst-1 上：如实记「投递失败」，实例留档。
+ 		await call(f.tools, "pao_plan_feedback", {
+ 			plan_id: 计划ID,
+@@ -969,7 +969,7 @@
+ 				},
+ 			],
+ 		});
+-		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1]!;
++		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1] ?? "";
+ 		const 详情 = await call(f.tools, "pao_plan_query", { plan_id: 计划ID });
+ 		// 身份与运行关联：空对话里凭计划 ID 就能找回「当初是谁提的、什么要求」。
+ 		expect(详情).toContain("来源主控 sess-1");
+@@ -1161,7 +1161,7 @@
+ 				},
+ 			],
+ 		});
+-		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1]!;
++		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1] ?? "";
+ 		const saved = await call(f.tools, "pao_plan_save_template", {
+ 			plan_id: 计划ID,
+ 			definition_version: 1,
+@@ -1199,7 +1199,7 @@
+ 			display_name: "相对路径计划",
+ 			steps: [{ title: "写初稿", dept: "写作部", requirement: "写初稿", expected_artifacts: "创作成果/初稿.md" }],
+ 		});
+-		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1]!;
++		const 计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1] ?? "";
+ 		const saved = await call(f.tools, "pao_plan_save_template", {
+ 			plan_id: 计划ID,
+ 			definition_version: 1,
+@@ -1226,7 +1226,7 @@
+ 				},
+ 			],
+ 		});
+-		const 甲计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1]!;
++		const 甲计划ID = /计划ID：(p-[\w-]+)/.exec(建)?.[1] ?? "";
+ 		await call(f.tools, "pao_plan_save_template", {
+ 			plan_id: 甲计划ID,
+ 			definition_version: 1,
+--- before/packages/coding-agent/test/pao/workflow-plan.test.ts
++++ after/packages/coding-agent/test/pao/workflow-plan.test.ts
+@@ -253,7 +253,7 @@
+ 					预期成果: "创作成果/第1章/初稿.md",
+ 					人工门: true,
+ 					约束: "不要改设定大纲",
+-					预算: { tokens: 1000 },
++					预算: { turns: 1000 },
+ 					档位: "primary",
+ 					技能: ["小说笔法"],
+ 				}),
+@@ -277,7 +277,7 @@
+ 		expect(recipe.节点[0]!.验收).toBe("创作成果/第1章/初稿.md");
+ 		expect(recipe.节点[0]!.目标).toContain("写初稿");
+ 		expect(recipe.节点[0]!.目标).toContain("预期成果：创作成果/第1章/初稿.md");
+-		expect(recipe.节点[0]!.预算).toEqual({ tokens: 1000 });
++		expect(recipe.节点[0]!.预算).toEqual({ turns: 1000 });
+ 		expect(recipe.节点[0]!.技能).toEqual(["小说笔法"]);
+ 		expect(recipe.节点[1]!.审核).toBe(true);
+ 		expect(recipe.节点[1]!.部门标准).toBe("审稿部标准.md");
+--- before/packages/coding-agent/test/pao/workflow-review.test.ts
++++ after/packages/coding-agent/test/pao/workflow-review.test.ts
+@@ -634,7 +634,7 @@
+ 					attempt: 1,
+ 					time: "2026-10-03 10:59",
+ 					result: "failed",
+-					failure_type: "fatal",
++					failure_type: "unknown_outcome",
+ 					summary: "后完成失败",
+ 				}),
+ 			].join("\n\n"),
+@@ -679,7 +679,7 @@
+ 			记录: [],
+ 		};
+ 		const row = buildV2ReviewReport(recipe, cardsDir, flow).节点.find((item) => item.节点 === "侦察")!;
+-		expect(row.末次失败类型).toBe("fatal");
++		expect(row.末次失败类型).toBe("unknown_outcome");
+ 		expect(row.末次成功摘要).toBe("先完成成功");
+ 	});
+ });
+--- before/packages/coding-agent/test/pao/worktrees-tools.test.ts
++++ after/packages/coding-agent/test/pao/worktrees-tools.test.ts
+@@ -1,3 +1,5 @@
++import type { AgentToolResult } from "@earendil-works/pi-agent-core";
++import type { TSchema } from "typebox";
+ import { describe, expect, it } from "vitest";
+ 
+ import type { ExtensionAPI, ToolDefinition } from "../../src/core/extensions/types.ts";
+@@ -10,6 +12,7 @@
+ 	type WorktreeBinding,
+ 	type WorktreeInspection,
+ } from "../../src/pao/worktrees/index.ts";
++import { createTestExtensionToolContext } from "../extension-tool-context.ts";
+ 
+ function fakePi() {
+ 	const tools = new Map<string, ToolDefinition>();
+@@ -81,8 +84,18 @@
+ 	};
+ }
+ 
+-function context(cwd = "C:\\task") {
+-	return { cwd } as never;
++function textOf(result: Pick<AgentToolResult<unknown>, "content">): string {
++	for (const content of result.content) {
++		if (content.type === "text") return content.text;
++	}
++	throw new Error("Expected a text tool result");
++}
++
++function schemaPropertyNames(schema: TSchema): string[] {
++	if (!("properties" in schema) || !schema.properties || typeof schema.properties !== "object") {
++		throw new Error("Expected an object schema with properties");
++	}
++	return Object.keys(schema.properties);
+ }
+ 
+ describe("registerWorktreeTools", () => {
+@@ -90,11 +103,12 @@
+ 		const { pi, tools } = fakePi();
+ 		registerWorktreeTools(pi);
+ 		expect([...tools.keys()]).toEqual(["pao_worktree_create", "pao_worktree_list", "pao_worktree_cleanup"]);
++		const ctx = await createTestExtensionToolContext("C:\\task");
+ 		const result = await tools
+ 			.get("pao_worktree_create")!
+-			.execute("1", { request_id: "req-1" }, undefined, undefined, context());
++			.execute("1", { request_id: "req-1" }, undefined, undefined, ctx);
+ 		expect(result.isError).toBe(true);
+-		expect(result.content[0]?.text).toContain("没有安装工作目录服务");
++		expect(textOf(result)).toContain("没有安装工作目录服务");
+ 	});
+ 
+ 	it("uses session cwd for the project root and never accepts a path or branch", async () => {
+@@ -109,8 +123,14 @@
+ 			}),
+ 		});
+ 		const create = tools.get("pao_worktree_create")!;
+-		expect(Object.keys(create.parameters.properties)).toEqual(["request_id", "display_name"]);
+-		await create.execute("1", { request_id: "req-1", display_name: " task " }, undefined, undefined, context());
++		expect(schemaPropertyNames(create.parameters)).toEqual(["request_id", "display_name"]);
++		await create.execute(
++			"1",
++			{ request_id: "req-1", display_name: " task " },
++			undefined,
++			undefined,
++			await createTestExtensionToolContext("C:\\task"),
++		);
+ 		expect(seen).toEqual([{ requestId: "req-1", projectRoot: "C:\\task", displayName: "task" }]);
+ 	});
+ 
+@@ -127,7 +147,7 @@
+ 			isExecutionActive: () => "unknown",
+ 		});
+ 		const cleanup = tools.get("pao_worktree_cleanup")!;
+-		expect(Object.keys(cleanup.parameters.properties)).toEqual(["request_id", "worktree_id", "reason"]);
++		expect(schemaPropertyNames(cleanup.parameters)).toEqual(["request_id", "worktree_id", "reason"]);
+ 		const result = await cleanup.execute(
+ 			"1",
+ 			{
+@@ -137,11 +157,11 @@
+ 			},
+ 			undefined,
+ 			undefined,
+-			context(),
++			await createTestExtensionToolContext("C:\\task"),
+ 		);
+ 		expect(cleanupActive).toBe("unknown");
+ 		expect(result.isError).toBe(true);
+-		expect(result.content[0]?.text).toContain("已保留");
++		expect(textOf(result)).toContain("已保留");
+ 	});
+ 
+ 	it("overlays live execution state on list rows and treats lookup failure as unknown", async () => {
+@@ -157,9 +177,11 @@
+ 				throw new Error("worker state unavailable");
+ 			},
+ 		});
+-		const result = await tools.get("pao_worktree_list")!.execute("1", {}, undefined, undefined, context());
++		const result = await tools
++			.get("pao_worktree_list")!
++			.execute("1", {}, undefined, undefined, await createTestExtensionToolContext("C:\\task"));
+ 		expect((result.details as WorktreeInspection[])[0]).toMatchObject({ active: "unknown" });
+-		expect(result.content[0]?.text).toContain("使用中=未知");
++		expect(textOf(result)).toContain("使用中=未知");
+ 	});
+ });
+ 
+--- before/packages/coding-agent/test/extension-tool-context.ts
++++ after/packages/coding-agent/test/extension-tool-context.ts
+@@ -0,0 +1,13 @@
++import { AuthStorage } from "../src/core/auth-storage.ts";
++import { createExtensionRuntime } from "../src/core/extensions/loader.ts";
++import { ExtensionRunner } from "../src/core/extensions/runner.ts";
++import type { ExtensionToolContext } from "../src/core/extensions/types.ts";
++import { SessionManager } from "../src/core/session-manager.ts";
++import { createInMemoryModelRegistry } from "./model-runtime-test-utils.ts";
++
++/** 通过真实装配入口构造工具上下文，避免手写夹具随接口变化而失效。 */
++export async function createTestExtensionToolContext(root: string): Promise<ExtensionToolContext> {
++	const modelRegistry = await createInMemoryModelRegistry(AuthStorage.inMemory());
++	const runner = new ExtensionRunner([], createExtensionRuntime(), root, SessionManager.inMemory(root), modelRegistry);
++	return runner.createToolContext("test-tool-call", undefined);
++}
+--- before/packages/coding-agent/test/with-test-cleanup.ts
++++ after/packages/coding-agent/test/with-test-cleanup.ts
+@@ -0,0 +1,17 @@
++/** 始终执行清理，同时保留测试本身和清理过程的失败。 */
++export async function withTestCleanup<T>(run: () => Promise<T>, cleanup: () => void | Promise<void>): Promise<T> {
++	let outcome: { ok: true; value: T } | { ok: false; error: unknown };
++	try {
++		outcome = { ok: true, value: await run() };
++	} catch (error) {
++		outcome = { ok: false, error };
++	}
++	try {
++		await cleanup();
++	} catch (error) {
++		if (!outcome.ok) throw new AggregateError([outcome.error, error], "测试与清理均失败");
++		throw error;
++	}
++	if (!outcome.ok) throw outcome.error;
++	return outcome.value;
++}
+--- before/packages/coding-agent/test/with-test-cleanup.test.ts
++++ after/packages/coding-agent/test/with-test-cleanup.test.ts
+@@ -0,0 +1,56 @@
++import { expect, it } from "vitest";
++import { withTestCleanup } from "./with-test-cleanup.ts";
++
++it("清理成功时保留返回值", async () => {
++	let cleaned = false;
++	expect(
++		await withTestCleanup(
++			async () => 42,
++			() => {
++				cleaned = true;
++			},
++		),
++	).toBe(42);
++	expect(cleaned).toBe(true);
++});
++
++it("测试和清理都失败时保留两个原错误", async () => {
++	const original = new Error("原测试失败");
++	const cleanup = new Error("清理失败");
++	await expect(
++		withTestCleanup(
++			async () => {
++				throw original;
++			},
++			() => {
++				throw cleanup;
++			},
++		),
++	).rejects.toMatchObject({
++		name: "AggregateError",
++		errors: [original, cleanup],
++	});
++});
++
++it("测试单独失败时原样抛出，包括undefined", async () => {
++	await expect(
++		withTestCleanup(
++			async () => {
++				throw undefined;
++			},
++			() => {},
++		),
++	).rejects.toBeUndefined();
++});
++
++it("清理单独失败时不能伪装成功", async () => {
++	const cleanup = new Error("清理失败");
++	await expect(
++		withTestCleanup(
++			async () => 42,
++			() => {
++				throw cleanup;
++			},
++		),
++	).rejects.toBe(cleanup);
++});

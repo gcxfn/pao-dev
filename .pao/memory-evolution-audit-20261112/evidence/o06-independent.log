@@ -1,0 +1,152 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o06-independent.test.ts > O06 独立完成审核 > D1 同项目整理完成后，新变化仍能再次整理 56ms
+   → expected 1 to be 2 // Object.is equality
+   → expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2
+ × o06-independent.test.ts > O06 独立完成审核 > D2 两个正式决定条件互斥时，不自动合并并丢弃条件 56ms
+   → expected [ { …(2) } ] to have a length of 2 but got 1
+ × o06-independent.test.ts > O06 独立完成审核 > D3 合并待定与已确认决定时，不把已确认决定降成待定 50ms
+   → expected false to be true // Object.is equality
+ × o06-independent.test.ts > O06 独立完成审核 > D4 settled 后异步登记的整理任务，无需另一次用户回合即可消费 1077ms
+   → expected 'pending' to be 'done' // Object.is equality
+ × o06-independent.test.ts > O06 独立完成审核 > D5 rebuild 接受带空格的项目路径，不静默重建错误范围 201ms
+   → expected [] to have a length of 1 but got +0
+ × o06-independent.test.ts > O06 独立完成审核 > D6 backup 接受带空格的目录参数，并登记真实维护队列 103ms
+   → expected undefined to be defined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D1 同项目整理完成后，新变化仍能再次整理
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ o06-independent.test.ts:72:28
+     70|     expect(q.enqueue()).toBe(true); await f.settled();
+     71|     results.D1 = { first, after: q.row(), calls: q.calls(), canonical:…
+     72|     expect.soft(q.calls()).toBe(2);
+       |                            ^
+     73|     expect(f.canonical()).toHaveLength(1);
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D1 同项目整理完成后，新变化仍能再次整理
+AssertionError: expected [ { …(2) }, { …(2) } ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ o06-independent.test.ts:73:27
+     71|     results.D1 = { first, after: q.row(), calls: q.calls(), canonical:…
+     72|     expect.soft(q.calls()).toBe(2);
+     73|     expect(f.canonical()).toHaveLength(1);
+       |                           ^
+     74|   });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D2 两个正式决定条件互斥时，不自动合并并丢弃条件
+AssertionError: expected [ { …(2) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ o06-independent.test.ts:82:27
+     80|     const organized = await f.organize();
+     81|     results.D2 = { organized, canonical: f.canonical() };
+     82|     expect(f.canonical()).toHaveLength(2);
+       |                           ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D3 合并待定与已确认决定时，不把已确认决定降成待定
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ o06-independent.test.ts:93:73
+     91|     const canonical = f.canonical();
+     92|     results.D3 = { organized, confirmedId: ids[1], canonical };
+     93|     expect(canonical.some(m => m.content.confirmation === "confirmed")…
+       |                                                                         ^
+     94|   });
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D4 settled 后异步登记的整理任务，无需另一次用户回合即可消费
+AssertionError: expected 'pending' to be 'done' // Object.is equality
+
+Expected: "done"
+Received: "pending"
+
+ ❯ o06-independent.test.ts:104:79
+    102|     await tick(); await tick();
+    103|     results.D4 = { job: q.row(), calls: q.calls(), canonical: f.canoni…
+    104|     await expect.poll(() => q.row()?.status, { timeout: 1000, interval…
+       |                                                                               ^
+    105|   });
+    106|
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ o06-independent.test.ts:104:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D5 rebuild 接受带空格的项目路径，不静默重建错误范围
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ o06-independent.test.ts:118:18
+    116|     const rows = f.store.db.prepare("SELECT memory_id FROM memory_fts …
+    117|     results.D5 = { projectId: targetScope.projectId, rows, notices: f.…
+    118|     expect(rows).toHaveLength(1);
+       |                  ^
+    119|   });
+    120|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D6 backup 接受带空格的目录参数，并登记真实维护队列
+AssertionError: expected undefined to be defined
+ ❯ o06-independent.test.ts:131:17
+    129|     const row = f.store.db.prepare("SELECT source_scope,status FROM ex…
+    130|     results.D6 = { directory, row: row ?? null, notices: f.notices };
+    131|     expect(row).toBeDefined();
+       |                 ^
+    132|   });
+    133| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  21:06:28
+   Duration  4.27s (transform 1.95s, setup 0ms, import 2.57s, tests 1.55s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o06-independent-vitest.json

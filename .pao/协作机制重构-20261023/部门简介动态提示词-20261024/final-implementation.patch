@@ -1,0 +1,276 @@
+diff --git a/packages/coding-agent/src/pao/dept/catalog.ts b/packages/coding-agent/src/pao/dept/catalog.ts
+index cf66f823f..e2b8ee97a 100644
+--- a/packages/coding-agent/src/pao/dept/catalog.ts
++++ b/packages/coding-agent/src/pao/dept/catalog.ts
+@@ -18,7 +18,9 @@ import { isAbsolute, join, resolve, sep } from "node:path";
+ 
+ import { loadTierConfig, resolveTierConfigPath, type TierConfig, tierNameToModel } from "../routing/config.ts";
+ import { DEPT_DIR_NAME, type DeptRegistryRow, deptDirIdentity, REGISTRY_FILE_NAME, readRegistry } from "./registry.ts";
+-import { RECIPE_FILE_NAME } from "./render.ts";
++
++/** 配方文件名,固定在 部门/<名>/ 下;建部正门(pao_create_dept)产出的唯一正本 */
++export const RECIPE_FILE_NAME = "配方.md";
+ 
+ /**
+  * 干法段标题（S5 包4 双层配方切分标记,值必须是 `## 干法`）。
+diff --git a/packages/coding-agent/src/pao/dept/index.ts b/packages/coding-agent/src/pao/dept/index.ts
+index fd9231c98..45f2a1ec4 100644
+--- a/packages/coding-agent/src/pao/dept/index.ts
++++ b/packages/coding-agent/src/pao/dept/index.ts
+@@ -84,17 +84,27 @@ export interface RegisterDeptToolsOptions {
+  *
+  * 渲染:每次 run 前(before_agent_start)读 部门/注册表.md,把一行一部门的快照
+  * (带「截至」日期)追加为系统提示 section;改注册表,下一次请求天然生效。
+- * PAO_HOME 缺失或注册表读不了时不渲染该 section(无部门环境的会话不该因此失败);
++ * PAO_HOME 缺失时跳过该 section;注册表读失败时明确提示,不能伪装成空名单;
+  * 注册表存在但为空时渲染空态说明。
+  */
+ export function registerDeptTools(pi: ExtensionAPI, options: RegisterDeptToolsOptions = {}): void {
+ 	const paoHome = (): string => options.paoHome ?? resolvePaoHome();
+ 	pi.registerTool(buildDeptTool(paoHome));
+ 	pi.on("before_agent_start", (event) => {
++		let home: string;
+ 		try {
+-			event.systemPromptOptions.sections[REGISTRY_SECTION_NAME] = renderRegistryFromHome(paoHome(), today());
++			home = paoHome();
+ 		} catch {
+-			// PAO_HOME 缺失/读失败:跳过本 section,不阻断会话
++			// 无 PAO_HOME 的无部门环境保持原有行为:不渲染,不阻断会话。
++			return undefined;
++		}
++		try {
++			event.systemPromptOptions.sections[REGISTRY_SECTION_NAME] = renderRegistryFromHome(home, today());
++		} catch (error) {
++			// 有 PAO_HOME 却意外读失败时明确告知,不能伪装成空名单。
++			const reason = error instanceof Error ? error.message : String(error);
++			event.systemPromptOptions.sections[REGISTRY_SECTION_NAME] =
++				`部门名单读取失败,不能视为没有已登记部门。原因:${reason}`;
+ 		}
+ 		return undefined;
+ 	});
+diff --git a/packages/coding-agent/src/pao/dept/render.ts b/packages/coding-agent/src/pao/dept/render.ts
+index 8271227a4..37bcf2303 100644
+--- a/packages/coding-agent/src/pao/dept/render.ts
++++ b/packages/coding-agent/src/pao/dept/render.ts
+@@ -1,16 +1,27 @@
+ import { createHash } from "node:crypto";
+ import { existsSync, readFileSync, statSync } from "node:fs";
+ import { join } from "node:path";
+-import {
+-	DEPT_DIR_NAME,
+-	type DeptRegistryRow,
+-	formatRegistryRow,
+-	parseRegistry,
+-	REGISTRY_FILE_NAME,
+-} from "./registry.ts";
++import { type DeptCatalog, type DeptCatalogEntry, RECIPE_FILE_NAME, readDeptCatalog } from "./catalog.ts";
++import { DEPT_DIR_NAME, type DeptRegistryRow, formatRegistryRow, parseRegistry } from "./registry.ts";
+ 
+-/** 配方文件名,固定在 部门/<名>/ 下;建部正门(pao_create_dept)产出的唯一正本 */
+-export const RECIPE_FILE_NAME = "配方.md";
++/** 配方「详细干法」段标题:标题前是常驻概要,标题起是 worker 按需读取的正文。 */
++export const DEPT_RECIPE_METHOD_HEADING = "## 干法";
++
++export interface RecipeMethodSplit {
++	hasMethod: boolean;
++	overview: string;
++}
++
++/**
++ * 按干法标记切分配方纯文本。
++ * 有标记时概要只保留标记前内容;无标记时 overview 保留全文,供部长快照兼容旧配方。
++ */
++export function splitRecipeMethod(recipe: string): RecipeMethodSplit {
++	const marker = recipe.indexOf(DEPT_RECIPE_METHOD_HEADING);
++	return marker === -1
++		? { hasMethod: false, overview: recipe.trimEnd() }
++		: { hasMethod: true, overview: recipe.slice(0, marker).trimEnd() };
++}
+ 
+ /** 本地时区时间戳,YYYY-MM-DD HH:MM(与 cards/handoff.ts 等同款口径) */
+ function formatTimestamp(date: Date): string {
+@@ -55,15 +66,51 @@ export function renderRegistryText(registryText: string, asOf: string): string {
+ 	return renderRegistrySnapshot(parseRegistry(registryText), asOf);
+ }
+ 
+-/** 读 <paoHome>/部门/注册表.md 并渲染;注册表不存在按空态渲染,不报错 */
++/** 一个部门在系统提示里的简介;配方缺失只说明简介读不到,不据此判定派发资格。 */
++function renderDeptCatalogEntry(entry: DeptCatalogEntry): string {
++	const persona = entry.人设?.trim();
++	const description = !entry.配方存在
++		? "不可读取（配方缺失或不可读）"
++		: persona && !/^<待填(?:[:：>]|$)/.test(persona)
++			? persona
++			: "未填写";
++	const parts = [`${entry.名字}｜职责简介：${description}`];
++	if (entry.标签.length > 0) parts.push(`标签：${entry.标签.join("、")}`);
++	return `- ${parts.join("｜")}`;
++}
++
++/**
++ * 部门目录 → 主控系统提示片段(纯函数)。
++ *
++ * 只从 catalog 取名称、人设和注册表标签;完整配方、工具、技能、知识库都不进常驻提示。
++ * 静态目录不能证明任务、预算或权限允许派发,所以这里只陈述简介可读性,不推断派发资格。
++ */
++export function renderDeptCatalogSnapshot(catalog: DeptCatalog, asOf: string): string {
++	const registryFailure = catalog.问题.find(
++		(issue) => issue.级别 === "阻止启动" && issue.类别 === "注册表" && issue.部门 === "（注册表）",
++	);
++	if (registryFailure) {
++		return [
++			`截至 ${asOf}:部门名单读取失败,不能视为没有已登记部门。`,
++			`原因:${registryFailure.问题}`,
++			`证据:${registryFailure.证据}`,
++		].join("\n");
++	}
++	if (catalog.部门.length === 0) {
++		return `截至 ${asOf}:当前没有已登记部门。`;
++	}
++
++	return [`截至 ${asOf},已登记部门如下(按具体任务选择):`, "", ...catalog.部门.map(renderDeptCatalogEntry)].join("\n");
++}
++
++/** 读 <paoHome>/部门 并渲染职责简介;注册表不存在是明确空名单,读取失败则明确报错。 */
+ export function renderRegistryFromHome(paoHome: string, asOf: string = today()): string {
+-	const registryPath = join(paoHome, DEPT_DIR_NAME, REGISTRY_FILE_NAME);
+-	const text = existsSync(registryPath) ? readFileSync(registryPath, "utf8") : "";
+-	return renderRegistryText(text, asOf);
++	return renderDeptCatalogSnapshot(readDeptCatalog(paoHome), asOf);
+ }
+ 
+ /**
+- * 部门配方 → 人设快照片段(纯读,不写盘):读 部门/<名>/配方.md 原文,带「截至 <配方 mtime>」行。
++ * 部门配方 → 人设快照片段(纯读,不写盘):带「截至 <配方 mtime>」行。
++ * 有「## 干法」标记时只常驻概要,并给出配方路径供按需读取;无标记旧配方仍保留全文。
+  * M2-01 §1:部长会话启动时渲染进人设,这是 dept 唯一新增渲染面;派卡/中转机械校验永远读最新
+  * 配方,快照旧不导致派错。配方文件不存在返回 null——调用方跳过,不报错也不静默假装有。
+  * 注意:不自包 XML 标签,与注册表快照同口径。
+@@ -73,10 +120,15 @@ export function renderRecipeSnapshot(deptName: string, paoHome: string): string
+ 	if (!existsSync(path)) return null;
+ 	const text = readFileSync(path, "utf8");
+ 	const asOf = formatTimestamp(statSync(path).mtime);
++	const split = splitRecipeMethod(text);
++	const header = [`截至 ${asOf},部门「${deptName}」配方如下(会话启动时快照;档位合法性等校验永远以最新配方为准):`, ""];
++	if (!split.hasMethod) return [...header, split.overview].join("\n");
+ 	return [
+-		`截至 ${asOf},部门「${deptName}」配方如下(会话启动时快照;档位合法性等校验永远以最新配方为准):`,
++		...header,
++		split.overview || "没有常驻概要;详细内容均在干法段,需要时按下方路径读取。",
+ 		"",
+-		text.trimEnd(),
++		`配方文件:${path}`,
++		`需要专业细节时，按需读取该文件的「${DEPT_RECIPE_METHOD_HEADING}」段；常驻概要不替代最新配方。`,
+ 	].join("\n");
+ }
+ 
+diff --git a/packages/coding-agent/test/pao/dept-tools.test.ts b/packages/coding-agent/test/pao/dept-tools.test.ts
+index 887626b70..edf4e407d 100644
+--- a/packages/coding-agent/test/pao/dept-tools.test.ts
++++ b/packages/coding-agent/test/pao/dept-tools.test.ts
+@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it } from "vitest";
+ import type { ExtensionAPI, ToolDefinition } from "../../src/core/extensions/types.ts";
+ import {
+ 	type DeptRegistryRow,
++	formatRegistry,
+ 	parseRegistry,
+ 	readRegistry,
+ 	registerDeptTools,
+@@ -333,7 +334,7 @@ describe("pao_create_dept 工具与启动渲染注册", () => {
+ 		const capturedEmpty = capturePi();
+ 		registerDeptTools(capturedEmpty.pi, { paoHome: emptyHome });
+ 		const emptySections = await runBeforeAgentStart(capturedEmpty);
+-		expect(emptySections.pao_dept_registry).toContain("为空");
++		expect(emptySections.pao_dept_registry).toContain("没有已登记部门");
+ 
+ 		// PAO_HOME 缺失 → 不渲染、不报错
+ 		const oldHome = process.env.PAO_HOME;
+@@ -347,4 +348,88 @@ describe("pao_create_dept 工具与启动渲染注册", () => {
+ 			if (oldHome !== undefined) process.env.PAO_HOME = oldHome;
+ 		}
+ 	});
++
++	it("每轮从注册表和配方实读人设与标签;人员更新生效,移除部门后旧名单不累积", async () => {
++		const home = tempHome();
++		await createDept({ paoHome: home, 名字: "写作", 标签: ["文档", "文案"] });
++		const recipePath = join(home, "部门", "写作", "配方.md");
++		const initialRecipe = readFileSync(recipePath, "utf8");
++		writeFileSync(recipePath, initialRecipe.replace(/- 人设:.*$/m, "- 人设:负责对外文案与信息结构"), "utf8");
++		const captured = capturePi();
++		registerDeptTools(captured.pi, { paoHome: home });
++
++		const first = await runBeforeAgentStart(captured);
++		expect(first.pao_dept_registry).toContain("写作｜职责简介：负责对外文案与信息结构");
++		expect(first.pao_dept_registry).toContain("标签：文档、文案");
++
++		writeFileSync(recipePath, initialRecipe.replace(/- 人设:.*$/m, "- 人设:负责校对事实与措辞"), "utf8");
++		const second = await runBeforeAgentStart(captured);
++		expect(second.pao_dept_registry).toContain("负责校对事实与措辞");
++		expect(second.pao_dept_registry).not.toContain("负责对外文案与信息结构");
++
++		writeFileSync(
++			join(home, "部门", "注册表.md"),
++			formatRegistry([{ 名字: "审查", 标签: [], 库路径: "部门/审查/知识库", 建部日期: "2026-10-24" }]),
++			"utf8",
++		);
++		const third = await runBeforeAgentStart(captured);
++		expect(third.pao_dept_registry).toContain("审查｜职责简介：不可读取");
++		expect(third.pao_dept_registry).not.toContain("写作");
++	});
++
++	it("未填写人设如实标注;缺失配方明确不可读取,不泄露完整配方和工具清单", async () => {
++		const home = tempHome();
++		const noPersonaDir = join(home, "部门", "无简介");
++		mkdirSync(noPersonaDir, { recursive: true });
++		writeFileSync(join(noPersonaDir, "配方.md"), "# 配方:无简介\n\n- 工具:read,grep,bash\n", "utf8");
++		writeFileSync(
++			join(home, "部门", "注册表.md"),
++			formatRegistry([
++				{ 名字: "无简介", 标签: ["调查"], 库路径: "部门/无简介/知识库", 建部日期: "2026-10-24" },
++				{ 名字: "缺配方", 标签: [], 库路径: "部门/缺配方/知识库", 建部日期: "2026-10-24" },
++			]),
++			"utf8",
++		);
++		const captured = capturePi();
++		registerDeptTools(captured.pi, { paoHome: home });
++
++		const section = (await runBeforeAgentStart(captured)).pao_dept_registry;
++		expect(section).toContain("无简介｜职责简介：未填写");
++		expect(section).toContain("缺配方｜职责简介：不可读取");
++		expect(section).not.toContain("派发状态");
++		expect(section).not.toContain("# 配方:");
++		expect(section).not.toContain("read,grep,bash");
++	});
++
++	it("重名问题不扩散到其它部门,提示不推断任务、预算或权限资格", async () => {
++		const home = tempHome();
++		await createDept({ paoHome: home, 名字: "健康", 标签: ["coding"] });
++		const duplicateDir = join(home, "部门", "重复");
++		mkdirSync(duplicateDir, { recursive: true });
++		const first = { 名字: "重复", 标签: ["甲"], 库路径: "部门/重复/知识库", 建部日期: "2026-10-24" };
++		const second = { ...first, 标签: ["乙"] };
++		const registryPath = join(home, "部门", "注册表.md");
++		writeFileSync(registryPath, formatRegistry([readRegistry(registryPath)[0], first, second]), "utf8");
++		const captured = capturePi();
++		registerDeptTools(captured.pi, { paoHome: home });
++
++		const section = (await runBeforeAgentStart(captured)).pao_dept_registry;
++		const healthy = section.split("\n").find((line) => line.startsWith("- 健康｜"));
++		expect(healthy).toBeDefined();
++		expect(healthy).not.toContain("重复");
++		expect(healthy).not.toContain("不可派发");
++		expect(section.split("\n").some((line) => line.startsWith("- 重复｜") && line.includes("职责简介"))).toBe(true);
++	});
++
++	it("注册表路径被目录占位时明确报读取失败,不伪装为空名单", async () => {
++		const home = tempHome();
++		mkdirSync(join(home, "部门", "注册表.md"), { recursive: true });
++		const captured = capturePi();
++		registerDeptTools(captured.pi, { paoHome: home });
++
++		const section = (await runBeforeAgentStart(captured)).pao_dept_registry;
++		expect(section).toContain("部门名单读取失败");
++		expect(section).toContain("不能视为没有已登记部门");
++		expect(section).not.toContain("当前没有已登记部门");
++	});
+ });

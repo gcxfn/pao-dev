@@ -1,0 +1,145 @@
+/* 工作看板整页视图 v1（只读）：布局对齐 scheduled-tasks-view，从简。 */
+.workboard-view {
+  padding: 24px 28px 32px;
+  width: min(920px, 100%);
+  margin: 0 auto;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.workboard-status {
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.workboard-section {
+  display: grid;
+  gap: 10px;
+}
+
+.workboard-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 640;
+  color: var(--text-strong);
+}
+
+.workboard-subsection__title {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
+.workboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.workboard-row {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+.workboard-row__meta {
+  color: var(--muted-strong);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.workboard-row__warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workboard-warning {
+  padding: 1px 8px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+}
+
+.workboard-pending__lines {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 4px;
+}
+
+.workboard-pending__lines dt {
+  float: left;
+  margin-right: 8px;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.workboard-pending__lines dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.workboard-empty {
+  margin: 0;
+  color: var(--muted-strong);
+}
+
+/* 部门行定位按钮（卡钻取第一级）：行内容整体可点,样式与原静态行一致只添手型与焦点态。 */
+.workboard-dept-locate {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workboard-dept-locate:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
+}
+
+.workboard-locate-status {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+/* 定位高亮：脉冲一次后保留描边,直到定位其他部门。 */
+.workboard-row--located {
+  border-color: var(--accent);
+  animation: workboard-locate-pulse 1.6s ease-out 1;
+}
+
+@keyframes workboard-locate-pulse {
+  0%,
+  60% {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+/* 待处理行 → 打开真实卡详情（S7-A）：主行动作，独立于四行说明。 */
+.workboard-open-card {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 2px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  font-size: 12px;
+  cursor: pointer;
+}

@@ -1,0 +1,98 @@
+Skipping image OS validation for hb__12b4b5ba8dbc7587bb7a587dfb70f06f: docker inspect returned 1
+Running command: apt-get update && apt-get install -y curl unzip xz-utils
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' 3f2d1f25076471cce3c05427cd1446178f8c012abf6a4619a6228c1d65341b17 /tmp/harbor-pao-source.tar.gz | sha256sum -c -; mkdir -p /tmp/harbor-pao-source; unzip -q /tmp/harbor-pao-source.tar.gz -d /tmp/harbor-pao-source
+Command outputs captured
+Running command: set -euo pipefail; NODE_VERSION=v24.18.0; NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; NODE_DIR=$HOME/.local/pao-node; if [ ! -x "$NODE_DIR/bin/node" ]; then mkdir -p "$HOME/.local"; curl -fsSLo /tmp/pao-node.tar.xz https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; printf '%s  %s\n' "$NODE_SHA256" /tmp/pao-node.tar.xz | sha256sum -c -; mkdir -p "$NODE_DIR"; tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C "$NODE_DIR"; fi; export PATH="$NODE_DIR/bin:$PATH"; "$NODE_DIR/bin/node" --version; "$NODE_DIR/bin/npm" --version
+Command outputs captured
+Running command: set -euo pipefail; export PATH="$HOME/.local/pao-node/bin:$PATH"; cd /tmp/harbor-pao-source; npm ci --ignore-scripts --no-audit --no-fund && npm run build; test -f /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js; node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js --version
+Command failed
+Trial html-js-filter__GRk9wb8 failed: Command failed (exit 2): set -euo pipefail; export PATH="$HOME/.local/pao-node/bin:$PATH"; cd /tmp/harbor-pao-source; npm ci --ignore-scripts --no-audit --no-fund && npm run build; test -f /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js; node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js --version
+stdout: npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'autoevals@0.3.0',
+npm warn EBADENGINE   required: {
+npm warn EBADENGINE     npm: 'please-use-pnpm',
+npm warn EBADENGINE     pnpm: '>=10.27.0',
+npm warn EBADENGINE     yarn: 'ple ... [6713 chars truncated] ... nses"'.
+npm error Lifecycle script `build:offline` failed with error:
+npm error code 2
+npm error path /tmp/harbor-pao-source/packages/ai
+npm error workspace @earendil-works/pi-ai@1.0.2
+npm error location /tmp/harbor-pao-source/packages/ai
+npm error command failed
+npm error command sh -c npm run check:model-data && tsc -p tsconfig.build.json && shx rm -rf dist/providers/data && shx cp -r src/providers/data dist/providers/data
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path /tmp/harbor-pao-source/packages/ai
+npm error workspace @earendil-works/pi-ai@1.0.2
+npm error location /tmp/harbor-pao-source/packages/ai
+npm error command failed
+npm error command sh -c npm run generate-models && npm run build:offline
+
+stderr: None
+Collecting main service artifacts
+compose cp failed; retrying download with engine cp: Docker compose command failed for environment html-js-filter. Command: docker compose --project-name html-js-filter__grk9wb8__env --project-directory /run/desktop/mnt/host/d/AI/workspace/临时文件夹/地图简报基准-20261020/controller-home/.cache/harbor/tasks/packages/terminal-bench/html-js-filter/f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3/environment -f /tmp/tmp747dycyi/html-js-filter__GRk9wb8__env-docker-compose-resources.json -f /mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker-compose-build.yaml -f /tmp/tmp7hwcyp04/docker-compose-environment.json -f /tmp/tmpn6rx6p02/docker-compose-mounts.json cp main:/app/filter.py /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261021/jobs/install-smoke2-post-pao/html-js-filter__GRk9wb8/artifacts/app/filter.py. Return code: 1. Stdout:  html-js-filter__grk9wb8__env-main-1 Copying html-js-filter__grk9wb8__env-main-1:/app/filter.py to /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261021/jobs/install-smoke2-post-pao/html-js-filter__GRk9wb8/artifacts/app/filter.py
+Error response from daemon: Could not find the file /app/filter.py in container f3d3438d66d055422e10a64e2b539f81524b9cc83bdc71bb4c7dc7bb86f9b447
+. Stderr: None. 
+Failed to download artifact '/app/filter.py' from service 'main' (best-effort)
+Traceback (most recent call last):
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 499, in run
+    await self._prepare()
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 545, in _prepare
+    await self._setup_agent()
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 1761, in _setup_agent
+    await asyncio.wait_for(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/python/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1136, in setup
+    await self.install(environment)
+  File "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py", line 137, in install
+    await self.exec_as_agent(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1081, in exec_as_agent
+    return await self._exec(
+           ^^^^^^^^^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1048, in _exec
+    raise self._classify_exec_error(command, result)
+harbor.agents.installed.base.NonZeroAgentExitCodeError: Command failed (exit 2): set -euo pipefail; export PATH="$HOME/.local/pao-node/bin:$PATH"; cd /tmp/harbor-pao-source; npm ci --ignore-scripts --no-audit --no-fund && npm run build; test -f /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js; node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js --version
+stdout: npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'autoevals@0.3.0',
+npm warn EBADENGINE   required: {
+npm warn EBADENGINE     npm: 'please-use-pnpm',
+npm warn EBADENGINE     pnpm: '>=10.27.0',
+npm warn EBADENGINE     yarn: 'ple ... [6713 chars truncated] ... nses"'.
+npm error Lifecycle script `build:offline` failed with error:
+npm error code 2
+npm error path /tmp/harbor-pao-source/packages/ai
+npm error workspace @earendil-works/pi-ai@1.0.2
+npm error location /tmp/harbor-pao-source/packages/ai
+npm error command failed
+npm error command sh -c npm run check:model-data && tsc -p tsconfig.build.json && shx rm -rf dist/providers/data && shx cp -r src/providers/data dist/providers/data
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path /tmp/harbor-pao-source/packages/ai
+npm error workspace @earendil-works/pi-ai@1.0.2
+npm error location /tmp/harbor-pao-source/packages/ai
+npm error command failed
+npm error command sh -c npm run generate-models && npm run build:offline
+
+stderr: None
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/artifact_handler.py", line 313, in _download_artifact
+    await source_env.service_download_file(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1322, in service_download_file
+    await self.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1307, in download_file
+    await self._platform.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 278, in download_file
+    await self._download_via_engine_cp(source_path, target_path, service)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 253, in _download_via_engine_cp
+    await self._engine_cp(f"{container}:{container_path}", str(target_path))
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 244, in _engine_cp
+    raise RuntimeError(
+RuntimeError: Engine cp failed ('f3d3438d66d0:/app/filter.py' -> '/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261021/jobs/install-smoke2-post-pao/html-js-filter__GRk9wb8/artifacts/app/filter.py'): Error response from daemon: Could not find the file /app/filter.py in container f3d3438d66d0
+
+Not retrying trial because the maximum number of retries has been reached

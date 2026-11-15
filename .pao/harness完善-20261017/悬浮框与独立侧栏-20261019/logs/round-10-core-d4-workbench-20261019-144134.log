@@ -1,0 +1,116 @@
+
+Running 3 tests using 1 worker
+
+(node:16468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\d4-sidebar-draft.spec.ts:187:5 › 窄窗口里右侧状态栏默认收起，展开能看、收起能记住 (15.0s)
+(node:21104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 apps\desktop\tests\core\d4-sidebar-draft.spec.ts:249:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 (9.6s)
+(node:30332) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30332) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened (8.3s)
+
+
+  1) apps\desktop\tests\core\d4-sidebar-draft.spec.ts:187:5 › 窄窗口里右侧状态栏默认收起，展开能看、收起能记住 ─────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m320[39m
+    Received: [31m189[39m
+
+      213 |     await expand.click();
+      214 |     await expect(rail).toBeVisible();
+    > 215 |     expect(Math.round((await rail.boundingBox())!.width)).toBe(320);
+          |                                                           ^
+      216 |     const composerExpanded = (await window.getByTestId("composer").boundingBox())!;
+      217 |     await expect
+      218 |       .poll(() => window.evaluate(() => localStorage.getItem("pi-gui.task-status-collapsed")))
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d4-sidebar-draft.spec.ts:215:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗口里右侧状态栏默认收起，展开能看、收起能记住\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗口里右侧状态栏默认收起，展开能看、收起能记住\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d4-sidebar-draft-窄窗口里右侧状态栏默认收起，展开能看、收起能记住\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\d4-sidebar-draft.spec.ts:249:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ────
+
+    Error: locator.click: Error: strict mode violation: getByTestId('toggle-side-panel') resolved to 2 elements:
+        1) <button type="button" aria-pressed="false" aria-label="Toggle side panel" aria-controls="task-workbench" data-testid="toggle-side-panel" class="icon-button topbar__icon">…</button> aka getByTestId('topbar').getByTestId('toggle-side-panel')
+        2) <button type="button" aria-pressed="true" title="Hide side panel" aria-label="Toggle side panel" aria-controls="task-workbench" data-testid="toggle-side-panel" class="workbench__add icon-button">…</button> aka getByTestId('workbench').getByTestId('toggle-side-panel')
+
+    Call log:
+    [2m  - waiting for getByTestId('toggle-side-panel')[22m
+
+
+      262 |     if ((await compact.count()) > 0) await compact.click();
+      263 |     await expect(window.getByTestId("task-status")).toBeVisible();
+    > 264 |     await window.getByTestId("toggle-side-panel").click();
+          |                                                   ^
+      265 |     const status = window.getByTestId("task-status");
+      266 |     const tools = window.getByTestId("workbench");
+      267 |     const composer = window.getByTestId("composer");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d4-sidebar-draft.spec.ts:264:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened 
+
+    Error: locator.click: Error: strict mode violation: getByTestId('toggle-side-panel') resolved to 2 elements:
+        1) <button type="button" aria-pressed="false" aria-label="Toggle side panel" aria-controls="task-workbench" data-testid="toggle-side-panel" class="icon-button topbar__icon">…</button> aka getByTestId('topbar').getByTestId('toggle-side-panel')
+        2) <button type="button" aria-pressed="true" title="Hide side panel" aria-label="Toggle side panel" aria-controls="task-workbench" data-testid="toggle-side-panel" class="workbench__add icon-button">…</button> aka getByTestId('workbench').getByTestId('toggle-side-panel')
+
+    Call log:
+    [2m  - waiting for getByTestId('toggle-side-panel')[22m
+
+
+      70 | async function openWorkbench(window: Page): Promise<void> {
+      71 |   const workbench = window.getByTestId("workbench");
+    > 72 |   if (!(await workbench.isVisible())) await window.getByTestId("toggle-side-panel").click();
+         |                                                                                     ^
+      73 |   await expect(workbench).toBeVisible();
+      74 | }
+      75 |
+        at openWorkbench (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:72:85)
+        at addTool (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:77:3)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:414:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\d4-sidebar-draft.spec.ts:187:5 › 窄窗口里右侧状态栏默认收起，展开能看、收起能记住 ──────────────
+    apps\desktop\tests\core\d4-sidebar-draft.spec.ts:249:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ─────
+    apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened 

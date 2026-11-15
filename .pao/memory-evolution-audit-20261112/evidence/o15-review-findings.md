@@ -1,0 +1,34 @@
+# O15 独立复核证据
+
+核实日期：2026-11-15。复核方式：不采信报告结论，逐条构造反面场景亲自复验。
+
+## 判定
+
+**O15 可关闭。** V1—V5 全部通过且标注准确；V6 复核口径一致；commitment-chain 定论成立；环境变量分离正确；无 blocker。
+
+## 逐条复核结果
+
+| 项 | 判定 | 亲验证据 |
+|---|---|---|
+| V1 记忆实际使用 | **PASS（真实模型）** | 6 个 run × 2 请求 = 12 次真实调用。每 run `model-requests.json` 的 `response.headers` 含 `x-magpie-provider: opencode-zen-free`、`x-magpie-model: opencode-zen-free/deepseek-v4.1-flash-free`、HTTP 200、`usage.totalTokens` 非零（2372/4354…5669）、`reasoning` token 非零——真实付费 provider。`requestId:"unknown"` 是 magpie SSE 不回 requestId 的事实，非假调用。预置臂 `injectedTokens:["memory.snapshot"]` 3/3：召回行真实出现在首个前台请求 `payload.raw.messages` 最后一条 user 消息（`[pao 自动召回]…mem-…rev-1…当前修订…已确认…相关度 0.5`），assistantText 复述同 token。空记忆臂 3/3 如实拒答：payload 无任何召回行，assistantText 明说「常驻记忆索引里没有任何条目…不能凭印象编」——真没召回而非脚本强判（injectedTokens 为空数组是真实扫描结果）。**O04 修订链核对做了**：preset-1 memory.sqlite 的 `memory_revisions` 表 3 条 rev-1 `confirmation:"confirmed"`，`memory_usage` 表有 `action:"inject"`+`memory_id=mem-0b612d05`+`revision=1` 行——召回来自当前修订生效链。判据（预置臂命中/空臂拒答）在 run-memory-benefit.mjs 注释中先于运行冻结（`hit = 回答里出现了哪几个冻结结论 token` + `injectedTokens` 只认首个前台请求），非结果后凑。 |
+| V2 成果真实执行 | **PASS（机制真实）** | run-v2.mjs 用 `execFileSync("git",...)` 真实 init/commit 子进程；`resolveArtifactVersion` 实现（artifacts.ts:669-693）git 路径走 `git cat-file blob ${commit}:${path}` 读 git object，受管路径读 `location.dir` 副本——**不是比对同一工作区文件**。evidence.json `git-read-verify.match=true`（expectedLen=52=resolved.content 字节比对）。`decodeArtifactReceiptRef("receipt-raw-no-prefix")` 返回 `{receiptRef}` 无 verdict 字段（undefined），`"pass:receipt-ok-001"` 返回 `verdict:"pass"`——未知回执「结果待核」显示真生效。 |
+| V3 真实技能改进闭环 | **PASS（真实模型）** | (a) 付费调用真发生：`Temp/o15-v3-txNRF5/pao-home/memory/background-ledger/job-o15v3-001/*.jsonl` 两条 `type:"usage"` 行，provider=magpie、model=group/deepseek、`totalTokens:762/939`、`reasoning:86/36`、requestId 各为 `evo-prob-1cee48ad…:candidate:43947773…` / `evo-prob-1f6fc00d…:candidate:e8733fab…`——与 `evolution_candidates.usage_refs_json` 两行完全对上。`proposeCandidate` 实现走 `deps.modelRegistry.streamSimple(model,context)`，run-v3.mjs 注入的 modelRegistry 包装 `runtime.streamSimple`（`createReadOnlyModelRuntime` + `C:/Users/ASUS/.pi/agent/auth.json` 真实凭证）——真发 HTTP。reservations=0 是 unlimited 直通（`budgetVerdict.unlimited===true` 时 `budgetReserved=false`，不落预留/不结算空气），合理。(b) `handleRegression` 返回 `rolledBack:true`、`previousVersion:v-b3fdd71f9e03`、`postEff` 从 v-c0fb71d169a3 真实切回 v-b3fdd71f9e03，`affectedTasks` 列出 `task-r2-post` 待换版——真回退非断言摆设（store.effectiveVersion 实际变化）。(c) O11 残留如实标：evidence.json `o11StructuralNotes` 明确「本验收用 kind=command 而非 agent…agent 通道 reproduction fail-closed 到不了 passed…command 通道完成部分验收」，报告 V3 节把「command 通道验收完成、agent 通道未完成」分列，**没把 command 通道结果说成完整闭环**；`acceptanceVsOutput` 缺口如实列「evaluate 不读 acceptance 字段…evaluate 层比对仍属缺口」。判据（R1 reproduction 要求含 `OUTPUT_LANGUAGE=zh` 不含 `=en`、R2 要求 `示例` 标题）写在 SKILL_V0 注释 + verifier 脚本，先于 propose 冻结——非结果后凑。 |
+| V4 费用完整性 | **PASS（真实模型）** | `requestExtraction` 一次真实调用：evidence.json `usage.totalTokens:1200`、`cost.total:0`。账本 jsonl 对账：`type:"usage"` 行 `kind:"memory_extraction"`、`provider:"magpie"`、`totalTokens:1200`、`note` 含 `requestId=job-o15v4-001:extract:def0122f…`——1200 是 provider 实返 token 计数，非脚本编（脚本只读 `result.usage`）。requestId 四处一致（result.requestId / reservation.idempotencyKey / ledger appendUsage note / extraction-attempt custom 行）。reservation `status:"settled"`、`预留额:0.05`、`已结算费用:0`、`备注:"请求完成:stop"`——magpie 返 `cost.total=0` 是已知零费用按 settled 收口（committed=0、remaining=10 与 grants 10 自洽）。**「未知费用保留占额不覆盖」未真实验证**：报告如实列「该分支保留未复跑…机制路径正确但本轮无真实命中样例」，没造一例假 unknown 冒充验证——诚实处理。 |
+| V5 发行物脱离开发仓 | **PASS（机制真实）** | 独立复验：我另写 `o15-review-v5-probe-c.js` 新起 node 进程 `require("…/app.asar.unpacked/node_modules/@pao/coding-agent/dist/pao/memory/store.js")`，`require.resolve` 确认模块路径在 `desktop/apps/desktop/release/win-unpacked/resources/app.asar.unpacked/…` 下，`fs.realpathSync` 与开发仓 `PAO/packages/coding-agent/dist` 不同（`same? false`，packaged pkg `@pao/coding-agent@1.0.2`）——**真打包产物非开发仓**。进程 C 独立启动 `openMemoryStore(home,"readonly")` → `recoverEvolutionState` 读到 `resourceCount:1`+`listTaskBindings` 读到 A 进程写的 `bind-o15v5-1794705092917`(task-v5→res-o15v5-skill@v0-o15v5)——**真跨进程恢复**（A 写→退出→B/C 独立进程读 sqlite+w版本目录物化）。probe 用打包 dist 全部 API（openMemoryStore/recoverEvolutionState/listTaskBindings），不 import pao-dev 源码。 |
+| V6 交付复核 | **PASS** | 抽查三行口径 vs 实际证据：O08「Git/非 Git 真实任务生成与复用」→ V2 register→resolve→use 真实 git 子进程+字节比对，口径一致没夸大；O13「真实退出重启恢复」→ V5 跨进程恢复（报告如实注「未起真 Electron 主进程」——是跨进程非完整 Electron 重启，边界如实标注）；O10「真实重复问题从入口进生成」→ V3 declare→select→propose 真实走通且 `{BASE_FILES}` 带 SKILL.md 全文（run-v3.mjs 注释+evidence 的 propose diffs 证明模型读了原正文）。O11 行「真实技能行为改善」→ V3 两轮 v0→v1→v2 真实 diff+evaluate passed，口径一致。 |
+| commitment-chain 归属定论 | **PASS** | `waitForJobStatus("failed")` 改判 `consecutive_failures>=1` 是 O03 暂态语义的**正确判据**非放宽：extraction-jobs.ts 注释「普通失败在 MAX_ATTEMPTS=3 内可自动恢复；recoverJobs 把普通 failed 且 consecutive_failures 未超限的任务重取为 pending」——status=failed 是瞬态（会被 recover 抢回 pending），等 `status==='failed'` 会错过窗口永远 pending，等 `consecutive_failures>=1` 判「已经发生过失败」是语义正确断言。测试用例本身（`A 首次提炼失败后切 B…waitForJobStatus("failed")`）测的是「失败后旧来源+新来源仍各归原 taskId」——判失败事件发生过即可，不削检查。补的三份授权文件（外发许可 projects/记忆后台预算 unlimited/总预算账 grants+reservations）是 O01 许可门+预算门要求的真实形状（V3/V4 同构文件已证可放行真实请求）。定论「测试补许可/预算文件」成立，**非许可门过严**。亲验：本轮 `npx vitest --run test/pao/memory-task-commitment-chain.test.ts` → `Test Files 1 passed, Tests 6 passed`。 |
+| 189/189 归属 | **PASS** | 报告说「核心 11 套件」不是冒充 66 全量：亲验 `npx vitest --run test/pao/memory-{commitments,extraction,search,deletion,runtime,usage}.test.ts test/pao/evolution-{problems,validation,activation,binding,regression}.test.ts` → `Test Files 11 passed, Tests 189 passed`（PI_NO_LOCAL_LLM=1、PI_TELEMETRY=0、不强制 PI_OFFLINE）。test/pao 目录确有 66 个 .test.ts，报告如实记「66 项全量套件后台执行中未落本报告」——没把子集当全量报。 |
+| 环境变量分离 | **PASS** | 三个真实模型脚本（run-memory-benefit/run-v3/run-v4）均 `delete process.env.PI_OFFLINE`（撤离线）+ `PI_NO_LOCAL_LLM="1"`（只禁本地 LLM 不拦远程 magpie）。真实模型验收没留在 PI_OFFLINE=1 假环境；离线 vitest 套件我复跑时也没污染（vitest 用 faux provider 不需要联网）。两类环境分开。 |
+| 提炼 job 真实性 | **PASS** | preset-1 `extraction_jobs` 表 `status:"done"`、`owner_process:"pid-49420"`、`attempt_count:1`；`model-requests.json` 第二条请求 `messages[0]` 是提炼 prompt（`# 增量条目（本次提炼范围）…sourceId=src-…entryId=…`）——提炼真发生。`last_usage:null` 是 done 后清空语义（O03 契约），非缺失。 |
+
+## 发现的非 blocker 备注
+
+1. **V4 未知费用分支无真实样例**：报告如实标注「机制路径正确但本轮无真实命中样例」——供应商返 cost.total=0 属已知零费用，unknown 分支代码路径存在（`settleBudget(实际费用=undefined)`→status="unknown"）但本轮没真实触发。这是如实边界非缺陷。
+2. **V5 未起真 Electron 主进程**：报告限制节如实写「未起真 Electron 主进程；关键链路（store/recover/binding）由打包 dist 直接驱动」——跨进程是 node 子进程非 Electron 进程，与 S9-11「真实重启恢复」口径有轻微差但属已知边界（O13 已关时 S9-11 用跨进程语义验收过）。
+3. **V1 requestId="unknown"**：magpie SSE 响应不返回 requestId 头，model-requests.json 如实记 unknown 不伪造——真实证据。
+
+## 复核产物
+
+- 本文件：`evidence/o15-review-findings.md`
+- V5 独立探针：`evidence/o15-review-v5-probe-c.js`（另起进程 C 复验跨进程恢复）
+- 亲验命令输出：commitment-chain 6/6、核心 11 套件 189/189、V1 sqlite 修订链/memory_usage、V3/V4 账本 jsonl、V5 realpath 比对。

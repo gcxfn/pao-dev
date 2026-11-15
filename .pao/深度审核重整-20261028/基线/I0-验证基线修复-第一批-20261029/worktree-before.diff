@@ -1,0 +1,2831 @@
+diff --git "a/.pao/pi\345\215\207\347\272\247\350\257\204\344\274\260-20261024/PI-Desktop\345\256\277\344\270\273\350\257\204\344\274\260.md" "b/.pao/pi\345\215\207\347\272\247\350\257\204\344\274\260-20261024/PI-Desktop\345\256\277\344\270\273\350\257\204\344\274\260.md"
+index 0a3b57a7..f0630bd6 100644
+--- "a/.pao/pi\345\215\207\347\272\247\350\257\204\344\274\260-20261024/PI-Desktop\345\256\277\344\270\273\350\257\204\344\274\260.md"
++++ "b/.pao/pi\345\215\207\347\272\247\350\257\204\344\274\260-20261024/PI-Desktop\345\256\277\344\270\273\350\257\204\344\274\260.md"
+@@ -4,6 +4,29 @@
+ 
+ ## 结论
+ 
++### 本次子代理评估后的主控复核
++
++2026-10-25，用户要求“完全通过插件，不修改任何宿主源码”，并补充桌面机制和UI复用。两位子代理均为group/deepseek high，报告分别见[插件公开能力](子代理评估-插件公开能力.md)与[PAO行为映射](子代理评估-PAO行为映射.md)。主控实际复核了两份结论之间的分歧及底层调用链。远端HEAD仍与下述固定提交一致。
++
++**结论：存在不修改PI-Desktop/pi源码、且复用宿主模型与会话执行的完整接入设计路线；静态评估为条件可行，尚未经过真实插件闭环验证。无需先假定修改宿主，也不必把整套旧执行宿主塞进插件。** PAO本体仍需重构接入，不能原样加载现有扩展。
++
++推荐一个插件：内部保留PAO部门、任务卡、验收和返修规则；一个常驻服务通过公开pi.desktop.invoke调用session/create、agent/prompt、agent/getStatus、session/get、agent/abort；监听session:turnEnded并核对真实回合与业务回执，再机械推进下一步。PAO继续负责现有的任务身份、attempt和验收证据，宿主负责模型执行和会话历史。业务状态归PAO并不是第二个模型执行宿主。
++
++这修正了先前只看专用collaboration接口时的过窄判断：它的spawn/send确实要求活动工具身份，但普通公开会话接口没有同样限制。完成消息也确实可以启动来源会话的一轮，而不只是静静落入队列；不能据此宣称所有模型后续行为都确定执行。确定性的流程判断仍应由PAO代码执行。
++
++主控复核证据：apps/desktop/electron/main/plugin-runtime.ts:5611起提供受权限保护的公开desktop.invoke，对普通操作不要求存在工具调用；mcp-control.ts:189起注册普通会话/Agent操作，createMcpControlController转交已有IPC；ipc/session-ipc.ts:228起转交session.create；services/plugin-services.ts:585起广播回合结束事件；runtime/plans.ts:272发布该事件。文档对应03-plugin-api.md:1135起的desktop control及:1352起的回合结束契约。子代理个别文档行号有偏移，以本段复核位置和实际符号为准。
++
++仍需验证四项，不能把静态可达当成运行成功：
++
++1. **事件与恢复**：回合结束事件无确认/重放，且文档明确可能仍有迟到工具结果。事件只用于唤醒，必须核对持久状态、回执和写入停止；重开后对账，不能直接当作可安全验收。文档关于“0.14.8尚未发布事件”的字样陈旧，不能据此断言本次0.21源码没有事件；具体安装发行物另行核对。
++2. **工作树**：不能只凭MCP便捷工具的字段表断言无隔离能力。通用desktop.invoke没有按该便捷工具schema删字段；sessionCreate IPC透传参数，Rust rpc/mod.rs:2636起实际读取isolated:true并创建隔离工作树。这是可达源码路线，但插件说明未完整承诺参数和后续合并/清理操作，需验证并确认公开契约稳定性。也可以由PAO使用现有Git工作树实现，将目录作为projectPath交给宿主；这保留工作树管理，不等于保留第二模型执行宿主。该替代同样尚未运行。
++3. **取消与退出**：agentAbort支持sessionId加turnId校验，插件应按实际回合取消，避免中止后来任务；不能只看便捷工具schema推断没有turnId。宿主退出限时仍成立，需在工作中持续保存状态，退出时取消并标中断，重开显式恢复；本次不承诺退出后后台继续作业或等待所有任务成功完成。
++4. **UI与权限**：插件内PAO页面及聊天扩展有真实公开接口，整套宿主布局和交互没有任意替换契约；权限审批、配置和实际Windows运行均未集成验证。详情见下方UI表。
++
++能复用：项目与持久会话、模型配置与凭证执行、回合历史与用量记录、Agent侧执行、常驻服务生命周期、事件通道、插件安装/启停/设置、命令入口、工作面板、主题及聊天插槽。仍由PAO维护：部门职责、任务书、卡和attempt、机械验收、返修历史、流程控制、业务去重与恢复映射。宿主Token记录可以复用，不代表自动得到了完整费用统计或P5降负担结论。
++
++推荐后续最小验证采用“常驻服务＋普通会话接口＋PAO自有工作台”，验证派发、机械验收、原卡返修、迟到事件、精确取消与关闭重开。此次没有开始实现、安装、付费试跑、合并或迁移。下文保留较早评估的背景和调查记录，涉及后台调度与工作树的保留判断以本段复核为准。
++
+ 值得先做最小接入验证。长期把 PAO 的部门、卡、配方、验收和经验维护为独立业务包，由成熟桌面宿主提供会话、模型、界面、后台与安装更新，方向合理。当前证据不足以认定现有 PAO 可以直接作为插件装入 PI-Desktop，或不再需要任何宿主改动。
+ 
+ 推荐结构为一个 PAO 业务包、一个 PI-Desktop 插件及其薄宿主适配；业务包内部按现有模块组织，不为每个部门另建插件。是否继续提供 CLI 由既有产品需求决定；桌面插件本身不能证明现有无界面基准运行入口仍可用。
+@@ -76,7 +99,30 @@
+ 
+ 初步判断：迁移总成本明显高于单纯升级 pi 1.4.0，主要成本在执行接线、持久身份、恢复及界面迁移，业务模块有复用潜力。尚不具备可靠工期和节省费用估算；最小验证结果出来后再估计。
+ 
+-## 官方来源
++## 2026-10-25补充：UI能否只靠插件实现
++
++以下为主控对同一固定提交的实现复核，未安装或运行。插件可以新增完整PAO工作界面、在聊天中增加入口，并改变整体外观；公开契约不等于允许任意替换宿主所有界面和交互。
++
++| 需求 | 可采用的插件机制 | 边界 |
++|---|---|---|
++| 部门、任务卡、流程、验收记录的专属工作台 | contributes.views，插件自带HTML/JS/CSS，在宿主工作面板打开 | 可自行设计内部布局；不是替换主窗口或宿主导航。宿主缓存视图上限4，不要将每个部门做成独立常驻视图 |
++| 独立设置页、复杂编辑表单、弹出窗口 | ui.panel或自己的view；简单设置用contributes.settings | 简单设置由宿主表单生成；复杂部门配置放自己的页面，不能据此改写宿主所有设置页 |
++| 聊天里的“交给部门”按钮、快捷选择部门 | composerControl、composerTrigger及composerTransforms | 在现有输入区域增加入口；不替换整个编辑器或其提交语义 |
++| 每条回复下显示任务状态、回执链接、人工操作 | entryExtra、userAction、assistantAction | 是附加内容，不改写宿主既有消息正文或原按钮行为；实际操作仍须走业务权限和回执规则 |
++| PAO派发和验收工具显示成专属卡片 | toolCard | 只能注册本插件自己的agentTools，不据此替换其他插件或宿主工具卡 |
++| 在回复里渲染PAO流程图或结构化内容 | blockRenderer | 使用本插件命名空间的代码块标签；不是接管全部Markdown渲染 |
++| 自己的确认框、详情弹层 | pi.ui.openLayer | 宿主权限/审批等需要用户决定时会隐藏插件层，不可覆盖宿主决策界面 |
++| 色彩、字体、背景、间距等外观 | contributes.themes、运行时themes接口及windowAppearance | 主题CSS会作用于宿主样式，可做比换颜色更广的外观调整；依赖内部class的布局覆盖较脆弱，不等于稳定的布局/交互替换接口 |
++
++与此不同，renderer的pi.ui.injectStyle会把普通样式规则限制在本插件挂载区域；不能把它误认为任意全局改样式接口。可信renderer确实与宿主处于同一网页环境，但直接操作宿主DOM、调用内部store或抓内部IPC不计入本次公开接口方案，也不作为长期兼容保证。
++
++建议保留宿主项目列表、会话列表、聊天主体、模型设置和通用文件/工具展示，在一个PAO工作面板内集中部门、任务卡和验收；聊天输入区加派发按钮，回复旁显示状态与跳转。这样可以只交付一个插件，且不要求复刻现有PAO桌面的每一处布局。现有React纯展示组件可能迁移，但当前组件对自有IPC和状态的依赖需逐一拆开，不能直接宣称整套界面可搬入。
++
++源码证据（均为上文固定提交）：packages/plugin-sdk/src/renderer.ts:50列出7种插槽，:282定义样式与弹层，:454限制自有工具卡；apps/desktop/src/plugins/renderer-slots/registry.ts负责附加注册和重复键；style-injection.ts:46实现作用域；apps/desktop/src/components/workpanel/PluginViewTab.tsx:19实现工作面板视图；apps/desktop/electron/main/plugin-view-host.ts:52为视图缓存上限、:432为隔离页面配置；packages/plugin-sdk/src/index.ts:1240起为主题、设置、面板和revealView；packages/plugin-sdk/src/theme-css.ts:321及apps/desktop/src/features/app/useAppShellRuntime.tsx:574共同实现主题校验和全局样式注入。examples/plugins/ui-slots-lab/renderer/index.mjs:31起有真实各插槽示例；不只依据路线图判断。
++
++主控同时确认实际plugin-runtime.ts:660、:662在应用退出时分别限制插件关闭钩子1.5秒和总体收尾3秒。不能把存在onUnload回调等同于宿主允许等待所有PAO在途工作完成。纯插件接入必须明确持久取消/恢复的语义，并验证退出后确实无遗留写入；若要求退出前无限等待模型工作完成，则与此宿主退出契约冲突。本轮没有实际启动验证。
++
++## 官方来源（固定提交）
+ 
+ - [项目说明](https://github.com/vastsa/PI-Desktop)
+ - [架构](https://github.com/vastsa/PI-Desktop/blob/d2c9fc44087f24260521c66530c4f92c04790105/docs/spec/02-architecture/01-architecture.md)
+diff --git "a/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/activate-tools.mjs" "b/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/activate-tools.mjs"
+index c197fec0..2a252c41 100644
+--- "a/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/activate-tools.mjs"
++++ "b/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/activate-tools.mjs"
+@@ -62,6 +62,6 @@ export default function benchmarkOrganization(pi) {
+   pi.on('before_agent_start', (event) => {
+     event.systemPromptOptions.sections.benchmark_organization = isMinister
+       ? '本轮已建立侦察、规划、实施、审核部门。遵守绑定节点职责与真实会话身份。只读节点调用 pao_minister_save_node_map 保存面向后继的结构化业务地图；地图默认覆盖项目业务内容，排除 .git 与当前编排目录 .pao，不把流程控制文件当输入、成果或机械验收。实施节点提交具体工作卡交执行者，不自行编码。提交工作卡或结束拆解后立即结束本轮，不用 sleep、轮询或持续等待；后台结果与监督会唤醒你。收到工人结果或监督通知后，实际检查证据再审核、补卡或请求裁定；没有待处理结果时继续结束本轮。禁止以口头总结冒充节点完成。不得读取 /tests、/solution 或寻找基准答案。'
+-      : '本轮必须使用预设工作流“基准开发流水线”。owner 是当前主控会话，不是人类用户。主控负责启动、查询、处理阻塞和最终报告，只协调，不自行编码，也不得读取 /tests、/solution 或修改官方任务解法与测试。把用户原始任务全文作为“任务”参数启动工作流。收到后台通知后，先实际检查实例、卡和证据。需要裁决时用 pao_decision_pack 读取卡面和原始 verification 证据，对 fail/not_run 逐项查证；不得把泛泛一句确认当作逐项 basis。接受偏差必须为每项填写当前 attempt、原始 verification_index、原 condition 和该条 basis，同时提供总验收 basis。普通未验证事项由主控处理；只有真实人工门、授权、权限或范围边界才询问人类。人工裁决后依次执行 pao_change_status → pao_deliver_card → 核实交卷结果 → pao_push_flow；pao_change_status 只改卡状态，人工链不能靠 pao_push_flow 补交卷。使用 pao_change_status 时 operator 必须与卡面 owner 完全一致；仅 owner 为“主控”的卡可用 operator=“主控”，不得伪造部门身份。failed 不可直转 delivered；合法返修保持原实例、轮次、owner、attempt 与历史：拆解中由原绑定部长继续，拆解后当前轮原卡由部长使用 pao_minister_rework_cards，审核范围变化走主控 pao_control_node action=rework。真实人工确认、恢复和重开仍走界面门。不得重建实例、伪造状态或绕过失败恢复。启动或裁决完成后结束本轮；不用 sleep、轮询或持续等待，后台结果与监督会唤醒。';
++      : '本轮使用预设工作流“基准开发流水线”，把用户原始任务全文作为“任务”参数启动。owner 是当前主控会话；负责协调、处理阻塞和最终报告，不自行编码，不读取 /tests、/solution 或修改官方任务与测试。收到后台通知后先查实例、卡和证据。卡验收：用 pao_decision_pack 核对原始 verification，对 fail/not_run 逐项查证。接受偏差时，accepted_deviations 每项填写当前 attempt、原始 verification_index、原 condition 和具体 basis，同时提供总验收 basis。依次 pao_change_status → pao_deliver_card → 核实交卷结果；状态变更不等于交卷。operator 必须与卡面 owner 一致，仅 owner 为“主控”的卡可用 operator=“主控”。节点裁定：用 pao_query_flow 核对当前实例、节点、轮次、裁定通道和暂停。若是匹配的等待主控裁定，在卡验收、交卷完成后调用 pao_control_node action=rule，携 instance、node、round、result（pass/change/reject）、reason 和 references（真实 file:line）。普通节点 pass 只解除本次裁定暂停，不交付卡，也不替后续独立审核放行。裁定处理完再 pao_push_flow。普通质量问题由主控依据证据处理；人工裁定、真实人工确认、恢复、重开及新增授权仍须用户从界面确认，不用 confirm/resume/reopen 处理普通质量阻塞。failed 不可直转 delivered；返修保留原实例、轮次、owner、attempt 历史：拆解中由原部长继续，拆解后当前轮原卡由部长用 pao_minister_rework_cards，审核回边用 pao_control_node action=rework。启动或处理完成后结束本轮；不用 sleep 或轮询，后台结果会唤醒。';
+   });
+ }
+diff --git "a/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/benchmark-organized-adapter.py" "b/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/benchmark-organized-adapter.py"
+index 9a259fa7..7f6ea8ad 100644
+--- "a/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/benchmark-organized-adapter.py"
++++ "b/.pao/\345\215\217\344\275\234\346\234\272\345\210\266\351\207\215\346\236\204-20261023/benchmark-sdk-host/benchmark-organized-adapter.py"
+@@ -39,7 +39,8 @@ class OrganizedPAOAgent(PAOAgent):
+         )
+         for name in ('setup.mjs', 'kit.json', 'activate-tools.mjs', 'probe-tools.mjs',
+                      'benchmark-organized-entry.mjs', 'benchmark-worktree-host.mjs',
+-                     'benchmark-host-factories.mjs', 'benchmark-child-entry.mjs', 'probe-child-rpc.mjs'):
++                     'benchmark-host-factories.mjs', 'benchmark-child-entry.mjs',
++                     'probe-child-rpc.mjs', 'query-organized-terminal.mjs'):
+             await self._upload_config_text(
+                 environment,
+                 content=(kit / name).read_text(encoding='utf-8'),
+@@ -96,17 +97,49 @@ class OrganizedPAOAgent(PAOAgent):
+             '主控每30分钟监督部门；实际检查后调用 pao_ack_supervision。'
+             '最终官方测试独立运行。\n\n原始任务全文：\n' + instruction
+         )
++        context.metadata = {
++            **(context.metadata or {}),
++            'pao_organization_manifest_sha256': self.options.organization_manifest_sha256,
++            'pao_organization_started': False,
++            'pao_organization_git_baseline': False,
++            'pao_organization_workflow_status': None,
++            'pao_organization_completed': False,
++            'pao_organization_control_instance': None,
++            'pao_organization_control_owner': None,
++            'pao_organization_control_workflow': None,
++            'pao_organization_report_workflow': None,
++            'pao_organization_terminal_query_error': None,
++        }
++        original_error = None
+         try:
+             await super().run(workflow_instruction, environment, context)
++        except BaseException as error:
++            original_error = error
++            raise
+         finally:
+-            copied = await self.exec_as_agent(environment, command=(
+-                'if [ -d /tmp/harbor-pao-home/部门 ]; then cp -a /tmp/harbor-pao-home/部门 /logs/agent/organization/; fi; '
+-                'if [ -d /tmp/harbor-pao-home/工作流 ]; then cp -a /tmp/harbor-pao-home/工作流 /logs/agent/organization/; fi; '
+-                'if [ -f /tmp/harbor-pao-home/pao配置/保温.json ]; then '
+-                'cp /tmp/harbor-pao-home/pao配置/保温.json /logs/agent/organization/保温.json; fi'
+-            ))
+-            if copied.return_code != 0:
+-                raise RuntimeError('组织配置留证失败：' + str(copied.return_code))
++            try:
++                copied = await self.exec_as_agent(environment, command=(
++                    'if [ -d /tmp/harbor-pao-home/部门 ]; then cp -a /tmp/harbor-pao-home/部门 /logs/agent/organization/; fi; '
++                    'if [ -d /tmp/harbor-pao-home/工作流 ]; then cp -a /tmp/harbor-pao-home/工作流 /logs/agent/organization/; fi; '
++                    'if [ -f /tmp/harbor-pao-home/pao配置/保温.json ]; then '
++                    'cp /tmp/harbor-pao-home/pao配置/保温.json /logs/agent/organization/保温.json; fi'
++                ))
++                if copied.return_code != 0:
++                    raise RuntimeError('组织配置留证失败：' + str(copied.return_code))
++            except BaseException as evidence_error:
++                message = type(evidence_error).__name__ + ': ' + str(evidence_error)
++                context.metadata = {
++                    **(context.metadata or {}),
++                    'pao_organization_evidence_error': message,
++                }
++                if original_error is None:
++                    raise
++                note = '组织配置留证同时失败：' + message
++                add_note = getattr(original_error, 'add_note', None)
++                if callable(add_note):
++                    add_note(note)
++                else:
++                    setattr(original_error, 'pao_organization_evidence_error', message)
+         proof = await self.exec_as_agent(environment, command=(
+             'test -f .pao/benchmark/工作流实例-基准开发流水线.md && '
+             'cp .pao/benchmark/工作流实例-基准开发流水线.md /logs/agent/organization/final-flow.md && '
+@@ -117,7 +150,91 @@ class OrganizedPAOAgent(PAOAgent):
+             raise RuntimeError('组织流程未实际启动或缺少 Git 基线，不能视作部门协作试验成功')
+         context.metadata = {
+             **(context.metadata or {}),
+-            'pao_organization_manifest_sha256': self.options.organization_manifest_sha256,
+             'pao_organization_started': True,
+             'pao_organization_git_baseline': True,
+         }
++        try:
++            terminal_result = await self.exec_as_agent(
++                environment,
++                command=(
++                    '"$HOME/.local/pao-node/bin/node" '
++                    '/tmp/benchmark-organization/query-organized-terminal.mjs '
++                    + shlex.quote(self._REMOTE_SOURCE_DIR) + ' '
++                    + shlex.quote('/tmp/harbor-pao-home') + ' '
++                    + shlex.quote('/app') + ' '
++                    + shlex.quote('基准开发流水线')
++                ),
++            )
++        except BaseException as error:
++            message = type(error).__name__ + ': ' + str(error)
++            context.metadata = {
++                **(context.metadata or {}),
++                'pao_organization_terminal_query_error': message,
++            }
++            raise RuntimeError('组织工作流终态查询执行失败：' + message) from error
++
++        stdout = terminal_result.stdout or ''
++        stderr = terminal_result.stderr or ''
++        try:
++            terminal = json.loads(stdout)
++        except (json.JSONDecodeError, TypeError) as error:
++            message = '查询结果不是严格 JSON：' + type(error).__name__ + ': ' + str(error)
++            context.metadata = {
++                **(context.metadata or {}),
++                'pao_organization_terminal_query_error': message,
++            }
++            raise RuntimeError('组织工作流终态查询结果无法解析') from error
++
++        if terminal_result.return_code != 0:
++            error_detail = terminal.get('error') if isinstance(terminal, dict) else None
++            if isinstance(error_detail, dict):
++                message = str(error_detail.get('name') or 'QueryError') + ': ' + str(
++                    error_detail.get('message') or ''
++                )
++            else:
++                message = (stderr or stdout).strip()
++            message = '查询退出码 ' + str(terminal_result.return_code) + (
++                '：' + message if message else ''
++            )
++            context.metadata = {
++                **(context.metadata or {}),
++                'pao_organization_terminal_query_error': message,
++            }
++            raise RuntimeError('组织工作流终态查询失败：' + message)
++
++        control = terminal.get('control') if isinstance(terminal, dict) else None
++        report = terminal.get('report') if isinstance(terminal, dict) else None
++        if (
++            not isinstance(terminal, dict)
++            or terminal.get('ok') is not True
++            or not isinstance(control, dict)
++            or not isinstance(report, dict)
++            or report.get('status') not in ('running', 'hold', 'completed')
++            or not isinstance(control.get('instance'), str)
++            or not control.get('instance')
++            or not isinstance(control.get('owner'), str)
++            or not control.get('owner')
++            or not isinstance(control.get('workflow'), str)
++            or not control.get('workflow')
++            or not isinstance(report.get('workflow'), str)
++            or not report.get('workflow')
++        ):
++            message = '查询结果缺少完整控制身份、报告标识或合法终态'
++            context.metadata = {
++                **(context.metadata or {}),
++                'pao_organization_terminal_query_error': message,
++            }
++            raise RuntimeError('组织工作流终态查询结果不完整')
++
++        status = report['status']
++        context.metadata = {
++            **(context.metadata or {}),
++            'pao_organization_workflow_status': status,
++            'pao_organization_completed': status == 'completed',
++            'pao_organization_control_instance': control['instance'],
++            'pao_organization_control_owner': control['owner'],
++            'pao_organization_control_workflow': control['workflow'],
++            'pao_organization_report_workflow': report['workflow'],
++        }
++        if status != 'completed':
++            raise RuntimeError('组织工作流未完成：status=' + status)
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/bench_controller.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/bench_controller.py"
+index 4adea971..5ec555a5 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/bench_controller.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/bench_controller.py"
+@@ -43,10 +43,7 @@ def read(path):
+ 
+ 
+ def write(path, data):
+-    path = Path(path)
+-    pending = path.with_suffix(path.suffix + ".pending")
+-    pending.write_text(json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+-    pending.replace(path)
++    runner_common.write_json(Path(path), data)
+ 
+ 
+ def command(
+@@ -411,6 +408,7 @@ def observe_runtime(run, config, docker):
+         docker,
+         "ps",
+         "-a",
++        "--size=false",
+         "--format",
+         "{{json .}}",
+         timeout=15,
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/kit.json" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/kit.json"
+index 621fde1b..1568f878 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/kit.json"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/kit.json"
+@@ -51,6 +51,7 @@
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
++        "允许请求主控裁定": true,
+         "档位": "primary",
+         "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+@@ -66,6 +67,7 @@
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
++        "允许请求主控裁定": true,
+         "档位": "primary",
+         "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+@@ -83,6 +85,7 @@
+         "只读": false,
+         "工人数量": 1,
+         "人工确认": false,
++        "允许请求主控裁定": true,
+         "档位": "primary",
+         "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+@@ -100,6 +103,7 @@
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
++        "允许请求主控裁定": true,
+         "档位": "primary",
+         "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/manifest.json" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/manifest.json"
+index a7d0f499..86402691 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/manifest.json"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/organized-post/manifest.json"
+@@ -6,7 +6,7 @@
+   "files": [
+     {
+       "path": "organized-post/kit.json",
+-      "sha256": "df9cbc6dbb5a57fa5a0eb573acb3ef80ab776a1e376761a499bc64da8de6b056"
++      "sha256": "c9f11a7bf4d943b7d7bdd121987dec51bb9b3699d336180e776f21e875ec69b5"
+     },
+     {
+       "path": "organized-post/setup.mjs",
+@@ -22,7 +22,7 @@
+     },
+     {
+       "path": "map_bench_pao_organized.py",
+-      "sha256": "da2b9bfd5e25fe629845c456906ab8d2addbcbcb518402ae265e5499ee3b4071"
++      "sha256": "198893b9aed6b4835ea0fcf3440ee934d7cc257af98b74bf79e380fb63659e6f"
+     }
+   ]
+ }
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/prepare_run.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/prepare_run.py"
+index 3e09a066..ed120070 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/prepare_run.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/prepare_run.py"
+@@ -95,6 +95,7 @@ def build_package_assembly(benchmark: Path, sdk_host: Path) -> dict[str, dict]:
+         "benchmark-organized-entry.mjs",
+         "benchmark-worktree-host.mjs",
+         "probe-child-rpc.mjs",
++        "query-organized-terminal.mjs",
+     }
+ 
+     for relative in sorted(root_files):
+@@ -147,7 +148,7 @@ def build_package_assembly(benchmark: Path, sdk_host: Path) -> dict[str, dict]:
+                 source,
+                 source_kind="benchmark",
+             )
+-    for name in ("preparation_agent.py", "bench_controller.py"):
++    for name in ("preparation_agent.py", "bench_controller.py", "runner_common.py"):
+         _add_target(
+             assembly,
+             name,
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/runner_common.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/runner_common.py"
+index b9f44cd9..bf0ca5fd 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/runner_common.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/runner_common.py"
+@@ -2,15 +2,18 @@
+ 
+ from __future__ import annotations
+ 
++import errno
+ import hashlib
+ import json
+ import math
++import os
+ from pathlib import Path, PurePosixPath
+ import subprocess
+ import tempfile
++import time
+ import zipfile
+-from typing import Any
+ import base64
++from typing import Any
+ 
+ 
+ def now() -> str:
+@@ -46,14 +49,91 @@ def read_json_value(path: Path) -> Any:
+     )
+ 
+ 
++_REPLACE_TIMEOUT_SECONDS = 1.5
++_REPLACE_INTERVAL_SECONDS = 0.05
++_REPLACE_MAX_ATTEMPTS = 31
++
++
++def _replacement_is_temporarily_blocked(error: OSError) -> bool:
++    """只把真实平台探测到的目标占用错误视为可等待。"""
++    if not isinstance(error, PermissionError) or error.errno != errno.EACCES:
++        return False
++    if os.name == "nt":
++        return getattr(error, "winerror", None) == 5
++    return True
++
++
++def _replace_with_bounded_wait(temporary: Path, target: Path) -> None:
++    """等待目标文件释放；时限与尝试次数是防止时钟和极小间隔失控的双重边界。"""
++    deadline = time.monotonic() + _REPLACE_TIMEOUT_SECONDS
++    first_error = None
++    last_error = None
++    attempts = 0
++    while attempts < _REPLACE_MAX_ATTEMPTS:
++        attempts += 1
++        try:
++            os.replace(temporary, target)
++            return
++        except OSError as error:
++            if not _replacement_is_temporarily_blocked(error):
++                raise
++            first_error = first_error or error
++            last_error = error
++            if time.monotonic() >= deadline or attempts >= _REPLACE_MAX_ATTEMPTS:
++                break
++            remaining = deadline - time.monotonic()
++            time.sleep(min(_REPLACE_INTERVAL_SECONDS, max(0.0, remaining)))
++    message = (
++        f"原子替换在 {attempts} 次尝试后仍失败："
++        f"目标={target}；临时文件={temporary}；"
++        f"首次异常={first_error!r}；最后异常={last_error!r}"
++    )
++    failure = PermissionError(last_error.errno, message)
++    failure.filename = str(target)
++    failure.filename2 = str(temporary)
++    failure.first_error = first_error
++    failure.last_error = last_error
++    failure.target = str(target)
++    failure.attempts = attempts
++    failure.temporary = str(temporary)
++    failure.winerror = getattr(last_error, "winerror", None)
++    raise failure from first_error
++
++
+ def write_json(path: Path, value: Any) -> None:
++    """序列化到本次调用独有的同目录文件，再以原子替换发布。"""
++    path = Path(path)
+     path.parent.mkdir(parents=True, exist_ok=True)
+-    pending = path.with_name(path.name + ".pending")
+-    pending.write_text(
+-        json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+-        encoding="utf-8",
+-    )
+-    pending.replace(path)
++    payload = json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
++    descriptor = None
++    temporary = None
++    failure = None
++    try:
++        descriptor, name = tempfile.mkstemp(
++            dir=path.parent,
++            prefix=f".{path.name}.",
++            suffix=".pending",
++        )
++        temporary = Path(name)
++        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
++            descriptor = None
++            stream.write(payload)
++        _replace_with_bounded_wait(temporary, path)
++    except BaseException as error:
++        failure = error
++        raise
++    finally:
++        if descriptor is not None:
++            os.close(descriptor)
++        if temporary is not None:
++            try:
++                temporary.unlink()
++            except FileNotFoundError:
++                pass
++            except BaseException as cleanup_error:
++                if failure is None:
++                    raise
++                failure.cleanup_error = cleanup_error
+ 
+ 
+ def absolute_path(value: str, label: str) -> Path:
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_bench_controller.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_bench_controller.py"
+index 07b1d95a..3a7d3985 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_bench_controller.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_bench_controller.py"
+@@ -491,7 +491,7 @@ class ControllerTest(unittest.IsolatedAsyncioTestCase):
+ 
+         self.assertEqual(
+             captured["command"],
+-            ["fixture-docker", "ps", "-a", "--format", "{{json .}}"],
++            ["fixture-docker", "ps", "-a", "--size=false", "--format", "{{json .}}"],
+         )
+         evidence = raised.exception.evidence
+         self.assertEqual(evidence["stage"], "runtime_ps")
+@@ -527,7 +527,7 @@ class ControllerTest(unittest.IsolatedAsyncioTestCase):
+         self.assertEqual(evidence["stage"], "runtime_ps")
+         self.assertEqual(
+             evidence["argv"],
+-            ["fixture-docker", "ps", "-a", "--format", "{{json .}}"],
++            ["fixture-docker", "ps", "-a", "--size=false", "--format", "{{json .}}"],
+         )
+         self.assertIsNone(evidence["returncode"])
+         self.assertEqual(evidence["stdout"], "")
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_governance_runner.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_governance_runner.py"
+index a664b262..756ffb09 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_governance_runner.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_governance_runner.py"
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import errno
+ import json
+ import os
+ from pathlib import Path
+@@ -11,6 +12,8 @@ import subprocess
+ import sys
+ import tempfile
+ import textwrap
++import threading
++import time
+ import unittest
+ from unittest import mock
+ 
+@@ -156,6 +159,332 @@ class GovernanceRunnerTest(unittest.TestCase):
+         )
+         return payload
+ 
++    def run_sdk_adapter_with_stub_parent(
++        self,
++        adapter_path: Path,
++        *,
++        parent_error: bool = False,
++        parent_cancel: bool = False,
++        evidence_return_code: int = 0,
++        proof_return_code: int = 0,
++        terminal_return_code: int = 0,
++        terminal_stdout: str | None = None,
++        terminal_stderr: str = "",
++        terminal_raise: bool = False,
++    ) -> dict:
++        """只执行真实 SDK 适配器；父类、模型和远端执行均使用内存桩。"""
++        if terminal_stdout is None:
++            terminal_stdout = json.dumps(
++                {
++                    "ok": True,
++                    "control": {
++                        "instance": "fixture-instance",
++                        "owner": "fixture-owner",
++                        "workflow": "基准开发流水线",
++                        "cards_dir": "/app/.pao/benchmark/卡",
++                    },
++                    "report": {
++                        "workflow": "基准开发流水线",
++                        "status": "completed",
++                    },
++                },
++                ensure_ascii=False,
++            )
++        config_path = self.root / "sdk-adapter-run-config.json"
++        config_path.write_text(
++            json.dumps(
++                {
++                    "adapter_path": str(adapter_path),
++                    "parent_error": parent_error,
++                    "parent_cancel": parent_cancel,
++                    "evidence_return_code": evidence_return_code,
++                    "proof_return_code": proof_return_code,
++                    "terminal_return_code": terminal_return_code,
++                    "terminal_stdout": terminal_stdout,
++                    "terminal_stderr": terminal_stderr,
++                    "terminal_raise": terminal_raise,
++                },
++                ensure_ascii=False,
++            ),
++            encoding="utf-8",
++        )
++        probe = self.root / "sdk-adapter-run-probe.py"
++        probe.write_text(
++            textwrap.dedent(
++                """
++                import asyncio
++                import importlib.util
++                import json
++                from pathlib import Path
++                import sys
++                import types
++                from unittest.mock import patch
++
++                config = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++                adapter_path = Path(config["adapter_path"]).resolve()
++                events = []
++
++                class ParentRunError(Exception):
++                    pass
++
++                class FakeField:
++                    def __init__(self, **_kwargs):
++                        pass
++
++                class FakePAOOptions:
++                    def __init__(self, **values):
++                        self.__dict__.update(values)
++
++                parent_sentinel = ParentRunError("model-stream-sentinel")
++                cancel_sentinel = asyncio.CancelledError("fixture-cancelled")
++
++                class FakePAOAgent:
++                    options_model = FakePAOOptions
++                    _REMOTE_SOURCE_DIR = "/app"
++                    _REMOTE_LAUNCHER = "/tmp/pao-benchmark/agent.sh"
++
++                    def __init__(self, options):
++                        self.options = options
++
++                    async def run(self, instruction, environment, context):
++                        events.append(("run", instruction, context.metadata))
++                        if config["parent_cancel"]:
++                            raise cancel_sentinel
++                        if config["parent_error"]:
++                            raise parent_sentinel
++
++                    async def exec_as_agent(self, environment, command):
++                        events.append(("exec", environment, command))
++                        if command.startswith("if [ -d /tmp/harbor-pao-home/部门 ]"):
++                            return types.SimpleNamespace(
++                                return_code=config["evidence_return_code"],
++                                stdout="",
++                                stderr="fixture evidence copy",
++                            )
++                        if "final-flow.md" in command:
++                            return types.SimpleNamespace(
++                                return_code=config["proof_return_code"],
++                                stdout="",
++                                stderr="fixture final flow",
++                            )
++                        if "query-organized-terminal.mjs" in command:
++                            if config["terminal_raise"]:
++                                raise OSError("query-spawn-sentinel")
++                            return types.SimpleNamespace(
++                                return_code=config["terminal_return_code"],
++                                stdout=config["terminal_stdout"],
++                                stderr=config["terminal_stderr"],
++                            )
++                        return types.SimpleNamespace(
++                            return_code=0,
++                            stdout="",
++                            stderr="",
++                        )
++
++                pydantic = types.ModuleType("pydantic")
++                pydantic.Field = FakeField
++                map_package = types.ModuleType("map_bench_pao")
++                pao_agent = types.ModuleType("map_bench_pao.pao_agent")
++                pao_agent.PAOAgent = FakePAOAgent
++                pao_agent.PAOOptions = FakePAOOptions
++                map_package.pao_agent = pao_agent
++                with patch.dict(sys.modules, {
++                    "pydantic": pydantic,
++                    "map_bench_pao": map_package,
++                    "map_bench_pao.pao_agent": pao_agent,
++                }):
++                    spec = importlib.util.spec_from_file_location(
++                        "sdk_adapter_under_test", adapter_path
++                    )
++                    adapter = importlib.util.module_from_spec(spec)
++                    spec.loader.exec_module(adapter)
++                adapter.OrganizedOptions.model_fields = {
++                    "organization_manifest_sha256": object()
++                }
++                options = adapter.OrganizedOptions(
++                    organization_manifest_sha256="a" * 64
++                )
++                agent = adapter.OrganizedPAOAgent(options)
++                context = types.SimpleNamespace(metadata={"preexisting": "kept"})
++                payload = {
++                    "outcome": "returned",
++                    "metadata": context.metadata,
++                    "query_calls": 0,
++                }
++                try:
++                    asyncio.run(
++                        agent.run("fixture instruction", "fixture-environment", context)
++                    )
++                except BaseException as error:
++                    payload = {
++                        "outcome": "raised",
++                        "error_type": type(error).__name__,
++                        "error_message": str(error),
++                        "error_notes": list(getattr(error, "__notes__", [])),
++                        "same_parent_sentinel": (
++                            error is parent_sentinel or error is cancel_sentinel
++                        ),
++                        "metadata": context.metadata,
++                    }
++                else:
++                    payload["metadata"] = context.metadata
++                payload["query_calls"] = sum(
++                    "query-organized-terminal.mjs" in event[2]
++                    for event in events
++                    if event[0] == "exec"
++                )
++                print(json.dumps(payload, ensure_ascii=False))
++                """
++            ),
++            encoding="utf-8",
++        )
++        completed = subprocess.run(
++            [sys.executable, str(probe), str(config_path)],
++            cwd=self.root,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++        )
++        self.assertEqual(completed.returncode, 0, completed.stderr)
++        return json.loads(completed.stdout)
++
++    def make_terminal_query_fixture(self, name: str) -> tuple[Path, Path]:
++        """用当前 dist 的公开写面建立隔离配方；状态构造不依赖展示文本。"""
++        root = self.root / ("terminal-query-" + name)
++        project = root / "project"
++        pao_home = root / "pao-home"
++        project.mkdir(parents=True)
++        (pao_home / "工作流").mkdir(parents=True)
++        (project / "input.txt").write_text("fixture\n", encoding="utf-8")
++        subprocess.run(
++            ["git", "init", str(project)],
++            check=True,
++            capture_output=True,
++            encoding="utf-8",
++        )
++        subprocess.run(
++            ["git", "-C", str(project), "add", "input.txt"],
++            check=True,
++            capture_output=True,
++            encoding="utf-8",
++        )
++        subprocess.run(
++            [
++                "git",
++                "-C",
++                str(project),
++                "-c",
++                "user.name=Terminal Query Test",
++                "-c",
++                "user.email=terminal-query@example.invalid",
++                "commit",
++                "-m",
++                "fixture",
++            ],
++            check=True,
++            capture_output=True,
++            encoding="utf-8",
++        )
++        (pao_home / "工作流" / "基准开发流水线.md").write_text(
++            """---
++版本: 2
++名字: 基准开发流水线
++自动执行: true
++参数:
++  - 任务
++节点:
++  - 名字: 完成节点
++    部门: 测试
++    目标: "{任务}"
++    验收: 夹具
++    输入: []
++    约束: 夹具
++    执行方式: 拆解
++    只读: true
++    工人数量: 1
++    人工确认: false
++    档位: primary
++    模型: harbor-endpoint/test/model
++    思考强度: high
++    depends_on: []
++---
++查询夹具。
++""",
++            encoding="utf-8",
++        )
++        return project, pao_home
++
++    def start_terminal_query_fixture(
++        self,
++        mode: str,
++        project: Path,
++        pao_home: Path,
++    ) -> None:
++        source = Path(__file__).resolve().parents[3] / "PAO"
++        setup_script = self.root / "terminal-query-fixture.mjs"
++        setup_script.write_text(
++            """
++import { join } from "node:path";
++import { pathToFileURL } from "node:url";
++
++const [source, paoHome, projectRoot, mode] = process.argv.slice(2);
++const load = (file) =>
++  import(pathToFileURL(join(source, "packages/coding-agent/dist/pao", file)).href);
++const { loadRecipe } = await load("workflow/recipe.js");
++const {
++  bindMinister,
++  endDecomposition,
++  pauseControl,
++  readControl,
++  startControl,
++} = await load("workflow/control.js");
++const cardsDir = join(projectRoot, ".pao", "benchmark", "卡");
++const options = {
++  cardsDir,
++  workspaceDir: join(projectRoot, ".pao", "benchmark"),
++  ownerSessionId: "fixture-owner",
++};
++const recipe = loadRecipe(paoHome, "基准开发流水线");
++await startControl(recipe, { 任务: "查询夹具" }, options);
++if (mode === "hold") {
++  await pauseControl(recipe, options, "夹具人工挂起");
++}
++if (mode === "completed") {
++  await bindMinister(recipe, options, "完成节点", "fixture-minister");
++  const flow = readControl(recipe, options);
++  await endDecomposition(
++    recipe,
++    options,
++    {
++      实例: flow.实例,
++      节点: "完成节点",
++      轮次: 1,
++      部长会话: "fixture-minister",
++    },
++    "无卡夹具完成",
++  );
++}
++console.log(JSON.stringify({ ok: true, mode }));
++""",
++            encoding="utf-8",
++        )
++        completed = subprocess.run(
++            [
++                "C:/Program Files/nodejs/node.exe",
++                str(setup_script),
++                str(source),
++                str(pao_home),
++                str(project),
++                mode,
++            ],
++            cwd=self.root,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++            timeout=30,
++        )
++        self.assertEqual(completed.returncode, 0, completed.stderr)
++
+     def make_run(self, *, started: bool = False) -> Path:
+         run = self.root / "run"
+         run.mkdir()
+@@ -363,6 +692,9 @@ class GovernanceRunnerTest(unittest.TestCase):
+         (benchmark / "bench_controller.py").write_text(
+             "# current controller\n", encoding="utf-8"
+         )
++        (benchmark / "runner_common.py").write_text(
++            "# current shared runner\n", encoding="utf-8"
++        )
+         (benchmark / "map_bench_pao_organized.py").write_text(
+             "# root adapter is recorded only; SDK adapter replaces it\n",
+             encoding="utf-8",
+@@ -561,6 +893,358 @@ class GovernanceRunnerTest(unittest.TestCase):
+                 "high",
+             )
+ 
++    def test_write_json_preserves_unicode_and_rejects_non_finite_values(self) -> None:
++        """真实文件行为：中文和 Emoji 原样落盘，NaN/Infinity 不发布。"""
++        target = self.root / "unicode-state.json"
++        original = {"版本": "旧", "说明": "旧文件仍需完整"}
++        runner_common.write_json(target, original)
++        value = {
++            "名称": "实施状态",
++            "说明": "中文保持原样",
++            "标记": "🙂",
++            "列表": ["第一项", "第二项"],
++        }
++
++        runner_common.write_json(target, value)
++
++        text = target.read_text(encoding="utf-8")
++        self.assertIn("实施状态", text)
++        self.assertIn("🙂", text)
++        self.assertEqual(json.loads(text), value)
++        for invalid in (float("nan"), float("inf"), float("-inf")):
++            with self.subTest(invalid=invalid):
++                with self.assertRaises(ValueError):
++                    runner_common.write_json(target, {"值": invalid})
++                self.assertEqual(json.loads(target.read_text(encoding="utf-8")), value)
++                self.assertEqual(
++                    list(target.parent.glob(f".{target.name}.*.pending")),
++                    [],
++                )
++
++    def test_write_json_retries_simulated_transient_replace_error(self) -> None:
++        """模拟短暂占用：同一唯一临时文件在第二次替换时成功发布。"""
++        target = self.root / "transient-state.json"
++        original = {"版本": "旧"}
++        replacement = {"版本": "新", "说明": "中文完整"}
++        runner_common.write_json(target, original)
++        real_replace = runner_common.os.replace
++        attempts = []
++
++        def replace_after_one_failure(source, destination):
++            attempts.append(Path(source))
++            if len(attempts) == 1:
++                error = PermissionError(
++                    errno.EACCES,
++                    "模拟短暂目标占用",
++                    str(source),
++                    str(destination),
++                )
++                error.winerror = 5
++                raise error
++            return real_replace(source, destination)
++
++        with (
++            mock.patch.object(
++                runner_common.os,
++                "replace",
++                side_effect=replace_after_one_failure,
++            ),
++            mock.patch.object(runner_common.time, "sleep", return_value=None),
++        ):
++            runner_common.write_json(target, replacement)
++
++        self.assertEqual(len(attempts), 2)
++        self.assertEqual(attempts[0], attempts[1])
++        self.assertEqual(json.loads(target.read_text(encoding="utf-8")), replacement)
++        self.assertFalse(attempts[0].exists())
++
++    def test_write_json_bounded_permission_failure_keeps_old_and_cleans_own_file(
++        self,
++    ) -> None:
++        """模拟持续占用：有界失败，旧目标不变，只清理本调用的临时文件。"""
++        target = self.root / "blocked-state.json"
++        old_text = '{"版本": "旧", "说明": "完整旧文件"}\n'
++        target.write_text(old_text, encoding="utf-8")
++        decoy = target.with_name(f".{target.name}.other.pending")
++        decoy_text = "其他调用仍在使用的临时文件\n"
++        decoy.write_text(decoy_text, encoding="utf-8")
++        errors = []
++        temporary_paths = []
++
++        def always_blocked(source, destination):
++            temporary_paths.append(Path(source))
++            error = PermissionError(
++                errno.EACCES,
++                "模拟持续目标占用",
++                str(source),
++                str(destination),
++            )
++            error.winerror = 5
++            errors.append(error)
++            raise error
++
++        started = time.monotonic()
++        with (
++            mock.patch.object(runner_common, "_REPLACE_TIMEOUT_SECONDS", 0.15),
++            mock.patch.object(runner_common, "_REPLACE_INTERVAL_SECONDS", 0.02),
++            mock.patch.object(
++                runner_common.os,
++                "replace",
++                side_effect=always_blocked,
++            ),
++        ):
++            with self.assertRaises(PermissionError) as raised:
++                runner_common.write_json(target, {"版本": "新"})
++        elapsed = time.monotonic() - started
++
++        failure = raised.exception
++        self.assertGreaterEqual(len(errors), 2)
++        self.assertGreaterEqual(elapsed, 0.1)
++        self.assertLess(elapsed, 1.0)
++        self.assertIs(failure.first_error, errors[0])
++        self.assertIs(failure.__cause__, errors[0])
++        self.assertEqual(failure.target, str(target))
++        self.assertEqual(failure.attempts, len(errors))
++        self.assertIn(str(target), str(failure))
++        self.assertIn(f"{len(errors)} 次尝试", str(failure))
++        self.assertEqual(target.read_text(encoding="utf-8"), old_text)
++        self.assertFalse(temporary_paths[0].exists())
++        self.assertTrue(decoy.exists())
++        self.assertEqual(decoy.read_text(encoding="utf-8"), decoy_text)
++
++    def test_write_json_does_not_retry_unrelated_replace_errors(self) -> None:
++        """模拟非占用错误：EPERM、ENOSPC 及 Windows 非共享冲突 EACCES 均不重试。"""
++        cases = (
++            PermissionError(errno.EPERM, "模拟永久权限错误"),
++            OSError(errno.ENOSPC, "模拟磁盘空间不足"),
++        )
++        if os.name == "nt":
++            cases += (
++                PermissionError(
++                    errno.EACCES,
++                    "模拟非共享冲突的权限错误",
++                    "source",
++                    "target",
++                ),
++            )
++        for injected in cases:
++            if os.name == "nt" and injected.errno == errno.EACCES:
++                injected.winerror = 32
++            with self.subTest(error=type(injected).__name__, errno=injected.errno):
++                target = self.root / f"no-retry-{injected.errno}.json"
++                old_text = '{"版本": "旧"}\n'
++                target.write_text(old_text, encoding="utf-8")
++                temporary_paths = []
++
++                def fail_once(source, destination):
++                    temporary_paths.append(Path(source))
++                    raise injected
++
++                with (
++                    mock.patch.object(
++                        runner_common.os,
++                        "replace",
++                        side_effect=fail_once,
++                    ),
++                    mock.patch.object(runner_common.time, "sleep") as sleep,
++                ):
++                    with self.assertRaises(type(injected)) as raised:
++                        runner_common.write_json(target, {"版本": "新"})
++
++                self.assertIs(raised.exception, injected)
++                self.assertEqual(len(temporary_paths), 1)
++                self.assertFalse(temporary_paths[0].exists())
++                sleep.assert_not_called()
++                self.assertEqual(target.read_text(encoding="utf-8"), old_text)
++
++    def test_concurrent_write_json_publishes_only_complete_old_or_new_documents(
++        self,
++    ) -> None:
++        """真实多线程写入：两个唯一临时文件并存，读者不见半截 JSON。"""
++        target = self.root / "concurrent-state.json"
++        old = {"版本": "旧", "内容": "旧" * 4000}
++        first = {"版本": "甲", "内容": "甲" * 4000}
++        second = {"版本": "乙", "内容": "乙" * 4000}
++        runner_common.write_json(target, old)
++        allowed = {"旧": old, "甲": first, "乙": second}
++        replacements_arrived = threading.Barrier(3)
++        release_replacements = threading.Event()
++        stop_reader = threading.Event()
++        lock = threading.Lock()
++        temporary_paths = []
++        temporary_values = []
++        writer_errors = []
++        reader_errors = []
++        reader_values = []
++        real_replace = runner_common.os.replace
++        real_read_text = Path.read_text
++        coordinated_paths = set()
++
++        def coordinated_replace(source, destination):
++            path = Path(source)
++            with lock:
++                if path in coordinated_paths:
++                    # 读者短占目标造成的重试不再等待屏障。
++                    return real_replace(source, destination)
++                coordinated_paths.add(path)
++                # replace 前先自行读取，避免线程测试把 Windows 共享冲突混入写入断言。
++                replacement = json.loads(path.read_text(encoding="utf-8"))
++                temporary_paths.append(path)
++                temporary_values.append(replacement)
++            # 两个写者都已完成临时文件后，再同时放行替换。
++            replacements_arrived.wait(timeout=5)
++            release_replacements.wait(timeout=5)
++            return real_replace(source, destination)
++
++        def retrying_read_text(path, *args, **kwargs):
++            deadline = time.monotonic() + 1.5
++            while True:
++                try:
++                    return real_read_text(path, *args, **kwargs)
++                except PermissionError as error:
++                    if path != target or time.monotonic() >= deadline:
++                        raise
++                    time.sleep(0.005)
++
++        def write_value(value):
++            try:
++                runner_common.write_json(target, value)
++            except BaseException as error:
++                with lock:
++                    writer_errors.append(error)
++
++        def read_values():
++            while not stop_reader.is_set():
++                try:
++                    text = retrying_read_text(target, encoding="utf-8")
++                    value = json.loads(text)
++                except BaseException as error:
++                    with lock:
++                        reader_errors.append(error)
++                else:
++                    with lock:
++                        reader_values.append((value["版本"], value))
++                        # 每次成功读取后让出时间片，避免持续读柄挡住发布替换。
++                        time.sleep(0.002)
++                time.sleep(0.001)
++
++        reader = threading.Thread(target=read_values)
++        writers = [
++            threading.Thread(target=write_value, args=(value,))
++            for value in (first, second)
++        ]
++        with (
++            mock.patch.object(
++                runner_common.os,
++                "replace",
++                side_effect=coordinated_replace,
++            ),
++            mock.patch.object(Path, "read_text", retrying_read_text),
++        ):
++            reader.start()
++            try:
++                for writer in writers:
++                    writer.start()
++                replacements_arrived.wait(timeout=5)
++                release_replacements.set()
++            finally:
++                for writer in writers:
++                    writer.join(timeout=10)
++                stop_reader.set()
++                reader.join(timeout=10)
++
++        self.assertFalse(reader.is_alive())
++        self.assertTrue(all(not writer.is_alive() for writer in writers))
++        self.assertEqual(writer_errors, [])
++        self.assertEqual(reader_errors, [])
++        self.assertEqual(len(set(temporary_paths)), 2)
++        self.assertCountEqual(temporary_values, [first, second])
++        self.assertIn(json.loads(target.read_text(encoding="utf-8")), [first, second])
++        self.assertTrue(reader_values)
++        self.assertTrue(
++            all(allowed.get(name) == value for name, value in reader_values)
++        )
++        self.assertTrue(all(not path.exists() for path in temporary_paths))
++
++    def test_copied_controller_uses_copied_shared_publisher(self) -> None:
++        """复制后的控制器真实导入同目录共享入口，不只验证 helper。"""
++        _sources_path, _run, sources = self.make_prepare_sources()
++        benchmark = Path(sources["benchmark_source"])
++        source_controller = Path(__file__).with_name("bench_controller.py")
++        source_common = Path(__file__).with_name("runner_common.py")
++        (benchmark / "bench_controller.py").write_bytes(
++            source_controller.read_bytes()
++        )
++        (benchmark / "runner_common.py").write_bytes(source_common.read_bytes())
++        assembly = prepare_run.build_package_assembly(
++            benchmark,
++            Path(sources["sdk_host_source"]),
++        )
++        copied = self.root / "copied-package"
++        copied.mkdir()
++        prepare_run.copy_assembly(assembly, copied)
++
++        probe = textwrap.dedent(
++            """
++            import json
++            from pathlib import Path
++            import sys
++
++            root = Path(sys.argv[1]).resolve()
++            sys.path.insert(0, str(root))
++            import bench_controller
++            import runner_common
++
++            assert Path(bench_controller.__file__).resolve() == root / "bench_controller.py"
++            assert Path(runner_common.__file__).resolve() == root / "runner_common.py"
++            calls = []
++
++            def capture(path, value):
++                calls.append([str(path), value])
++
++            runner_common.write_json = capture
++            payload = {"名称": "复制后的控制器", "值": 1}
++            bench_controller.write(root / "controller-probe.json", payload)
++            print(json.dumps({
++                "controller": str(Path(bench_controller.__file__).resolve()),
++                "runner_common": str(Path(runner_common.__file__).resolve()),
++                "calls": calls,
++            }, ensure_ascii=False))
++            """
++        )
++        completed = subprocess.run(
++            [sys.executable, "-c", probe, str(copied)],
++            check=False,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++            cwd=copied,
++            env={
++                **os.environ,
++                "PYTHONIOENCODING": "utf-8",
++                "PYTHONPATH": str(copied),
++            },
++        )
++        self.assertEqual(
++            completed.returncode,
++            0,
++            (completed.stdout or "") + "\n" + (completed.stderr or ""),
++        )
++        result = json.loads(completed.stdout)
++        self.assertEqual(result["calls"], [[str(copied / "controller-probe.json"), {
++            "名称": "复制后的控制器",
++            "值": 1,
++        }]])
++        self.assertEqual(
++            runner_common.digest(copied / "bench_controller.py"),
++            runner_common.digest(source_controller),
++        )
++        self.assertEqual(
++            runner_common.digest(copied / "runner_common.py"),
++            runner_common.digest(source_common),
++        )
++        self.assertFalse((copied / "controller-probe.json").exists())
++
+     def test_historical_inputs_remain_unchanged(self) -> None:
+         sources_path, run, sources = self.make_prepare_sources()
+         task = Path(sources["task_source"])
+@@ -857,6 +1541,221 @@ class GovernanceRunnerTest(unittest.TestCase):
+             all(proof["parent_ipc"] for proof in rpc_report["proofs"])
+         )
+ 
++    def test_structured_terminal_query_distinguishes_real_workflow_states(self) -> None:
++        benchmark = Path(__file__).resolve().parent
++        source = Path(__file__).resolve().parents[3] / "PAO"
++        query = (
++            benchmark.parents[1]
++            / "协作机制重构-20261023"
++            / "benchmark-sdk-host"
++            / "query-organized-terminal.mjs"
++        )
++        observed = {}
++        for mode in ("completed", "hold", "running"):
++            project, pao_home = self.make_terminal_query_fixture(mode)
++            self.start_terminal_query_fixture(mode, project, pao_home)
++            completed = subprocess.run(
++                [
++                    "C:/Program Files/nodejs/node.exe",
++                    str(query),
++                    str(source),
++                    str(pao_home),
++                    str(project),
++                    "基准开发流水线",
++                ],
++                cwd=self.root,
++                capture_output=True,
++                text=True,
++                encoding="utf-8",
++                timeout=30,
++            )
++            self.assertEqual(completed.returncode, 0, completed.stderr)
++            payload = json.loads(completed.stdout)
++            self.assertTrue(payload["ok"])
++            self.assertEqual(payload["report"]["status"], mode)
++            self.assertEqual(payload["control"]["workflow"], "基准开发流水线")
++            self.assertEqual(payload["control"]["owner"], "fixture-owner")
++            self.assertTrue(payload["control"]["instance"])
++            observed[mode] = payload["report"]["status"]
++
++        project, pao_home = self.make_terminal_query_fixture("unstarted")
++        completed = subprocess.run(
++            [
++                "C:/Program Files/nodejs/node.exe",
++                str(query),
++                str(source),
++                str(pao_home),
++                str(project),
++                "基准开发流水线",
++            ],
++            cwd=self.root,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++            timeout=30,
++        )
++        self.assertNotEqual(completed.returncode, 0)
++        payload = json.loads(completed.stdout)
++        self.assertFalse(payload["ok"])
++        self.assertEqual(payload["error"]["name"], "Error")
++        observed["unstarted"] = payload["ok"]
++        self.assertEqual(
++            observed,
++            {
++                "completed": "completed",
++                "hold": "hold",
++                "running": "running",
++                "unstarted": False,
++            },
++        )
++
++    def test_sdk_adapter_requires_completed_structured_terminal(self) -> None:
++        benchmark = Path(__file__).resolve().parent
++        adapter_path = (
++            benchmark.parents[1]
++            / "协作机制重构-20261023"
++            / "benchmark-sdk-host"
++            / "benchmark-organized-adapter.py"
++        )
++        completed = self.run_sdk_adapter_with_stub_parent(adapter_path)
++        self.assertEqual(completed["outcome"], "returned")
++        self.assertEqual(completed["query_calls"], 1)
++        self.assertEqual(completed["metadata"]["preexisting"], "kept")
++        self.assertTrue(completed["metadata"]["pao_organization_started"])
++        self.assertTrue(completed["metadata"]["pao_organization_completed"])
++        self.assertEqual(
++            completed["metadata"]["pao_organization_workflow_status"],
++            "completed",
++        )
++
++        for status in ("hold", "running"):
++            with self.subTest(status=status):
++                payload = self.run_sdk_adapter_with_stub_parent(
++                    adapter_path,
++                    terminal_stdout=json.dumps(
++                        {
++                            "ok": True,
++                            "control": {
++                                "instance": "fixture-instance",
++                                "owner": "fixture-owner",
++                                "workflow": "基准开发流水线",
++                                "cards_dir": "/app/.pao/benchmark/卡",
++                            },
++                            "report": {
++                                "workflow": "基准开发流水线",
++                                "status": status,
++                            },
++                        },
++                        ensure_ascii=False,
++                    ),
++                )
++                self.assertEqual(payload["outcome"], "raised")
++                self.assertEqual(payload["error_type"], "RuntimeError")
++                self.assertIn("status=" + status, payload["error_message"])
++                self.assertTrue(payload["metadata"]["pao_organization_started"])
++                self.assertFalse(payload["metadata"]["pao_organization_completed"])
++                self.assertEqual(
++                    payload["metadata"]["pao_organization_workflow_status"],
++                    status,
++                )
++
++    def test_sdk_adapter_terminal_query_failures_are_fatal(self) -> None:
++        benchmark = Path(__file__).resolve().parent
++        adapter_path = (
++            benchmark.parents[1]
++            / "协作机制重构-20261023"
++            / "benchmark-sdk-host"
++            / "benchmark-organized-adapter.py"
++        )
++        cases = {
++            "control_missing": {
++                "terminal_return_code": 1,
++                "terminal_stdout": json.dumps(
++                    {
++                        "ok": False,
++                        "error": {
++                            "name": "Error",
++                            "message": "缺少控制清单",
++                        },
++                    },
++                    ensure_ascii=False,
++                ),
++            },
++            "spawn_error": {"terminal_raise": True},
++            "bad_json": {"terminal_stdout": "{not-json"},
++            "incomplete": {
++                "terminal_stdout": json.dumps(
++                    {
++                        "ok": True,
++                        "control": {},
++                        "report": {"status": "completed"},
++                    }
++                )
++            },
++        }
++        for name, options in cases.items():
++            with self.subTest(name=name):
++                payload = self.run_sdk_adapter_with_stub_parent(
++                    adapter_path,
++                    **options,
++                )
++                self.assertEqual(payload["outcome"], "raised")
++                self.assertEqual(payload["error_type"], "RuntimeError")
++                self.assertTrue(
++                    payload["metadata"]["pao_organization_terminal_query_error"]
++                )
++                self.assertFalse(payload["metadata"]["pao_organization_completed"])
++
++    def test_sdk_adapter_preserves_parent_error_when_evidence_copy_fails(self) -> None:
++        benchmark = Path(__file__).resolve().parent
++        adapter_path = (
++            benchmark.parents[1]
++            / "协作机制重构-20261023"
++            / "benchmark-sdk-host"
++            / "benchmark-organized-adapter.py"
++        )
++        for name, options, error_type, message in (
++            (
++                "model_error",
++                {"parent_error": True},
++                "ParentRunError",
++                "model-stream-sentinel",
++            ),
++            (
++                "cancelled",
++                {"parent_cancel": True},
++                "CancelledError",
++                "fixture-cancelled",
++            ),
++        ):
++            with self.subTest(name=name):
++                payload = self.run_sdk_adapter_with_stub_parent(
++                    adapter_path,
++                    evidence_return_code=9,
++                    **options,
++                )
++                self.assertEqual(payload["outcome"], "raised")
++                self.assertEqual(payload["error_type"], error_type)
++                self.assertEqual(payload["error_message"], message)
++                self.assertTrue(payload["same_parent_sentinel"])
++                self.assertTrue(
++                    any("留证同时失败" in note for note in payload["error_notes"])
++                )
++                self.assertEqual(payload["query_calls"], 0)
++                self.assertTrue(
++                    payload["metadata"]["pao_organization_evidence_error"]
++                )
++
++        no_parent_error = self.run_sdk_adapter_with_stub_parent(
++            adapter_path,
++            evidence_return_code=9,
++        )
++        self.assertEqual(no_parent_error["outcome"], "raised")
++        self.assertEqual(no_parent_error["error_type"], "RuntimeError")
++        self.assertTrue(
++            no_parent_error["metadata"]["pao_organization_evidence_error"]
++        )
++
+     def test_sdk_adapter_setup_contract_and_install_arguments(self) -> None:
+         benchmark = Path(__file__).resolve().parent
+         adapter_path = (
+@@ -1048,6 +1947,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+             "benchmark-host-factories.mjs",
+             "benchmark-child-entry.mjs",
+             "probe-child-rpc.mjs",
++            "query-organized-terminal.mjs",
+         )
+         for name in upload_names:
+             content = (
+@@ -1164,6 +2064,15 @@ class GovernanceRunnerTest(unittest.TestCase):
+             (event["kind"], event["environment"], event["argument"])
+             for event in payload_events
+         ]
++        self.assertIn(
++            (
++                "upload",
++                "fixture-environment",
++                "/tmp/benchmark-organization/query-organized-terminal.mjs"
++                "|organization-query-organized-terminal.mjs",
++            ),
++            signed_history,
++        )
+         self.assertEqual(
+             [kind for kind, _environment, _argument in signed_history],
+             [
+@@ -1171,7 +2080,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+                 "exec",
+                 *[
+                     "upload"
+-                    for _ in range(9)
++                    for _ in range(10)
+                 ],
+                 "exec",
+                 "exec",
+@@ -1876,6 +2785,52 @@ class GovernanceRunnerTest(unittest.TestCase):
+         )
+         self.assertFalse((run / "terminal-receipt.json").exists())
+ 
++    def test_cancelled_trial_can_stop_before_verifier_but_observes_created_verifier(self) -> None:
++        run = self.make_run()
++        trial = run / "jobs" / "controller-task-1" / "trial-one"
++        trial.mkdir(parents=True)
++        runner_common.write_json(trial / "config.json", {"trial_name": "trial-one"})
++        runner_common.write_json(trial / "result.json", {
++            "verifier_result": None,
++            "exception_info": {"exception_type": "CancelledError"},
++        })
++        runner_common.write_json(run / "control-status.json", {
++            "state": "mechanism_stopped", "writers_stopped": True,
++        })
++
++        for verifier_running in (None, True, False):
++            with self.subTest(verifier_running=verifier_running):
++                def runner(docker, *args, **kwargs):
++                    if args[0] == "ps":
++                        rows = [
++                            self.docker_row("controller-test", "", False),
++                            self.docker_row("trial-one__abc-env-main-1", "trial-one__env", False),
++                        ]
++                        if verifier_running is not None:
++                            rows.append(self.docker_row("trial-one__abc-verifier-1", "trial-one__verifier__trial", verifier_running))
++                        return "\n".join(rows)
++                    return self.state(bool(verifier_running) if "verifier" in args[-1] else False)
++
++                result = watch_run.observe_once(run, "controller-test", runner=runner)
++                self.assertEqual(result["terminal"], verifier_running is not True)
++                self.assertTrue(result["scope"]["scope_complete"])
++                if result["terminal"]:
++                    receipt = runner_common.read_json(run / "terminal-receipt.json")
++                    self.assertEqual(receipt["official_rewards"], [])
++                    self.assertEqual(receipt["exceptions"], [{"exception_type": "CancelledError"}])
++                    facts = receipt["business_terminal"]
++                    self.assertEqual(facts["business_status"], "mechanism_stopped")
++                    self.assertFalse(facts["business_finished"])
++                    self.assertTrue(facts["business_failed"])
++                    self.assertTrue(facts["trial_result_exists"])
++                    self.assertEqual(facts["official_verifier_result_count"], 0)
++                    self.assertFalse(facts["formal_result_exists"])
++                    self.assertEqual(facts["missing_reward_count"], 1)
++                    self.assertEqual(facts["malformed_reward_count"], 0)
++                    self.assertEqual(facts["scoring"], "verifier_not_run")
++                    self.assertIn("mechanism_stopped", receipt["reward_note"])
++                    self.assertIn("reward 缺失", receipt["reward_note"])
++
+     def test_docker_state_query_failure_aborts_without_stop_receipt(self) -> None:
+         run = self.make_run()
+ 
+@@ -1977,16 +2932,18 @@ class GovernanceRunnerTest(unittest.TestCase):
+         self.assertFalse(control["writers_stopped"])
+         receipt = runner_common.read_json(run / "terminal-receipt.json")
+         self.assertEqual(receipt["official_rewards"], [])
++        facts = receipt["business_terminal"]
++        self.assertFalse(facts["business_finished"])
++        self.assertTrue(facts["business_failed"])
++        self.assertFalse(facts["trial_result_exists"])
++        self.assertFalse(facts["formal_result_exists"])
++        self.assertEqual(facts["scoring"], "not_run")
++        self.assertIn("failed", receipt["reward_note"])
++        self.assertIn("官方评分未运行", receipt["reward_note"])
+         self.assertEqual(
+-            receipt["reward_note"],
+-            "预检失败且明确未启动正式模型；官方评分未运行，不填 0",
+-        )
+-        self.assertTrue(receipt["business_terminal"]["business_failed"])
+-        self.assertEqual(
+-            receipt["business_terminal"]["error"],
++            facts["error"],
+             "RuntimeError('环境预检失败；未启动正式模型')",
+         )
+-        self.assertEqual(receipt["business_terminal"]["scoring"], "not_run")
+         controller_exit = runner_common.read_json(run / "controller-exit.json")
+         self.assertTrue(controller_exit["actors_stopped_observed"])
+         self.assertFalse(controller_exit["writers_stopped"])
+@@ -2108,15 +3065,17 @@ class GovernanceRunnerTest(unittest.TestCase):
+         self.assertEqual((run / "control-status.json").read_bytes(), control_before)
+         receipt = runner_common.read_json(run / "terminal-receipt.json")
+         self.assertEqual(receipt["official_rewards"], [])
+-        self.assertEqual(receipt["business_terminal"]["business_status"], "preflight")
++        facts = receipt["business_terminal"]
++        self.assertEqual(facts["business_status"], "preflight")
++        self.assertFalse(facts["business_finished"])
++        self.assertIsNone(facts["business_failed"])
++        self.assertFalse(facts["formal_result_exists"])
+         self.assertEqual(
+-            receipt["business_terminal"]["scoring"],
++            facts["scoring"],
+             "missing_or_not_run",
+         )
+-        self.assertEqual(
+-            receipt["reward_note"],
+-            "控制器异常退出且没有正式评分结果；不将缺失解释为 0",
+-        )
++        self.assertIn("preflight", receipt["reward_note"])
++        self.assertIn("控制器异常退出", receipt["reward_note"])
+         controller_exit = runner_common.read_json(run / "controller-exit.json")
+         self.assertFalse(controller_exit["writers_stopped"])
+         self.assertTrue(controller_exit["actors_stopped_observed"])
+@@ -2270,10 +3229,14 @@ class GovernanceRunnerTest(unittest.TestCase):
+             receipt["business_terminal"]["scoring"],
+             "official_result_available",
+         )
+-        self.assertEqual(
+-            receipt["reward_note"],
+-            "仅原版 verifier_result；缺失保持 null，真实 0.0 原样保留",
+-        )
++        facts = receipt["business_terminal"]
++        self.assertFalse(facts["business_finished"])
++        self.assertIsNone(facts["business_failed"])
++        self.assertTrue(facts["trial_result_exists"])
++        self.assertEqual(facts["official_verifier_result_count"], 1)
++        self.assertTrue(facts["formal_result_exists"])
++        self.assertIn("已暂停", receipt["reward_note"])
++        self.assertIn("没有证明成功或正常作答", receipt["reward_note"])
+         controller_exit = runner_common.read_json(run / "controller-exit.json")
+         self.assertEqual(controller_exit["terminal_basis"], "controller_crash")
+         self.assertFalse(controller_exit["writers_stopped"])
+@@ -2301,17 +3264,237 @@ class GovernanceRunnerTest(unittest.TestCase):
+             runner=runner,
+         )
+         receipt = runner_common.read_json(run / "terminal-receipt.json")
++        facts = receipt["business_terminal"]
++        self.assertFalse(facts["business_finished"])
++        self.assertTrue(facts["business_failed"])
++        self.assertIsNone(facts["model_execution_started"])
++        self.assertIn("failed", receipt["reward_note"])
++        self.assertIn("没有正式评分结果", receipt["reward_note"])
+         self.assertEqual(
+-            receipt["reward_note"],
+-            "没有正式评分结果；不将缺失解释为 0",
++            facts["scoring"],
++            "missing_or_not_run",
+         )
+-        self.assertIsNone(
+-            receipt["business_terminal"]["model_execution_started"]
++
++    def test_execution_error_trial_result_does_not_claim_official_result(self) -> None:
++        run = self.make_run()
++        trial = run / "jobs" / "controller-task-1" / "trial-one"
++        trial.mkdir(parents=True)
++        runner_common.write_json(
++            run / "jobs" / "controller-task-1" / "config.json",
++            {"job_name": "controller-task-1"},
+         )
+-        self.assertEqual(
+-            receipt["business_terminal"]["scoring"],
+-            "missing_or_not_run",
++        runner_common.write_json(
++            trial / "config.json",
++            {"trial_name": "trial-one"},
++        )
++        exception = {
++            "exception_type": "RuntimeError",
++            "exception_message": "组织工作流未完成：status=hold",
++        }
++        runner_common.write_json(
++            trial / "result.json",
++            {
++                "verifier_result": None,
++                "exception_info": exception,
++                "agent_result": {},
++            },
+         )
++        runner_common.write_json(
++            run / "control-status.json",
++            {"state": "execution_error", "writers_stopped": True},
++        )
++        child = "trial-one__abc-env-main-1"
++        child_project = bench_controller.compose_project("trial-one", "env")
++
++        def runner(docker, *args, **kwargs):
++            if args[0] == "ps":
++                return "\n".join(
++                    [
++                        self.docker_row("controller-test", "", False),
++                        self.docker_row(child, child_project, False),
++                    ]
++                )
++            return self.crashed_state(0)
++
++        result = watch_run.observe_once(
++            run,
++            "controller-test",
++            runner=runner,
++        )
++
++        self.assertTrue(result["terminal"])
++        receipt = runner_common.read_json(run / "terminal-receipt.json")
++        facts = receipt["business_terminal"]
++        self.assertEqual(facts["business_status"], "execution_error")
++        self.assertFalse(facts["business_finished"])
++        self.assertTrue(facts["business_failed"])
++        self.assertTrue(facts["trial_result_exists"])
++        self.assertEqual(facts["trial_result_count"], 1)
++        self.assertEqual(facts["official_verifier_result_count"], 0)
++        self.assertFalse(facts["formal_result_exists"])
++        self.assertEqual(facts["valid_reward_count"], 0)
++        self.assertEqual(facts["missing_reward_count"], 1)
++        self.assertEqual(facts["malformed_reward_count"], 0)
++        self.assertEqual(facts["scoring"], "verifier_not_run")
++        self.assertEqual(receipt["exceptions"], [exception])
++        self.assertIn("官方 verifier 未运行", receipt["reward_note"])
++        self.assertIn("reward 缺失", receipt["reward_note"])
++        self.assertNotIn("奖励畸形", receipt["reward_note"])
++
++    def test_missing_score_is_failed_with_missing_official_reward(self) -> None:
++        run = self.make_run()
++        trial = run / "jobs" / "controller-task-1" / "trial-one"
++        trial.mkdir(parents=True)
++        runner_common.write_json(
++            run / "jobs" / "controller-task-1" / "config.json",
++            {"job_name": "controller-task-1"},
++        )
++        runner_common.write_json(
++            trial / "config.json",
++            {"trial_name": "trial-one"},
++        )
++        runner_common.write_json(
++            trial / "result.json",
++            {
++                "verifier_result": {"rewards": {}},
++                "exception_info": None,
++                "agent_result": {},
++            },
++        )
++        runner_common.write_json(
++            run / "control-status.json",
++            {"state": "missing_score", "writers_stopped": True},
++        )
++        env = "trial-one__abc-env-main-1"
++        verifier = "trial-one__abc-verifier-1"
++
++        def runner(docker, *args, **kwargs):
++            if args[0] == "ps":
++                return "\n".join(
++                    [
++                        self.docker_row("controller-test", "", False),
++                        self.docker_row(env, "trial-one__env", False),
++                        self.docker_row(
++                            verifier,
++                            "trial-one__verifier__trial",
++                            False,
++                        ),
++                    ]
++                )
++            return self.crashed_state(0)
++
++        result = watch_run.observe_once(
++            run,
++            "controller-test",
++            runner=runner,
++        )
++
++        self.assertTrue(result["terminal"])
++        receipt = runner_common.read_json(run / "terminal-receipt.json")
++        facts = receipt["business_terminal"]
++        self.assertEqual(facts["business_status"], "missing_score")
++        self.assertFalse(facts["business_finished"])
++        self.assertTrue(facts["business_failed"])
++        self.assertTrue(facts["trial_result_exists"])
++        self.assertEqual(facts["official_verifier_result_count"], 1)
++        self.assertTrue(facts["formal_result_exists"])
++        self.assertEqual(facts["missing_reward_count"], 1)
++        self.assertEqual(facts["malformed_reward_count"], 0)
++        self.assertEqual(facts["scoring"], "official_result_missing_reward")
++        self.assertIn("missing_score", receipt["reward_note"])
++        self.assertIn("没有 reward", receipt["reward_note"])
++
++    def test_paused_without_score_is_not_reported_as_success(self) -> None:
++        run = self.make_run()
++        runner_common.write_json(
++            run / "control-status.json",
++            {"state": "paused", "writers_stopped": True},
++        )
++
++        def runner(docker, *args, **kwargs):
++            if args[0] == "ps":
++                return self.docker_row("controller-test", "", False)
++            return self.crashed_state(0)
++
++        result = watch_run.observe_once(
++            run,
++            "controller-test",
++            runner=runner,
++        )
++
++        self.assertTrue(result["terminal"])
++        receipt = runner_common.read_json(run / "terminal-receipt.json")
++        facts = receipt["business_terminal"]
++        self.assertEqual(facts["business_status"], "paused")
++        self.assertFalse(facts["business_finished"])
++        self.assertIsNone(facts["business_failed"])
++        self.assertEqual(facts["scoring"], "missing_or_not_run")
++        self.assertIn("已暂停", receipt["reward_note"])
++        self.assertIn("没有证明成功或正常作答", receipt["reward_note"])
++        self.assertNotIn("已结束（finished）", receipt["reward_note"])
++
++    def test_running_and_unknown_do_not_fake_business_outcome(self) -> None:
++        for label, status in (("running", "running"), ("missing", None)):
++            with self.subTest(status=status):
++                run = self.root / f"run-{label}"
++                run.mkdir()
++                (run / "jobs").mkdir()
++                runner_common.write_json(run / "run-sources.json", {})
++                if status is not None:
++                    runner_common.write_json(
++                        run / "control-status.json",
++                        {"state": status, "writers_stopped": False},
++                    )
++
++                def runner(docker, *args, **kwargs):
++                    if args[0] == "ps":
++                        return self.docker_row("controller-test", "", False)
++                    return self.crashed_state(0)
++
++                result = watch_run.observe_once(
++                    run,
++                    "controller-test",
++                    runner=runner,
++                )
++                facts = result["business_terminal"]
++                self.assertEqual(
++                    facts["business_status"],
++                    status if status is not None else "unknown",
++                )
++                self.assertFalse(facts["business_finished"])
++                self.assertIsNone(facts["business_failed"])
++                self.assertFalse(result["terminal"])
++                self.assertFalse((run / "terminal-receipt.json").exists())
++
++    def test_business_status_failure_classification_keeps_unknown_as_null(self) -> None:
++        run = self.make_run()
++        expected = {
++            "finished": False,
++            "failed": True,
++            "execution_error": True,
++            "missing_score": True,
++            "mechanism_stopped": True,
++            "stop_unconfirmed": True,
++            "paused": None,
++            "running": None,
++            "preflight": None,
++            "unknown": None,
++        }
++        for status, business_failed in expected.items():
++            with self.subTest(status=status):
++                facts = watch_run.terminal_facts(
++                    run,
++                    {"state": status},
++                    [],
++                )
++                self.assertEqual(facts["business_status"], status)
++                self.assertEqual(facts["business_finished"], status == "finished")
++                self.assertIs(facts["business_failed"], business_failed)
++
++        missing = watch_run.terminal_facts(run, None, [])
++        self.assertEqual(missing["business_status"], "unknown")
++        self.assertFalse(missing["business_finished"])
++        self.assertIsNone(missing["business_failed"])
+ 
+     def test_score_container_is_in_round_scope(self) -> None:
+         run = self.make_run()
+@@ -2405,6 +3588,16 @@ class GovernanceRunnerTest(unittest.TestCase):
+         receipt = runner_common.read_json(run / "terminal-receipt.json")
+         self.assertTrue(receipt["writers_stopped_observed"])
+         self.assertEqual(receipt["official_rewards"], [0.0])
++        facts = receipt["business_terminal"]
++        self.assertEqual(facts["business_status"], "finished")
++        self.assertTrue(facts["business_finished"])
++        self.assertFalse(facts["business_failed"])
++        self.assertTrue(facts["trial_result_exists"])
++        self.assertEqual(facts["official_verifier_result_count"], 1)
++        self.assertTrue(facts["formal_result_exists"])
++        self.assertEqual(facts["valid_reward_count"], 1)
++        self.assertEqual(facts["scoring"], "official_result_available")
++        self.assertIn("finished", receipt["reward_note"])
+ 
+         verified = launch_run.verify_previous(
+             run,
+@@ -2496,6 +3689,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+                 str(docker),
+                 "ps",
+                 "-a",
++                "--size=false",
+                 "--format",
+                 "{{json .}}",
+             )
+@@ -2503,6 +3697,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+             evidence = error.evidence
+         self.assertEqual(evidence["stage"], "watch_docker")
+         self.assertEqual(evidence["argv"][-1], "{{json .}}")
++        self.assertIn("--size=false", evidence["argv"])
+         self.assertEqual(evidence["returncode"], 17)
+         self.assertIn("query-stdout", evidence["stdout"])
+         self.assertIn("query-stderr", evidence["stderr"])
+@@ -2564,7 +3759,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+         self,
+     ) -> None:
+         run = self.make_run()
+-        command = ["fixture-docker", "ps", "-a", "--format", "{{json .}}"]
++        command = ["fixture-docker", "ps", "-a", "--size=false", "--format", "{{json .}}"]
+         original = subprocess.TimeoutExpired(
+             command,
+             1.0,
+@@ -2630,7 +3825,7 @@ class GovernanceRunnerTest(unittest.TestCase):
+         self.assertEqual(recorded["evidence"]["stage"], "watch_docker")
+         self.assertEqual(
+             recorded["evidence"]["argv"],
+-            [watch_run.DOCKER_EXE, "ps", "-a", "--format", "{{json .}}"],
++            [watch_run.DOCKER_EXE, "ps", "-a", "--size=false", "--format", "{{json .}}"],
+         )
+         self.assertIsNone(recorded["evidence"]["returncode"])
+         self.assertEqual(recorded["evidence"]["stdout"], "")
+@@ -2662,10 +3857,14 @@ class GovernanceRunnerTest(unittest.TestCase):
+         )
+         self.assertEqual(
+             [
+-                (row["status"], row["reward"])
++                (
++                    row["status"],
++                    row["reward"],
++                    row["official_verifier_result_exists"],
++                )
+                 for row in watch_run.reward_rows(run)
+             ],
+-            [("valid", 0.0), ("missing", None)],
++            [("valid", 0.0, True), ("missing", None, False)],
+         )
+         rows = watch_run.reward_rows(run)
+         self.assertEqual(
+@@ -2697,6 +3896,10 @@ class GovernanceRunnerTest(unittest.TestCase):
+             ["malformed"] * 4,
+         )
+         self.assertEqual([row["reward"] for row in rows], [None] * 4)
++        self.assertEqual(
++            [row["official_verifier_result_exists"] for row in rows],
++            [True, True, False, False],
++        )
+ 
+         runner_common.write_json(
+             run / "control-status.json",
+@@ -2716,9 +3919,15 @@ class GovernanceRunnerTest(unittest.TestCase):
+         self.assertTrue(result["terminal"])
+         receipt = runner_common.read_json(run / "terminal-receipt.json")
+         self.assertEqual(receipt["official_rewards"], [])
++        facts = receipt["business_terminal"]
++        self.assertTrue(facts["business_finished"])
++        self.assertFalse(facts["business_failed"])
++        self.assertEqual(facts["trial_result_count"], 4)
++        self.assertEqual(facts["official_verifier_result_count"], 2)
++        self.assertTrue(facts["formal_result_exists"])
+         self.assertEqual(
+             receipt["official_reward_status"],
+-            "formal_result_without_valid_reward",
++            "official_result_malformed",
+         )
+         self.assertEqual(
+             [row["status"] for row in receipt["reward_rows"]],
+@@ -2728,6 +3937,8 @@ class GovernanceRunnerTest(unittest.TestCase):
+             len(receipt["reward_errors"]),
+             4,
+         )
++        self.assertIn("畸形", receipt["reward_note"])
++        self.assertIn("官方 verifier", receipt["reward_note"])
+ 
+     def test_bad_result_root_is_malformed_without_dropping_other_results(self) -> None:
+         run = self.make_run()
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_prepare_sources.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_prepare_sources.py"
+index 8310a4cc..e2c536cf 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_prepare_sources.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/test_prepare_sources.py"
+@@ -105,6 +105,7 @@ class PrepareSourcesTest(unittest.TestCase):
+             "scripts/offline_validate.py",
+             "preparation_agent.py",
+             "bench_controller.py",
++            "runner_common.py",
+         ):
+             path = root / relative
+             path.parent.mkdir(parents=True, exist_ok=True)
+@@ -180,6 +181,12 @@ class PrepareSourcesTest(unittest.TestCase):
+             assembly["map_bench_pao_organized.py"]["source"],
+             (self.sdk / "benchmark-organized-adapter.py").resolve(),
+         )
++        terminal_query = assembly["organized-post/query-organized-terminal.mjs"]
++        self.assertEqual(terminal_query["source_kind"], "sdk_host")
++        self.assertEqual(
++            terminal_query["source"],
++            (self.sdk / "query-organized-terminal.mjs").resolve(),
++        )
+ 
+     def test_assembly_checks_root_activation_before_using_sdk_version(self) -> None:
+         root = self._make_benchmark()
+@@ -486,6 +493,20 @@ class PrepareSourcesTest(unittest.TestCase):
+             activation["source"],
+             str(self.sdk / "activate-tools.mjs"),
+         )
++        terminal_query = next(
++            record
++            for record in assembly
++            if record["target"] == "organized-post/query-organized-terminal.mjs"
++        )
++        self.assertEqual(terminal_query["source_kind"], "sdk_host")
++        self.assertEqual(
++            terminal_query["source"],
++            str(self.sdk / "query-organized-terminal.mjs"),
++        )
++        self.assertEqual(
++            terminal_query["sha256"],
++            runner_common.digest(run / "organized-post" / "query-organized-terminal.mjs"),
++        )
+         derived = source_manifest["derived"][0]
+         self.assertEqual(
+             derived["sha256"],
+diff --git "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/watch_run.py" "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/watch_run.py"
+index af9bfcd4..d2fc15df 100644
+--- "a/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/watch_run.py"
++++ "b/.pao/\345\234\260\345\233\276\347\256\200\346\212\245\344\270\216\351\203\250\351\227\250\345\215\217\344\275\234-20261020/benchmark/watch_run.py"
+@@ -164,6 +164,16 @@ def planned_identities(
+         ):
+             planned.append(env_identity)
+         if phase != "preflight" and identity["phase"] != "preflight":
++            result_path = run / "jobs" / identity["job_dir"] / trial / "result.json"
++            trial_result = runner_common.read_json(result_path) if result_path.is_file() else None
++            # 明确异常终局可以发生在评分前；未创建的 verifier 不等于仍在写入。
++            # 已创建的评分容器仍在 observed 中发现并逐一核查实际状态。
++            ended_before_score = (
++                (control or {}).get("writers_stopped") is True
++                and isinstance(trial_result, dict)
++                and bool(trial_result.get("exception_info"))
++                and trial_result.get("verifier_result") is None
++            )
+             verifier_identity = {
+                 "kind": "project",
+                 "project": (
+@@ -174,7 +184,8 @@ def planned_identities(
+                 "role": "verifier",
+                 "phase": identity["phase"],
+             }
+-            planned.append(verifier_identity)
++            if not ended_before_score:
++                planned.append(verifier_identity)
+             observed.append(verifier_identity)
+     score_dir = run / "current-score"
+     scoring_started = score_dir.is_dir()
+@@ -234,7 +245,7 @@ def _discover_scope(
+     observed = plan["observed_identities"]
+     families = project_families(observed)
+     score_container = score_container_name(run)
+-    rows = runner(docker, "ps", "-a", "--format", "{{json .}}")
++    rows = runner(docker, "ps", "-a", "--size=false", "--format", "{{json .}}")
+     controllers = [
+         row for row in rows.splitlines()
+         if row.strip()
+@@ -406,6 +417,7 @@ def _reward_row(path: Path, run: Path) -> dict:
+             "error": f"{type(error).__name__}: {error}",
+             "exception": None,
+             "agent_result": None,
++            "official_verifier_result_exists": False,
+         }
+     if not isinstance(value, dict):
+         return {
+@@ -415,8 +427,10 @@ def _reward_row(path: Path, run: Path) -> dict:
+             "error": f"结果根必须是对象，实际为 {type(value).__name__}",
+             "exception": None,
+             "agent_result": None,
++            "official_verifier_result_exists": False,
+         }
+     verifier = value.get("verifier_result")
++    official_verifier_result_exists = isinstance(verifier, dict)
+     rewards = verifier.get("rewards") if isinstance(verifier, dict) else None
+     present = isinstance(rewards, dict) and "reward" in rewards
+     reward = rewards.get("reward") if present else None
+@@ -436,6 +450,7 @@ def _reward_row(path: Path, run: Path) -> dict:
+         "error": error,
+         "exception": value.get("exception_info"),
+         "agent_result": value.get("agent_result"),
++        "official_verifier_result_exists": official_verifier_result_exists,
+     }
+ 
+ 
+@@ -452,7 +467,12 @@ def terminal_facts(
+     rewards: list[dict] | None = None,
+ ) -> dict:
+     """把业务失败与实际停写分开；只读取已有控制事实，不改写控制状态。"""
+-    status = (control or {}).get("state")
++    raw_status = (control or {}).get("state")
++    status = (
++        raw_status
++        if isinstance(raw_status, str) and raw_status
++        else "unknown"
++    )
+     preflight_path = run / "preflight-summary.json"
+     preflight = (
+         runner_common.read_json(preflight_path)
+@@ -475,6 +495,22 @@ def terminal_facts(
+     rewards = reward_rows(run) if rewards is None else rewards
+     valid_rewards = [row for row in rewards if row["status"] == "valid"]
+     malformed_rewards = [row for row in rewards if row["status"] == "malformed"]
++    official_verifier_result_count = sum(
++        row["official_verifier_result_exists"] for row in rewards
++    )
++    business_failed = (
++        True
++        if status in {
++            "failed",
++            "execution_error",
++            "missing_score",
++            "mechanism_stopped",
++            "stop_unconfirmed",
++        }
++        else False
++        if status == "finished"
++        else None
++    )
+     allowed = (
+         status == "failed"
+         and not rewards
+@@ -485,10 +521,14 @@ def terminal_facts(
+     )
+     return {
+         "business_status": status,
+-        "business_failed": status == "failed",
++        "business_finished": status == "finished",
++        "business_failed": business_failed,
+         "error": control_error,
+         "preflight_error": preflight_error,
+-        "formal_result_exists": bool(rewards),
++        "trial_result_exists": bool(rewards),
++        "trial_result_count": len(rewards),
++        "official_verifier_result_count": official_verifier_result_count,
++        "formal_result_exists": official_verifier_result_count > 0,
+         "valid_reward_count": len(valid_rewards),
+         "missing_reward_count": sum(
+             row["status"] == "missing" for row in rewards
+@@ -498,16 +538,62 @@ def terminal_facts(
+         "scoring": (
+             "official_result_available"
+             if valid_rewards
+-            else "formal_result_without_valid_reward"
+-            if rewards
++            else "official_result_malformed"
++            if malformed_rewards
++            else "official_result_missing_reward"
++            if official_verifier_result_count
+             else "not_run"
+             if model_execution_started is False
++            else "verifier_not_run"
++            if rewards
+             else "missing_or_not_run"
+         ),
+         "allow_failure_without_formal_result": allowed,
+     }
+ 
+ 
++def _reward_note(
++    facts: dict,
++    rewards: list[dict],
++    *,
++    controller_crash: bool,
++) -> str:
++    status = facts["business_status"]
++    status_notes = {
++        "finished": "控制器已结束（finished）；",
++        "paused": "控制器已暂停，没有证明成功或正常作答；",
++        "running": "控制器仍在运行，不能判定业务成功或失败；",
++        "preflight": "控制器仍处于预检（preflight）；",
++        "unknown": "控制状态未知，不能判定业务成功或失败；",
++        "failed": "控制器报告失败（failed）；",
++        "execution_error": "业务执行异常（execution_error）；",
++        "missing_score": "控制器报告缺失分（missing_score）；",
++        "mechanism_stopped": "控制器已停止机制（mechanism_stopped），不能当作成功；",
++        "stop_unconfirmed": "控制器停写尚未确认（stop_unconfirmed），不能当作成功；",
++    }
++    prefix = status_notes.get(status, f"控制器状态为 {status}；")
++    if facts["valid_reward_count"]:
++        detail = "官方 verifier reward 原样保留，缺失项保持 null。"
++    elif facts["malformed_reward_count"]:
++        detail = "存在官方 verifier 结果但 reward 畸形，不填 0；原异常另存。"
++    elif facts["official_verifier_result_count"]:
++        detail = "官方 verifier 结果存在但没有 reward，不填 0；原异常另存。"
++    elif rewards:
++        detail = (
++            "trial result 存在，但官方 verifier 未运行；"
++            "reward 缺失，不填 0；原异常另存。"
++        )
++    elif status == "missing_score":
++        detail = "没有官方 verifier 结果，reward 缺失，不填 0。"
++    elif facts["model_execution_started"] is False:
++        detail = "官方评分未运行，不填 0。"
++    elif controller_crash:
++        detail = "控制器异常退出且没有正式评分结果；不将缺失解释为 0。"
++    else:
++        detail = "没有正式评分结果；不将缺失解释为 0。"
++    return prefix + detail
++
++
+ def observe_once(
+     run: Path,
+     controller: str,
+@@ -564,29 +650,15 @@ def observe_once(
+         malformed_rewards = [
+             row for row in rewards if row["status"] == "malformed"
+         ]
+-        abnormal_exit_without_result = (
+-            controller_crash
+-            and not rewards
+-            and not facts["allow_failure_without_formal_result"]
+-            and not writers_stopped
+-        )
+         receipt = {
+             **result,
+             "writers_stopped_observed": True,
+             "official_rewards": [row["reward"] for row in valid_rewards],
+             "reward_rows": rewards,
+-            "reward_note": (
+-                "仅原版 verifier_result；缺失保持 null，真实 0.0 原样保留"
+-                if valid_rewards
+-                else "存在正式评分结果但奖励畸形，不填 0；原异常另存"
+-                if malformed_rewards or facts["scoring"] == "formal_result_without_valid_reward"
+-                else (
+-                    "预检失败且明确未启动正式模型；官方评分未运行，不填 0"
+-                    if facts["model_execution_started"] is False
+-                    else "控制器异常退出且没有正式评分结果；不将缺失解释为 0"
+-                    if abnormal_exit_without_result
+-                    else "没有正式评分结果；不将缺失解释为 0"
+-                )
++            "reward_note": _reward_note(
++                facts,
++                rewards,
++                controller_crash=controller_crash,
+             ),
+             "official_reward_status": facts["scoring"],
+             "exceptions": [
+diff --git a/README.md b/README.md
+index b4464c79..a8088e58 100644
+--- a/README.md
++++ b/README.md
+@@ -88,6 +88,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临
+ |---|---|
+ | 任务安排与当前状态 | [执行计划 §10](plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#10-分批实施与依赖) |
+ | 协作稳定性集中治理 | [完整修复计划](plans/未完成/2026-10-25-PAO协作稳定性集中治理计划.md)、[主控审核证据](.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)；进度仍看执行计划 §10.21 |
++| 整体深度审核与架构重整（2026-10-28 起） | [任务书](plans/未完成/2026-10-28-整体深度审核与架构重整任务书.md)、[目标架构与实施分路](.pao/深度审核重整-20261028/目标架构与实施分路.md)；状态看执行计划 §10.22 |
+ | 右上悬浮框、独立侧栏与辅助对话 | [归档任务书](plans/已完成/2026-10-19-右上悬浮框与独立侧栏任务书.md)、[交付报告](.pao/harness完善-20261017/悬浮框与独立侧栏-20261019/交付报告.md)；状态仍看执行计划 §10 |
+ | 实施经过与验证证据 | [执行记录](.pao/harness完善-20261017/执行记录.md) |
+ | 10 月 20 日摩擦修复验收 | [本轮记录](.pao/摩擦修复-20261020/实施与验收记录.md)；任务状态看执行计划 §10.7 |
+diff --git a/plans/v2-ARCHITECTURE.md b/plans/v2-ARCHITECTURE.md
+index f88bfc6b..ee924334 100644
+--- a/plans/v2-ARCHITECTURE.md
++++ b/plans/v2-ARCHITECTURE.md
+@@ -979,3 +979,17 @@ driver 用 pi 的公开会话、压缩投影和只读工具能力建立独立辅
+ CLI 与桌面共用业务规则，按真实能力装配；缺少必要能力时在启动模型前拒绝，实际创建或运行失败也必须停止。主控宿主关闭全停、异常重启先盘点并由人决定恢复的纪律不变，自动交接不意味着重启后自动续跑。旧数据先在隔离副本预演，正式现场迁移另行授权。
+ 
+ 详细目标与验收见[多部门协作与主控减负重构总计划](未完成/2026-10-23-多部门协作实现收敛重构讨论稿.md)；当前批次状态与验收证据只见[执行总册 §10.21](未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#1021-多部门协作与主控减负重构)。本节是机制定案，不代表实现已经验收。
++
++## 34. 整体深度审核后的技术边界（2026-10-29）
++
++本节确认本轮重整必须遵守的技术边界。实施分路与具体停点处理见[目标架构与实施分路](../.pao/深度审核重整-20261028/目标架构与实施分路.md)，当前状态及实际验收只看[执行总册 §10.22](未完成/2026-10-17-Harness完善与工作台迭代执行计划.md#1022-2026-10-28-整体深度审核与架构重整)。
++
++CLI、桌面、基准及离线彩排共用产品宿主的业务装配与无界面工作树实现。保留现有窄宿主接口和真实能力检查；桌面只适配自身存储与窗口，基准只适配题目与运行环境。基准不得长期维护桌面宿主的源码打包副本，历史冻结件保持不动。
++
++卡片模块维护任务定义和卡状态，流程模块维护冻结配方、轮次和判定，不可变执行绑定维护实际执行根与输入身份。尝试结果和验收事实采用结构化记录，正文与看板只负责呈现；旧记录通过统一读取适配消费。卡片键、公开工具名和用户数据目录保持兼容；不以改为结构化为由自动迁移正式现场或丢弃旧记录。
++
++程序采集实际执行事实、绑定身份并办理确定的交付手续，模型负责判断与说明。工具参数、声明及角色允许集合保持一致；保留动态状态和权限校验。执行退出、业务完成、停止确认与官方评分是不同结论，分别记录，不用退出码或未知值填补成功。
++
++普通观察失败只记录可观察性错误；身份冲突、冻结输入损坏、用户停止与预算限制仍按明确规则停止相关写入。未证明进程已停时保留写保护和执行占位，关闭失败必须暴露。§32.3 与 §33.3 的显式人工恢复纪律继续有效。
++
++无人值守的新实例须显式声明运行策略，每个停点有负责人、截止与明确结果。哪些普通验收偏差可交主控模型裁决，属于待用户确定的行为，不能由缺少界面推定授权；此前有人值守和旧实例语义保持。该待决项不改变以上已确认的技术边界。
+diff --git "a/plans/\346\234\252\345\256\214\346\210\220/2026-10-17-Harness\345\256\214\345\226\204\344\270\216\345\267\245\344\275\234\345\217\260\350\277\255\344\273\243\346\211\247\350\241\214\350\256\241\345\210\222.md" "b/plans/\346\234\252\345\256\214\346\210\220/2026-10-17-Harness\345\256\214\345\226\204\344\270\216\345\267\245\344\275\234\345\217\260\350\277\255\344\273\243\346\211\247\350\241\214\350\256\241\345\210\222.md"
+index 2b858df5..d5809ef6 100644
+--- "a/plans/\346\234\252\345\256\214\346\210\220/2026-10-17-Harness\345\256\214\345\226\204\344\270\216\345\267\245\344\275\234\345\217\260\350\277\255\344\273\243\346\211\247\350\241\214\350\256\241\345\210\222.md"
++++ "b/plans/\346\234\252\345\256\214\346\210\220/2026-10-17-Harness\345\256\214\345\226\204\344\270\216\345\267\245\344\275\234\345\217\260\350\277\255\344\273\243\346\211\247\350\241\214\350\256\241\345\210\222.md"
+@@ -546,6 +546,10 @@ Windows core 其余失败按影响上述主流程的程度定向处理；未定
+ 
+ ### 10.21 2026-10-23 多部门协作与主控减负重构
+ 
++2026-10-26晚间接续：主控已审核r22后处理通知实际实现及Hypatia独立报告，接手修复直接节点零通知、异步准备后停止/暂停/裁定及身份重核，并展开深层条件表达式；原始回执取消契约保留，不增加锁或持久消息状态。23:12自动链原快照93项完整回归退出0，后补1项独立通过，桥接10项原有路径及独立新增5项通过，生产类型、四文件Biome和diff检查通过；跳过不算通过。主控签发15文件摘要的r23代码审核回执并独立冻结第一题MiniMax high。临时启动脚本误用Docker内部192.168.65.0/24导致管理接口失联，已核对本轮空网络身份后移除并恢复API，再经实际路由核对创建192.168.66.0/24本轮网络；尚无正式控制器或模型作答。零模型联网发现容器到本机网关超时，确认无活容器后按已有授权重启Docker Desktop，当前重启在途，不盲目重复作答、不改变冻结输入。仅验证协作流程修复，不重评r22或为提高分数重跑。实际状态及日志见[治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)。完整无harness故障的真实整链仍未证明，目标保持进行中。
++
++2026-10-26接续：用户授权循环诊断、修复和第一题整链验收，启动后委派子代理观察。按[锁与返修协作治理计划](2026-10-26-锁与返修协作治理计划.md)完成地图恢复、短认领事务和扇出通知锁修复的实际代码审查；42项地图、46项观察装配检查及后续定向并发/额度/退款/暂停保护通过，具体范围和失败修正见[治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)，不将模拟计作整链成功。r21已真实停写并收证，CancelledError和未知评分保留；仅清理其已停止的3只测试容器及专属网络。2026-10-26 15:03独立冻结r22并实际启动控制器 `pao-audit-first-20261026-r22`（be5d0c6d096ffcd5e81a1771962dab53c25382bd520c1edf85ac1b41b6cf121c），仅第一题MiniMax high。零模型联网探针漏挂载导致首次检查失败，修正临时启动脚本后从同一尚未启动的冻结继续，未修改冻结输入或重复作答。15:10真实启动核验已保存startup-confirmed.json：主控3条MiniMax回复并调用pao_start_flow/pao_query_flow，原实例绑定，侦察部长PID1448在途，两只本轮容器实际运行；15:47已独立核对r22真实终局：官方0.0、无异常，控制器退出0、全部本轮容器停写；人工裁定门未解除，主控正常结束后Harbor评分，不能称业务整链完成。确认原始回执要求已完成节点执行已禁止动作的职责冲突，非锁故障或错误人工路由；主控已补详细任务书派Harvey修复原始回执/后处理结果通知边界，保留原取消和完成保护。新修复待代码审核与验证；不重评或为提分重跑；已派Hypatia负责本轮故障/终局观察，无定时自动化或资源采样。原OS隔离、重启、P5整体负担等未验项保持。
++
+ 2026-10-25集中治理：三位group/deepseek high子代理及主控已完成回执/返修、关闭失败传播、公共装配、可取消锁等待、工作树原始字节一致性及共享运行器修复。主控按code-simplicity审核实际代码；内核本地提交 `4d5877a62`、`000647340`，desktop `fdeaa98f`，未推送，pi合并与PI-Desktop迁移继续暂停。生产源码类型及桌面构建通过，四部门四条固定回应下真实文件/Git/RPC路径分别通过，运行器最终24项通过；不把模拟、跳过或中断项算真实整链。r14凭证环境接线失败无模型/评分，已修并有真实子进程通过证据；r15进入真实容器安装，随后Windows虚拟内存不足事件与DockerVM重启同一时段出现，两只本轮容器退出255。新版观察器已实际收取controller_crash终局，保留原preflight/writers_stopped=false和未知评分，实际全部停写与采样退出、资源汇总已确认；采样有缺口。本轮网络及pao-r14/pao-r15自动化均已删除，未动历史冻结输入及正式PAO_HOME。用户已批准WSL4GB调整及Ubuntu中断；原配置已备份、实际WSL关闭与Docker重启成功，Linux MemTotal4006576kB确认生效，主机提交内存暂降至78%。2026-10-25 r16已在13:46预检失败：SDK最终入口把kit目录传给要求JSON文件的共享setup，触发EISDIR；未进入模型作答，官方评分未知。主控已核实本轮容器和后台进程全部停止、采样汇总6项，本轮网络及pao-r16自动化已删除。SDK文件参数已修；共享setup原有Git输入基线及监督配置已恢复，显式project进入预检。主控审核实际实现，真实Node与真实PAO API在隔离目录建立四部门通过、零模型；代理SDK install及Git正反例夹具通过，部门API桩不算整链。r17于16:08在真实无模型子角色RPC预检失败：共享激活器对worker合法不注册回调，旧探针仍要求session_start。未进入模型作答、无评分，缺失不填0。已实际核实两只本轮容器exited/Pid0且OOMKilled=false，观察器18528和采样器44188退出，6项采样已汇总；本轮空网络已删除。RPC探针与SDK激活器最终来源装配已修复，26离线检查及实际prepare→setup→三角色CLI/RPC/IPC无模型链通过。主控code-simplicity审核实际代码，未以桩替代最终装配。16:39独立r18已启动，控制器实际running；仅第一题全角色MiniMax high，尚无模型/评分结论。16:45实际Docker及会话核查：预检已通过、正式主控已调用pao_start_flow并建立真实实例，此前推进到规划交接地图；16:54监督因docker ps非零停止模型链，原模型子容器已exited137且OOMKilled=false。异常保留CancelledError及收证cp Cannot allocate memory，Docker另报snapshotter.Usage路径缺失，具体底层根因待诊断。16:57官方结果实际落盘，reward=0.0；17:00主控另行核查包含独立verifier在内的本轮4只容器均exited/Pid0、OOMKilled=false，watch42536及采样14380退出，37项资源采样汇总，本轮空网络和自动化pao-r17已删除。本次按真实0分结束，不刷分或另开r19。可观察用量仅下界input10739/output530/cacheRead5213，部门工人归档不完整、总费用未知；完整组织交付及工作树终局证据缺失。Docker监督stderr遗漏、取消与归档异常分离、verifier身份发现等诊断建议留待后续代码修复，本题未构成正常完整流程或整批验收通过。本轮新私有网络192.168.64.0/24，旧r14/r15原件和历史对象不改。完整模型/官方评分、在途真实宿主故障及原P5、OS隔离、机器重启仍未验，本批不能封板。详细证据见[主控审核记录](../../.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)。
+ 
+ 2026-10-25最新：r12流程修复经主控实际代码审核和整合，内核本地提交 `0236147ed`，未推送。相关5文件153项本地验证、生产源码类型及依赖检查通过；全仓类型仍有其他测试和桌面模块错误，未宣称全仓通过。详细边界见[主控代码审核](../../.pao/协作机制重构-20261023/r12流程修复-20261024/主控代码审核.md)。未重跑真实模型链，原中断成果官方补评0及P5、OS隔离、系统重启等未验项保持。用户要求暂停实际 pi 合并，提交后仅评估[PI-Desktop 插件化接入](../../.pao/pi升级评估-20261024/PI-Desktop宿主评估.md)，未实施迁移。
+@@ -622,6 +626,19 @@ r6随后因新增监督器把YAML未加引号的时间读取为datetime，写JSO
+ 
+ 本项是本轮实施状态的唯一维护处。基线、任务边界、具体检查和审核证据见[实施与主控验收记录](../../.pao/协作机制重构-20261023/实施与主控验收记录.md)。不得用此前批次通过的结论替代本轮验证。
+ 
++### 10.22 2026-10-28 整体深度审核与架构重整
++
++用户2026-10-28要求对整个项目做完整深度审核与优化，批准大刀阔斧修改整体架构，并要求先出任务书再并发处理。方案正本为[整体深度审核与架构重整任务书](2026-10-28-整体深度审核与架构重整任务书.md)；本轮取代逐轮“跑—修—再跑”，§10.21的r37结论不变（组织hold、官方评分未运行、reward未知）。证据目录为`.pao/深度审核重整-20261028/`。
++
++| 阶段 | 当前状态 |
++|---|---|
++| P0 基线固定 | 完成（2026-10-28 22:25）：三仓HEAD、二进制安全diff、status与未跟踪清单存于`.pao/深度审核重整-20261028/基线/`；未提交、未重置、未清理任何改动 |
++| P1 并发深度审核（A1—A8） | 进行中：8路只读审核同时派发（A8外围模块为补派），报告归`.pao/深度审核重整-20261028/审核/` |
++| P2 汇总与定案 | 未开始 |
++| P3 并发实施 | 未开始 |
++| P4 离线验收 | 未开始 |
++| P5 真实运行确认 | 未开始，须用户另行授权 |
++
+ ## 11. 验收设计
+ 
+ ### 11.1 层级与环境
+@@ -735,3 +752,555 @@ T02–T06、T10、T14、T19–T20 含并发/中断/丢返回断言。边界测
+ 本会话按要求停止实施，仅编写需求/计划。停止前刷新代码图，未改产品源码。曾加五个回归，四个反向验证缺陷，第五个未运行；停止后五例与新增导入完整撤出活动测试文件，原文件保留此前15例。
+ 
+ 材料见[执行记录](../../.pao/harness完善-20261017/执行记录.md)及[待实施回归用例](../../.pao/harness完善-20261017/待实施回归用例.md)。本次文档整理没有运行产品测试、真实Electron、构建或供应商任务，不将既有差异计为本轮实现。
++
++
++## r23 启动恢复补记（2026-10-26 23:37）
++
++此前Docker Desktop重启命令实际退出1、超时，随后从代理shell启动的Docker在重命名sailor-ingest.sock时报告ERROR_CANT_ACCESS_FILE并自行退出，不能继续记录为重启在途。公开问题 https://github.com/openai/codex/issues/52698 记录了相同的MSIX启动环境现象，本机原因仍属推断。经系统资源管理器调用未观察到进程启动；改用Windows Win32_Process.Create启动既有D:/Docker/Docker Desktop.exe返回0/PID25988，随后实际Docker ps恢复。未删除或移动socket目录，未重置Docker数据、修改配置或重启整机。
++
++复用已核对身份及空容器状态的r23专属192.168.66.0/24网络，模型网关与registry TCP检查通过（connectivity-probe.json）。主控再次核对15文件审核摘要和r22实际停写，通过实际Linux解释器检查，仅启动同一未作答r23一次；控制器ID为d55ac6a5803ce7fddc19b1f27f1200a9ed8e1f158f7c4c7ca2732ec348df51c0，实际Docker显示running，control-started及control-status已生成。此时只证明控制器启动，尚无真实模型/部门整链完成证明。Hypatia已受托核对真实启动、观察故障与终局；不开定时器或资源采样器。不重评r22，不修改题目、答案或冻结输入。
++
++2026-10-26 23:39补记：r23预检已完成，control-status于15:38:39Z进入running，正式环境html-js-filter__476fwid__env-main-1实际running；mechanism-progress仍waiting_for_first_instance、blocker=null。尚无真实部门启动证明，更无正式官方评分。控制器预检日志的Mean 0不作为本轮答案成绩。Hypatia继续只读核查并观察。
++
++
++2026-10-26 23:41真实启动核实：主控直接读取正式环境/logs/agent/pao.txt，确认MiniMax high真实回复及pao_start_flow调用；实例c7e0e6fa-3ec9-4024-b758-419ce9b93c60已建立，侦察部长PID1416、会话7f6de784-c6d5-4230-beb9-eaa4e2aefa4f启动。mechanism-progress于15:41:31Z确认bound、blocker=null、needs_manual_check=false；当前等待部长拆卡属于正常异步等待。此证据只证明真实主控与部门启动，不证明工人、审核或整链完成，无本轮官方成绩。Hypatia继续观察后续，主控不增加密集轮询。
++
++
++2026-10-27 00:16 r23故障收取：侦察及规划真实交接通过；实施卡的描述性绝对路径在派发准备被missing_input正确拒绝，worker未启动。主控错误恢复后取消卡并暂停，未建立第2轮。已通过本轮control-request受控暂停，shared watch_run终局收取退出0，全部3只本轮容器停写、范围完整；正式环境退出137且OOMKilled=false，不视为OOM。官方奖励缺失、异常CancelledError，不填0、不追加评分。fault-evidence-summary.json收录会话用量下界input520842/output147367/cacheRead6545882/reasoning77613，费用未知。Hypatia完成只读根因审查：公共建卡前缺普通文件输入校验；owner、canceled及无UI人工门按契约保护。主控已在锁与返修协作治理计划首部落完整任务书并派Hypatia实施复用解析器的整批前置校验及工具说明，URI地图消费时机保留；未验收该修复，未启动r24。此前回执通知修复尚未真实执行到工人完成阶段，整链目标仍未完成。
++
++
++2026-10-27 00:32 r23修复审核及r24：主控按code-simplicity读取实际brief/control/minister与测试的修改前后差异，接受复用resolveFileReference的窄校验；整批prepared值用于校验与写卡，URI跳过普通路径校验、不提前消费地图，无新增锁/队列/自动恢复。原始日志workflow-control 41/41、dispatch-brief-artifacts 26/26、生产类型及四文件Biome通过；主控diff --check退出0，无全库或93项重复回归。源码仍需真实整链验证。r23实际终局停写再次核对后，独立冻结r24（源码fb6cf396042dccca546bfa34d49425794a46ecbec20fc6dc0398784e84550f07），只第一题MiniMax high。临时启动脚本最初无法从当前WSL视图看到dockerd而停止，尚未冻结/作答；改从Docker host网络命名空间读取实际路由并核对全部Docker IPAM后，创建不重叠192.168.67.0/24本轮专属网络，网关/registry及实际Linux解释器检查通过。控制器pao-audit-first-20261027-r24已running，ID e0ceac0a3a6dd24739fc3027bf75e6628f1c1eb082eb40be1e1ff158427eb3f0，当前preflight/model_execution_started=false，不能当模型成功。Hypatia受托整个真实流程观察，用户要求主控仅等待子代理最终结果，不开轮询或采样器。r23无分、r22官方0保留；OS隔离/重启/P5等未验项不变。
++
++
++
++### r24观察命令故障收取与修复审核（2026-10-27T08:10:18+08:00）
++
++r24已终止，terminal-receipt.json确认控制器、预检及正式环境三只容器全部exited/Pid0、OOMKilled=false；实际停写与身份完整性核查通过。正式结果CancelledError，无有效官方奖励，分数未知，不填0、不补评分。原始用量与覆盖不完整说明保留于终局回执，费用未知。r22官方0不变。
++
++根因是观察命令docker ps -a --format '{{json .}}'隐式请求容器大小统计；统计正式环境临时目录时该目录消失，snapshotter.Usage报ENOENT，导致观察查询整体失败并触发停止保护。不能简单归为与harness无关：观察入口请求了并不需要的大小统计。修复仅在bench_controller.observe_runtime及watch_run._discover_scope两处加--size=false；保持超时、错误记录、身份匹配、单题容器限制、完整收取与停止保护，不新增重试或辅助框架。
++
++主控按code-simplicity审核四文件修改前后差异及两个真实消费入口，确认不消费Size。62项定向无模型检查退出0，原始日志在工作区临时文件夹/审查修复-20261026/r25-observer-checks.log；真实CLI相同命令退出0，输出r25-cli-listing.jsonl。未实际复现临时删除竞态，不能据这些检查宣称模型整链通过。
++
++回执归因仍在复核：卡0002尝试1/2的receipt-format-recovery.json均表明唯一JSON围栏恢复成功，strict_error仅描述恢复前严格解析失败。主控已驳回仅凭strict_error把重开归因于格式错误的结论，待核对卡历史与部长工具调用。r25脚本已准备但尚未启动；不改历史冻结、正式PAO_HOME或答案。OS隔离、机器重启、在途宿主故障、P5整体费用/token下降仍未验，pi升级与desktop迁移暂停。
++
++
++### 独立审核新增证据契约修复审核（2026-10-27T09:10:47+08:00）
++
++主控从已停r24容器只读收取Git对象与两次审核副本，未运行答案、未读隐藏测试。与认领tree逐文件比较，两次原有filter.py及selftest_filter.py均逐字节相同，只新增已声明审核脚本/报告/运行记录；未跟踪输入确已复制入副本。原始元数据见工作区临时文件夹/审查修复-20261026/r24-review-content-diff.json。post-dispatch将任意worker改动都拒绝，因而误拒这些新增证据；这是已确认缺陷。源项目前后tree值未完整留存，另一分支是否触发未知。主控撤回此前依据owner模型自报推断的项目根验收/提交误伤结论；实际代码在内容门返回，尚未机械验收，verifyCard已有executionKey，不新增根选择分支。
++
++修改仅共同完成链post-dispatch.ts对新增A/??证据与修改/删除/重命名既有文件作区分，后续原有checkBoundaryWrite继续逐项核对声明。源项目内容tree不变、基线不明停审、旧尝试身份、取消、未达项、真实失败及审核产物不合并等保护保留。复用已有diff与执行绑定，不加新锁、快照、配置或框架。brief.ts只补独立审核证据写绑定副本和验收按执行根取件说明。
++
++workflow-independent-review.test.ts增加真实Git/Node工人、模拟模型回执正反例：副本根新脚本/报告的存在/包含/跑命令机械验收，既有业务修改/删除/重命名拒绝，未声明新增拒绝，源项目派发后变化拒绝，同内容提交不误拒，基线缺失停审。前代理3项失败含无效注入时机与已删除文件的错误产物声明，主控修正真实触发顺序和声明，不放宽检查。主控整文件结果15过1失败后仅修正剩余基线注入，单项1/1通过（其余15未重跑），原始日志independent-review-main.log及independent-review-baseline-main.log；简报26/26、观察器62/62、生产类型、三文件Biome及diff检查退出0。没有全量检查、没有不稳定捕获竞态真实复现，原有捕获/异常门未变。
++
++Hypatia模型服务额度异常中断，Godel明确指定group/deepseek high后仍返回GLM-5.3-Flash-Trial同一服务错误，未执行任务，不能宣称DeepSeek已接手或已完整交付。主控接续完成代码修改和审查，r25观察暂由既有watch_run后台收取，禁止伪称子代理在线。真实题目仍只用MiniMax high，不跑后两题；r25尚待独立冻结启动。r24无有效奖励不填0、不补评；r22官方0保留。实际OS隔离、整机重启、在途宿主故障和P5整体负担下降仍未验。
++
++### r25正式作答进程启动（2026-10-27）
++
++独立运行real-run-20261027-prepared-r25已冻结启动，源码SHA256为99b5a510de441b9f988f1ccb493b02517a9c1d851ef7c9a33217c63ce36dd388，控制器pao-audit-first-20261027-r25。上一轮r24已核查实际停写。使用本轮192.168.68.0/24专属网络，网关和registry连接通过，未重置全局环境。
++
++control-status于01:13:22Z进入running；正式试次html-js-filter__HCMUjcX，环境html-js-filter__hcmujcx__env-main-1。实际docker top确认正式benchmark-organized-entry.mjs及pao进程启动，模型minimax-code/MiniMax-M3.1-Flash high，仅第一题。尚未核实模型完整回复、部门整链完成或官方评分，不能将启动当作验收。
++
++Godel已终局报模型服务额度错误，未执行观察任务。现由既有watch_run.py后台终局收取，终端会话71418，日志在工作区临时文件夹/审查修复-20261026/r25-terminal-watch.log；不开定时器或资源采样器。主控等待收取结果，不密集轮询。观察超时不等于容器终止。其余未验项与历史分数不变。
++
++### r25终局及自检/审核交接修复审核（2026-10-27）
++
++r25在人工裁定暂停后经本轮控制器pause入口停止，terminal-receipt于01:50:20Z确认全部三容器exited/Pid0、OOMKilled=false、作用域完整、writers_stopped_observed=true；主控再次实际inspect控制器和正式环境一致，后台收取会话71418退出0，无资源采样器。正式结果CancelledError，无有效官方奖励，不填0、不补评分。用量覆盖及费用未知保留在回执agent_results，不能把原始cost=0当免费，不能相加不同统计口径。
++
++主控只读原始工人流确认尝试1正常stop，最终文本在JSON前包含普通说明，既有JSON-only协议确被违反，未证明预算截断。尝试2实际自报人工审核not_run，host-bridge因此没有创建request_id；原代码保护正确，不能称审核请求丢失。已确认的交接缺陷是共同完成链把未创建请求的owner待复核误称部长审核hold，后续通知诱导部长找不存在的请求；worker提示词也未区分自己负责的检查与后续审核职责。
++
++按任务书只改共同边界：post-dispatch机械验收后、部长回调前识别真实自报未达，准确告知主控经pao_verify_card及既有pao_change_status/basis/accepted_deviations逐项处理；host-bridge删除已由共同入口承接的同一前置门。派发提示词区分工人自检与后续复核，工人必做未做仍须not_run、失败仍须fail，未将not_run改成成功或排除于验收。原部长返回后迟到/全停/身份/attempt复核、真实机械失败、绑定、源树和逐项接受保护保留；未新增状态、锁、重试或配置。
++
++主控code-simplicity逐文件对照修改前副本及调用链，代码图命中buildWorkerPrompt，部分新共同函数未被图索引，已用实际源码调用核对。真实临时Git及正式机械验收、模拟工人回执8项通过/90项未跑：fail/not_run均不调用部长、不交付不提交；普通人工条件仍经部长pass走原交付，owner逐项接受及继续主链通过，原正常hold/非法判定保护通过。原始r25-handoff-tests.log，生产类型、四文件Biome及diff退出0。提示词是否被真实模型遵守与完整整链尚未证明，需独立r26。子代理服务额度错误未执行本修复，主控直接实施与审核；不冒充代理完成。OS隔离/重启/P5等原未验项不变。
++
++2026-10-27 r26启动留档：独立冻结real-run-20261027-prepared-r26，源码0252ba3561c4905b49e6686c78126ca0ef63a63145e7b17b69eb8f84dc81e95e，控制器pao-audit-first-20261027-r26（f45c0cfa3f4120745d058d633d8df30c87c8c987fce03ed987d6d5acb9f31978）。已核对r25真实停写、当前审核文件摘要、实际Linux解释器、192.168.69.0/24与真实路由/IPAM不重叠、网关/registry连接。控制器实际running/Pid1335，control-status于01:57:19Z为preflight/model_execution_started=false，此时不算正式模型作答。
++
++后台终局收取会话12390，日志工作区临时文件夹/审查修复-20261026/r26-terminal-watch.log；继续复用watch_run，不开定时器、资源采样器或本轮内自动重试。子代理服务未恢复，不能宣称子代理在线。保持第一题MiniMax high，未改原题/官方测试，不启动后两题。尚无本轮官方成绩或完整流程验收。
++
++r26真实启动补记（2026-10-27 10:01）：预检通过，control-status于01:59:02Z进入running；正式环境html-js-filter__psvwdu4__env-main-1先安装依赖后启动pao进程（实际docker top PID9693）。02:00:27Z主控建立实例824f00f2-1291-48de-83da-1e5438d29840，owner=01a17b16-371b-7527-afac-6142c036d91b，机制绑定bound、blocker=null、needs_manual_check=false，等待部长拆卡。此时仅证实真实主控与实例启动，不证明工人/审核完成或官方评分。后台收取12390继续，主控转为等待。
++
++§10.21补记（2026-10-27）：r26实际人工停链后已确认四容器/后台停写，无有效奖励（CancelledError，非0分）。两处共同边界修复：迟到裁定与处理阶段不一致、仅人工条件的受管验收未保存内容树。主控审核实际四文件；裁定8项通过/36未跑，真实Git内容与交卷7项通过，类型/风格/diff通过。详见[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)；真实整链及原未验项仍待验，不宣布整体完成。
++
++§10.21补记（2026-10-27）：r27侦察成功后，部长地图交接仅给URI无可读位置，规划部长反复猜路径停链；已暂停并确认三容器与后台停写，无有效奖励。共同地图输入组装补原JSON路径，与失效复核复用；真实read/Git/地图、模拟部长8项通过42未跑，类型/风格/diff通过。详见锁与返修治理记录r27终局段；完整真实流程及原未验项仍待验。
++
++
++### §10.21 r28终局补记（2026-10-27）
++
++第一题r28官方评分0.0，评分异常null；本轮终局收据范围完整且写者停止，控制器及正式环境实查exited/Pid0，收尾进程exit0。真实地图读取已通过，协作仍因失败重排与旧失败通知的处理冲突进入人工门；机械验收输入另有命令/注释混用。后续任务与状态仅在《锁与返修协作治理计划》r28后续节及《锁与返修治理记录》维护。不是整链验收通过；不重评本轮。OS隔离、机器重启和P5整体token/费用下降仍未验。
++
++
++### §10.21 r29终局补记（2026-10-27）
++
++第一题r29取得真实官方0.0、异常null；四只本轮容器实际exited/Pid0，后台终局采集exit0，收据范围完整且停写。原项目最终业务tree与三张独立审核基线一致，各副本仅新增审核脚本和报告，但放行入口将其不同tree误判为成果过期；协作整链仍未通过。不重评r29、未启动r30。具体证据、纠正后的卡节点归属、待实施任务与委派限制仅在《锁与返修治理记录》及《锁与返修协作治理计划》r29后续节维护。真实0分与该流程问题的因果关系未证；整体负担、OS隔离、机器重启等原未验项不变。
++
++### §10.21 r30启动与代码验收补记（2026-10-27）
++
++r29版本判断公共边界及异步状态保护已由DeepSeek实施，主控审核实际代码、最终五文件摘要与定向记录后通过代码验收。16项版本保护、17项独立审核及生产类型/风格通过；auto-chain整文件被实施会话loop guard中断未完成，不声称全量回归通过。r30已独立启动，仅第一题MiniMax high，当前预检不能算模型作答；观察已派回Dewey，实际接单与终局仍待核实。详细身份、证据和限制见[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)末节。真实无故障整链、评分和停写尚未验收，原未验项不变。
++
++r30终局补记：真实模型已进入实施，但控制器发布进度JSON时原子替换PermissionError并取消trial，无有效官方奖励，不填0。主控已实查三容器exited/Pid0/OOM=false、观察进程退出。未到审核节点，不能据此验收r29修复。已收取观察代理最终报告，修复任务指向《锁与返修协作治理计划》r30后续节，委派Dewey协调group/deepseek high实施公共文件发布边界；尚未修复验收或启动下一轮。原未验项不变。
++
++r30修复签收补记：公共文件发布已由DeepSeek high完成，主控审核三文件实际代码和消费路径，核对30项定向、Python编译及逐文件检查退出0；D盘真实Windows占用9项、容器9p事件同步10项通过，主控核查实际异常→释放→恢复及持续占用有界失败证据，源码摘要一致，本轮探针资源无残留。详见《锁与返修治理记录》最终签收节。用户最新决定下一轮先不启动，r31目录实际不存在；本项签收不替代真实模型全链验收，不宣布目标完成或降费。
++
++### §10.21 r31恢复启动（2026-10-28）
++
++用户明确批准启动，已解除上一条暂不启动限制。独立r31准备启动exit0，主控核实控制器实际running、预检中，不能当作模型作答；原Dewey已接单观察，唯一collector PID32736实际存活。仅第一题MiniMax high，无新增定时自动化，详细身份及证据见《锁与返修治理记录》r31节。真实无故障整链、官方奖励及收尾仍待验收，原未验项保留。
++
++### §10.21 r31终局与启动边界调查（2026-10-28）
++
++r31已实际停止，无有效官方奖励，缺失值不填0；控制器、预检和正式环境三只本轮容器均exited/Pid0/OOM=false，collector已退出，作用域完整且写者停止。事故卡片0002先因地图覆盖过期正常停链，随后过期地图复核部长PID3046在启动约5.037秒后留下退出收据。代码与原始证据确证宿主默认5000ms RPC握手超时后树杀，但没有留下子进程内部具体阻塞阶段，不能让退出收据等同于子进程崩溃。
++
++唯一`group/deepseek` high会话完成调用链核查和多组无模型温启动重放；精确容器重放为280.522ms并激活全部部长工具，一次探针冷启动超过5秒但未复现且不能与现场同因。没有足够证据支持公共生命周期代码修改，因此未改PAO源码、测试或冻结，也未加长超时、关闭校验或增加锁/重试/兼容层。生产类型检查退出0，两个宿主定向测试通过；`workflow-host-bridge`目标文件仍有12个默认5秒超时，未全绿。根因保持未决，不启动r32，不宣称整链通过；OS隔离、机器重启和P5整体费用/token下降等原未验项不变。详细证据见[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)r31终局节。
++
++§10.21 r31公共握手预算契约补记（2026-10-28）：后续证据确认底层合法初始化/请求预算为
++15秒/30秒，而外层部长握手默认只等5秒，形成可复现的公共契约矛盾。该证据替代“未取得
++r31现场精确阻塞点就完全不得修改公共启动边界、也不得启动r32”的调查建议。公共默认预算
++统一为30秒，并在主动树杀前记录预算、实际等待、pid与stderr尾；自发退出保留exit
++code、signal和stderr。r31现场具体阻塞点仍未知，30秒不是现场根因修复，不保证所有未来
++冷启动成功，也不宣布r32可启动或整链通过。
++
++补强验收在隔离`PAO_HOME`中建立最小部门注册表、配方、知识库索引和档位配置，通过
++`role`路径显式加载实际`paoExtension`；部长工具面出现`pao_ack_supervision`与
++`pao_create_dept`，人为延迟6秒后默认30秒预算握手成功，真实`sessionId`在宿主、扩展和
++provider记录中一致且provider请求数为0。已真实验证隔离组织中的PAO扩展参与启动；这仍是
++人为延迟模拟时序，不是r31根因重现或真实模型通过。
++
++### §10.21 r32公共启动边界签收后独立启动（2026-10-28）
++
++主控实际代码审核已签收公共30秒启动预算及失败先留证改动；相关定向与隔离真实CLI证据已收取，
++未将r31具体慢点未知或workflow-host-bridge的12个测试超时写为通过。详见
++[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)。
++
++独立运行real-run-20261028-prepared-r32，控制器pao-audit-first-20261028-r32，
++源码SHA b771491918cfa46b5d2d6edc2477ba87c207a69167c9ecadf7147a121558ba32。
++实际启动退出0、控制器running；19:45:32Z尚处于预检，不能记为模型作答或整链通过。
++仅html-js-filter，全部真实角色MiniMax high；交同一子代理观察终局、主控等待，不设自动化。
++官方评分、完整协作链及停写收证待验，原OS隔离/重启/P5整体负担等未验项保留。
++
++### §10.21 r32人工门终局补记（2026-10-28）
++
++r32真实进入模型执行并在正式实例`0fb6d724-268d-480e-9852-b4e5bae8e324`中完成两次worker
++尝试，但最终停在实施卡0001的人工裁定门：两次最终消息都在合法JSON回执前带有散文，严格
++整条JSON解析因此均判无效；`filter_selftest.py`尚未交付。地图覆盖过期曾在前段停链，复核
++新地图后已恢复，不是最终停因。观察代理按授权暂停本轮并确认三容器停止、PID0、OOM=false，
++控制器正常退出0，作用域完整且写者停止；唯一收取器已结束。
++
++官方奖励缺失，不填0；结果只看到`n_trials=0`、`n_errors=1`，显示`mean=0.0`不构成真实
++业务0分。异常是暂停触发的`CancelledError`。官方trial token及PAO已观察用量下界已留证，
++费用和嵌套请求覆盖仍未知。当前没有证据认定存在独立PAO harness故障，JSON前后散文与严格
++回执协议是否需要在后续修复由主控审核决定。未运行verifier、未重评、未启动r33或后两题，
++未操作正式PAO_HOME、历史冻结及历史容器。r31精确慢点、公共启动修复的整链效果、OS隔离、
++机器重启及P5整体降费仍未验。详细证据见
++[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)及本轮运行目录。
++
++
++### r32回执公共传输边界主控审核签收（2026-10-28）
++
++主控按code-simplicity读取receipt.ts、runner.ts、实际调用链及两个变动测试，
++并核对最终源文件SHA与定向日志。严格入口不变；唯一JSON围栏或普通说明中的唯一裸对象，
++共同进入既有JSON.parse/schema/真实产物检查。runner沿用同attempt恢复审计和原始证据，
++审计失败仍失败，后续机械验收仍独立，不把恢复直接当delivered。
++
++首次实现会误收含其他标量的数组包装；主控退回后按统一对象外结构符规则修正，
++修复前3个负例确实失败，修复后receipt30/30、run22/22通过。对象外含[]的说明文字
++保守拒绝，对象内verification/changes与字符串中的括号不受影响。两个恢复诊断成员
++已合并，无新增锁、状态、配置、模型重试或按题目特判。
++
++主控已查最终两个测试日志、生产类型检查、Biome/diff检查及两份r32冻结原文回放，
++退出0；实际Node受控子进程日志证明单attempt单恢复审计、原生用量优先、重复落卡留档、
++卡仍in_progress。受控探针是零模型验证，不能代替真实答题或官方评分。
++实际实施为group/deepseek high同一会话01a17eff-e105-7390-b2f3-e64786ce1a00，
++纠正子进程35404正常退出0。正式PAO_HOME、历史冻结、题目与测试未改。
++
++本次源码审核通过，允许另建r33。其审核文件摘要见临时任务目录r33-code-review.json。
++尚未宣称r33已启动或整链通过；r32缺失奖励继续为未知，r31精确慢点、旧bridge测试超时、
++OS隔离、机器重启及P5整体费用/token下降继续未验。实现及验证证据位于
++临时任务目录r32-receipt-bare-json-20261028/array-wrapper-correction-20261028/。
++
++#### §10.21 r33独立启动
++
++公共回执外壳修复经主控签收后，独立r33已启动。启动工具会话已结束，但观察侧没有取得
++启动器进程的可读取退出码，因此记`null`，不能据控制器退出0反推；控制器
++pao-audit-first-20261028-r33（ID69628b604cb00e7f5f32158ee4d60019208331d261b54222271f8c6c2c3ef4b2）
++实际running，尚未据此判模型已作答。
++源码SHA48f5f5dfd9e1188141d1da55cd58e200cc51c94632ad45a316ad577b57f0d1fe。
++运行目录real-run-20261028-prepared-r33，仅第一题、全部真实角色MiniMax high。
++同一子代理观察至终局，主控等待，无定时自动化。完整协作链、官方奖励与实际停写待验。
++原OS隔离/重启/P5整体收益等未验项继续保留。
++
++#### §10.21 r33人工门终局与观察收证（2026-10-28）
++
++r33实际进入模型执行。主模型会话为`01a17f21-3f83-700f-8238-c337d7d5f875`，
++工作流实例为`7c70bd87-fe07-4edf-aa39-6a2fc175c087`；流程完成侦察、规划和实施后，
++停在实施卡0001机械验收。卡面19条检查中7条通过、12条未过：9条含嵌套双引号的
++`python3 -c "exec(\"...\")"`被公共执行边界截断，实际Python收到`exec(\`并报
++`SyntaxError: '(' was never closed`；另3条是前序复制命令未生成`_acc_*`文件后的连锁
++文件不存在。直接自测、语法编译和文件存在检查通过。根因证据指向
++`PAO/packages/coding-agent/src/pao/cards/verifier.ts`：`tokenizeForExec()`遇到外层
++双引号即终止参数，没有保留内层转义内容；`checkCommandSafety()`与
++`runCommandEntries()`是受影响公共命令执行边界。本轮没有修改产品或冻结源码。
++因此这是机械验收命令传输/分词公共缺陷，不是业务答案失败，也不是业务0分。
++
++观察代理按授权以`bench_controller.py pause --mode immediate`暂停，命令退出0；
++`control-request.json`记录`mode=immediate`，最终`control-status.json`为`paused`且
++`writers_stopped=true`。控制器exited、PID0、ExitCode0、OOM=false；预检环境
++`667a01b211a9`和正式环境`cb8081b8cc2f`均exited、PID0、ExitCode137、OOM=false；
++`pao-score-ff66d1ec729d37e5`不存在，没有执行评分。`terminal-receipt.json`记录
++`writers_stopped=true`、`scope_complete=true`、`actual_stop_observed=true`。
++唯一收取器PID7960已由原生等待观察到退出，但没有保留可读取退出码的句柄，退出码记`null`；
++启动器退出码同样记`null`。本轮无资源采样器，未启动r34。
++
++官方奖励缺失，不填0：`reward=null`、`valid_reward_count=0`。结果中的`mean=0.0`
++对应`n_trials=0`，不是官方业务0分；异常是暂停导致的`CancelledError`。官方trial用量为
++input464103、cache326896、output9717，费用未知；PAO已观察下界为input4631999、
++output185654、cacheRead4200067、cacheWrite0，嵌套覆盖不完整。worker卡面原生用量为
++input62098、output44917、cacheRead1390630、cacheWrite0、turns32、toolCalls33，
++原生`cost=0`不视为免费。
++
++r33未运行审核节点，因此不能宣称r29独立审核版本修复通过；唯一回执恢复属于r32的
++JSON围栏传输修复。终局与组织/工作树证据位于运行目录
++`observer-blocker-evidence-20261027T210424Z/`和
++`observer-final-evidence-20261027T210625Z/`，两份`SHA256SUMS.txt`的SHA256分别为
++`8ff4d25b1e5b4e2701e060479ef22d68d2401f5d70d72ffd8dd109286b0f4503`和
++`cb14c436c53eab9215e77e6891f1a32eb9f0e837a951b9338f7cb3f8709a5aee`。
++`terminal-receipt.json` SHA256为
++`eedd51159cac356b6ccac165c24ed37c6b2eb906bafd15d1de7c322ed6af5904`，
++`controller-exit.json`为
++`dafbd8bef4b99e641bfe1f50072be3691ffe577936e41fd230ec0ecfed4a05d2`。
++
++本轮没有操作题目、隐藏测试、答案、冻结输入、正式PAO_HOME或历史容器，没有重评或刷0。
++主控需先审核并处置机械验收命令分词/传输边界，之后才可考虑下一轮；当前整链不通过。
++r31具体慢点、旧bridge的12个默认5秒超时、OS隔离、机器重启、在途宿主故障和P5整体
++收益/费用下降继续保留为未验项。
++
++
++### 公共命令argv与受管人工内容版本主控签收（2026-10-28）
++
++主控已审verifier.ts实际差异、预检到执行调用链、受影响测试和依赖锁。采用直接固定的
++shell-quote 1.12.0，执行只消费同一成熟解析结果；语法与Windows相对路径规范化复用
++一次遍历，保留原安全词扫描并对真实argv再检查，非字符串token/歧义语法拒绝，无shell
++执行不变。恢复审计/身份/沙箱/超时/取消保护不因传输修复放宽。永久测试不含HTML
++过滤业务伪实现，使用通用Python多行exec和Node实际argv验证。
++
++主控此前将受管人工内容采集判为额外范围并要求退回，之后核对计划161行及既有
++verifier-attempt-baseline测试，确认r26已经批准该公共契约。现恢复有当前attempt
++verification的人工复核也固定真实内容版本，owner接受后交卷仍核对验后变化；无回执
++仍无法机械判。最终两个真实Git交卷正反例、一个人工待审用例通过，不以模拟模型作答
++替代真实模型整链。argv23/51定向及依赖/生产tsc/Biome等已留证；baseline整个文件
++两个既有5秒超时不记为通过，旧bridge测试超时也保留。
++
++Linux原挂载完整SDK smoke仍超时；同一consumer在D盘9p上进程D态/p9_client_rpc，
++45秒读取约100MiB仍未完成import，在容器本地/tmp import约523ms，完整SDK与两CLI
++smoke通过。未延长既有30秒预算；最终Windows/Linux隔离安装导入证据已查阅。
++主控最后仅将新私有接口字段改成ASCII，生产tsc/Biome/diff再验退出0；冻结入口将
++从当前源码重建，不沿用改名前旧dist作为真实试次源码。
++
++实施边界违规保留：旧DeepSeek会话01a17eff-e105-7390-b2f3-e64786ce1a00曾读隐藏
++测试，已作废，未用于后续实施。新会话01a17f5b-6ec2-70a2-90c0-74024bf1241d完成
++公共修正并退出0，未读隐藏测试内容；不把过程描述成完全合规，也不据此宣称模型效果。
++当前无题目、答案或测试特判；未改冻结输入/正式PAO_HOME/历史容器。
++
++允许独立r34启动；文件SHA正本见临时任务目录r34-code-review.json。r33官方奖励缺失
++继续未知，不填0。r29独立复核版本、r31精确慢点、OS隔离、机器重启和P5整体收益
++继续未验，不能因工程检查通过宣称整批验收。
++
++#### §10.21 r34实际启动
++
++启动脚本实际退出0；控制器pao-audit-first-20261028-r34（9cf8471ce3dd）
++真实running，冻结源码SHA232badd65aa46ae7e42678fc1d227ad36c0ecf92f98ed181caf47db56c548195。
++独立目录real-run-20261028-prepared-r34，仅第一题与全部真实角色MiniMax high。
++子代理观察至终局，无定时自动化。
++
++#### §10.21 r34终局与协作停链
++
++正式trial html-js-filter__PVVGCFc实际完成，官方reward为真实0.0，
++exception_info为null，无重试。官方verifier执行2项测试：
++test_clean_html_unchanged通过，test_filter_blocks_xss失败；后者在iframe srcdoc中
++仍检出可执行script。这是业务成果没有通过官方测试，不归因于产品执行器。
++input/cache/output/cost均缺失并保持null，不把worker回执里的原生cost=0写成免费。
++
++组织流程实际完成机械验收、owner人工复核和独立审核，卡0001/0002/0003最终均到
++delivered。卡0003 attempt 2的2条fail、1条not_run已由owner按当前attempt逐项接受。
++审核部长在提交change判定前退出；主线程调用pao_control_node resume时被
++“须用户在界面显式确认”拒绝，final-flow.md为“状态: 挂起”。因此本轮没有跨过
++主控change裁决和审核回边，不能写组织协作全链通过。停链发生在模型执行结束后，
++官方verifier仍按当时artifact正常完成评分；业务测试失败不能据此归因于该停链。
++
++卡0003两轮独立审核均使用受管副本。attempt 1新增audit_probe.py、证据日志和findings，
++基线tree为2e3b7629ad1298dc153d8491f90f1ccd9d0ed037，检查前后tree均为
++56e8587f4b3039b39cd60ea8cdfc774f2e3650d2；attempt 2检查前后tree均为
++fd7c58052cab3f3909ebdd7f42b98dfaab7b6933。filter.py始终未变，SHA256为
++617b746dfa301a96f413b3084e0cf69be85977aee47e4309d8be657a02f99f70，
++最终正式artifact同SHA。证据副本没有误当成果版本，也未合并进原项目，说明r29独立审核
++版本路径本轮实际运行成功；日志没有单独命名为reviewEvidence的函数级审计字段，
++因此只记实际行为，不虚构命名标记。
++
++终局实测预检环境、正式环境和verifier均exited、PID0、OOMfalse、ExitCode137，
++控制器exited、PID0、OOMfalse、ExitCode0。评分容器
++pao-score-377deb6234d81738曾进入本轮scope，当前精确inspect已无该对象，终态未知。
++唯一收取器PID31356及父进程40120已退出，因无可读句柄，退出码记null；stderr为空，
++watch-error.json不存在。启动器工具会话18048不是OS PID，退出码记null；控制器退出0
++另有容器状态证据，不从启动器未知退出码反推。
++
++terminal-receipt.json SHA256为
++cdf1b4a6e2427bdae6afc20420d746bc355d930c127c136e0de4cd47912a5420，
++controller-exit.json为
++47cf077a8c3c038ff4b6e828ef905eee7d928e13d15ff914855dc1a9785efa51，
++正式result.json为
++d07fa62a23c5ad8501e079ef7d6e31c053f7a35c4e8f99602d400bdb7ef4019a。
++完整证据和SHA见本轮observer-final-sha256.txt、observer-exit-receipt.json及
++observer-terminal-process-check-20261028.txt。
++
++本轮未启动r35、其他题目、额外评分或paid重试，未修改题目、答案、隐藏测试、冻结输入、
++正式PAO_HOME或历史容器。D盘9p完整SDK smoke超时、baseline全文件两个既有5秒超时、
++旧bridge 12个默认超时、r31精确慢点、OS隔离、机器重启、在途宿主故障和P5整体收益
++仍未验。旧实施会话01a17eff-e105-7390-b2f3-e64786ce1a00读取隐藏测试的违规记录
++继续保留；本轮公共修复不能写成答案对照或成本下降。
++
++
++### r34审核生命周期修复主控签收及独立r35授权执行（2026-10-28）
++
++主控已加载code-simplicity，核对本轮四文件修改前副本到实际源码的精确增量、调用链和
++最终SHA，以及原有print-mode等待后台工作收敛的实现。r34主会话并非无等待即退出：
++审核卡待owner时提前请求裁定写全局人工暂停，交付后仍被正确的人工门阻止，才是停链
++根因。审核裁定请求现与判定前置条件对齐，不允许未拆解结束或未全交付时制造该暂停。
++实际无模型control/Git/bridge与模拟部长RPC证明：拒绝提前裁定后，owner交付可以由
++既有drive重新唤醒原审核部长，提交明确标注的模拟判定；不伪称真实模型已验证。
++
++主控审核时发现单纯在shutdown读后判断暂停存在竞态，现使用原控制文件锁内重读的
++pauseControlIfUnpaused，关闭与异常收场共用，先到停因优先且不重复写盘。显式pause
++仍按原样保存理由并允许替换；主控指出的trim无关变化已经纠正。owner/身份/轮次/
++机械验收/成果版本/取消及真实UI恢复门均保留，没有自动接受或自动pass。
++
++核读验证：生命周期15例、迟到裁定2例、提前裁定拒绝和暂停原文等定向证据；生产类型、
++四文件Biome和限定diff检查均exit0。新真实Git集成用例单独15秒，实测约12.5秒，
++未改全局时限；既有默认5秒超时未宣称已全清。真实DeepSeek high实施会话
++01a17fdb-577e-7ad2-a1dc-3eda4a9fdc45已退出0，后续桥接/并发完善与最终验证由协调
++代理完成并如实区分。已核实wrapper29796/child45132不存活，未重复运行模型测试。
++
++r34官方0分与本次组织停链分开保留。主控独立见启动器工具session18048退出0，
++该事实不由子代理没有句柄而改为未知。允许以新冻结输入启动独立r35，仅原第一题、
++所有角色MiniMax high；先确认r34本轮实际停写，不改历史输入，不为业务0刷分。
++本轮签收SHA正本见临时任务目录r35-code-review.json。D盘9p完整SDK smoke、旧
++测试超时、OS隔离、重启、在途宿主故障及P5整体收益等原未验项继续保留。
++
++#### §10.21 r35第一题终局与组织流中断（2026-10-28）
++
++独立r35只运行`html-js-filter`。启动前38项签收文件SHA全部一致；入口PID 34180实际
++退出0。控制器`pao-audit-first-20261028-r35`
++（`f6f36502cbd945ba04e8119086ac63c21bf18d097905c1c0e63ce4603def934d`）
++使用冻结source archive SHA
++`fdf3c223f1fed1752843dceb3156f3ee7ca060184a7a7cd4321c4d2845ba4c04`，
++实际模型为MiniMax-M3.1-Flash/high，专网`192.168.78.0/24`不重叠。
++
++组织流程未完成。规划部长会话`df34e40a-b4b9-4f31-a8f4-66ad961d3c0a`在
++`2026-10-28T00:53:16.915Z`收到
++`Anthropic stream ended without a stop reason`，assistant记录
++`stopReason=error`。工作流停在`规划/no_card`，实施、独立审核、主控交卷均未开始；
++侦察1/4交付，规划/实施/审核拆解结束均为false。Git基线HEAD与最终HEAD相同，
++`/app/filter.py`精确读取不存在，因此没有答案成果可供评价。
++
++外层trial仍按该工作树执行正式verifier，取得真实官方reward `0.0`，
++`exception_info=null`；官方agent usage/cost为null。用量账已记录轮次下界为
++input 107860、output 35162、cacheRead 646294，规划部长缺1轮原生用量，费用未知。
++外层`terminal-receipt.json`的`exceptions=[]`和`business_failed=false`不能证明组织链
++完成；是否应将组织挂起后的继续评分判为harness失败，留主控结合源码与契约审核。
++
++本轮r29独立审核版本守卫未触发；r34提前requestRuling路径实际调用0次，直接路径未验。
++关闭后暂停原因未变成“关闭”，观察到先到停因保持；但没有另造关闭竞态，不能替代r34
++原有并发红绿证据。四个已知容器均exited/PID 0/OOM false；评分容器曾在scope中，
++精确inspect现已不存在，终态未知。唯一收取器PID 17284已退出，退出码无句柄记null；
++当前无r35 watch、Python、Node后台进程、采样器或自动化。
++
++详细原始证据、关键SHA和未验项见
++`D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r35/observer-evidence-20261028T005520Z/observer-final-summary.md`
++及同目录`sha256sum.txt`；证据事实见
++[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)。
++本轮未启动r36、其他题目、付费重试或额外评分，也未改产品、题目、答案、测试、冻结输入、
++正式PAO_HOME或历史容器。r31精确慢点、既有baseline/bridge超时、D盘9p完整SDK smoke、
++OS隔离、机器重启、在途宿主故障、P5整体收益及r29/r34上述未触发路径继续保留未验。
++
++
++### r35终态适配修复主控审核及独立r36准备（2026-10-28）
++
++主控按code-simplicity核读SDK正本适配器、终态查询脚本、真实control读面、
++prepare装配来源和manifest绑定，以及7项定向验证实现与最终日志。旧适配器把
++CLI正常退出与实例文件存在误认为组织完成；现复用当前PAO dist的结构化报告，
++只有completed可以正常结束。hold/running、未启动、坏JSON、查询失败均明确报错。
++父调用模型/取消异常保持原样，留证同时失败仅补充证据，不掩盖首因。
++没有增加工作流状态正本或修改PAO业务判定，没有调整评分或历史冻结。
++
++真实dist与隔离Git/组织状态验证和模拟父类适配器验证分开记录，不代替Docker模型整链。
++r35外部模型断流、无答案及官方0原样保留；重试目标为完成整链而非刷分。
++允许独立r36冻结，仅第一题且全角色MiniMax high，先实际核实r35停写；
++冻结消费SDK正本并重新生成运行时清单。启动和终局观察交既有子代理，
++主控直接等待完成，不新增自动化或采样器。签收摘要见r36-code-review.json。
++OS隔离、重启、在途故障、P5整体收益及原测试超时未验项保留，不宣称整批通过。
++
++
++#### §10.21 r36第一题真实终局与回执传输停链（2026-10-28）
++
++独立r36只运行`html-js-filter`。启动前签收的41项文件SHA全部一致；入口PID 30840
++实际退出0。控制器`pao-audit-first-20261028-r36`
++（`a7d1a31a3470d1e0fe722b7c067c9ab778cdf330a11bd90bab0ed4638da9bdd3`）
++使用冻结source archive SHA
++`49d9c8b314625c378cbde1655443dc4c93b5b57f2e130dd8b5e67c0c806738ee`，
++运行时organized manifest SHA为
++`7cfb74f627618145e8a9ebfcd2c6dbd99d7c626611744fb86fc0d75fd4bd3681`。
++专网`192.168.79.0/24`不重叠，正式环境
++`html-js-filter__yxmznlp__env-main-1`为
++`8708b04edd6f48e33a1bd2a272b62fa61e0c8788a74cfbc423d9f1bd25d0a9e6`。
++全部真实角色仍为MiniMax-M3.1-Flash/high。
++
++组织流程完成侦察、规划和卡0001，卡0002三次独立复验均因最终消息同时含JSON回执围栏
++和命令代码围栏而被现有唯一外壳诊断拒绝，第三次失败后owner按授权将卡转为cancelled。
++工作流进入`hold`，没有走到机械验收、人工复核、独立审核、主控裁决或交卷。第三次
++用量为input 28321、output 19644、cacheRead 3331390、cacheWrite 0、18轮、
++17次工具调用，费用保持未知；原生`cost=0`不能当账单。
++
++本轮验证r35新增的外层终态门槛正确工作：适配器把`hold`报为
++`RuntimeError: 组织工作流未完成：status=hold`，trial终态`execution_error`，
++没有把未完成组织误当completed后评分。正式verifier未启动，`official_rewards=[]`，
++奖励缺失不填0。该三题业务是否可通过仍未知，未重跑或补评分。
++terminal receipt的`business_failed=false`只表示业务状态字符串不等于字面值`failed`；
++实际`business_status=execution_error`且有RuntimeError异常，不能当成成功。
++r29独立审核版本守卫没有实际触发，不能写通过或认定复发。
++
++控制器、预检环境、正式环境均exited/PID 0/OOM false；控制器ExitCode 0，
++两个环境ExitCode 137。137是harness终局清理状态，不是OOM。预期评分容器
++`pao-score-fa59b6840fa40846`当前不存在，终态未知。唯一collector PID 25360退出0；
++观察包装器工具会话23803因修正前的收据属性写法退出1，collector本身和业务终局未失败。
++观察收据已按真实退出状态更正，完整agent ID为
++`01a17c50-e551-7b70-bfe8-ab77da9a2d07`。当前没有r36容器、模型、watch或启动器进程，
++也没有第二collector、资源采样器或自动化。
++
++详细证据、容器快照和SHA清单只在
++`D:/AI/workspace/临时文件夹/审查修复-20261026/r36-observer-evidence-20261028T042431Z/`
++维护，事实综述见
++[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)。
++本轮未启动r37、其他题目、付费重试或额外评分，未修改产品源码、题目、答案、测试、
++冻结输入、正式PAO_HOME或历史容器。r31精确慢点、D盘9p完整SDK smoke超时、
++baseline/bridge既有超时、OS隔离、机器重启、在途宿主故障、P5整体收益及旧会话违规
++记录相关边界继续保留。
++
++
++### r36公共回执及观察终态修复主控签收，独立r37准备（2026-10-28）
++
++主控核读receipt实际源码与两阶段精确差异，指出并真实复现的坏候选误收已返修，
++三个Node探针现在均拒绝。唯一候选仍交原schema/产物检查；strict入口与runner不变，
++原文/首因/同轮审计/取消/usage/机械验收/owner保护保留。围栏外空对象与普通
++说明不是回执候选，此恢复不作通用JSON修复器宣传。64项receipt/run、2项真实
++重试、三份冻结回复回放逐字段一致、生产类型和Biome均有对应最终通过证据。
++
++观察器区分trial结果与官方verifier结果，execution_error等如实为失败，
++paused/running/unknown保持未定，缺失reward不写畸形；真实0保留。主控核读调用者
++与17项验证，实际停写与身份确认门未放宽。新wrapper Add-Member更新对象，
++真实进程模拟collector 0/7，wrapper与退出收据均原样返回。历史r36留档不改。
++
++主控签收六文件及新wrapper固定摘要见r37-code-review.json；独立r37入口已生成，
++此记录尚不表示真实运行启动。按已有授权仅第一题、全角色MiniMax high；先核实
++r36实际停写，重新冻结构建与SDK装配，子代理观察终局，主控直接阻塞等待。
++不启动后两题、不为提分重跑、不读隐藏测试帮助作答，不新增自动化或采样器。
++r36官方分缺失，不能填0。原OS隔离/重启/在途故障/P5等未验项继续保留。
++
++
++#### §10.21 r37预检网络冲突阻断（2026-10-28）
++
++独立r37在发布本轮run前终止。`r37-code-review.json`登记的42个签收文件及1个
++external wrapper的SHA-256全部一致；`verify_previous(r36)`退出0，控制器及两个
++预检/正式环境均实际停止，控制器ExitCode 0，两个环境ExitCode 137且OOM false。
++r37目标run启动前不存在。
++
++唯一一次准备启动以Python 3.11执行，退出1。真实原因是候选
++`192.168.80.0/24`与现有Docker网络
++`html-js-filter__lnh8ubh__env_default`
++（ID `4e01c52a3691d71178ba13a371e115ed5d607143fd8602f2fd2631507d9b4fd7`，
++子网`192.168.80.0/20`，0个容器）及宿主实际路由
++`192.168.80.0/20`重叠；入口没有绕过冲突。失败发生在run发布、网络创建、容器
++启动、模型调用及观察收取之前，因此r37 run/network/containers均不存在，
++collector/wrapper未启动，模型调用为0，检查时无相关活动进程。
++
++本轮没有真实模型执行、官方verifier、组织节点、人工复核、独立审核或官方奖励。
++reward保持`null/unknown_not_run`，不得填0；不能把`failed=false`、预检正常或
++进程已停写解释为工作流、回归路径或组织整链完成。精确退出码、冲突身份、日志、
++诊断和终态收据见
++`D:/AI/workspace/临时文件夹/审查修复-20261026/r37-preflight-blocker-final.json`
++与同目录`r37-prepare-launch-20261028.log`、`r37-network-conflict-diagnosis.json`。
++后续是否采用不冲突的新候选或处置既有网络须由主控另行决定，本轮未重试。
++原OS隔离、机器重启、在途宿主故障、P5整体收益、r31精确慢点、D盘9p完整SDK
++smoke及既有测试超时等未验项继续保留。
++
++
++#### §10.21 r37 v2真实终局：owner交卷后停在显式UI恢复门（2026-10-28）
++
++经主控审核，r37以仅替换候选网络为`10.243.37.0/24`的v2入口继续，入口SHA-256为
++`75fed2ea2782d051fcddfcc6f79601cec50e8d3642412ba525e8fbe89621eb04`，
++Python 3.11执行退出0，完整日志为
++`D:/AI/workspace/临时文件夹/审查修复-20261026/r37-network-v2-prepare-launch-20261028.log`。
++实时路由和Docker网络检查通过，名称
++`pao-audit-first-20261028-r37`的网络ID为
++`ce4a3bec3cb2c1380c7e2320593c5132e19f5f7304fa8ee2306dc6fb9abe2e61`；
++历史`192.168.80.0/24`网络及冲突证据未删除。r37只运行`html-js-filter`，
++所有真实角色为`minimax-code/MiniMax-M3.1-Flash/high`。
++
++真实预检环境为`html-js-filter__ldxbxhy__env-main-1`
++（`759dd6fce324236a13ac19d458bde43a9a4fd39a0cf163ed0becb2a6be78271e`），
++正式环境为`html-js-filter__qhdcwrn__env-main-1`
++（`ae8673f30efaeff09c499b31e40465640cc2220d3acb6921f20ecaf12124fee4`）。
++控制器`pao-audit-first-20261028-r37`的ID为
++`03811791cf15724d40656c61c6dbdb2f31d9b124724be0b97595408eacdbdec5`，
++实际执行约`07:12:45Z`至`08:06:21Z`。模型实例为
++`69d1eb80-863e-49d5-b877-1824f316b4e4`，owner为
++`01a1815d-5e2a-7475-b555-8095195c7c87`。
++
++组织流程完成侦察、规划和两张实施卡的实跑。卡0001自动交付；卡0002机械验收5/5，
++工人如实自报4项`not_run`、0项`fail`。实施部长在`08:03:21.457Z`正确停链，要求
++owner逐项接受偏差或返修，没有代替人工放行。owner随后于08:04逐项接受当前attempt
++的#19至#22并转`delivered`，`pao_deliver_card`生成真实提交`21aad4d`。
++
++卡面交卷后，owner实际调用`pao_control_node action=confirm`及`action=resume`，
++两次均由既有公共门返回“须用户在界面显式确认；无交互界面不能自动恢复或代替人工门”；
++随后`pao_push_flow`仍停在`hold`，审核节点未落卡。最终公开卡面为两张均`delivered`，
++但`final-flow.md`状态为`挂起`、审核节点`no_card`。这是无人值守适配器进入真实UI
++恢复门后的合法停链，不是卡状态、机械验收或组织完成判断错误；主会话并未漏收卡0002的
++owner通知。
++
++该停链也没有复现r34“审核部长提交change前停链”路径，因为审核部长从未启动。
++r29独立审核版本守卫同样未触发，不能认定通过或复发。是否应为无人值守基准增加经主控
++裁决替代显式UI恢复的合法入口，属于需要另行定义的授权边界；本轮没有删门、伪造pass、
++自动接受或增加重试/框架。
++
++适配器把`hold`正确抛为`RuntimeError: 组织工作流未完成：status=hold`，trial终态为
++`execution_error`。正式verifier未运行，预期评分容器
++`pao-score-d4f97cb6203924d9`不存在；`official_rewards=[]`，
++`official_reward_status=verifier_not_run`，reward为`null`而不是0。
++官方agent usage、token和cost均为`null`，原生记录中的数额与`cost=0`不能替代供应商
++账单。终局再核对本轮三容器均为exited/PID 0/OOM false：控制器ExitCode 0，两个
++环境ExitCode 137且OOM false；137来自harness终止容器内`sleep infinity`，不是业务
++崩溃或内存溢出。
++
++唯一collector PID 44204、wrapper和observer均实际退出0，stderr SHA-256为
++`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`。
++当前无r37 watch、launch、模型或测试进程，无第二collector、资源采样器或自动化。
++公开卡面、部长会话与监督控制证据复制在
++`D:/AI/workspace/临时文件夹/审查修复-20261026/r37-hold-forensics-20261028/`，
++运行终态与SHA证据在
++`D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r37/`。
++
++本轮未启动r38、后两题、其他模型或额外评分，未修改产品源码、题目、答案、测试、
++冻结输入、正式PAO_HOME或历史容器，未读取隐藏测试帮助模型。r31精确慢点、D盘9p
++完整SDK smoke、既有测试超时、OS隔离、机器重启、在途宿主故障及P5整体收益继续未验。
++核心收据SHA-256：`terminal-receipt.json`
++`273CCC3B372CFDF970969CA752EA146E99C64B9A61B5FB3666AB76E39E6E8321`、
++`controller-exit.json`
++`A2B9E55E63C9E5A234BCB6DC8D785D4964CDC39B1A789F84437CF9760655B12B`、
++`observer-exit.json`
++`9288DECFF25319C8467C3501AFCC1B197B48785397CF38DFD89F4DB8360E6B23`、
++`mechanism-progress.json`
++`5C4CEDF1D37320F9A73F93AA08BDEABDECB625B1EBE339BEA00256E747E814AE`。
++终局`network inspect`退出0，网络
++`ce4a3bec3cb2c1380c7e2320593c5132e19f5f7304fa8ee2306dc6fb9abe2e61`
++仍存在但关联容器数为0；保留网络以便后续依据，不把它当残留模型进程。
++
++
++### §10.21补记：r37裁定接入修复验收后暂停（2026-10-28）
++
++三文件接入修复及主控简化已审核；隔离真实三角色RPC/IPC通过，模型调用0。按用户要求暂停，不启动r38。真实模型整链仍未验，r37官方评分缺失。完整证据与限制见[锁与返修治理记录](../../.pao/代码审查-20261026/锁与返修治理记录.md)的“r37裁定通道接入修复：主控代码验收后暂停”条目。

@@ -1,0 +1,115 @@
+{
+  "departments": [
+    {
+      "name": "侦察",
+      "tags": [
+        "代码调查",
+        "依赖与接口"
+      ],
+      "recipe": "# 配方:侦察\n\n- 名字:侦察\n- 人设:只读调查需求对应的入口、文件、依赖、接口和可用本地验证入口。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/侦察/知识库\n\n## 干法\n\n只读检查完成任务所需的公开输入与项目。把范围、现有事实、未知项、风险和核验证据整理为结构化节点地图，调用 pao_minister_save_node_map 保存后再结束拆解。zero_cards_reason 只说明本节点为何无需交卡并引用地图，不能替代地图。不得修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 harbor-endpoint/group/deepseek、high。\n"
+    },
+    {
+      "name": "规划",
+      "tags": [
+        "方案",
+        "任务拆分"
+      ],
+      "recipe": "# 配方:规划\n\n- 名字:规划\n- 人设:根据侦察地图制定范围明确、可验证的实施计划。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/规划/知识库\n\n## 干法\n\n先消费正式的侦察节点地图，针对公开任务列出修改边界、步骤、验证方法与风险。把本节点计划整理为结构化节点地图，调用 pao_minister_save_node_map 保存后再结束拆解；zero_cards_reason 只解释零卡原因，不冒充地图。不得修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 harbor-endpoint/group/deepseek、high。\n"
+    },
+    {
+      "name": "实施",
+      "tags": [
+        "代码实施",
+        "整合与验证"
+      ],
+      "recipe": "# 配方:实施\n\n- 名字:实施\n- 人设:依据地图和计划拆解实施卡，由工人完成修改、自测与整合。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/实施/知识库\n\n## 干法\n\n消费上游地图与计划，实际编码必须交工人卡。小任务默认一张卡；只有独立风险、接口边界或可分别验收的成果才拆卡。卡中给真实路径、目标、约束、交付物和可机械判断的验收。能机械判断的条件使用跑:、存在:或包含:，例如跑测试、检查关键产物存在、核对指定输出；无法机械判断的质量要求明确写成本节点负责部长的审核项。提交后显式结束拆解，不自行编码。保留 Git 改动边界、机械验收和执行锁保护。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 harbor-endpoint/group/deepseek、high。\n"
+    },
+    {
+      "name": "审核",
+      "tags": [
+        "独立审查",
+        "验收"
+      ],
+      "recipe": "# 配方:审核\n\n- 名字:审核\n- 人设:独立核对实际改动、当前尝试回执和真实证据。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/审核/知识库\n\n## 干法\n\n只读检查 Git 实际差异、机械验收、执行记录和公开任务要求，不能只相信实施总结。能安全执行的本地检查应执行，未验证项明示。质量判断由当前节点绑定的负责部长完成并留依据；只收到通知、要求工人复核或口头通过都不算审核成立。提交拆解结束与双轴判定；不读取官方隐藏测试，不修改实现，不虚构通过。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 harbor-endpoint/group/deepseek、high。\n\n## 验收标准\n\n需求各项有对应实际改动和证据；错误与边界有明确处理；区分本地检查与官方验收；费用和用量未知时如实说明；独立引用真实文件与行号。机械检查为零项或失败时明确人工负责部长，不宣称自动通过。\n"
+    }
+  ],
+  "workflow": {
+    "版本": 2,
+    "名字": "基准开发流水线",
+    "自动执行": true,
+    "参数": [
+      "任务"
+    ],
+    "节点": [
+      {
+        "名字": "侦察",
+        "部门": "侦察",
+        "目标": "只读侦察下面的公开任务，调用 pao_minister_save_node_map 保存入口、相关文件、接口、可验证方法、限制和未知项；zero_cards_reason 只解释零卡并引用该地图。原始任务：{任务}",
+        "验收": "存在: .pao/benchmark/工作流实例-基准开发流水线.md\n真实保存结构化侦察地图，zero_cards_reason 不作为地图或后继输入",
+        "输入": [],
+        "约束": "只读项目；不读取 /tests、/solution、oracle 或在线答案；不伪造运行结果；使用 harbor-endpoint/group/deepseek、high。",
+        "只读": true,
+        "工人数量": 1,
+        "人工确认": false,
+        "档位": "primary",
+        "模型": "harbor-endpoint/group/deepseek",
+        "思考强度": "high",
+        "depends_on": []
+      },
+      {
+        "名字": "规划",
+        "部门": "规划",
+        "目标": "消费侦察节点地图，调用 pao_minister_save_node_map 保存实施边界、步骤、验证方法、负责部长审核项和风险；zero_cards_reason 只解释零卡并引用该地图。原始任务：{任务}",
+        "验收": "存在: .pao/benchmark/工作流实例-基准开发流水线.md\n真实保存结构化规划地图，下游只消费地图而非 zero_cards_reason",
+        "输入": [],
+        "约束": "只读项目；不读取 /tests、/solution、oracle 或在线答案；不伪造运行结果；使用 harbor-endpoint/group/deepseek、high。",
+        "只读": true,
+        "工人数量": 1,
+        "人工确认": false,
+        "档位": "primary",
+        "模型": "harbor-endpoint/group/deepseek",
+        "思考强度": "high",
+        "depends_on": [
+          "侦察"
+        ]
+      },
+      {
+        "名字": "实施",
+        "部门": "实施",
+        "目标": "消费侦察与规划地图，按小任务少卡原则提交范围明确的工人卡；可机械判断的验收用跑:、存在:或包含:，质量要求交本节点负责部长审核。你不直接编码，提交后结束拆解。原始任务：{任务}",
+        "验收": "存在: .pao/benchmark/工作流实例-基准开发流水线.md\n跑: test -d .pao/benchmark/卡\n质量判断由本节点负责部长留证，不用零项机械检查冒充通过",
+        "输入": [],
+        "约束": "保留 Git 改动边界、机械验收、依赖、写锁和回执保护；不增加预算或重试；不伪造运行结果；使用 harbor-endpoint/group/deepseek、high。",
+        "只读": false,
+        "工人数量": 1,
+        "人工确认": false,
+        "档位": "primary",
+        "模型": "harbor-endpoint/group/deepseek",
+        "思考强度": "high",
+        "depends_on": [
+          "规划"
+        ]
+      },
+      {
+        "名字": "审核",
+        "部门": "审核",
+        "目标": "独立核对实施实际改动、当前尝试回执、Git 差异和真实检查证据，由本节点负责部长提交带 file:line 引用的双轴判定。原始任务：{任务}",
+        "验收": "存在: .pao/benchmark/工作流实例-基准开发流水线.md\n包含: .pao/benchmark/工作流实例-基准开发流水线.md::卡目录\n机械失败或零项由负责部长明确处理，不只凭通知或口头摘要通过",
+        "输入": [],
+        "约束": "只读实现；不读取 /tests、/solution、oracle 或在线答案；不伪造运行结果；使用 harbor-endpoint/group/deepseek、high。",
+        "只读": true,
+        "工人数量": 1,
+        "人工确认": false,
+        "档位": "primary",
+        "模型": "harbor-endpoint/group/deepseek",
+        "思考强度": "high",
+        "depends_on": [
+          "实施"
+        ],
+        "审核": true,
+        "部门标准": "审核:验收标准"
+      }
+    ]
+  },
+  "description": "固定四部门流程。侦察和规划以真实节点地图交接；实施少卡并由负责部长审核判断项；保留 Git、锁、回执和机械验收保护。"
+}

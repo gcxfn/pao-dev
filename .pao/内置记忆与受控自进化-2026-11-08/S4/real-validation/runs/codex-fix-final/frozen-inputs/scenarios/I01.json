@@ -1,0 +1,120 @@
+{
+  "id": "I01",
+  "description": "会话A否决常驻服务，会话B换措辞提同方案",
+  "sessions": [
+    {
+      "sessionId": "sess-a",
+      "messages": [
+        {
+          "role": "user",
+          "content": "内置记忆存储用什么方案？",
+          "timestamp": "2026-11-08T10:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "候选方案：SQLite（本地文件、零依赖）或 PostgreSQL（功能全但需外部服务）。",
+          "timestamp": "2026-11-08T10:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "不要常驻服务，就用 SQLite。",
+          "timestamp": "2026-11-08T10:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "内置记忆存储使用 SQLite",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "conditions": "不要常驻服务"
+        },
+        {
+          "kind": "decision",
+          "conclusion": "PostgreSQL 方案被否决",
+          "confirmation": "rejected",
+          "evidenceKind": "user_statement",
+          "conditions": "不要常驻服务"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "存储方案",
+          "mustContain": ["mem-sqlite"],
+          "mustNotContain": []
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "记忆存储选什么？要轻量的。",
+          "timestamp": "2026-11-08T11:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "建议用 SQLite，本地文件、零外部依赖，符合不要常驻服务的约束。",
+          "timestamp": "2026-11-08T11:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "好，就这个。",
+          "timestamp": "2026-11-08T11:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "内置记忆存储使用 SQLite",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "conditions": "不要常驻服务"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "存储方案",
+          "mustContain": ["mem-sqlite"],
+          "mustNotContain": []
+        },
+        {
+          "query": "PostgreSQL",
+          "mustContain": [],
+          "mustNotContain": ["mem-postgres-active"]
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-sqlite",
+        "kind": "decision",
+        "conclusion": "内置记忆存储使用 SQLite",
+        "confirmation": "confirmed",
+        "usageState": "active"
+      },
+      {
+        "id": "mem-postgres-rejected",
+        "kind": "decision",
+        "conclusion": "PostgreSQL 方案被否决",
+        "confirmation": "rejected",
+        "usageState": "active"
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-a-001",
+        "sessionId": "sess-a",
+        "entryId": "entry-003"
+      },
+      {
+        "sourceId": "src-sess-b-001",
+        "sessionId": "sess-b",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>PAO 右侧栏 · 关闭方式草稿</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 1520px;
+        padding: 26px 30px 20px;
+        background: #ffffff;
+        color: #22252a;
+        font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      }
+      h1 { font-size: 23px; margin: 0 0 8px; letter-spacing: 0.2px; }
+      .sub { font-size: 13px; color: #6b7076; margin: 0 0 22px; line-height: 1.6; }
+      .cols { display: flex; gap: 24px; align-items: flex-start; }
+      .col { width: 452px; }
+      .col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+      .col-head h2 { font-size: 15px; margin: 0; font-weight: 700; }
+      .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eef0f3; color: #4a5058; }
+      .tag--now { background: #fdecec; color: #b4362f; }
+      .tag--rec { background: #e8f0fe; color: #2b5bd0; }
+      .tag--b { background: #eef7ee; color: #2f6b39; }
+
+      .win { width: 452px; border: 1px solid #d9dce1; border-radius: 10px; overflow: hidden; background: #fff; }
+      .win-bar { height: 26px; background: #f7f8fa; border-bottom: 1px solid #e6e8ec; display: flex; align-items: center; gap: 5px; padding: 0 11px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: #d7dbe0; }
+      .win-body { display: flex; height: 276px; }
+      .sb { width: 122px; flex: 0 0 auto; background: #f2f3f5; border-right: 1px solid #e6e8ec; padding: 8px 7px; font-size: 10px; }
+      .sb-new { background: #fff; border: 1px solid #e0e3e8; border-radius: 6px; padding: 5px 6px; margin-bottom: 7px; font-weight: 600; color: #33383e; }
+      .sb-item { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 6px; color: #5a6068; }
+      .sb-item.is-active { background: #e7e9ed; color: #22252a; font-weight: 600; }
+      .sb-hint { color: #9aa0a8; font-size: 9px; padding: 6px 6px 0; line-height: 1.5; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #fff; }
+      .main-head { height: 28px; flex: 0 0 auto; border-bottom: 1px solid #eceef1; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 10px; color: #5a6068; }
+      .main-tools { display: flex; align-items: center; gap: 6px; color: #9aa0a8; font-size: 11px; }
+      .main-body { flex: 1; padding: 12px 12px 0; }
+      .bubble { height: 30px; background: #f4f5f7; border-radius: 8px; margin-bottom: 8px; }
+      .bubble--wide { height: 46px; }
+      .composer { margin: 0 10px 10px; height: 32px; border: 1px solid #e0e3e8; border-radius: 10px; display: flex; align-items: center; padding: 0 8px; font-size: 9px; color: #9aa0a8; }
+      .dock { width: 152px; flex: 0 0 auto; border-left: 1px solid #e6e8ec; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+      .dock-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 10px 8px; border-bottom: 1px solid #eceef1; }
+      .dock-head strong { font-size: 10.5px; }
+      .dock-head .ctl { display: flex; align-items: center; gap: 4px; font-size: 9.5px; color: #7b8189; }
+      .chev { width: 17px; height: 17px; border-radius: 5px; background: #f0f1f4; display: grid; place-items: center; font-size: 11px; color: #4a5058; }
+      .dock-sec { padding: 8px 10px; border-bottom: 1px solid #f0f1f4; }
+      .dock-sec h3 { font-size: 10px; margin: 0 0 5px; display: flex; justify-content: space-between; color: #33383e; font-weight: 700; }
+      .dock-sec h3 i { font-style: normal; font-weight: 400; color: #9aa0a8; font-size: 9px; }
+      .dock-line { font-size: 9px; color: #5a6068; line-height: 1.6; }
+      .dock-grow { flex: 1; }
+      .dock--strip { width: 34px; align-items: center; padding-top: 10px; gap: 6px; }
+      .strip-btn { width: 22px; height: 22px; border-radius: 6px; background: #f0f1f4; display: grid; place-items: center; font-size: 12px; color: #4a5058; }
+      .chooser { margin: 8px 10px 0; border-top: 1px solid #eceef1; padding-top: 8px; }
+      .chooser h4 { font-size: 10px; margin: 0 0 4px; }
+      .chooser p { font-size: 9px; color: #9aa0a8; margin: 0 0 6px; }
+      .tool-row { border: 1px solid #e6e8ec; border-radius: 7px; padding: 5px 7px; font-size: 9px; color: #4a5058; margin-bottom: 5px; }
+
+      .zoom { margin-top: 10px; border: 1px dashed #c9ced6; border-radius: 8px; padding: 11px 12px; background: #fbfcfd; }
+      .zoom-label { font-size: 11px; color: #6b7076; margin-bottom: 9px; }
+      .crop { display: flex; align-items: center; justify-content: space-between; border: 1px solid #e6e8ec; border-radius: 7px; background: #fff; padding: 9px 11px; }
+      .crop + .crop { margin-top: 8px; }
+      .crop strong { font-size: 12px; }
+      .crop .ctl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7b8189; }
+      .crop .chev { width: 22px; height: 22px; font-size: 13px; }
+      .dash { border: 1.5px dashed #d8564b; border-radius: 6px; padding: 1px 3px; }
+      .mark { color: #b4362f; font-size: 10.5px; margin-top: 6px; }
+      .mark--ok { color: #2f6b39; }
+      .bullets { margin: 12px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.75; color: #3a4048; }
+      .bullets li { margin-bottom: 3px; }
+      .bullets b { color: #22252a; }
+      .foot { margin-top: 24px; border-top: 1px solid #e6e8ec; padding-top: 12px; font-size: 12.5px; color: #6b7076; line-height: 1.75; }
+      .foot b { color: #3a4048; }
+    </style>
+  </head>
+  <body>
+    <h1>PAO 右侧栏 ·「怎么关」三种做法（草稿）</h1>
+    <p class="sub">
+      今天的问题：右侧栏只在「没打开工具」时才有收起箭头；一旦打开文件 / 终端 / 工具选择器，整条就关不掉了。<br />
+      下图只回答<b>怎么关</b>；右侧状态区内容乱的问题另出方案，本图不动它。
+    </p>
+
+    <div class="cols">
+      <!-- 现状 -->
+      <section class="col">
+        <div class="col-head"><span class="tag tag--now">现状</span><h2>工具打开后就关不掉</h2></div>
+        <div class="win">
+          <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="win-body">
+            <div class="sb">
+              <div class="sb-new">＋ 新建会话</div>
+              <div class="sb-item">⑂ 工作流</div>
+              <div class="sb-item">⌘ 工作看板</div>
+              <div class="sb-item is-active">🗂 会话</div>
+              <div class="sb-item">🕘 定时任务</div>
+            </div>
+            <div class="main">
+              <div class="main-head"><span>寻找七猫短篇脚本</span><span class="main-tools">⋯ ⊟</span></div>
+              <div class="main-body">
+                <div class="bubble bubble--wide"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+              </div>
+              <div class="composer">Ask pi to inspect the repo…</div>
+            </div>
+            <div class="dock">
+              <div class="dock-head">
+                <strong>当前工作</strong>
+                <span class="ctl">刷新<span class="dash" style="color: #d8564b">✕</span></span>
+              </div>
+              <div class="dock-sec"><h3>待办清单 <i>计划详情 ↗</i></h3><div class="dock-line">当前会话尚无 PAO 计划</div></div>
+              <div class="dock-sec"><h3>当前部门 <i>全部任务 ↗</i></h3><div class="dock-line">没有进行中的部门任务</div></div>
+              <div class="chooser">
+                <h4>打开一个工具</h4>
+                <p>把需要的工具和对话放在一起。</p>
+                <div class="tool-row">📄 文件</div>
+                <div class="tool-row">🧾 审查</div>
+                <div class="tool-row">▣ 终端</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zoom">
+          <div class="zoom-label">放大：标题栏右侧</div>
+          <div class="crop">
+            <strong>当前工作</strong>
+            <span class="ctl">刷新<span class="dash" style="color: #d8564b; font-size: 12px">这里没有箭头</span></span>
+          </div>
+          <div class="mark">打开工具后箭头消失，只剩工作台自己的「关工具」（只关工具，不关状态区）。</div>
+        </div>
+        <ul class="bullets">
+          <li>没开工具时：标题栏有 <b>‹</b>，能收成 40px 窄条。</li>
+          <li>打开文件 / 终端后：箭头消失。</li>
+          <li>结果：想让右侧整条让位，得<b>先关工具、再收栏</b>，两步。</li>
+        </ul>
+      </section>
+
+      <!-- 方案 A -->
+      <section class="col">
+        <div class="col-head"><span class="tag tag--rec">方案 A · 推荐</span><h2>整条一键收起，留 40px 窄条</h2></div>
+        <div class="win">
+          <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="win-body">
+            <div class="sb">
+              <div class="sb-new">＋ 新建会话</div>
+              <div class="sb-item">⑂ 工作流</div>
+              <div class="sb-item">⌘ 工作看板</div>
+              <div class="sb-item is-active">🗂 会话</div>
+              <div class="sb-item">🕘 定时任务</div>
+            </div>
+            <div class="main">
+              <div class="main-head"><span>寻找七猫短篇脚本</span><span class="main-tools">⋯ ⊟</span></div>
+              <div class="main-body">
+                <div class="bubble bubble--wide"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+              </div>
+              <div class="composer">Ask pi to inspect the repo…</div>
+            </div>
+            <div class="dock dock--strip">
+              <span class="strip-btn">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="zoom">
+          <div class="zoom-label">放大：两种状态下的控件</div>
+          <div class="crop">
+            <strong>当前工作</strong>
+            <span class="ctl">刷新<span class="chev">‹</span></span>
+          </div>
+          <div class="crop" style="justify-content: flex-start; gap: 10px">
+            <span class="chev">›</span>
+            <span style="font-size: 11.5px; color: #5a6068">收起后只剩这一条 40px 窄条</span>
+          </div>
+          <div class="mark mark--ok">箭头任何时候都在：状态区 + 工具一起收，一起回。</div>
+        </div>
+        <ul class="bullets">
+          <li>标题栏的 <b>‹</b> 常驻，打开工具时也在。</li>
+          <li>打开工具（文件 / 终端 / ＋）时<b>自动展开</b>，工具不会开在看不见的地方。</li>
+          <li>窄条上的 <b>›</b> 一键找回，工具标签还在。</li>
+        </ul>
+      </section>
+
+      <!-- 方案 B -->
+      <section class="col">
+        <div class="col-head"><span class="tag tag--b">方案 B</span><h2>整块隐藏，顶栏找回</h2></div>
+        <div class="win">
+          <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="win-body">
+            <div class="sb">
+              <div class="sb-new">＋ 新建会话</div>
+              <div class="sb-item">⑂ 工作流</div>
+              <div class="sb-item">⌘ 工作看板</div>
+              <div class="sb-item is-active">🗂 会话</div>
+              <div class="sb-item">🕘 定时任务</div>
+            </div>
+            <div class="main">
+              <div class="main-head">
+                <span>寻找七猫短篇脚本</span>
+                <span class="main-tools">⋯ <span class="dash" style="color: #d8564b">▤</span> ⊟</span>
+              </div>
+              <div class="main-body">
+                <div class="bubble bubble--wide"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+              </div>
+              <div class="composer">Ask pi to inspect the repo…</div>
+            </div>
+          </div>
+        </div>
+        <div class="zoom">
+          <div class="zoom-label">放大：顶栏右上角</div>
+          <div class="crop">
+            <span style="font-size: 12px; color: #5a6068">寻找七猫短篇脚本</span>
+            <span class="ctl">⋯ <span class="dash" style="color: #d8564b; font-size: 13px">▤</span></span>
+          </div>
+          <div class="mark">右侧一点不留，主区占满；找回入口挪到顶栏。</div>
+        </div>
+        <ul class="bullets">
+          <li>收起后右侧<b>完全消失</b>，主区拿回全部宽度。</li>
+          <li>找回入口是顶栏右上角的面板按钮（今天「工具面板」用的就是它）。</li>
+          <li>代价：看不出这边还有东西；顶栏多一个常驻控件，改动比 A 大。</li>
+        </ul>
+      </section>
+    </div>
+
+    <p class="foot">
+      <b>共同前提</b>：宽窗口（&gt; 980px）默认展开；窄窗口（≤ 980px）默认收起；用户的选择记在本机。<br />
+      还想「只关状态区、把工具留着」？说一声，可以在方案 A 上加一个次级按钮，不影响上面三选一。
+    </p>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\desktop\\plans.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\plans.ts"
+index 3c9d519..f251ec8 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\desktop\\plans.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\desktop\\plans.ts"
+@@ -8,7 +8,7 @@
+  *
+  * 坏定义与坏关联都进 `问题`，不静默当没有；同名计划按稳定计划 ID 区分，不用显示名拼路径。
+  */
+-import { readdirSync, realpathSync, statSync } from "node:fs";
++import { lstatSync, readdirSync, realpathSync, statSync } from "node:fs";
+ import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
+ import { formatCardNumber, loadCard, type ParsedCard, parseCardRef, projectRootForCards } from "../cards/index.ts";
+ import { redactContext } from "../context/index.ts";
+@@ -141,30 +141,92 @@ export function artifactOf(
+ 	当前轮: boolean,
+ ): DesktopPlanArtifact {
+ 	const 路径 = 记录.trim();
+-	const 绝对 = isAbsolute(路径) ? resolve(路径) : resolve(项目根, 路径);
++	const requestRoot = resolve(项目根);
++	const 绝对 = isAbsolute(路径) ? resolve(路径) : resolve(requestRoot, 路径);
+ 	// 相对路径统一用正斜杠：它要跨进程给桌面显示与再读取，Windows 反斜杠既难读、也没必要漏到界面。
+-	const 相对路径 = (relative(项目根, 绝对) || ".").split(sep).join("/");
++	const 相对路径 = (relative(requestRoot, 绝对) || ".").split(sep).join("/");
+ 	// 版本依据恒由「轮次＋卡号」拼出，界面不自己编，也不靠文件时间戳猜是哪一版。
+ 	// 卡号本身已经带「卡」前缀（formatCardNumber），这里不再重复加。
+ 	const 版本依据 = `第 ${轮次} 轮（${卡号}）`;
+-	if (!inside(项目根, 绝对))
+-		return { 路径, 相对路径, 轮次, 卡号, 版本依据, 当前轮, 存在: false, 说明: "路径越出工作区，不作为产物展示" };
++	const artifactResult = (exists: boolean, note?: string): DesktopPlanArtifact => ({
++		路径,
++		相对路径,
++		轮次,
++		卡号,
++		版本依据,
++		当前轮,
++		存在: exists,
++		...(note === undefined ? {} : { 说明: note }),
++	});
++
++	let realRoot: string;
+ 	try {
+-		if (!statSync(绝对).isFile())
+-			return { 路径, 相对路径, 轮次, 卡号, 版本依据, 当前轮, 存在: false, 说明: "这个路径在盘上不是普通文件" };
+-	} catch {
+-		return {
+-			路径,
+-			相对路径,
+-			轮次,
+-			卡号,
+-			版本依据,
+-			当前轮,
+-			存在: false,
+-			说明: "盘上找不到这个文件（可能被移动，或这一轮还没真正产出）",
+-		};
++		realRoot = realpathSync(requestRoot);
++	} catch (error) {
++		return artifactResult(false, `项目根不可读，无法核实产物路径：${explainPathError(error)}`);
++	}
++	const lexicallyInside = inside(requestRoot, 绝对);
++	let realTarget: string;
++	try {
++		realTarget = realpathSync(绝对);
++	} catch (error) {
++		if (isMissingPathError(error))
++			return artifactResult(false, "盘上找不到这个文件（可能被移动，或这一轮还没真正产出）");
++		return artifactResult(false, `无法核实产物真实路径：${explainPathError(error)}`);
++	}
++	if (!inside(realRoot, realTarget))
++		return artifactResult(
++			false,
++			lexicallyInside ? "链接的真实路径越出项目，不作为产物展示" : "路径越出工作区，不作为产物展示",
++		);
++
++	if (lexicallyInside) {
++		try {
++			if (findLinkedComponent(requestRoot, 绝对))
++				return artifactResult(false, "产物路径包含项目内链接（junction/symlink），不作为产物展示");
++		} catch (error) {
++			if (isMissingPathError(error))
++				return artifactResult(false, "盘上找不到这个文件（可能被移动，或这一轮还没真正产出）");
++			return artifactResult(false, `无法核实产物路径是否包含链接：${explainPathError(error)}`);
++		}
+ 	}
+-	return { 路径, 相对路径, 轮次, 卡号, 版本依据, 当前轮, 存在: true };
++
++	try {
++		const targetStat = statSync(realTarget);
++		if (targetStat.isDirectory()) return artifactResult(false, "目标是目录（EISDIR）");
++		if (!targetStat.isFile()) return artifactResult(false, "这个路径在盘上不是普通文件");
++	} catch (error) {
++		if (isMissingPathError(error))
++			return artifactResult(false, "盘上找不到这个文件（可能被移动，或这一轮还没真正产出）");
++		return artifactResult(false, `无法核实产物类型：${explainPathError(error)}`);
++	}
++	return artifactResult(true);
++}
++
++/** 只检查项目根以下的路径组件；项目根本身是 junction 时，由两侧 realpath 核范围。 */
++function findLinkedComponent(root: string, target: string): string | undefined {
++	const delta = relative(root, target);
++	if (delta === "") return undefined;
++	let current = root;
++	for (const part of delta.split(sep)) {
++		current = join(current, part);
++		if (lstatSync(current).isSymbolicLink()) return current;
++	}
++	return undefined;
++}
++
++function isMissingPathError(error: unknown): boolean {
++	if (!(error instanceof Error) || !("code" in error)) return false;
++	return error.code === "ENOENT" || error.code === "ENOTDIR";
++}
++
++function explainPathError(error: unknown): string {
++	const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : undefined;
++	if (code === "ENOENT" || code === "ENOTDIR") return "路径不存在";
++	if (code === "EACCES" || code === "EPERM") return `没有读取权限（${code}）`;
++	if (code === "EISDIR") return "目标是目录（EISDIR）";
++	const message = error instanceof Error ? error.message : String(error);
++	return code ? `${message}（${code}）` : message;
+ }
+ 
+ /** 一步的一次执行记录：默认显示第几次执行与打回原因摘要；卡引用与判定原文按需展开。 */
+@@ -218,9 +280,7 @@ export function stepProgress(flow: FlowControl, 项目根: string): DesktopPlanS
+ 		}
+ 		if (活干完 && definition?.审核 === true && control?.判定?.结果 !== "pass" && !control?.放行修复) 活干完 = false;
+ 		// 轮次升序、卡号升序；Array.sort 稳定，同一轮内保持回执出现顺序。
+-		产物.sort(
+-			(a, b) => a.轮次 - b.轮次 || (a.卡号 < b.卡号 ? -1 : a.卡号 > b.卡号 ? 1 : 0),
+-		);
++		产物.sort((a, b) => a.轮次 - b.轮次 || (a.卡号 < b.卡号 ? -1 : a.卡号 > b.卡号 ? 1 : 0));
+ 		return {
+ 			步骤ID: node.名字,
+ 			状态: node.状态,

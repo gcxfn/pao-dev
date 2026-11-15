@@ -1,0 +1,267 @@
+diff --git a/packages/coding-agent/src/pao/workflow/review.ts b/packages/coding-agent/src/pao/workflow/review.ts
+index 26d4f44bc..6bae81ca9 100644
+--- a/packages/coding-agent/src/pao/workflow/review.ts
++++ b/packages/coding-agent/src/pao/workflow/review.ts
+@@ -2,12 +2,13 @@
+  * 工作流复盘机械报告（§11.6 跑后复盘闭环,2026-10-03 用户拍板「每次跑完要检查本次实施,给我改进意见」）。
+  *
+  * 复盘是流程不是新状态:全部数据从既有账面（卡/回执/实例清单）现读,不建第二套真相（R10）。
+- * 本模块只做机械汇总——每节点 派发次数/重试/打回/失败类型/末次摘要/产物/人工门/预算 vs 实耗;
+- * 语义改进意见由主控基于报告给,用户拍板后经 pao_落配方 回写配方。本模块不调模型、不给建议。
++ * 本模块只做机械汇总——每节点 派发次数/重试/打回/失败类型/末次摘要/产物/人工门/预算 vs 实耗＋节点状态统计;
++ * 语义改进意见由主控基于报告给,用户拍板后经 pao_落配方 回写配方。本模块不调模型、不给建议、不写任何文件。
+  */
+ 
+ import { listCards } from "../cards/index.ts";
+ import type { CardStatus, ParsedCard } from "../cards/types.ts";
++import { CARD_STATUSES } from "../cards/types.ts";
+ import { parseWorkflowMarker, type WorkflowManifest } from "./driver.ts";
+ import type { WorkflowRecipe } from "./recipe.ts";
+ 
+@@ -42,6 +43,16 @@ export interface ReviewReport {
+ 	节点: ReviewNodeRow[];
+ 	/** 标记指向配方已删节点的卡（孤儿,报告点名不丢弃） */
+ 	孤儿卡: { 卡号: number; 节点: string; 卡状态: CardStatus }[];
++	/** 状态统计（由 节点 行只读汇总:每节点恰计一次,未落卡＋各实际卡状态 合计=节点总数;孤儿卡不进此口径） */
++	状态统计: ReviewStatusStats;
++}
++
++/** 节点状态统计:未落卡节点数＋各实际卡状态的节点数;只含有卡节点出现的状态,不置零占位。 */
++export interface ReviewStatusStats {
++	/** 配方在、卡未落的节点数 */
++	未落卡: number;
++	/** 有卡节点按卡现读状态计数 */
++	卡状态: Partial<Record<CardStatus, number>>;
+ }
+ 
+ /** 单卡回执用量聚合:跳过「汇总」行（母卡汇总=子卡之和,重复计）;缺项标未知不填零（R07）。 */
+@@ -118,7 +129,14 @@ export function buildReviewReport(recipe: WorkflowRecipe, cardsDir: string, mani
+ 		};
+ 	});
+ 
+-	return { 工作流: recipe.名字, 实例状态: manifest?.状态, 启动: manifest?.启动, 节点, 孤儿卡 };
++	// 状态统计只数 节点 行:无卡计未落卡,有卡按卡现读状态;孤儿卡不在 节点 行里,天然不计入
++	const 状态统计: ReviewStatusStats = { 未落卡: 0, 卡状态: {} };
++	for (const row of 节点) {
++		if (row.卡状态 === undefined) 状态统计.未落卡 += 1;
++		else 状态统计.卡状态[row.卡状态] = (状态统计.卡状态[row.卡状态] ?? 0) + 1;
++	}
++
++	return { 工作流: recipe.名字, 实例状态: manifest?.状态, 启动: manifest?.启动, 节点, 孤儿卡, 状态统计 };
+ }
+ 
+ function budgetLine(row: ReviewNodeRow): string {
+@@ -157,6 +175,15 @@ export function renderReviewReport(report: ReviewReport): string {
+ 	const 总派发 = report.节点.reduce((sum, row) => sum + row.派发次数, 0);
+ 	const 总打回 = report.节点.reduce((sum, row) => sum + row.打回, 0);
+ 	lines.push("", `总账:节点 ${report.节点.length}、尝试 ${总尝试}、派发 ${总派发}、打回 ${总打回}。`);
++	// 状态统计行:未落卡永远给出明确计数,实际出现的状态按 CARD_STATUSES 冻结顺序排;孤儿卡另列不计入
++	const 状态词 = [
++		`未落卡 ${report.状态统计.未落卡}`,
++		...CARD_STATUSES.flatMap((status) => {
++			const count = report.状态统计.卡状态[status] ?? 0;
++			return count > 0 ? [`${status} ${count}`] : [];
++		}),
++	];
++	lines.push(`节点状态:${状态词.join("、")}${report.孤儿卡.length > 0 ? "（孤儿卡另列,不计入节点）" : ""}。`);
+ 	if (report.孤儿卡.length > 0)
+ 		lines.push(
+ 			`孤儿卡（标记的节点不在配方里,配方改版遗留）:${report.孤儿卡.map((card) => `卡${card.卡号}→${card.节点}(${card.卡状态})`).join("、")}`,
+diff --git a/packages/coding-agent/test/pao/workflow-review.test.ts b/packages/coding-agent/test/pao/workflow-review.test.ts
+index 5751d224b..2927b35d5 100644
+--- a/packages/coding-agent/test/pao/workflow-review.test.ts
++++ b/packages/coding-agent/test/pao/workflow-review.test.ts
+@@ -2,17 +2,18 @@
+  * 工作流复盘机械报告单测（十八批,§11.6 跑后复盘闭环）:
+  * 从卡与回执现读——尝试/派发/打回/末次失败类型/末次成功摘要/产物/人工门/预算vs实耗;
+  * 拓扑序含未落卡节点、孤儿卡点名不静默、汇总回执不重复计、缺用量标未知不填零。
++ * 状态统计（只读）:未落卡与各实际卡状态各有计数,每节点恰计一次,合计=节点总数,孤儿卡不计入,报告前后输入文件字节不变。
+  * fixture 一律临时目录。
+  */
+-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+-import { join } from "node:path";
++import { dirname, join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ 
+ import { cardFileName, serializeCard, serializeReceipt } from "../../src/pao/cards/cardfile.ts";
+ import type { CardFrontmatter } from "../../src/pao/cards/types.ts";
+-import { type WorkflowManifest, workflowMarker } from "../../src/pao/workflow/driver.ts";
+-import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
++import { parseManifest, type WorkflowManifest, workflowMarker } from "../../src/pao/workflow/driver.ts";
++import { parseRecipe, type WorkflowRecipe } from "../../src/pao/workflow/recipe.ts";
+ import { buildReviewReport, renderReviewReport } from "../../src/pao/workflow/review.ts";
+ 
+ const tempDirs: string[] = [];
+@@ -204,3 +205,170 @@ describe("buildReviewReport / renderReviewReport", () => {
+ 		expect(report.孤儿卡).toEqual([]);
+ 	});
+ });
++
++describe("复盘状态统计（只读,不写卡与实例文件）", () => {
++	function 统计合计(report: ReturnType<typeof buildReviewReport>): number {
++		return report.状态统计.未落卡 + Object.values(report.状态统计.卡状态).reduce((sum, count) => sum + count, 0);
++	}
++
++	it("混合状态＋未落卡＋孤儿卡:各有明确计数,合计=节点总数,孤儿卡不计入", () => {
++		const cardsDir = makeDir();
++		writeCard(
++			cardsDir,
++			1,
++			"侦察",
++			{ 目标: "扫仓库", 部门: "侦察", 验收: "包含: 扫", 尝试: 1, 状态: "进行中" },
++			workflowMarker("复盘流", "侦察"),
++		);
++		writeCard(
++			cardsDir,
++			2,
++			"文档",
++			{ 目标: "写文档", 部门: "文档", 验收: "包含: 文档", 尝试: 1, 状态: "失败" },
++			workflowMarker("复盘流", "文档"),
++		);
++		writeCard(
++			cardsDir,
++			9,
++			"旧节点",
++			{ 目标: "已被删", 部门: "前端", 验收: "包含: 删", 尝试: 1, 状态: "取消" },
++			workflowMarker("复盘流", "已删节点"), // 孤儿卡:标记的节点不在配方里
++		);
++		const recipe = parseRecipe(RECIPE_TEXT, join("工作流", "复盘流.md"));
++		const report = buildReviewReport(recipe, cardsDir, manifest());
++
++		expect(report.状态统计).toEqual({ 未落卡: 1, 卡状态: { 进行中: 1, 失败: 1 } });
++		expect(统计合计(report)).toBe(report.节点.length); // 每节点恰计一次,合计=节点总数
++		expect(report.状态统计.卡状态.取消).toBeUndefined(); // 孤儿卡的取消不进统计
++		expect(report.孤儿卡).toEqual([{ 卡号: 9, 节点: "已删节点", 卡状态: "取消" }]); // 但仍在孤儿点名里
++
++		const text = renderReviewReport(report);
++		expect(text).toContain("节点状态:未落卡 1、进行中 1、失败 1（孤儿卡另列,不计入节点）。");
++		// 既有报告信息保留
++		expect(text).toContain("总账:节点 3、尝试 2、派发 0、打回 0。");
++		expect(text).toContain("孤儿卡（标记的节点不在配方里,配方改版遗留）:卡9→已删节点(取消)");
++	});
++
++	it("同节点两张卡只计一行:每节点恰计一次,不被影子卡重复计", () => {
++		const cardsDir = makeDir();
++		writeCard(
++			cardsDir,
++			1,
++			"侦察",
++			{ 目标: "扫仓库", 部门: "侦察", 验收: "包含: 扫", 尝试: 1, 状态: "已交付" },
++			workflowMarker("复盘流", "侦察"),
++		);
++		writeCard(
++			cardsDir,
++			3,
++			"侦察补",
++			{ 目标: "补扫", 部门: "侦察", 验收: "包含: 扫", 尝试: 1, 状态: "待认领" },
++			workflowMarker("复盘流", "侦察"), // 同节点第二张卡:后落者占行,前一张不算第二行
++		);
++		writeCard(
++			cardsDir,
++			2,
++			"文档",
++			{ 目标: "写文档", 部门: "文档", 验收: "包含: 文档", 尝试: 1, 状态: "已交付" },
++			workflowMarker("复盘流", "文档"),
++		);
++		const recipe = parseRecipe(RECIPE_TEXT, join("工作流", "复盘流.md"));
++		const report = buildReviewReport(recipe, cardsDir, undefined);
++
++		expect(report.节点).toHaveLength(3); // 侦察/文档/未跑各一行,影子卡不另起行
++		expect(report.状态统计).toEqual({ 未落卡: 1, 卡状态: { 待认领: 1, 已交付: 1 } });
++		expect(统计合计(report)).toBe(report.节点.length);
++	});
++
++	it("无节点:统计全零,合计 0=节点总数,终端仍给出明确计数", () => {
++		const cardsDir = makeDir(); // 空卡目录
++		// parseRecipe 拒绝空节点表,但报告层不该依赖该前提:直接构造空拓扑序配方验证兑底
++		const emptyRecipe: WorkflowRecipe = {
++			名字: "空流",
++			自动执行: false,
++			参数: [],
++			节点: [],
++			说明: "",
++			文件路径: join("工作流", "空流.md"),
++			占位符: [],
++			拓扑序: [],
++		};
++		const report = buildReviewReport(emptyRecipe, cardsDir, undefined);
++		expect(report.节点).toEqual([]);
++		expect(report.状态统计).toEqual({ 未落卡: 0, 卡状态: {} });
++		expect(统计合计(report)).toBe(0);
++
++		const text = renderReviewReport(report);
++		expect(text).toContain("总账:节点 0、尝试 0、派发 0、打回 0。");
++		expect(text).toContain("节点状态:未落卡 0。");
++	});
++
++	it("只读:报告前后卡与实例清单文件字节不变,也不新增文件", () => {
++		const cardsDir = makeDir();
++		writeCard(
++			cardsDir,
++			1,
++			"侦察",
++			{ 目标: "扫仓库", 部门: "侦察", 验收: "包含: 扫", 尝试: 1, 状态: "已交付" },
++			[
++				workflowMarker("复盘流", "侦察"),
++				serializeReceipt({
++					卡号: 1,
++					尝试号: 1,
++					时间: "2026-10-03 10:40",
++					结果: "成功",
++					摘要: "产出了地图",
++					用量: { turns: 8, toolCalls: 40, cost: 0.1 },
++				}),
++			].join("\n\n"),
++		);
++		writeCard(
++			cardsDir,
++			9,
++			"旧节点",
++			{ 目标: "已被删", 部门: "前端", 验收: "包含: 删", 尝试: 1, 状态: "失败" },
++			workflowMarker("复盘流", "已删节点"),
++		);
++		const manifestFile = join(dirname(cardsDir), "工作流实例-复盘流.md");
++		writeFileSync(
++			manifestFile,
++			[
++				"---",
++				"工作流: 复盘流",
++				`卡目录: ${cardsDir.replace(/\\/g, "/")}`,
++				'启动: "2026-10-03 10:00"',
++				"状态: 运行中",
++				"参数: {}",
++				"节点:",
++				'  - 名字: "侦察"',
++				'    卡号: "0001"',
++				"---",
++				"<!-- 驱动器维护 -->",
++				"",
++			].join("\n"),
++			"utf8",
++		);
++		const snapshot = () => {
++			const names = readdirSync(cardsDir).sort();
++			return {
++				names,
++				bytes: names.map((name) => readFileSync(join(cardsDir, name))),
++				manifest: readFileSync(manifestFile),
++			};
++		};
++
++		const before = snapshot();
++		const recipe = parseRecipe(RECIPE_TEXT, join("工作流", "复盘流.md"));
++		const manifest = parseManifest(readFileSync(manifestFile, "utf8"));
++		const text = renderReviewReport(buildReviewReport(recipe, cardsDir, manifest));
++		expect(text).toContain("节点状态:未落卡 2、已交付 1（孤儿卡另列,不计入节点）。");
++
++		const after = snapshot();
++		expect(after.names).toEqual(before.names); // 不新增不删除文件
++		expect(after.manifest.equals(before.manifest)).toBe(true); // 实例清单字节不变
++		for (const [index, name] of before.names.entries()) {
++			expect(after.names[index]).toBe(name); // 顺序对齐,不错位比较
++			expect(after.bytes[index].equals(before.bytes[index])).toBe(true); // 每张卡字节不变
++		}
++	});
++});

@@ -1,0 +1,37 @@
+[I0-2b] cwd=D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[I0-2b] PAO_HOME=D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-2b-shutdown-remaining\PAO_HOME
+[I0-2b] PI_OFFLINE=1
+[I0-2b] PI_NO_LOCAL_LLM=1
+[I0-2b] command=node ../../node_modules/vitest/vitest.mjs run test/pao/worker-dispatch.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:理由必填(派前自省,留痕供审查) > 缺参/空串/纯空格一律拒,卡不动、不拉起 37ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:理由必填(派前自省,留痕供审查) > 注册面:registerWorkerTools 装出 pao_dispatch_card(主控/部长共面,worker 角色整模块跳过) 1ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒) > 主控:任意部门卡 OK,owner 置为「主控」 703ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒) > 部长+PAO_DEPT 匹配:OK,owner 置为 PAO_DEPT 值 591ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒) > 部长+不匹配部门:拒派,卡保持待认领、不拉起 13ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒) > 部长+无 PAO_DEPT:拒派且报错写明 PAO_DEPT(fail-closed) 11ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒) > worker 角色:显式拒派(纵深防御,不留「非部长即主控」暗门) 11ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:部门并发上限(同部门活进程数,达上限拒派) > 无 PAO_HOME:部门上限 3 与跨部门共享名额同时生效 915ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:部门并发上限(同部门活进程数,达上限拒派) > 设了 PAO_HOME 但无保温文件:照样按缺省 3 拒(护栏不因配置缺失而失效) 111ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:部门并发上限(同部门活进程数,达上限拒派) > 保温.json 写「部门并发上限」:1 → 按 1 拒;清零后可派 762ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:认领(待认领→进行中)＋基线快照＋登记,与扇出同链路 > 真 git 仓库:认领改状态+owner,基线快照文件出现,回执落卡,登记表带部门+派单理由 3973ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_dispatch_card:认领(待认领→进行中)＋基线快照＋登记,与扇出同链路 > 进行中卡不双跑(与扇出同一把关),派单即时回执直接给拒派原因(2026-10-05 修) 27ms
+ ✓ test/pao/worker-dispatch.test.ts > 登记表扩展:部门/派单理由 可空字段 > register 不带新字段:归一为 null(不是 undefined) 0ms
+ ✓ test/pao/worker-dispatch.test.ts > 登记表扩展:部门/派单理由 可空字段 > register 显式带新字段:原样保留 0ms
+ ✓ test/pao/worker-dispatch.test.ts > 登记表扩展:部门/派单理由 可空字段 > pao_inventory worker 行显示部门+派单理由,理由截断到一行合理长度 113ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_fanout:批量理由必填并留痕 > 无理由/空串拒,整批不执行 22ms
+ ✓ test/pao/worker-dispatch.test.ts > pao_fanout:批量理由必填并留痕 > 带理由:登记表逐条带派单理由,聚合摘要带理由 1649ms
+ ✓ test/pao/worker-dispatch.test.ts > worker Python 缓存：受控临时目录与停止证据 > 运行时覆盖调用方缓存变量，使用系统临时目录，并在正常完成后删除 4538ms
+ ✓ test/pao/worker-dispatch.test.ts > worker Python 缓存：受控临时目录与停止证据 > 停止未确认时保留缓存目录，供人工核对 4081ms
+ ✓ test/pao/worker-dispatch.test.ts > worker Python 缓存：受控临时目录与停止证据 > 第二次 workflowCheck 早失败时不创建缓存且不启运行器 742ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  01:20:18
+   Duration  20.61s (transform 1.61s, setup 0ms, import 2.11s, tests 18.30s, environment 0ms)
+
+
+[I0-2b] exitCode=0

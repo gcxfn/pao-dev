@@ -1,0 +1,51 @@
+红灯-首跑｜S3 对抗审核 P3-1 修复批｜新增 e2e：守卫保存并继续×骨架改名
+时间：2026-10-07 21:02:34（本地）｜被测构建：out/ 哈希 FE51452A14ABF4DD / DBE75251A4AFE715（与对抗审核验证版逐字节一致，含缺陷，未重建）
+命令：PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_OFFLINE=1 PI_NO_LOCAL_LLM=1 pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/workflow-canvas.spec.ts -g "守卫保存并继续×骨架改名"（desktop 仓根执行）
+结果：playwright 报告 1 failed（失败原文见下；本跑 shell 退出码经 tee 管道被吞，原始非零码未捕获——后续各门改用 PIPESTATUS 保留原码，如实登记）
+失败签名：expect(getByTestId('workflow-tabs')).not.toContainText("新工作流1") failed；Received string: "编辑验证×新工作流1×＋ 新建工作流"＝改名被 pendingAction 旧闭包整表写 #2 覆写回旧名→死标签；同测内磁盘断言 readFile(工作流/改名验证.md) 先行通过＝保存链成功、仅标签表被覆。
+================================================================
+
+Running 1 test using 1 worker
+
+  x  1 apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 (27.3s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ─────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).not.[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('workflow-tabs')
+    Expected substring: not [32m"新工作流1"[39m
+    Received string: [31m"编辑验证×[7m新工作流1[27m×＋ 新建工作流"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "not toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-tabs')[22m
+    [2m    8 × locator resolved to <nav aria-label="工作流标签" class="workflow-tabs" data-testid="workflow-tabs">…</nav>[22m
+    [2m      - unexpected value "编辑验证×新工作流1×＋ 新建工作流"[22m
+
+
+      710 |     const tabs = page.getByTestId("workflow-tabs");
+      711 |     await expect(tabs).toContainText("改名验证");
+    > 712 |     await expect(tabs).not.toContainText("新工作流1");
+          |                            ^
+      713 |     await expect(page.getByTestId("canvas-load-error")).toHaveCount(0);
+      714 |     // 切回改名标签：读回已保存配方，不出现「尚未保存或已被移除」误导横幅。
+      715 |     await tabs.getByRole("button", { name: "改名验证", exact: true }).click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:712:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ──────────

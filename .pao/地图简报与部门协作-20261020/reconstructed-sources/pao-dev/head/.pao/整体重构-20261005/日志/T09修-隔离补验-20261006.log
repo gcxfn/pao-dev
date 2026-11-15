@@ -1,0 +1,67 @@
+===== F11 隔离补验 2026-10-06（R27/R28 审查后：2 条仅有批跑败证者补隔离单文件复跑） =====
+口径＝CP40 同款：desktop/apps/desktop，PI_APP_TEST_LANE=core，单 worker，--grep 精确到用例
+
+$ PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background pnpm exec playwright test -c playwright.config.ts tests/core/settings-appearance.spec.ts --workers=1 --grep "every preset recolours the same design instead of restyling it"
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it (1.0m)
+
+
+  1) tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+EXIT=1
+
+$ PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background pnpm exec playwright test -c playwright.config.ts tests/core/review-scopes.spec.ts --workers=1 --grep "choosing another review checkout preserves the task and terminal checkout"
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout (47.4s)
+
+
+  1) tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('menu', { name: 'Review options', exact: true }).locator('[role="menuitemradio"][data-option-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-user-data-DYVN2v\\worktrees\\review-checkout-root\\wt-4c596d"]')[22m
+
+
+       at helpers\electron-app.ts:1836
+
+      1834 | export async function chooseReviewCheckout(window: Page, checkoutId: string): Promise<void> {
+      1835 |   const menu = await openReviewOptions(window);
+    > 1836 |   await menu.locator(`[role="menuitemradio"][data-option-id="${checkoutId}"]`).click();
+           |                                                                                ^
+      1837 | }
+      1838 |
+      1839 | /** The resolved comparison shown at the top of the Review "…" menu; press Escape to close. */
+        at chooseReviewCheckout (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:1836:80)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\review-scopes.spec.ts:291:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+EXIT=1

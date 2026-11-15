@@ -1,0 +1,29 @@
+[
+  {
+    "id": "A1",
+    "entry": "pao_start_flow（工作流形态，主控/模型请求）",
+    "request": "params.run_mode = \"unattended\"，宿主 PAO_RUN_MODE=attended",
+    "expected": "产品拒绝，且不写工作流实例",
+    "actual": "被拒并附错误原文",
+    "errorText": "启动参数 run_mode 冲突：请求 unattended，但可信宿主仅授权 attended；模型参数不能自行开启无人值守",
+    "evidence": "D:/AI/workspace/pao-dev/.pao/协作规则统一-20261030/S7/checks/matrix/REJ-A1-A"
+  },
+  {
+    "id": "A2",
+    "entry": "pao_start_flow（模型参数提权）",
+    "request": "params.run_mode = \"unattended\"（模型自行填写）",
+    "expected": "模型参数不能自行开启无人值守",
+    "actual": "被拒并附错误原文",
+    "errorText": "启动参数 run_mode 冲突：请求 unattended，但可信宿主仅授权 attended；模型参数不能自行开启无人值守",
+    "evidence": "D:/AI/workspace/pao-dev/.pao/协作规则统一-20261030/S7/checks/matrix/REJ-A1-A"
+  },
+  {
+    "id": "A3",
+    "entry": "pao_dispatch_card（单卡部门直派形态）",
+    "request": "无 run_mode 参数可传；运行方式仅由宿主环境变量决定",
+    "expected": "不适用：公开入口没有该参数（附源码位置）",
+    "actual": "不适用",
+    "errorText": "",
+    "evidence": "PAO/packages/coding-agent/src/pao/worker/index.ts:188-349（参数表无 run_mode）；PAO/packages/coding-agent/src/pao/index.ts:252-258（PAO_RUN_MODE）"
+  }
+]

@@ -1,0 +1,73 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-8ad73497-c401-4b09-a0cd-9d8129f6f56b",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"."
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao",
+			"oracle",
+			"在线基准答案"
+		]
+	},
+	"facts": [
+		"【实施目标】新建且仅新建 /app/filter.py：命令行 `python3 /app/filter.py <file.html>`（argv[1]），原地覆写该文件移除全部 JavaScript，其余 HTML 内容与格式逐字节保持；成功退出码 0，缺参数/文件不可读报 stderr 并以非 0 退出。仓库只留这一个产物，样例与临时文件一律放 /tmp/filter_test/。",
+		"【核心实现决策 D1：字节级“切除式”扫描器，不用解析器重排】自研 tokenizer 在原始 bytes 上扫描并求出待删除的字节区间，输出 = 输入按区间切除后的拼接。理由：任务要求“不得改变格式”，而 BeautifulSoup/lxml 重排会补 <html><body>、改实体大小写与引号风格（侦察地图已证风险），只有字节切除能保证“除 JS 外逐字节相同”。stdlib html.parser 虽可取标签原文，但仍需自行拼装整篇输出且会漏掉畸形标签；仅用作验证侧的交叉检查。",
+		"【核心实现决策 D2：全程 bytes，不整篇解码再编码】read 全部字节 → 在 bytes 上分词与切除 → 直接 open(path,'wb') 写回。这样 BOM、CRLF、非 UTF-8（latin-1）原样保留，无换行翻译、无编解码往返损坏。仅在“判定危险 URL”时，把属性值用 latin-1 视图（bytes↔str 一一对应）交给 html.unescape 做实体解码，不改变原文。",
+		"【D3 tokenizer 规格】逐个 '<' 位置判定：(a) '<!--' 起注释，找到 '-->'（兼容 '--!>'）为注释跨度；(b) '<!' 起 doctype/伪注释，找到 '>'；(c) '<?' 起处理指令，找到 '>'；(d) '</' 起结束标签，匹配 </[a-zA-Z] 后找 '>'；(e) '<name' 起开始标签：标签名 = [^\\s/>]+，随后解析属性直到配对 '>'（引号内 '>' 不算），识别自闭合 '/'；(f) 其余 '<' 视为普通文本，继续从 pos+1 扫描。属性用 bytes 正则 ([^\\s/>=]+)(?:\\s*=\\s*(?:\\\"[^\\\"]*\\\"|'[^']*'|[^\\s>]*))? 逐个记录每个属性的【值跨度】与【其前导空白跨度】，删除属性时连同前导空白一并切除，避免留下多余空格（<a href=\"x\" > → <a>）。",
+		"【D4 原始文本元素与 script 处理】script 元素按 HTML5 语义整块删除：<script …> … </script> 全部切除（含内容与结束标签）。若找不到对应 </script（大小写不敏感），按 HTML5 语义删除到文件末尾（<script/> 不自闭合）。标签名带命名空间前缀时（如 svg:script）按 script 处理。非 script 的原始文本元素（style、textarea、title、iframe、noembed、noframes、xmp）内容按纯文本处理，不在其中解析标签（保留原文），其中 style 内容另做 CSS 清洗（见 D5-R6）。noscript 例外：按普通标记解析，使其中的 <script> 也被删除（安全优先，浏览器中它本是无害文本，偏差已记录在风险项）。",
+		"【D5 移除口径（逐条可核对）】R1 script 元素整体删除；例外：<script> 带 type 属性且值（去空白小写）属于 {application/json, application/ld+json, text/template, text/x-template} 时保留整块（属数据块非 JavaScript，符合“尽量保留”）。R2 事件属性：属性名小写后匹配 ^on[a-z]（onclick/onerror/onload/onmouseover 等）→ 删除该属性（含前导空白）；data-on* 等不以 on 开头的不受影响。R3 危险 URL 属性：属性名属 URL 语义集合（href/src/action/formaction/data/poster/background/cite/longdesc/usemap/ping/codebase/classid/archive/manifest/profile，或名字里含 href/src/url/action/uri）且值的“有效 scheme”判定为 javascript: / vbscript: / livescript: / jscript: / ecmascript: / mocha: → 删除整个属性；data: 仅当 MIME 属 text/html、application/xhtml+xml、image/svg+xml、text/javascript、application/javascript 时删除（data:image/png 等安全 data URL 保留）。scheme 判定前先做：html.unescape 实体解码 → 去掉所有 \\x00-\\x20 与 \\x7f 控制/空白 → 小写 → 取首个 ':' 前的部分。覆盖 &#106;avascript:、&#x6a;avascript:、JAVASCRIPT:、\" javascript:\"、\"java\\tscript:\" 等绕过形式。R4 srcdoc 属性整体删除（其值是内联 HTML，可含脚本）。R5 meta http-equiv=refresh 的 content 属性：若含危险 scheme → 删除该 content 属性（留 <meta http-equiv=\"refresh\">，无 javascript URL）。R6 CSS 清洗（仅在 style 元素内容与 style 属性值内做 token 级删除，其余 CSS 原样保留）：删除 url( … ) 中含 javascript:/vbscript: 的整个 url() 调用；删除 expression( … ) 调用；删除裸露的 javascript:/vbscript: 词元（连冒号一并删）。R7 <base href=\"javascript:…\">、<object data=…>、<embed src=…>、<form action=…>、SVG/MathML 的 xlink:href=\"javascript:…\" 均由 R3 通用规则覆盖。R8 注释：注释内容默认逐字节保留，但注释内若出现 <script …>…</script> 块（IE 条件注释场景）也切除该块。R9 文本节点（可见文字）逐字节不动，不做 javascript: 词元中和（保内容优先；风险已登记）。",
+		"【D6 验收口径（机械化，可直接写成实施卡的 acceptance）】核心判据：对不含任何 JS 的良性 HTML，输出必须与输入逐字节相同 → `cmp -s in.html out.html`（exit 0）。含 JS 的样例，输出必须不含 <script（不分大小写）、不含 on*= 事件属性、不含 javascript:/vbscript:，同时必须仍含原有合法结构片段（表格/表头/标题/class/href=https/style 内容）。CLI：缺参数 → 退出码非 0；文件不存在 → 退出码非 0；正常处理 → 退出码 0。幂等：对同一文件连跑两次，第二次输出与第一次逐字节相同。",
+		"【D7 实施节点的本地验证入口（自建，全部放 /tmp/filter_test/）】至少 8 个样例：A 良性（doctype、h1、table/th/td、class/id/style 属性、实体 &amp; &#39;、中文与 emoji、注释、自闭合 <br/>、<img src=\"x.png\" alt=\"a\">、<a href=\"https://example.com\">、<style>a{color:red}</style>、CRLF 换行）→ 断言 cmp 逐字节相同；B <p>before</p><script>alert('x')</script><p>after</p> → 无 <script 且 before/after 保留；C 属性类（<img src=x onerror=alert(1)>、<div onclick=\"x()\" class=\"c\">、<a href=\"javascript:alert(1)\">t</a>、<a href=\"JAVASCRIPT&#58;alert(1)\">、<body onload=alert(1)>）→ 无 on*=、无 javascript:，class=\"c\" 与 https 链接保留；D SVG/MathML（<svg><script>alert(1)</script><circle onclick=\"x\"/></svg>）→ 脚本与 onclick 去除，<svg>/<circle> 保留；E CSS/meta（<style>a{background:url(javascript:alert(1))}</style>、<meta http-equiv=\"refresh\" content=\"0;url=javascript:alert(1)\">）→ 危险词元去除、style 其余 CSS 保留；F 编码（latin-1 字节 é、带 BOM 的 UTF-8）→ 输出字节与输入除 JS 外相同、BOM 不丢；G 幂等（跑两次 cmp）；H 畸形输入（未闭合标签、裸 <、属性中含 >、注释内 script）→ 不崩溃且脚本清除。核对手段：cmp / diff / grep -i -c 'script' / grep -i -c 'javascript:' / python3 -c 断言。用 python 与 python3 两个解释器各跑一遍。",
+		"【D8 实施节点交回的证据】必须包含：实际执行的命令与其真实输出（不伪造）、覆盖上述 A–H 的逐例结论、以及“良性样例 cmp 逐字节相同”的真实通过记录；未实跑的项目如实标注为未验证。不得读 /tests、/solution 或任何在线答案。",
+		"【依赖与工具限制】仅用 Python 标准库（re、sys、os、html.unescape）；不依赖 bs4/lxml 等第三方包（已装但重排风险高），如需交叉校验只可在测试脚本中使用，不得进入主实现路径。实施节点须自建验证：把样例 HTML 放 /tmp（不要污染 /app 仓库），执行 `python3 /app/filter.py /tmp/case.html` 后用 cmp/diff/grep 核对。",
+		"【本节点只读核对记录】read /app/filter.py → ENOENT（产物确不存在）；read /usr/local/lib/python3.12/html/parser.py → 存在，确认 stdlib 提供 HTMLParser（set_cdata_mode / convert_charrefs / get_starttag_text），可用于验证侧交叉解析（把输出再解析一次，断言无 script 元素、无 on* 属性）；前序侦察地图有效，本地图在其基础上只补实施与验收口径，不重复全仓调查。"
+	],
+	"unknowns": [
+		"评测是逐字节 diff 还是语义比较仍未知；本计划按“字节级切除”实现，天然同时满足两者，除非评测反向要求“保留 script 文本只去标签”（概率低，已在风险项记录取舍）。",
+		"评测输入 HTML 的具体内容、编码、DOCTYPE、结构未知（/app 无样例、git 索引为空），只能按通用 HTML 处理。",
+		"评测调用解释器名（python / python3）与是否带额外参数未知；两者均可用，脚本不得依赖解释器特有行为。",
+		"评测是否会在运行前额外安装依赖未知；本计划只用标准库，无此风险。",
+		"输入文件是否可能非 UTF-8（如 latin-1、含 BOM）未知：D2 的纯 bytes 方案已覆盖，无需探测。",
+		"本节点为只读规划节点，未执行任何命令、未实跑样例：实现细节的字节级正确性（属性跨度、空格残留、实体绕过）全部未运行验证，必须由实施节点实跑确认。"
+	],
+	"relations": [],
+	"risks": [
+		"评测口径未知仍是最大风险：是否要求连 script 文本内容一并删除、on* 是否算 JavaScript、javascript: URL 是否算、style 内 expression() 是否算、iframe srcdoc 与 meta refresh 是否算。本计划取“最彻底且不动非 JS 内容”的保守默认（R1–R9 逐条落地），实施节点须在交付说明中逐条列出被移除的类别，便于审核比对。",
+		"字节级与“可解析性”张力：切除 <script> 可能留下空白或孤立结束标签（如 <!--[if IE]> 条件注释被切断），需保证不产生新的可执行上下文；实施时对注释内 script 块整体切除而非只切标签。",
+		"属性切除后的空格残留（如 <a href=\"x\" > → <a>）：删除属性须连同其前导空白，否则 cmp 断言会失败；这是本计划最易实现错的细节，须用 A/C 样例实测。",
+		"实体与控制字符绕过：&#106;avascript:、&#x6a;avascript:、JAVASCRIPT:、行内空白与控制字符、<a href=\" javascript:…\"> 等，scheme 判定前必须先实体解码并剥离 \\x00-\\x20/\\x7f，否则漏杀。",
+		"script 未闭合语义：按 HTML5 删除到文件末尾会连带删掉后续合法内容（若评测样例含未闭合 script），这是一次显式取舍，须在交付说明中写明；同时可用“未闭合则只删标签并保留文本”的更保守变体，但会残留 JS 文本。",
+		"noscript 按普通标记解析（偏离浏览器 RAWTEXT 语义）会把 noscript 里的字面 <script> 文本也删掉，属安全优先的有意偏差，须在交付说明中记录。",
+		"文本节点中的 javascript: 字面文字未做中和（保内容优先）：若评测用朴素子串 grep 检查 javascript:，含该字面文字的输入会判失败；需实施节点在 A–H 样例外补一条“正文出现 javascript: 字样”的对照样例并把结论写入证据。",
+		"大文件性能：字节级正则扫描需避免灾难性回溯（属性正则用线性可退化的写法，不要用嵌套量词），评测可能有超时约束。",
+		"产物洁净度：仓库只允许新增 /app/filter.py，样例与临时产物放 /tmp/filter_test/，避免影响 diff 审查。",
+		"本规划节点只读，未执行任何 python 命令，也未实跑任何样例：所有实现细节与验收条件均为设计态，必须由实施节点实跑验证并回传真实输出，未验证项不得默认通过。"
+	],
+	"integrationOwner": "实施部门负责在 /app/filter.py 落地本地图 D1–D8（字节级切除式实现 + 口径 R1–R9），并实跑 A–H 样例回传证据；审核部门独立核对实际改动与运行证据。两部门均不得改变“除 JS 外逐字节保持”的验收口径，不得依赖未安装的第三方包，不得读 /tests、/solution。",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"前序侦察地图（有效）pao-map://wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-e4c685fe-97ee-410d-a67d-ec0a47cf47c4",
+		"原始公开任务文本（创建 /app/filter.py，就地去 JS，保留其余 HTML 与格式，仅用已安装包）",
+		"本节点只读核对：read /app/filter.py → ENOENT；read /usr/local/lib/python3.12/html/parser.py → 存在",
+		"本轮宿主给定的范围与约束（只处理公开任务，不读 /tests、/solution、oracle，不伪造运行结果）"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "9ca607fb04ba8235dd4244f95630023e04665697",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+	},
+	"files": [],
+	"capturedAt": "2026-10-27T20:55:25.955Z",
+	"mapDigest": "sha256:e3188b474a41fb434fc8aa9581cd3a1b73e2b6761d3bf40c565a6485c6bd8b52"
+}

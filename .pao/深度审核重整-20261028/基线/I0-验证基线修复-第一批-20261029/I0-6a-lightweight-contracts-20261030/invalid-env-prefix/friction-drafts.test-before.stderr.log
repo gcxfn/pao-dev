@@ -1,0 +1,27 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/friction-drafts.test.ts > 挂钩点：executeFanout 停止收尾（扇出取消） > 扇出被中途停止：在跑被杀＋排队未拉起的卡逐张记「扇出取消」草稿行
+AssertionError: expected [ +0, 1, +0, +0 ] to deeply equal [ 1, +0, +0, +0 ]
+
+- Expected
++ Received
+
+  [
+-   1,
+    0,
++   1,
+    0,
+    0,
+  ]
+
+ ❯ test/pao/friction-drafts.test.ts:414:72
+    412|    await waitUntil(() => runner.registry.list().filter((entry) => entr…
+    413|    // 同项目写任务串行：只有第一张已认领，其他卡仍排队，未制造执行尝试。
+    414|    expect(listCards(cardsDir).map((card) => card.frontmatter.attempt))…
+       |                                                                        ^
+    415|    controller.abort();
+    416|    const summary = await summaryPromise;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,118 @@
+# S9-桌面包 旧名清零对照（2026-10-08，改动后 grep；范围＝apps/desktop＋packages/pi-sdk-driver 已跟踪源码/测试，不含 vendor/node_modules/dist）
+
+## A. D7 IPC 键（卡目标/派单理由/卡引用）
+apps/desktop/tests/unit/session-control-queue-lane.spec.ts:47:    sessionControlQueueLane(request({ kind: "dispatch", 卡目标: "登录页重构" }), legacyPredicate),
+apps/desktop/tests/unit/session-control-queue-lane.spec.ts:50:    sessionControlQueueLane(request({ kind: "confirm", 卡引用: "CARD-1" }), legacyPredicate),
+
+## A3. dispatch/confirm 文本模板旧键（dispatchReason 前身/依据：）
+（0）
+
+## B. 五态值字符串（接收/执行/停止中/已停止/验收通过）
+apps/desktop/contracts/i18n-zh.ts:740:  Receiving: "接收",
+apps/desktop/contracts/i18n-zh.ts:741:  Stopping: "停止中",
+apps/desktop/contracts/i18n-zh.ts:742:  Stopped: "已停止",
+apps/desktop/contracts/i18n-zh.ts:743:  "Acceptance passed": "验收通过",
+apps/desktop/electron/platform/pao/canvas-query.ts:496:  const executions = Array.isArray(record["执行"])
+apps/desktop/electron/platform/pao/canvas-query.ts:497:    ? record["执行"].flatMap((item) => {
+
+## C. 卡状态五值字符串
+apps/desktop/contracts/i18n-zh.ts:13:  Failed: "失败",
+apps/desktop/contracts/i18n-zh.ts:155:  Cancel: "取消",
+apps/desktop/contracts/i18n-zh.ts:475:  Active: "进行中",
+apps/desktop/contracts/i18n-zh.ts:997:  "In progress": "进行中",
+apps/desktop/contracts/kanban.ts:96:export const KANBAN_CARD_ACTIONS = ["取消"] as const;
+apps/desktop/electron/ipc/request-validation.ts:889:  if (action !== "取消") {
+apps/desktop/electron/platform/pao/kanban-ops.ts:60:        if (input.action !== "取消") {
+apps/desktop/src/features/canvas/canvas-model.ts:55:  unclaimed: "待认领",
+apps/desktop/src/features/canvas/canvas-model.ts:56:  in_progress: "进行中",
+apps/desktop/src/features/canvas/canvas-model.ts:57:  delivered: "已交付",
+apps/desktop/src/features/canvas/canvas-model.ts:58:  failed: "失败",
+apps/desktop/src/features/canvas/canvas-model.ts:59:  canceled: "取消",
+apps/desktop/src/features/workboard/kanban-board.tsx:69:  unclaimed: "待认领",
+apps/desktop/src/features/workboard/kanban-board.tsx:70:  in_progress: "进行中",
+apps/desktop/src/features/workboard/kanban-board.tsx:71:  delivered: "已交付",
+apps/desktop/src/features/workboard/kanban-board.tsx:72:  failed: "失败",
+apps/desktop/src/features/workboard/kanban-board.tsx:73:  canceled: "取消",
+apps/desktop/src/features/workboard/kanban-page.tsx:89:        action: "取消",
+apps/desktop/src/styles/kanban.css:221:.kanban-column[data-status="待认领"] .kanban-column__dot {
+apps/desktop/src/styles/kanban.css:225:.kanban-column[data-status="进行中"] .kanban-column__dot {
+apps/desktop/src/styles/kanban.css:229:.kanban-column[data-status="已交付"] .kanban-column__dot {
+apps/desktop/src/styles/kanban.css:233:.kanban-column[data-status="失败"] .kanban-column__dot {
+apps/desktop/src/styles/kanban.css:237:.kanban-column[data-status="取消"] .kanban-column__dot {
+apps/desktop/src/styles/kanban.css:273:.kanban-card[data-status="待认领"] {
+apps/desktop/src/styles/kanban.css:278:.kanban-card[data-status="进行中"] {
+apps/desktop/src/styles/kanban.css:283:.kanban-card[data-status="已交付"] {
+apps/desktop/src/styles/kanban.css:288:.kanban-card[data-status="失败"] {
+apps/desktop/src/styles/kanban.css:293:.kanban-card[data-status="取消"] {
+apps/desktop/tests/core/kanban-board.spec.ts:256:      ["unclaimed", "待认领"],
+apps/desktop/tests/core/kanban-board.spec.ts:257:      ["in_progress", "进行中"],
+apps/desktop/tests/core/kanban-board.spec.ts:258:      ["delivered", "已交付"],
+apps/desktop/tests/core/kanban-board.spec.ts:259:      ["failed", "失败"],
+apps/desktop/tests/core/kanban-board.spec.ts:260:      ["canceled", "取消"],
+apps/desktop/tests/core/kanban-board.spec.ts:651:    await expect(failRow).toContainText("失败");
+apps/desktop/tests/core/todo-table.spec.ts:131:    "进行中",
+apps/desktop/tests/core/workflow-canvas.spec.ts:87:    await dialog.getByRole("button", { name: "取消", exact: true }).click();
+apps/desktop/tests/core/workflow-canvas.spec.ts:114:    await dialog.getByRole("button", { name: "取消", exact: true }).click();
+apps/desktop/tests/core/workflow-canvas.spec.ts:119:    await dialog.getByRole("button", { name: "取消", exact: true }).click();
+apps/desktop/tests/core/workflow-canvas.spec.ts:124:    await dialog.getByRole("button", { name: "取消", exact: true }).click();
+apps/desktop/tests/core/workflow-instance.spec.ts:183:    await expect(frozenA).toContainText("进行中");
+apps/desktop/tests/core/workflow-instance.spec.ts:221:    await expect(detail.getByTestId("canvas-node-detail-fields")).toContainText("进行中");
+apps/desktop/tests/core/workflow-instance.spec.ts:347:      ...(cardStatus === "失败" ? { 失败类型: "transient" } : {}),
+apps/desktop/tests/core/workflow-tabs.spec.ts:61:      .getByRole("button", { name: "取消", exact: true })
+apps/desktop/tests/core/workflow-tabs.spec.ts:70:      .getByRole("button", { name: "取消", exact: true })
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:49:        状态: "已交付",
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:274:          状态: "失败",
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:428:              状态: "失败",
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:487:        status: "已交付",
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:509:        status: "已交付",
+apps/desktop/tests/unit/canvas-node-detail.spec.ts:561:              nodes: [{ name: "实现", status: "已交付" }],
+apps/desktop/tests/unit/ipc-request-validation.spec.ts:511:    action: "取消",
+apps/desktop/tests/unit/ipc-request-validation.spec.ts:520:    action: "取消",
+apps/desktop/tests/unit/ipc-request-validation.spec.ts:525:  expect(() => expectKanbanCardOpInput({ ...input, action: "已交付" })).toThrow();
+apps/desktop/tests/unit/ipc-request-validation.spec.ts:526:  expect(() => expectKanbanCardOpInput({ ...input, action: "进行中" })).toThrow();
+apps/desktop/tests/unit/kanban-activity.spec.ts:19:    status: "进行中",
+apps/desktop/tests/unit/kanban-ops.spec.ts:74:    action: "取消",
+apps/desktop/tests/unit/kanban-ops.spec.ts:100:    action: "取消",
+apps/desktop/tests/unit/kanban-ops.spec.ts:122:    action: "取消",
+apps/desktop/tests/unit/kanban-ops.spec.ts:130:    action: "取消",
+apps/desktop/tests/unit/kanban-ops.spec.ts:139:    action: "取消",
+packages/pi-sdk-driver/extensions/pao/desktop.ts:375:                  .filter((node) => node.状态 === "已交付")
+packages/pi-sdk-driver/test/pao-canvas.test.mts:103:  手写卡(卡目录, 1, "实现画布桥", "进行中");
+packages/pi-sdk-driver/test/pao-canvas.test.mts:172:      ["实现", "进行中"],
+
+## E. 节点控制动作值（确认/暂停/恢复/裁定）＋旧命令参数键
+apps/desktop/contracts/i18n-zh.ts:1021:  Confirmed: "确认",
+apps/desktop/electron/platform/pao/canvas-query.ts:222:  const confirmation = asText(record["确认"]).trim();
+apps/desktop/tests/core/workflow-control.spec.ts:82:    await expect(controls.getByRole("status")).toContainText("确认");
+apps/desktop/tests/unit/flow-control-query.spec.ts:287:    rule: "裁定",
+apps/desktop/tests/unit/workflow-wizard.spec.ts:106:      { level: "警告", subject: "预算", reason: "未设", suggestion: "确认" },
+apps/desktop/tests/unit/workflow-wizard.spec.ts:146:          { level: "警告", subject: "预算", reason: "未设", suggestion: "确认" },
+packages/pi-sdk-driver/extensions/pao/flow-desktop.ts:616:            const actionLabel = action === "pause" ? "暂停" : action === "confirm" ? "确认" : "恢复";
+--- 旧命令参数键（名字/卡目录/实例/节点/轮次/动作/理由/前手 于 flow-control 面）
+packages/pi-sdk-driver/extensions/pao/flow-desktop.ts:569:                  超限动作: policy.value as "停滞" | "修完这轮放行",
+
+## D. 卡协议键消费残留（frontmatter 中文键读点／卡对象中文属性读点）
+（0）
+
+## D2. 卡对象中文属性（路径/卡号/正文/回执）读点（PaoDesktopCard/read-model 面已迁英文）
+（0）
+（0）
+
+## D3. 回执键中文读点（kanban-board ReceiptRow／canvas-query normalizeUsage）
+（0）
+
+## D4. 失败轴／失败分型／worker 回执状态值残留
+apps/desktop/src/features/canvas/recipe-canvas-editor.tsx:1032:                          aria-label="部门标准"
+packages/pi-sdk-driver/extensions/pao/flow-desktop.ts:522:            "部门标准",
+packages/pi-sdk-driver/test/pao-workboard.test.mts:54:    失败卡(卡目录, index + 1, 目标, "缺输入");
+apps/desktop/tests/core/workflow-canvas.spec.ts:303:    await page.getByTestId("workflow-inspector").getByLabel("部门标准", { exact: true }).fill("复核正确性");
+apps/desktop/tests/core/workflow-canvas.spec.ts:467:      .getByLabel("部门标准", { exact: true })
+apps/desktop/tests/unit/recipe-canvas-editor-review-node.spec.ts:68:  const match = html.match(/<textarea[^>]*aria-label="部门标准"[^>]*>([^<]*)<\/textarea>/);
+apps/desktop/tests/unit/recipe-canvas-editor-review-node.spec.ts:75:    expect(html).toContain('aria-label="部门标准"');
+apps/desktop/tests/unit/recipe-canvas-editor-review-node.spec.ts:82:    expect(html).toContain('aria-label="部门标准"');
+apps/desktop/tests/unit/recipe-canvas-editor-review-node.spec.ts:88:    expect(html).not.toContain('aria-label="部门标准"');
+apps/desktop/tests/unit/recipe-canvas-editor-review-node.spec.ts:94:    expect(reviewTogglePatch(false)).not.toHaveProperty("部门标准");
+packages/pi-sdk-driver/test/pao-workboard.test.mts:54:    失败卡(卡目录, index + 1, 目标, "缺输入");
+
+## F. 测试面残留汇总（unit＋core＋driver test）
+42

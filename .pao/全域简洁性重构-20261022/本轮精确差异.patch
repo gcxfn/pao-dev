@@ -1,0 +1,2085 @@
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/desktop/index.ts
++++ after/PAO/packages/coding-agent/src/pao/desktop/index.ts
+@@ -22,8 +22,10 @@
+ import { readDesktopSessionIncrement, readDesktopWorkflowMinister } from "./read-model.ts";
+ import { readDesktopFlows } from "./workflow.ts";
+ 
+ export { resolvePaoHome } from "../routing/config.ts";
++export { collectPending } from "../status/pending.ts";
++export { scanWorkflowInstances } from "../status/workflow-instances.ts";
+ export * from "./canvas.ts";
+ export * from "./dept.ts";
+ export * from "./editor.ts";
+ export * from "./maintenance.ts";
+
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/memory/resident.ts
++++ after/PAO/packages/coding-agent/src/pao/memory/resident.ts
+@@ -243,8 +243,9 @@
+ 		// ② 每轮自动召回 top3(默认关)
+ 		const messages: string[] = [];
+ 		let recalled: MemoryHit[] = [];
+ 		let recalledVendor: string | undefined;
++		let projectedMessages: readonly unknown[] | undefined;
+ 		const result = () =>
+ 			messages.length
+ 				? {
+ 						message: {
+@@ -283,12 +284,13 @@
+ 				return result();
+ 			}
+ 			const recalledHits = await vendor.recall(seed, AUTO_RECALL_TOP);
+ 			if (!current()) return;
++			projectedMessages = ctx.sessionManager?.buildSessionProjection().messages ?? [];
+ 			const selection = state.selectForContext(
+ 				recalledHits,
+ 				vendor.vendorName,
+-				ctx.sessionManager?.buildSessionProjection().messages ?? [],
++				projectedMessages,
+ 				residentSection ?? "",
+ 			);
+ 			const hits = state.record(selection.hits, vendor.vendorName);
+ 			recalled = hits;
+@@ -299,9 +301,9 @@
+ 			failOnce(`自动召回失败:${error instanceof Error ? error.message : String(error)}`);
+ 		}
+ 		// 纠正提示判断使用本请求实际可见副本；投影里的旧召回仍保留给历史与恢复。
+ 		const visible = state.filterVisibleMessages(
+-			ctx.sessionManager?.buildSessionProjection().messages ?? [],
++			projectedMessages ?? ctx.sessionManager?.buildSessionProjection().messages ?? [],
+ 		) as Array<{ role?: unknown; content?: unknown }>;
+ 		const visibleText = visible
+ 			.map((message) => {
+ 				if (message.role === "system") return "";
+
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/panel/index.ts
++++ after/PAO/packages/coding-agent/src/pao/panel/index.ts
+@@ -35,10 +35,9 @@
+ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+ import type { KeybindingsManager } from "../../core/keybindings.ts";
+ import type { Theme } from "../../modes/interactive/theme/theme.ts";
+ import { listPaoSubcommands, type PaoSubcommand } from "../command-router.ts";
+-import { readWarmConfig, toastEnabled } from "../host/config.ts";
+-import { loadMemoryVendorConfig } from "../memory/memory-vendor.ts";
++import { loadMemoryVendorConfig, type MemoryVendorConfig } from "../memory/memory-vendor.ts";
+ import { readJsonRaw } from "../shared/json.ts";
+ import { type InstanceSignalRow, scanInstanceSignals } from "../status/workflow-instances.ts";
+ import type { WorkflowRecipe } from "../workflow/recipe.ts";
+ import { listRecipes, loadRecipe } from "../workflow/recipe.ts";
+@@ -96,36 +95,44 @@
+ 	status: "missing" | "valid" | "invalid" | "unreadable";
+ 	reason?: string;
+ };
+ 
++type InspectedConfig = { state: ConfigState; value?: Record<string, unknown> };
++
+ /** 只读取配置形状和开关字段，不把参数对象（可能含凭证）显示到界面。 */
+ function inspectConfig(
+ 	path: string,
+ 	name: string,
+ 	fields: Record<string, (value: unknown) => boolean>,
+ 	required: string[] = [],
+-): ConfigState {
+-	if (!existsSync(path)) return { status: "missing" };
++): InspectedConfig {
++	if (!existsSync(path)) return { state: { status: "missing" } };
+ 	let raw: unknown;
+ 	try {
+ 		raw = readJsonRaw(path);
+ 	} catch (error) {
++		if ((error as NodeJS.ErrnoException).code === "ENOENT") return { state: { status: "missing" } };
+ 		const code = (error as NodeJS.ErrnoException).code;
+ 		return {
+-			status: code === "EACCES" || code === "EPERM" ? "unreadable" : "invalid",
+-			reason: safeConfigReason(name, error),
++			state: {
++				status: code === "EACCES" || code === "EPERM" ? "unreadable" : "invalid",
++				reason: safeConfigReason(name, error),
++			},
+ 		};
+ 	}
+ 	if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+-		return { status: "invalid", reason: `${name} 配置顶层应为 JSON 对象` };
++		return { state: { status: "invalid", reason: `${name} 配置顶层应为 JSON 对象` } };
+ 	}
++	const value = raw as Record<string, unknown>;
+ 	for (const [field, valid] of Object.entries(fields)) {
+-		const value = (raw as Record<string, unknown>)[field];
+-		if ((required.includes(field) && value === undefined) || (value !== undefined && !valid(value))) {
+-			return { status: "invalid", reason: `${name} 配置字段「${field}」格式错误` };
++		if (
++			(required.includes(field) && value[field] === undefined) ||
++			(value[field] !== undefined && !valid(value[field]))
++		) {
++			return { state: { status: "invalid", reason: `${name} 配置字段「${field}」格式错误` } };
+ 		}
+ 	}
+-	return { status: "valid" };
++	return { state: { status: "valid" }, value };
+ }
+ 
+ /** 配置解析失败只展示固定类别，不把 JSON 解析器可能带出的原文片段回显到 TUI。 */
+ function safeConfigReason(name: string, error: unknown): string {
+@@ -138,27 +145,27 @@
+ 	if (/JSON|json|解析|parse|token|position/i.test(message)) return `${name} 配置不是合法 JSON`;
+ 	return `${name} 配置无法读取`;
+ }
+ 
+-function warmConfigState(path: string): ConfigState {
++function warmConfigState(path: string): InspectedConfig {
+ 	return inspectConfig(path, "保温", {
+ 		"toast 通知": (value) => typeof value === "boolean",
+ 		上游并发上限: (value) => typeof value === "number" && Number.isFinite(value) && value >= 1,
+ 	});
+ }
+ 
+-function memoryConfigState(path: string): ConfigState {
+-	if (!existsSync(path)) return { status: "missing" };
++function memoryConfigState(path: string): { state: ConfigState; value?: MemoryVendorConfig } {
+ 	try {
+-		// 使用记忆模块唯一校验入口，避免面板与实际会话各自维护配置规则。
+-		loadMemoryVendorConfig(path);
+-		return { status: "valid" };
++		const value = loadMemoryVendorConfig(path);
++		return value ? { state: { status: "valid" }, value } : { state: { status: "missing" } };
+ 	} catch (error) {
+ 		const message = error instanceof Error ? error.message : String(error);
+ 		const unreadable = /无法读取|权限|permission|access|EACCES|EPERM|EISDIR|拒绝访问/i.test(message);
+ 		return {
+-			status: unreadable ? "unreadable" : "invalid",
+-			reason: safeConfigReason("记忆供应商", error),
++			state: {
++				status: unreadable ? "unreadable" : "invalid",
++				reason: safeConfigReason("记忆供应商", error),
++			},
+ 		};
+ 	}
+ }
+ 
+@@ -179,30 +186,32 @@
+ 		"裸敲 /pao 打开本面板；/pao <子命令> 直达功能。",
+ 	].join("\n");
+ }
+ 
+-/** 4 个设置项的当前值快照（读盘口径与各功能读取函数同源,见 settings.ts 头注释） */
++/** 4 个设置项的当前值快照（一次整读各文件,字段口径见 settings.ts 头注释） */
+ function readSettingsState(paoHome: string): {
+ 	toast: boolean;
+ 	上游并发上限: number | undefined;
+ 	自动召回: boolean;
+ 	自动交接: boolean;
+ 	warm: ConfigState;
+ 	memory: ConfigState;
+ } {
+-	const warm = warmConfigState(resolveWarmConfigPath(paoHome));
+-	const memoryState = memoryConfigState(resolveMemoryHomeConfigPath(paoHome));
+-	let memory: { 自动召回?: boolean; 自动交接?: boolean } | undefined;
+-	if (memoryState.status === "valid") memory = loadMemoryVendorConfig(resolveMemoryHomeConfigPath(paoHome));
+-	let warmConfig: ReturnType<typeof readWarmConfig> = { 存在: false };
+-	if (warm.status === "valid") warmConfig = readWarmConfig(paoHome);
++	const warmRead = warmConfigState(resolveWarmConfigPath(paoHome));
++	const memoryRead = memoryConfigState(resolveMemoryHomeConfigPath(paoHome));
++	const warm = warmRead.value;
++	const memory = memoryRead.value;
++	const concurrency = warm?.上游并发上限;
+ 	return {
+-		toast: warm.status === "invalid" || warm.status === "unreadable" ? true : toastEnabled(paoHome),
+-		上游并发上限: warm.status === "valid" ? warmConfig.上游并发上限 : undefined,
++		toast: warm?.["toast 通知"] !== false,
++		上游并发上限:
++			typeof concurrency === "number" && Number.isFinite(concurrency) && concurrency >= 1
++				? Math.floor(concurrency)
++				: undefined,
+ 		自动召回: memory?.自动召回 === true,
+ 		自动交接: memory?.自动交接 === true,
+-		warm,
+-		memory: memoryState,
++		warm: warmRead.state,
++		memory: memoryRead.state,
+ 	};
+ }
+ 
+ /** 设置页 4 个 SettingItem（description 如实标注生效时机与已知副作用） */
+
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/status/index.ts
++++ after/PAO/packages/coding-agent/src/pao/status/index.ts
+@@ -12,10 +12,10 @@
+  */
+ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+ import { renderAllQueues } from "../cards/render.ts";
+ import { addPaoSubcommand } from "../command-router.ts";
++import { renderDeptPanels } from "../dept/panels.ts";
+ import type { FanoutBackgroundState } from "../fanout/index.ts";
+-import { renderDeptPanels } from "../index.ts";
+ import { aggregateLedger, formatLedgerSummary, parseLedger, readLedgerText } from "../usage/ledger.ts";
+ 
+ /** /状态 状态注册的注入面（测试/宿主覆盖） */
+ export interface StatusCommandOptions {
+
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/status/results.ts
++++ after/PAO/packages/coding-agent/src/pao/status/results.ts
+@@ -12,29 +12,27 @@
+  * 实现照 workflow/control.ts buildDecisionPackage:648-661 的只读拆版——不落盘判定包、不 assertOwner。
+  * 本模块只读：「拟续跑」只给建议命令文案（同 pending.ts 口径），续跑必须由用户在对话/控制入口显式发起。
+  */
+ import { execFile } from "node:child_process";
+-import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+-import { basename, dirname, join } from "node:path";
++import { existsSync, readFileSync, realpathSync } from "node:fs";
++import { join } from "node:path";
+ 
+-import { parseFrontmatter } from "../../utils/frontmatter.ts";
+ import {
+ 	type BaselineDiff,
+ 	baselineSnapshotPath,
+ 	checkBoundaryWrite,
+-	parseSnapshot,
+ 	PROJECT_CONTENT_PATHSPECS,
++	parseSnapshot,
+ } from "../cards/baseline.ts";
+ import { listCards, loadCard } from "../cards/cardfile.ts";
+ import { formatCardNumber, parseCardRef } from "../cards/counter.ts";
+ import type { ParsedCard } from "../cards/types.ts";
+ import { readLatestVerdict } from "../cards/verifier.ts";
+-import { listProjects } from "../dept/projects.ts";
+ import { gitSpawnErrorText } from "../shared/git.ts";
+-import { controlView, type FlowControl, readControl } from "../workflow/control.ts";
+-import { humanGateSuspendReason, parseManifest, parseWorkflowMarker } from "../workflow/driver.ts";
+-import { loadFrozenRecipe } from "../workflow/minister.ts";
++import { controlView, type FlowControl } from "../workflow/control.ts";
++import { humanGateSuspendReason, parseWorkflowMarker, type WorkflowManifest } from "../workflow/driver.ts";
+ import { substituteParams } from "../workflow/recipe.ts";
++import { type InstanceAnomalyRow, readWorkflowInstance, scanWorkflowInstanceFiles } from "./workflow-instances.ts";
+ 
+ /** 单次 git 调用结果（注入点契约；code!==0 时 stderr 带原因）。 */
+ export interface ResultsGitOutput {
+ 	code: number;
+@@ -129,13 +127,9 @@
+ 	恢复: RecoverySummary;
+ }
+ 
+ /** 坏实例/目录不可达异常行（同 collectPending 的实例异常口径，不得当空闲清理）。 */
+-export interface ResultsAnomalyRow {
+-	路径: string;
+-	文件: string;
+-	原因: string;
+-}
++export type ResultsAnomalyRow = InstanceAnomalyRow;
+ 
+ export interface InstanceResultsSnapshot {
+ 	line: InstanceResultRow[];
+ 	exception: ResultsAnomalyRow[];
+@@ -453,9 +447,9 @@
+ function v1InstanceLine(
+ 	path: string,
+ 	projectName: string,
+ 	projectRoot: string,
+-	manifest: ReturnType<typeof parseManifest>,
++	manifest: WorkflowManifest,
+ ): InstanceResultRow {
+ 	const suspend = manifest.状态 === "挂起";
+ 	const line: RecoveryLine[] = [];
+ 	if (manifest.状态 === "已完成")
+@@ -494,19 +488,14 @@
+ 	projectName: string,
+ 	projectRoot: string,
+ 	runGit: ResultsRunGit,
+ ): Promise<InstanceResultRow> {
+-	const content = readFileSync(path, "utf8");
+-	const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
+-	if (frontmatter.版本 !== 2) {
+-		// v1 / 未知版本：parseManifest 对带版本非 2 的实例显式抛错（与 workflow-instances 同口径）
+-		return v1InstanceLine(path, projectName, projectRoot, parseManifest(content, path));
++	const instance = readWorkflowInstance(path);
++	if (instance.版本 === 1) {
++		if (!instance.清单) throw new Error("v1 实例读取未返回清单");
++		return v1InstanceLine(path, projectName, projectRoot, instance.清单);
+ 	}
+-	const cardDir = frontmatter.卡目录;
+-	if (typeof cardDir !== "string" || !cardDir) throw new Error("v2 实例缺必要控制字段「卡目录」");
+-	const options = { cardsDir: cardDir, workspaceDir: dirname(path) };
+-	const name = basename(path).slice("工作流实例-".length, -".md".length);
+-	const flow = readControl(loadFrozenRecipe(name, options), options);
++	const flow = instance.控制!;
+ 	const view = controlView(flow);
+ 	const nodeResult: NodeResultSection[] = [];
+ 	for (const node of flow.节点) {
+ 		try {
+@@ -561,50 +550,24 @@
+ ): Promise<InstanceResultsSnapshot> {
+ 	const runGit = memoizeRunGit(options.runGit ?? defaultRunGit);
+ 	const exception: ResultsAnomalyRow[] = [];
+ 	const line: InstanceResultRow[] = [];
+-	let projects: ReturnType<typeof listProjects>;
++	let discovered: ReturnType<typeof scanWorkflowInstanceFiles>;
+ 	try {
+-		projects = listProjects(paoHome);
++		discovered = scanWorkflowInstanceFiles(paoHome);
+ 	} catch (error) {
+ 		return {
+ 			line: [],
+ 			exception: [{ 路径: join(paoHome, "项目清单.md"), 文件: "项目清单.md", 原因: errorText(error) }],
+ 		};
+ 	}
+-	for (const project of projects) {
+-		const paoDir = join(project.项目根, ".pao");
+-		const candidates: string[] = [paoDir];
++	exception.push(...discovered.anomalies);
++	for (const file of discovered.files) {
+ 		try {
+-			for (const entry of readdirSync(paoDir, { withFileTypes: true }))
+-				if (entry.isDirectory()) candidates.push(join(paoDir, entry.name));
++			line.push(await instanceResultLine(file.path, file.projectName, file.projectRoot, runGit));
+ 		} catch (error) {
+-			if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+-				exception.push({
+-					路径: paoDir,
+-					文件: `${project.项目名}/.pao`,
+-					原因: `目录读取失败:${errorText(error)}`,
+-				});
+-			continue; // 无 .pao 目录＝无工作流实例，如实跳过
++			const pathParts = file.path.split(/[\\/]/);
++			exception.push({ 路径: file.path, 文件: pathParts.at(-1) ?? file.path, 原因: errorText(error) });
+ 		}
+-		for (const dir of candidates) {
+-			let files: string[];
+-			try {
+-				files = readdirSync(dir);
+-			} catch (error) {
+-				if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+-					exception.push({ 路径: dir, 文件: basename(dir), 原因: `目录读取失败:${errorText(error)}` });
+-				continue;
+-			}
+-			for (const file of files) {
+-				if (!file.startsWith("工作流实例-") || !file.endsWith(".md")) continue;
+-				const path = join(dir, file);
+-				try {
+-					line.push(await instanceResultLine(path, project.项目名, project.项目根, runGit));
+-				} catch (error) {
+-					exception.push({ 路径: path, 文件: file, 原因: errorText(error) });
+-				}
+-			}
+-		}
+ 	}
+ 	return { line: line, exception: exception };
+ }
+
+===================================================================
+--- before/PAO/packages/coding-agent/src/pao/status/workflow-instances.ts
++++ after/PAO/packages/coding-agent/src/pao/status/workflow-instances.ts
+@@ -84,8 +84,20 @@
+ 	实例: InstanceSignalRow[];
+ 	异常: InstanceAnomalyRow[];
+ }
+ 
++/** 一个待读取的实例文件位置；项目根供结果页保留原行字段。 */
++export interface WorkflowInstanceFile {
++	path: string;
++	projectName: string;
++	projectRoot: string;
++}
++
++interface WorkflowInstanceFileScan {
++	files: WorkflowInstanceFile[];
++	anomalies: InstanceAnomalyRow[];
++}
++
+ function errorText(error: unknown): string {
+ 	return error instanceof Error ? error.message : String(error);
+ }
+ 
+@@ -142,47 +154,60 @@
+ 	}
+ 	return out;
+ }
+ 
+-/** 遍历各项目 .pao 顶层及其下固定层数的所有工作流实例文件;单个实例的失败按原样进异常行,不中断扫描。 */
+-function eachInstance(
+-	paoHome: string,
+-	exception: InstanceAnomalyRow[],
+-	visit: (path: string, projectName: string) => void,
+-): void {
++/**
++ * 发现各项目 .pao 顶层及其下固定层数的工作流实例文件。
++ * 目录不可达与文件位置分开返回；文件内容读取与解析仍由调用方逐项处理。
++ */
++export function scanWorkflowInstanceFiles(paoHome: string): WorkflowInstanceFileScan {
++	const scan: WorkflowInstanceFileScan = { files: [], anomalies: [] };
+ 	for (const row of listProjects(paoHome)) {
+ 		const paoDir = join(row.项目根, ".pao");
+ 		try {
+ 			readdirSync(paoDir, { withFileTypes: true });
+ 		} catch (error) {
+ 			if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; // 无 .pao 目录＝无工作流实例,如实空
+-			exception.push(dirErrorLine(paoDir, `${row.项目名}/.pao`, error));
++			scan.anomalies.push(dirErrorLine(paoDir, `${row.项目名}/.pao`, error));
+ 			continue;
+ 		}
+-		const candidates: string[] = [paoDir, ...collectInstanceDirectories(paoDir, 4)];
++		const candidates = [paoDir, ...collectInstanceDirectories(paoDir, 4)];
+ 		for (const dir of candidates) {
+ 			let files: string[];
+ 			try {
+ 				files = readdirSync(dir);
+ 			} catch (error) {
+ 				if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; // 扫描间隙被删,下轮如实反映
+-				exception.push(dirErrorLine(dir, basename(dir), error));
++				scan.anomalies.push(dirErrorLine(dir, basename(dir), error));
+ 				continue;
+ 			}
+ 			for (const file of files) {
+ 				if (!file.startsWith("工作流实例-") || !file.endsWith(".md")) continue;
+-				const path = join(dir, file);
+-				try {
+-					visit(path, row.项目名);
+-				} catch (error) {
+-					exception.push({ 路径: path, 文件: file, 原因: errorText(error) });
+-				}
++				scan.files.push({ path: join(dir, file), projectName: row.项目名, projectRoot: row.项目根 });
+ 			}
+ 		}
+ 	}
++	return scan;
+ }
+ 
+-/** 扫各项目 .pao 顶层＋一层子目录的工作流实例:挂起清单＋显式异常（坏字段/读失败/目录不可达）。 */
++/** 遍历已发现的工作流实例文件;单个实例的失败按原样进异常行,不中断扫描。 */
++function eachInstance(
++	paoHome: string,
++	exception: InstanceAnomalyRow[],
++	visit: (path: string, projectName: string) => void,
++): void {
++	const scan = scanWorkflowInstanceFiles(paoHome);
++	exception.push(...scan.anomalies);
++	for (const file of scan.files) {
++		try {
++			visit(file.path, file.projectName);
++		} catch (error) {
++			exception.push({ 路径: file.path, 文件: basename(file.path), 原因: errorText(error) });
++		}
++	}
++}
++
++/** 扫共享发现范围内的全部工作流实例：挂起清单＋显式异常（坏字段/读失败/目录不可达）。 */
+ export function scanWorkflowInstances(paoHome: string): WorkflowInstanceScan {
+ 	const scan: WorkflowInstanceScan = { 挂起: [], 异常: [] };
+ 	eachInstance(paoHome, scan.异常, (path, projectName) => {
+ 		const state = readWorkflowInstance(path);
+
+===================================================================
+--- before/PAO/packages/coding-agent/test/pao/memory-resident.test.ts
++++ after/PAO/packages/coding-agent/test/pao/memory-resident.test.ts
+@@ -137,23 +137,28 @@
+ 
+ interface TestContext {
+ 	cwd: string;
+ 	signal: undefined;
++	projectionCalls?: { count: number };
+ 	sessionManager: {
+ 		getSessionId(): string;
+ 		getBranch(): unknown[];
+-		buildSessionProjection(): { messages: unknown[]; thinkingLevel: string; model: undefined };
++		buildSessionProjection(): { messages: unknown[]; thinkingLevel: string; model: { provider: string; modelId: string } | null };
+ 	};
+ }
+ 
+-function testContext(messages: unknown[] = [], sessionId = "test"): TestContext {
++function testContext(messages: unknown[] = [], sessionId = "test", projectionCalls?: { count: number }): TestContext {
+ 	return {
+ 		cwd: process.cwd(),
+ 		signal: undefined,
++		projectionCalls,
+ 		sessionManager: {
+ 			getSessionId: () => sessionId,
+ 			getBranch: () => [],
+-			buildSessionProjection: () => ({ messages, thinkingLevel: "off", model: undefined }),
++			buildSessionProjection: () => {
++				if (projectionCalls) projectionCalls.count++;
++				return { messages, thinkingLevel: "off", model: null };
++			},
+ 		},
+ 	};
+ }
+ 
+@@ -426,8 +431,21 @@
+ 		expect(sections[AUTO_RECALL_SECTION]).toContain("记忆ID m-1");
+ 		expect(currentFake.calls.召回).toEqual([{ 检索词: "用户要我汇报什么风格", 上限: AUTO_RECALL_TOP }]);
+ 	});
+ 
++	it("自动召回成功只构建一次会话投影", async () => {
++		currentFake = fakeVendor({ hits: exampleHit });
++		const home = tempHome({
++			记忆供应商: { 供应商: "假供应商", 自动召回: true },
++			外发项目: [currentProject ?? "未知"],
++		});
++		const captured = capturePi();
++		registerResident(captured.pi, home, () => makeManager([]));
++		const projectionCalls = { count: 0 };
++		await fireTurnWithContext(captured, "复用投影", testContext([], "test", projectionCalls));
++		expect(projectionCalls.count).toBe(1);
++	});
++
+ 	it("前缀缓存:检索词逐轮变化,静态段逐字节不变——召回只追加消息", async () => {
+ 		currentFake = fakeVendor({ hits: exampleHit });
+ 		const home = tempHome({
+ 			记忆供应商: { 供应商: "假供应商", 自动召回: true },
+@@ -536,8 +554,22 @@
+ 		const first = await fireTurn(captured, "第一轮");
+ 		expect(first[AUTO_RECALL_SECTION]).toContain("自动召回失败");
+ 		expect(first[RESIDENT_MEMORY_SECTION]).toContain("- 事实A");
+ 	});
++	it("召回抛错后仍读取本轮投影供可见消息过滤", async () => {
++		currentFake = fakeVendor({ 召回抛错: "网络断" });
++		const home = tempHome({
++			记忆供应商: { 供应商: "假供应商", 自动召回: true },
++			外发项目: [currentProject ?? "未知"],
++		});
++		const captured = capturePi();
++		registerResident(captured.pi, home, () => makeManager([]));
++		const projectionCalls = { count: 0 };
++		const context = testContext([], "test", projectionCalls);
++		const turn = await fireTurnWithContext(captured, "失败后仍有纠正", context);
++		expect(turn.message?.content).toContain("自动召回失败");
++		expect(projectionCalls.count).toBe(1);
++	});
+ 	it("本轮召回与常驻索引同内容时只留常驻正文，不重复追加", async () => {
+ 		currentFake = fakeVendor({ hits: [{ 内容: "用户偏好简洁汇报", 记忆ID: "resident-1" }] });
+ 		const home = tempHome({
+ 			记忆供应商: { 供应商: "假供应商", 自动召回: true },
+
+===================================================================
+--- before/PAO/packages/coding-agent/test/pao/panel-view.test.ts
++++ after/PAO/packages/coding-agent/test/pao/panel-view.test.ts
+@@ -4,8 +4,9 @@
+  * 翻转与数字循环的即时写盘＋notify 回执、写失败回滚、非 TUI 降级发文本页。
+  * 经 openPaoPanel 的真实接线口捕获 overlay factory,再注入 fake tui/theme/keybindings
+  * （panorama-worker-live.test.ts 同款手法,不做真键盘仿真;配置文件用临时目录 fixture）。
+  */
++import * as fs from "node:fs";
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { dirname, join } from "node:path";
+ import { type Component, type TUI, visibleWidth } from "@earendil-works/pi-tui";
+@@ -20,8 +21,13 @@
+ import { startControl } from "../../src/pao/workflow/control.ts";
+ import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
+ import { parseFrontmatter } from "../../src/utils/frontmatter.ts";
+ 
++vi.mock("node:fs", async (importOriginal) => {
++	const actual = await importOriginal<typeof fs>();
++	return { ...actual, readFileSync: vi.fn(actual.readFileSync) };
++});
++
+ const tempDirs: string[] = [];
+ let testPi: ExtensionAPI;
+ afterEach(() => {
+ 	for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+@@ -370,8 +376,60 @@
+ 		expect(rendered).toContain("自动召回      未配置");
+ 		expect(rendered).toContain("自动交接      未配置");
+ 	});
+ 
++	it("一次刷新投影出保温与记忆的合法字段", async () => {
++		const home = makeHome();
++		mkdirSync(join(home, "pao配置"), { recursive: true });
++		writeFileSync(
++			resolveWarmConfigPath(home),
++			'{ "toast 通知": false, "上游并发上限": 3.9, "空闲分钟": 45 }\n',
++			"utf8",
++		);
++		writeFileSync(
++			join(home, "pao配置", "记忆供应商.json"),
++			'{"供应商":"fixture-vendor","自动召回":true,"自动交接":false}\n',
++			"utf8",
++		);
++		const { view } = await openPanel({ resolvePaoHome: () => home });
++		view!.handleInput("\t");
++		const rendered = view!.render(80).join("\n");
++		expect(rendered).toMatch(/toast 通知\s+关/);
++		expect(rendered).toMatch(/上游并发上限\s+3/);
++		expect(rendered).toMatch(/自动召回\s+开/);
++		expect(rendered).toMatch(/自动交接\s+关/);
++	});
++
++	it("一次设置快照对保温与记忆配置文件各只读取一次", async () => {
++		const home = makeHome();
++		mkdirSync(join(home, "pao配置"), { recursive: true });
++		writeFileSync(resolveWarmConfigPath(home), '{"上游并发上限":3}\n', "utf8");
++		const memoryPath = join(home, "pao配置", "记忆供应商.json");
++		writeFileSync(memoryPath, '{"供应商":"fixture-vendor","自动召回":true}\n', "utf8");
++		const readMock = vi.mocked(fs.readFileSync);
++		readMock.mockClear();
++		await openPanel({ resolvePaoHome: () => home });
++		const warmReads = readMock.mock.calls.filter(([path]) => path === resolveWarmConfigPath(home));
++		const memoryReads = readMock.mock.calls.filter(([path]) => path === memoryPath);
++		expect(warmReads).toHaveLength(1);
++		expect(memoryReads).toHaveLength(1);
++	});
++
++	it("保温上游并发上限小于 1 时仍按原字段校验拒绝", async () => {
++		const home = makeHome();
++		mkdirSync(join(home, "pao配置"), { recursive: true });
++		writeFileSync(resolveWarmConfigPath(home), '{"上游并发上限":0}\n', "utf8");
++		const { view, ctx } = await openPanel({ resolvePaoHome: () => home });
++		view!.handleInput("\t");
++		const rendered = view!.render(80).join("\n");
++		expect(rendered).toMatch(/上游并发上限\s+异常/);
++		expect(rendered).toContain("配置字段「上游并发上限」格式错误");
++		view!.handleInput("\x1b[B");
++		view!.handleInput(" ");
++		expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("保留原文件"), "error");
++		expect(JSON.parse(readFileSync(resolveWarmConfigPath(home), "utf8"))).toEqual({ 上游并发上限: 0 });
++	});
++
+ 	it("记忆供应商路径不可读时显示异常,不暴露系统错误原文", async () => {
+ 		const home = makeHome();
+ 		mkdirSync(join(home, "pao配置", "记忆供应商.json"), { recursive: true });
+ 		const { view } = await openPanel({ resolvePaoHome: () => home });
+
+===================================================================
+--- before/PAO/packages/coding-agent/test/pao/results-aggregate.test.ts
++++ after/PAO/packages/coding-agent/test/pao/results-aggregate.test.ts
+@@ -15,16 +15,19 @@
+ import { baselineSnapshotPath } from "../../src/pao/cards/baseline.ts";
+ import { createCard, loadCard, parseCardRef, serializeCard } from "../../src/pao/cards/index.ts";
+ import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+ import { collectInstanceResults, type InstanceResultRow, type ResultsRunGit } from "../../src/pao/status/results.ts";
++import { scanWorkflowInstances } from "../../src/pao/status/workflow-instances.ts";
+ import {
+ 	addNodeCards,
+ 	bindMinister,
+ 	controlPath,
+ 	endDecomposition,
+ 	readControl,
+ 	startControl,
+ } from "../../src/pao/workflow/control.ts";
++import { startWorkflow } from "../../src/pao/workflow/driver.ts";
++import { createTemporaryPlan, resolvePlanExecution } from "../../src/pao/workflow/plan.ts";
+ import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
+ 
+ const tempDirs: string[] = [];
+ afterEach(() => {
+@@ -462,8 +465,58 @@
+ 		);
+ 		expect(await collectInstanceResults(home)).toEqual({ line: [], exception: [] });
+ 	});
+ 
++	it("读取临时计划的深层实例：与共享发现使用同一目录范围", async () => {
++		const s = buildScenario();
++		const created = await createTemporaryPlan({
++			项目根: s.项目根,
++			显示名: "深层结果",
++			来源会话: "sess-owner",
++			请求ID: "req-deep",
++			已注册部门: ["开发"],
++			步骤: [{ 标题: "开发", 部门: "开发", 要求: "完成任务" }],
++			当刻: "2026-10-22 10:00",
++		});
++		const execution = resolvePlanExecution({
++			项目根: s.项目根,
++			来源会话: "sess-owner",
++			计划ID: created.计划ID,
++			启动请求ID: "start-deep",
++			定义版本: 1,
++		});
++		await startWorkflow(
++			execution.配方,
++			{},
++			{
++				cardsDir: execution.卡目录,
++				workspaceDir: execution.工作区,
++				ownerSessionId: "sess-owner",
++			},
++		);
++		const results = await collectInstanceResults(s.home);
++		const shared = scanWorkflowInstances(s.home);
++		expect(results.exception).toEqual([]);
++		expect(shared.异常).toEqual([]);
++		expect(findLine(results.line, execution.配方名).路径).toBe(execution.控制清单);
++	});
++
++	it("项目 .pao 不可达：显式进异常行，不拖垮其他项目实例", async () => {
++		const s = buildScenario();
++		await pushToHumanGate(s);
++		const blockedProject = tempDir("pao-results-blocked-project-");
++		const blocked = join(blockedProject, ".pao");
++		writeFileSync(blocked, "不是目录", "utf8");
++		writeFileSync(
++			join(s.home, "项目清单.md"),
++			`| 项目名 | 项目根 | 首次服务 | 最近服务 |\n| --- | --- | --- | --- |\n| 项目甲 | ${s.项目根} | 2026-10-04 10:00 | 2026-10-04 10:00 |\n| 项目乙 | ${blockedProject} | 2026-10-04 10:00 | 2026-10-04 10:00 |\n`,
++			"utf8",
++		);
++		const { line, exception } = await collectInstanceResults(s.home);
++		expect(findLine(line, "验流").工作流).toBe("验流");
++		expect(exception.some((row) => row.路径 === blocked && row.原因.includes("目录读取失败"))).toBe(true);
++	});
++
+ 	it("真实 Git 仓库：结果页读取基线差异与未跟踪文件", async () => {
+ 		const s = buildScenario();
+ 		await pushToHumanGate(s, ["任务甲", "任务乙"]);
+ 		execFileSync("git", ["init", "-q"], { cwd: s.项目根, stdio: "ignore" });
+
+===================================================================
+--- before/desktop/apps/desktop/electron/application/app-store.ts
++++ after/desktop/apps/desktop/electron/application/app-store.ts
+@@ -1,7 +1,11 @@
+ import { JsonCatalogStore } from "@pi-gui/catalogs/node";
+ import { sessionKey } from "@pi-gui/session-driver";
+-import type { ExtensionFlagValues, SessionSchemaInfo } from "@pi-gui/session-driver";
++import {
++  mergeEnabledModelPatterns,
++  type ExtensionFlagValues,
++  type SessionSchemaInfo,
++} from "@pi-gui/session-driver";
+ import type { BrowserWindow } from "electron";
+ import { randomUUID } from "node:crypto";
+ import { readFile, stat } from "node:fs/promises";
+ import { homedir, hostname } from "node:os";
+@@ -5328,24 +5332,8 @@
+     )
+   );
+ }
+ 
+-function mergeEnabledModelPatterns(
+-  existingPatterns: readonly string[],
+-  providerPatterns: readonly string[],
+-): readonly string[] {
+-  const merged = [...existingPatterns];
+-  const seen = new Set(existingPatterns);
+-  for (const pattern of providerPatterns) {
+-    if (seen.has(pattern)) {
+-      continue;
+-    }
+-    seen.add(pattern);
+-    merged.push(pattern);
+-  }
+-  return merged;
+-}
+-
+ function reconcilePinnedSessionOrder(
+   pinnedAtBySession: ReadonlyMap<string, string>,
+   preferredOrder: readonly string[],
+ ): readonly string[] {
+
+===================================================================
+--- before/desktop/apps/desktop/src/features/workbench/file-editor-pane.tsx
++++ after/desktop/apps/desktop/src/features/workbench/file-editor-pane.tsx
+@@ -12,8 +12,9 @@
+   isMarkdownPath,
+   type FileLineMark,
+   type FileWorkbenchTabs,
+ } from "./file-workbench-state";
++import { scrollIntoContainer } from "./scroll-into-container";
+ import { useI18n, type I18n } from "../../i18n/react";
+ 
+ interface FileEditorPaneProps {
+   readonly api: PiDesktopApi;
+@@ -222,9 +223,8 @@
+       </div>
+     </section>
+   );
+ }
+-
+ function renderEditorBody({
+   activePath,
+   lineMark,
+   markdown,
+@@ -330,22 +330,4 @@
+       })}
+     </pre>
+   );
+ }
+-
+-function scrollIntoContainer(element: HTMLElement, containerSelector: string): void {
+-  const container = element.closest(containerSelector);
+-  if (!(container instanceof HTMLElement)) {
+-    return;
+-  }
+-  const elementRect = element.getBoundingClientRect();
+-  const containerRect = container.getBoundingClientRect();
+-  if (elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom) {
+-    return;
+-  }
+-  const top =
+-    container.scrollTop +
+-    (elementRect.top - containerRect.top) -
+-    container.clientHeight / 2 +
+-    elementRect.height / 2;
+-  container.scrollTop = Math.max(0, top);
+-}
+
+===================================================================
+--- before/desktop/apps/desktop/src/features/workbench/file-explorer.tsx
++++ after/desktop/apps/desktop/src/features/workbench/file-explorer.tsx
+@@ -7,8 +7,9 @@
+   RefreshIcon,
+ } from "../../ui/icons";
+ import { ancestorDirectoryPaths } from "./file-workbench-state";
+ import { buildFileTree, filterWorkspaceFiles, type FileTreeNode } from "./file-tree";
++import { scrollIntoContainer } from "./scroll-into-container";
+ import { useI18n } from "../../i18n/react";
+ 
+ interface FileExplorerProps {
+   readonly files: readonly string[] | null;
+@@ -214,22 +215,4 @@
+ 
+ function depthFromPath(path: string): number {
+   return path.split("/").filter(Boolean).length - 1;
+ }
+-
+-function scrollIntoContainer(element: HTMLElement, containerSelector: string): void {
+-  const container = element.closest(containerSelector);
+-  if (!(container instanceof HTMLElement)) {
+-    return;
+-  }
+-  const elementRect = element.getBoundingClientRect();
+-  const containerRect = container.getBoundingClientRect();
+-  if (elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom) {
+-    return;
+-  }
+-  const top =
+-    container.scrollTop +
+-    (elementRect.top - containerRect.top) -
+-    container.clientHeight / 2 +
+-    elementRect.height / 2;
+-  container.scrollTop = Math.max(0, top);
+-}
+
+===================================================================
+--- before/desktop/apps/desktop/src/features/workbench/scroll-into-container.ts
++++ after/desktop/apps/desktop/src/features/workbench/scroll-into-container.ts
+@@ -0,0 +1,17 @@
++export function scrollIntoContainer(element: HTMLElement, containerSelector: string): void {
++  const container = element.closest(containerSelector);
++  if (!(container instanceof HTMLElement)) {
++    return;
++  }
++  const elementRect = element.getBoundingClientRect();
++  const containerRect = container.getBoundingClientRect();
++  if (elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom) {
++    return;
++  }
++  const top =
++    container.scrollTop +
++    (elementRect.top - containerRect.top) -
++    container.clientHeight / 2 +
++    elementRect.height / 2;
++  container.scrollTop = Math.max(0, top);
++}
+
+===================================================================
+--- before/desktop/apps/desktop/tests/core/workspace-file-scroll.spec.ts
++++ after/desktop/apps/desktop/tests/core/workspace-file-scroll.spec.ts
+@@ -0,0 +1,84 @@
++import { mkdir, writeFile } from "node:fs/promises";
++import { join } from "node:path";
++import { expect, test, type Locator } from "@playwright/test";
++import {
++  launchDesktop,
++  makeUserDataDir,
++  makeWorkspace,
++  seedAgentDir,
++  seedNamedTextSessionFixture,
++  selectSession,
++} from "../helpers/electron-app";
++
++const SESSION_TITLE = "File scroll fixture session";
++
++async function expectBoxInside(inner: Locator, outer: Locator): Promise<void> {
++  const innerBox = await inner.boundingBox();
++  const outerBox = await outer.boundingBox();
++  expect(innerBox).not.toBeNull();
++  expect(outerBox).not.toBeNull();
++  if (!innerBox || !outerBox) {
++    return;
++  }
++  expect(innerBox.y).toBeGreaterThanOrEqual(outerBox.y - 2);
++  expect(innerBox.y + innerBox.height).toBeLessThanOrEqual(outerBox.y + outerBox.height + 2);
++}
++
++test("file targets scroll inside their editor and explorer containers", async () => {
++  test.setTimeout(120_000);
++  const userDataDir = await makeUserDataDir();
++  const agentDir = join(userDataDir, "agent");
++  const workspacePath = await makeWorkspace("file-scroll-workspace");
++  await mkdir(join(workspacePath, "src"), { recursive: true });
++  await mkdir(join(workspacePath, "nested"), { recursive: true });
++
++  const longLines = Array.from({ length: 400 }, (_, index) =>
++    index + 1 === 350 ? "marker-350" : `long line ${index + 1}`,
++  );
++  await writeFile(join(workspacePath, "src", "long.ts"), `${longLines.join("\n")}\n`, "utf8");
++  await Promise.all(
++    Array.from({ length: 80 }, (_, index) =>
++      writeFile(
++        join(workspacePath, "nested", `file-${String(index).padStart(2, "0")}.txt`),
++        `nested ${index}\n`,
++        "utf8",
++      ),
++    ),
++  );
++
++  await seedAgentDir(agentDir);
++  await seedNamedTextSessionFixture(agentDir, workspacePath, {
++    title: SESSION_TITLE,
++    userText: "Open the far file targets.",
++    assistantText: [
++      "Long src/long.ts:350 sits far down.",
++      "Tree nested/file-79.txt:1 is the last row.",
++    ].join("\n"),
++  });
++
++  const harness = await launchDesktop(userDataDir, {
++    agentDir,
++    initialWorkspaces: [workspacePath],
++    testMode: "background",
++  });
++
++  try {
++    const window = await harness.firstWindow();
++    await selectSession(window, SESSION_TITLE);
++    const assistant = window.locator(".timeline-item--assistant");
++
++    await assistant.getByRole("button", { name: "src/long.ts:350", exact: true }).click();
++    const longMark = window.locator('[data-testid="file-line-mark"][data-line="350"]');
++    await expect(longMark).toContainText("marker-350");
++    await expectBoxInside(longMark, window.locator(".file-editor__body"));
++
++    await assistant.getByRole("button", { name: "nested/file-79.txt:1", exact: true }).click();
++    const lastRow = window.locator(
++      '.file-workbench__tree-row--file[data-file-path="nested/file-79.txt"]',
++    );
++    await expect(lastRow).toBeVisible();
++    await expectBoxInside(lastRow, window.locator(".file-workbench__tree"));
++  } finally {
++    await harness.close();
++  }
++});
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/index.ts
++++ after/desktop/packages/pi-sdk-driver/src/index.ts
+@@ -103,12 +103,15 @@
+ } from "./pao-flow-control.js";
+ export { loadPaoDesktopPlans } from "./pao-plans.js";
+ export type {
+   PaoDesktopPlanModule,
++  PaoPlanArtifact,
+   PaoPlanFeedback,
+   PaoPlanReadResult,
+   PaoPlanStartLink,
+   PaoPlanStep,
++  PaoPlanStepProgress,
++  PaoPlanStepRecord,
+   PaoPlanView,
+ } from "./pao-plans.js";
+ // 部门详情薄桥必须在模块顶层 re-export：宿主主进程体积是懒加载的，只有被静态求值的
+ // 导入才会进产物；放在惰性 import() 里拿不到（core lane 曾因此在真实 Electron 里
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-canvas.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-canvas.ts
+@@ -2,16 +2,14 @@
+  * PAO 工作流画布只读出口（桌面 P4-2）：把 fork 的 readDesktopCanvas（P4-1 数据桥）
+  * 收拢成一个加载点，桌面壳一次 IPC 拉取画布整页数据（配方库＋实例＋异常行），
+  * 不在桌面层重造解析。
+  *
+- * readDesktopCanvas 未列入 fork 包入口 exports，只能按构建产物的真实路径深引——
+- * 从 ./pao 入口的落盘位置反推 dist/pao 目录，再以 file URL 动态 import
+- * dist/pao/desktop/canvas.js（与 pao-workboard 的 status 深引同模式），
+- * 绝不引 fork 源码、不写任何文件、不缓存数据。readDesktopPreflight 预检桥
+- * 留给向导批次（P4-3），此处不加载。
++ * 画布与运行态读取都经公开的 pao/desktop 入口加载；Node 原生 ESM 缓存复用同一模块
++ * 实例，因而保留 owner 表；驱动包不反推内部构建目录，也不再维护第二层 Promise 缓存。
++ * 这里不写任何文件，也不缓存读取结果。
++ * readDesktopPreflight 预检桥留给向导批次（P4-3），此处不加载。
+  */
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
++import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ /** fork canvas.ts 的配方节点概要（包入口未导出类型，此处按结构声明）。 */
+ export interface PaoCanvasReviewEdge {
+   readonly target: string;
+@@ -165,43 +163,22 @@
+ ) => PaoNodeDetail;
+ 
+ /** 动态加载 fork 构建产物里的 readDesktopCanvas；加载失败抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopCanvas(): Promise<PaoDesktopCanvasReader> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  // ./pao 入口（dist/pao/index.js）所在目录即 fork 构建产物的 dist/pao。
+-  const forkPaoDistDir = dirname(paoEntryPath);
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir, "desktop", "canvas.js")).href
+-  )) as {
+-    readDesktopCanvas?: PaoDesktopCanvasReader;
+-  };
++  const module = await loadPaoDesktopModule();
+   if (typeof module.readDesktopCanvas !== "function") {
+-    throw new Error("readDesktopCanvas is not available in the PAO build products.");
++    throw new Error("PAO 构建产物缺少画布入口 readDesktopCanvas。");
+   }
+-  return module.readDesktopCanvas;
++  return module.readDesktopCanvas as unknown as PaoDesktopCanvasReader;
+ }
+ 
+-/** 动态加载 D8d 节点详情深读（与 loadPaoDesktopCanvas 同一模块，同一深引模式）。 */
++/** 动态加载 D8d 节点详情深读（与 loadPaoDesktopCanvas 同一公开模块）。 */
+ export async function loadPaoDesktopNodeDetail(): Promise<PaoDesktopNodeDetailReader> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  const forkPaoDistDir = dirname(paoEntryPath);
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir, "desktop", "canvas.js")).href
+-  )) as {
+-    readDesktopNodeDetail?: PaoDesktopNodeDetailReader;
+-  };
++  const module = await loadPaoDesktopModule();
+   if (typeof module.readDesktopNodeDetail !== "function") {
+-    throw new Error("readDesktopNodeDetail is not available in the PAO build products.");
++    throw new Error("PAO 构建产物缺少节点详情入口 readDesktopNodeDetail。");
+   }
+-  return module.readDesktopNodeDetail;
++  return module.readDesktopNodeDetail as unknown as PaoDesktopNodeDetailReader;
+ }
+ 
+ // ── 运行态数据桥（read-model.js）：卡面全文/执行映射/会话增量 ────────────────
+ // 节点详情深读只带模板值与回执子集；输入、产物路径、用量、执行映射的尝试号与会话
+@@ -299,22 +276,21 @@
+     offset?: number,
+   ) => PaoDesktopSessionIncrement;
+ }
+ 
+-/** 动态加载运行态只读桥（read-model.js，与 canvas.js 同 dist/pao/desktop）。 */
++/** 动态加载运行态只读桥（与 canvas.js 同属公开 pao/desktop 入口）。 */
+ export async function loadPaoDesktopRuntimeReader(): Promise<PaoDesktopRuntimeReader> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  const forkPaoDistDir = dirname(paoEntryPath);
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir, "desktop", "read-model.js")).href
+-  )) as Partial<PaoDesktopRuntimeReader>;
+-  for (const key of ["readDesktopProject", "readDesktopSessionIncrement"] as const) {
+-    if (typeof module[key] !== "function") {
+-      throw new Error(`PAO desktop read model is missing ${key} in the build products.`);
++  const module = await loadPaoDesktopModule();
++  const { readDesktopProject, readDesktopSessionIncrement } = module;
++  if (
++    typeof readDesktopProject !== "function" ||
++    typeof readDesktopSessionIncrement !== "function"
++  ) {
++    if (typeof readDesktopProject !== "function") {
++      throw new Error("PAO 构建产物缺少运行态入口 readDesktopProject。");
+     }
++    throw new Error("PAO 构建产物缺少运行态入口 readDesktopSessionIncrement。");
+   }
+-  return module as PaoDesktopRuntimeReader;
++  // 公开类型保留历史最小投影；真实内核函数接受完整卡/执行结构并返回更丰富字段。
++  // 两者已在项目快照和会话增量的真实读取流程中核对，断言只发生在这一加载边界。
++  return { readDesktopProject, readDesktopSessionIncrement } as unknown as PaoDesktopRuntimeReader;
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-card-ops.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-card-ops.ts
+@@ -4,24 +4,18 @@
+  * 只暴露内核 cards/index.js 已导出的纯库函数（readCard／changeCardStatus）：
+  * changeCardStatus 内部自带迁移白名单、单写者校验、读-合并-写与盘上状态一致性检查，
+  * 桌面层不重造任何状态机规则、不绕 owner 校验；操作者身份与目标状态由桌面桥给定
+  * （只代「用户」执行取消），业务判定唯一留在内核。
+- *
+- * 与 pao-kanban.ts 同一条 dist 引路径：开发态经 pnpm link 指向 fork 构建产物，
+- * 打包态用 vendor 物化副本；桌面不 import 内核 TS 源码。
+  */
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
+-
+-/** 内核卡最小形状（S9 迁移后英文键；只声明本桥读到的键，其余不猜）。 */
++/** 内核卡最小形状；公开替身只需要读卡号和当前状态，其余卡面字段不进入桌面契约。 */
+ export interface PaoCardOpsCard {
+   readonly path: string;
+   readonly card_no: number;
+   readonly frontmatter: { readonly status: string; readonly [key: string]: unknown };
+   readonly [key: string]: unknown;
+ }
+ 
+-/** 内核 changeCardStatus 的入参（中文键，与 fork cards/statemachine 同源）。 */
++/** 状态操作入参；`to` 保持旧公开字符串契约，业务状态值仍由内核状态机校验。 */
+ export interface PaoCardStatusChangeInput {
+   readonly 操作者: string;
+   readonly to: string;
+   readonly 失败类型?: string;
+@@ -29,9 +23,9 @@
+   readonly 时间: string;
+   readonly 尝试上限?: number;
+ }
+ 
+-/** 内核卡文件层纯签名（读同步、写原子；并发与一致性由内核自查）。 */
++/** loader 的返回签名来自内核；公开替身类型只在模块适配边界使用。 */
+ export interface PaoCardOpsModule {
+   readonly readCard: (path: string) => PaoCardOpsCard;
+   readonly changeCardStatus: (
+     card: PaoCardOpsCard,
+@@ -40,19 +34,17 @@
+ }
+ 
+ /** 动态加载 fork 构建产物里的卡文件层；缺函数即抛错，由调用方降级为操作不可用。 */
+ export async function loadPaoCardOps(): Promise<PaoCardOpsModule> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  const module = (await import(
+-    pathToFileURL(join(dirname(paoEntryPath), "cards", "index.js")).href
+-  )) as Partial<PaoCardOpsModule>;
+-  for (const key of ["readCard", "changeCardStatus"] as const) {
+-    if (typeof module[key] !== "function") {
+-      throw new Error(`PAO 构建产物缺少卡操作入口 ${key}。`);
+-    }
+-  }
+-  return module as PaoCardOpsModule;
++  const module = await import("@earendil-works/pi-coding-agent/pao");
++  const { readCard, changeCardStatus } = module;
++  if (typeof readCard !== "function") throw new Error("PAO 构建产物缺少卡操作入口 readCard。");
++  if (typeof changeCardStatus !== "function")
++    throw new Error("PAO 构建产物缺少卡操作入口 changeCardStatus。");
++  // 内核实现接受完整 ParsedCard/StatusChangeInput，公开层继续保留历史最小契约。
++  // 两种形状已由真实卡文件上的 readCard/changeCardStatus 流程测试核实。
++  const bridge = module as unknown as PaoCardOpsModule;
++  return {
++    readCard: bridge.readCard,
++    changeCardStatus: bridge.changeCardStatus,
++  };
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-desktop-module.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-desktop-module.ts
+@@ -0,0 +1,11 @@
++import type * as PaoDesktopExports from "@earendil-works/pi-coding-agent/pao/desktop";
++
++export type PaoDesktopModule = typeof PaoDesktopExports;
++
++/**
++ * 桌面桥统一从 PAO 的公开入口加载。Node 的原生 ESM 模块缓存会复用同一模块实例，
++ * 因而继续与桌面会话内置扩展共享 owner 表；这里不再维护第二层 Promise 缓存。
++ */
++export function loadPaoDesktopModule(): Promise<PaoDesktopModule> {
++  return import("@earendil-works/pi-coding-agent/pao/desktop");
++}
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-flow-control.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-flow-control.ts
+@@ -9,13 +9,12 @@
+  * runDesktopFlowCommand 会把每个参数拿磁盘真值复核（实例唯一、卡目录、节点与轮次、
+  * owner/原 owner），桌面层不重造规则、不绕 owner 校验；本模块只负责加载与形状声明。
+  * 「暂停」是内核真实的 pauseControl：只记挂起原因以暂停推进，不停在途进程；桌面桥没有停止入口。
+  *
+- * 与 pao-workflow.ts 同一条深引路径（dist/pao/desktop/index.js）：必须与桌面会话内置
+- * pao 扩展是同一模块实例，owner 表才共享，否则 runDesktopFlowCommand 找不到会话。
++ * 与 pao-workflow.ts 共用公开桌面入口：必须与桌面会话内置 pao 扩展是同一模块实例，
++ * owner 表才共享，否则 runDesktopFlowCommand 找不到会话。
+  */
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
++import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ /** fork NodeReport（controlReport 逐节点产物，中文键；字段与 fork 同源）。 */
+ export interface PaoFlowNodeReport {
+   readonly 名字: string;
+@@ -88,20 +87,14 @@
+ }
+ 
+ /** 动态加载 fork 构建产物里的控制桥；缺函数即抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopFlowControl(): Promise<PaoDesktopFlowControlModule> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  const forkPaoDistDir = dirname(paoEntryPath);
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir, "desktop", "index.js")).href
+-  )) as Partial<PaoDesktopFlowControlModule>;
+-  for (const key of ["readDesktopFlows", "runDesktopFlowCommand"] as const) {
+-    if (typeof module[key] !== "function") {
+-      throw new Error(`PAO desktop bridge is missing ${key} in the build products.`);
+-    }
+-  }
+-  return module as PaoDesktopFlowControlModule;
++  const module = await loadPaoDesktopModule();
++  const { readDesktopFlows, runDesktopFlowCommand } = module;
++  if (typeof readDesktopFlows !== "function")
++    throw new Error("PAO 构建产物缺少控制入口 readDesktopFlows。");
++  if (typeof runDesktopFlowCommand !== "function")
++    throw new Error("PAO 构建产物缺少控制入口 runDesktopFlowCommand。");
++  // 内核入口返回完整 native 类型；公开层仍以历史最小投影声明同一真实函数。
++  // 加载边界只跨越投影差异，函数行为和参数已由真实控制流程测试核实。
++  return { readDesktopFlows, runDesktopFlowCommand } as unknown as PaoDesktopFlowControlModule;
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-kanban.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-kanban.ts
+@@ -1,18 +1,12 @@
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
+ import type { PaoDesktopSessionIncrement } from "./pao-canvas.js";
++import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ /** 复用内核卡读取与项目清单聚合；不在桌面重写解析器。 */
+ export type PaoKanbanReader = (paoHome: string, currentProject: string) => unknown;
+ 
+ export async function loadPaoKanbanReader(): Promise<PaoKanbanReader> {
+-  const entry = fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent/pao"));
+-  const module = (await import(
+-    pathToFileURL(join(dirname(entry), "desktop", "read-model.js")).href
+-  )) as {
+-    readDesktopPending?: PaoKanbanReader;
+-  };
++  const module = await loadPaoDesktopModule();
+   if (typeof module.readDesktopPending !== "function")
+     throw new Error("PAO 构建产物缺少卡聚合入口。");
+   return module.readDesktopPending;
+ }
+@@ -33,15 +27,10 @@
+   ): PaoDesktopSessionIncrement;
+ }
+ 
+ export async function loadPaoWorkboardSessionReader(): Promise<PaoWorkboardSessionReader> {
+-  const entry = fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent/pao"));
+-  const module = (await import(
+-    pathToFileURL(join(dirname(entry), "desktop", "read-model.js")).href
+-  )) as PaoWorkboardSessionReader;
+-  if (
+-    typeof module.readDesktopExecution !== "function" ||
+-    typeof module.readDesktopWorkflowMinister !== "function"
+-  )
++  const module = await loadPaoDesktopModule();
++  const { readDesktopExecution, readDesktopWorkflowMinister } = module;
++  if (typeof readDesktopExecution !== "function" || typeof readDesktopWorkflowMinister !== "function")
+     throw new Error("PAO 构建产物缺少执行会话读取入口。");
+-  return module;
++  return { readDesktopExecution, readDesktopWorkflowMinister };
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-workboard.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-workboard.ts
+@@ -2,17 +2,13 @@
+  * PAO 工作看板只读聚合出口（桌面 P3 首件）：把本地 PAO fork 已有的同步聚合函数
+  * 收拢成一个加载点，桌面壳一次 IPC 拉取三段数据（部门积压／挂起与异常工作流实例／
+  * 待处理事项），不在桌面层重造解析。
+  *
+- * fork 的包入口（./pao）直接导出 deptBacklogSnapshot；status 两件
+- * （workflow-instances／pending）未列入包 exports，只能按构建产物的真实路径深引——
+- * 从 ./pao 入口的落盘位置反推 dist/pao 目录，再以 file URL 动态 import 构建产物，
+- * 绝不引 fork 源码、不写任何文件、不缓存数据。
++ * 部门积压从包根入口读取；工作流实例扫描与待处理事项从公开桌面入口读取。
++ * 三个函数均来自内核公开导出，不反推内部构建目录，也不缓存读取结果。
+  */
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
+-
+ import { deptBacklogSnapshot, type DeptBacklogRow } from "@earendil-works/pi-coding-agent/pao";
++import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ export type { DeptBacklogRow };
+ 
+ /** fork status/workflow-instances.ts 的挂起实例行（包入口未导出类型，此处按结构声明）。 */
+@@ -63,54 +59,20 @@
+   workflowInstances(home: string): Promise<PaoWorkflowInstanceScan>;
+   pending(home: string, limits?: PaoPendingLimits): Promise<PaoPendingItem[]>;
+ }
+ 
+-function resolvePaoEntryPath(): string {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string })
+-    .resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  return fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-}
+-
+-/** ./pao 入口（dist/pao/index.js）所在目录即 fork 构建产物的 dist/pao。 */
+-function forkPaoDistDir(): string {
+-  return dirname(resolvePaoEntryPath());
+-}
+-
+-async function loadWorkflowInstanceScan(home: string): Promise<PaoWorkflowInstanceScan> {
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir(), "status", "workflow-instances.js")).href
+-  )) as {
+-    scanWorkflowInstances?: (paoHome: string) => PaoWorkflowInstanceScan;
+-  };
+-  if (typeof module.scanWorkflowInstances !== "function") {
+-    throw new Error("scanWorkflowInstances is not available in the PAO build products.");
+-  }
+-  return module.scanWorkflowInstances(home);
+-}
+-
+-async function loadPendingItems(home: string, limits?: PaoPendingLimits): Promise<PaoPendingItem[]> {
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir(), "status", "pending.js")).href
+-  )) as {
+-    collectPending?: (paoHome: string, options?: PaoPendingLimits) => PaoPendingItem[];
+-  };
+-  if (typeof module.collectPending !== "function") {
+-    throw new Error("collectPending is not available in the PAO build products.");
+-  }
+-  return module.collectPending(home, limits);
+-}
+-
+-/** 动态加载 fork 构建产物并返回三个只读聚合；加载失败抛错，由调用方降级为不可用。 */
++/** 动态加载公开入口并返回三个只读聚合；加载失败抛错，由调用方降级为不可用。 */
+ export async function loadPaoWorkboardAggregates(): Promise<PaoWorkboardAggregates> {
+-  // 静态引入已在模块图里，这里仅为把入口失败与两件深引失败放进同一个加载点。
+-  if (typeof deptBacklogSnapshot !== "function") {
+-    throw new Error("deptBacklogSnapshot is not available in the PAO build products.");
+-  }
++  const module = await loadPaoDesktopModule();
++  const { scanWorkflowInstances, collectPending } = module;
++  if (typeof deptBacklogSnapshot !== "function")
++    throw new Error("PAO 构建产物缺少看板入口 deptBacklogSnapshot。");
++  if (typeof scanWorkflowInstances !== "function")
++    throw new Error("PAO 构建产物缺少看板入口 scanWorkflowInstances。");
++  if (typeof collectPending !== "function")
++    throw new Error("PAO 构建产物缺少看板入口 collectPending。");
+   return {
+     deptBacklog: async (home) => deptBacklogSnapshot(home),
+-    workflowInstances: (home) => loadWorkflowInstanceScan(home),
+-    pending: (home, limits) => loadPendingItems(home, limits),
++    workflowInstances: async (home) => scanWorkflowInstances(home),
++    pending: async (home, limits) => collectPending(home, limits),
+   };
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/pao-workflow.ts
++++ after/desktop/packages/pi-sdk-driver/src/pao-workflow.ts
+@@ -1,18 +1,16 @@
+ /**
+  * PAO 工作流向导桥（桌面 P4-3）：把 fork 的 desktop 桥五函数（目录只读／预检同源闸门／
+  * 模板安装／配方保存／启流）收拢成一个加载点，桌面壳经 IPC 直调，不在桌面层重造解析。
+  *
+- * 深引路径与 pao-canvas.ts 同模式：从 ./pao 入口反推 dist/pao 目录，动态 import
+- * dist/pao/desktop/index.js。该模块与桌面会话内置 pao 扩展（builtin factory paoExtension
+- * 的 registerDesktopOwner）在主进程内是同一实例——owners 表共享，启流/存配方的会话
+- * 校验与 ui.confirm 二次确认全部沿用 fork 原语义，桌面层不绕不仿。
++ * 公开桌面入口与桌面会话内置 pao 扩展（builtin factory paoExtension 的
++ * registerDesktopOwner）在主进程内是同一模块实例——owners 表共享，启流/存配方的
++ * 会话校验与 ui.confirm 二次确认全部沿用 fork 原语义，桌面层不绕不仿。
+  *
+  * 配方对象（中文键）整体透传：渲染等值性（renderDesktopRecipe）靠不重造字段，
+  * 桌面只改向导明确暴露的节点字段（模型/档位/思考强度/预算）。
+  */
+-import { dirname, join } from "node:path";
+-import { fileURLToPath, pathToFileURL } from "node:url";
++import { loadPaoDesktopModule } from "./pao-desktop-module.js";
+ 
+ /** fork 节点预算（CardBudget 数值字段）。 */
+ export interface PaoNodeBudget {
+   readonly turns?: number;
+@@ -153,27 +151,36 @@
+ }
+ 
+ /** 动态加载 fork 构建产物里的 desktop 桥；加载失败抛错，由调用方降级为不可用。 */
+ export async function loadPaoDesktopWorkflow(): Promise<PaoDesktopWorkflowModule> {
+-  const resolve = (import.meta as ImportMeta & { resolve?: (specifier: string) => string }).resolve;
+-  if (typeof resolve !== "function") {
+-    throw new Error("import.meta.resolve is unavailable in this runtime.");
+-  }
+-  const paoEntryPath = fileURLToPath(resolve("@earendil-works/pi-coding-agent/pao"));
+-  const forkPaoDistDir = dirname(paoEntryPath);
+-  const module = (await import(
+-    pathToFileURL(join(forkPaoDistDir, "desktop", "index.js")).href
+-  )) as Partial<PaoDesktopWorkflowModule>;
+-  for (const key of [
+-    "readDesktopRecipeCatalog",
+-    "previewDesktopWorkflow",
+-    "installDesktopTemplate",
+-    "saveDesktopRecipe",
+-    "deleteDesktopRecipe",
+-    "startDesktopWorkflow",
+-  ] as const) {
+-    if (typeof module[key] !== "function") {
+-      throw new Error(`PAO desktop bridge is missing ${key} in the build products.`);
+-    }
+-  }
+-  return module as PaoDesktopWorkflowModule;
++  const module = await loadPaoDesktopModule();
++  const {
++    readDesktopRecipeCatalog,
++    previewDesktopWorkflow,
++    installDesktopTemplate,
++    saveDesktopRecipe,
++    deleteDesktopRecipe,
++    startDesktopWorkflow,
++  } = module;
++  if (typeof readDesktopRecipeCatalog !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 readDesktopRecipeCatalog。");
++  if (typeof previewDesktopWorkflow !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 previewDesktopWorkflow。");
++  if (typeof installDesktopTemplate !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 installDesktopTemplate。");
++  if (typeof saveDesktopRecipe !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 saveDesktopRecipe。");
++  if (typeof deleteDesktopRecipe !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 deleteDesktopRecipe。");
++  if (typeof startDesktopWorkflow !== "function")
++    throw new Error("PAO 构建产物缺少工作流入口 startDesktopWorkflow。");
++  // 内核实现接受完整 WorkflowRecipe 并返回完整 catalog/preview；公开层保留历史最小
++  // 契约。真实配方读写、预览和启动流程已覆盖字段传递与返回值，断言只在此加载边界。
++  return {
++    readDesktopRecipeCatalog,
++    previewDesktopWorkflow,
++    installDesktopTemplate,
++    saveDesktopRecipe,
++    deleteDesktopRecipe,
++    startDesktopWorkflow,
++  } as unknown as PaoDesktopWorkflowModule;
+ }
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/src/runtime-supervisor.ts
++++ after/desktop/packages/pi-sdk-driver/src/runtime-supervisor.ts
+@@ -28,8 +28,9 @@
+   RuntimeSkillRecord,
+   RuntimeSourceInfo,
+   RuntimeSnapshot,
+ } from "@pi-gui/session-driver/runtime-types";
++import { mergeEnabledModelPatterns } from "@pi-gui/session-driver";
+ import type { WorkspaceRef } from "@pi-gui/session-driver";
+ import { createRuntimeDependencies } from "./runtime-deps.js";
+ import type { PiCreateAgentSessionOptions } from "./npm-package-fallback.js";
+ import {
+@@ -1441,24 +1442,8 @@
+       : {}),
+   } satisfies ModelSettingsSnapshot;
+ }
+ 
+-function mergeEnabledModelPatterns(
+-  existingPatterns: readonly string[],
+-  providerPatterns: readonly string[],
+-): readonly string[] {
+-  const merged = [...existingPatterns];
+-  const seen = new Set(existingPatterns);
+-  for (const pattern of providerPatterns) {
+-    if (seen.has(pattern)) {
+-      continue;
+-    }
+-    seen.add(pattern);
+-    merged.push(pattern);
+-  }
+-  return merged;
+-}
+-
+ function firstNonEmptyLine(value: string): string | undefined {
+   return value
+     .split(/\r?\n/)
+     .map((line) => line.trim())
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/pao-canvas.test.mts
++++ after/desktop/packages/pi-sdk-driver/test/pao-canvas.test.mts
+@@ -6,9 +6,9 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { join, resolve } from "node:path";
+-import { loadPaoDesktopCanvas } from "../src/pao-canvas.ts";
++import { loadPaoDesktopCanvas } from "../dist/pao-canvas.js";
+ 
+ const base = resolve("D:/AI/workspace/临时文件夹/PAO-画布桥测试-20261005");
+ mkdirSync(base, { recursive: true });
+ 
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/pao-card-ops.test.mts
++++ after/desktop/packages/pi-sdk-driver/test/pao-card-ops.test.mts
+@@ -0,0 +1,64 @@
++import assert from "node:assert/strict";
++import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import test from "node:test";
++import { loadPaoCardOps } from "../dist/pao-card-ops.js";
++
++function cardText(status, owner) {
++  return [
++    "---",
++    "goal: public card bridge test",
++    "dept: engineering",
++    "acceptance: test",
++    "attempt: 1",
++    'created: "2026-10-22 12:00"',
++    `status: ${status}`,
++    ...(owner === undefined ? [] : [`owner: ${owner}`]),
++    "---",
++    "",
++  ].join("\n");
++}
++
++test("card operations use the public PAO entry and preserve disk-backed state rules", async () => {
++  const root = mkdtempSync(join(tmpdir(), "pao-card-ops-public-"));
++  const cardsDir = join(root, ".pao", "cards");
++  const cardPath = join(cardsDir, "卡0002-owner.md");
++  mkdirSync(cardsDir, { recursive: true });
++  writeFileSync(cardPath, cardText("in_progress", "owner-a"), "utf8");
++  try {
++    const cards = await loadPaoCardOps();
++    const card = cards.readCard(cardPath);
++    assert.equal(card.card_no, 2);
++    assert.equal(card.frontmatter.status, "in_progress");
++    assert.equal(card.frontmatter.owner, "owner-a");
++    assert.equal(readFileSync(cardPath, "utf8"), cardText("in_progress", "owner-a"));
++
++    assert.throws(
++      () =>
++        cards.changeCardStatus(card, {
++          操作者: "different-owner",
++          to: "canceled",
++          依据: "owner check",
++          时间: "2026-10-22 12:01",
++        }),
++      (error) => error?.code === "FORBIDDEN_WRITER",
++    );
++    assert.equal(card.frontmatter.status, "in_progress");
++    assert.equal(readFileSync(cardPath, "utf8"), cardText("in_progress", "owner-a"));
++
++    const updated = cards.changeCardStatus(card, {
++      操作者: "owner-a",
++      to: "canceled",
++      依据: "owner check",
++      时间: "2026-10-22 12:02",
++    });
++    assert.equal(updated.frontmatter.status, "canceled");
++    const disk = cards.readCard(cardPath);
++    assert.equal(disk.frontmatter.status, "canceled");
++    assert.equal(disk.frontmatter.owner, "owner-a");
++    assert.match(disk.body, /2026-10-22 12:02/);
++  } finally {
++    rmSync(root, { recursive: true, force: true });
++  }
++});
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/pao-desktop-module.test.mts
++++ after/desktop/packages/pi-sdk-driver/test/pao-desktop-module.test.mts
+@@ -0,0 +1,25 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++
++test("loader resolves to the native public PAO desktop module", async () => {
++  const { loadPaoDesktopModule } = await import("../dist/pao-desktop-module.js");
++  const [loaded, native] = await Promise.all([
++    loadPaoDesktopModule(),
++    import("@earendil-works/pi-coding-agent/pao/desktop"),
++  ]);
++  assert.equal(loaded, native);
++  for (const name of [
++    "readDesktopCanvas",
++    "readDesktopNodeDetail",
++    "readDesktopProject",
++    "readDesktopSessionIncrement",
++    "readDesktopFlows",
++    "readDesktopPlans",
++    "readDesktopDeptCatalog",
++    "readDesktopDeptDetail",
++    "runDesktopFlowCommand",
++    "startDesktopWorkflow",
++  ] as const) {
++    assert.equal(typeof loaded[name], "function", `${name} should be exported by pao/desktop`);
++  }
++});
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts
++++ after/desktop/packages/pi-sdk-driver/test/pao-public-bridge-identity.test.mts
+@@ -0,0 +1,106 @@
++import assert from "node:assert/strict";
++import { resolve } from "node:path";
++import test from "node:test";
++
++import { loadPaoCardOps } from "../dist/pao-card-ops.js";
++import {
++  loadPaoDesktopCanvas,
++  loadPaoDesktopNodeDetail,
++  loadPaoDesktopRuntimeReader,
++} from "../dist/pao-canvas.js";
++import { loadPaoDesktopDept } from "../dist/pao-dept.js";
++import { loadPaoDesktopFlowControl } from "../dist/pao-flow-control.js";
++import {
++  loadPaoKanbanReader,
++  loadPaoWorkboardSessionReader,
++} from "../dist/pao-kanban.js";
++import { loadPaoDesktopPlans } from "../dist/pao-plans.js";
++import { loadPaoDesktopWorkflow } from "../dist/pao-workflow.js";
++import { loadPaoWorkboardAggregates } from "../dist/pao-workboard.js";
++
++test("migrated bridges load real functions from the native public PAO entries", async () => {
++  const [
++    desktop,
++    root,
++    cardOps,
++    canvas,
++    nodeDetail,
++    runtime,
++    dept,
++    flowControl,
++    kanban,
++    workboardSession,
++    plans,
++    workflow,
++    workboard,
++  ] =
++    await Promise.all([
++      import("@earendil-works/pi-coding-agent/pao/desktop"),
++      import("@earendil-works/pi-coding-agent/pao"),
++      loadPaoCardOps(),
++      loadPaoDesktopCanvas(),
++      loadPaoDesktopNodeDetail(),
++      loadPaoDesktopRuntimeReader(),
++      loadPaoDesktopDept(),
++      loadPaoDesktopFlowControl(),
++      loadPaoKanbanReader(),
++      loadPaoWorkboardSessionReader(),
++      loadPaoDesktopPlans(),
++      loadPaoDesktopWorkflow(),
++      loadPaoWorkboardAggregates(),
++    ]);
++
++  assert.equal(typeof root.readCard, "function");
++  assert.equal(typeof cardOps.readCard, "function");
++  assert.equal(typeof cardOps.changeCardStatus, "function");
++  assert.equal(typeof desktop.readDesktopCanvas, "function");
++  assert.equal(typeof canvas, "function");
++  assert.equal(typeof desktop.readDesktopNodeDetail, "function");
++  assert.equal(typeof nodeDetail, "function");
++  assert.equal(typeof runtime.readDesktopProject, "function");
++  assert.equal(typeof runtime.readDesktopSessionIncrement, "function");
++  assert.equal(typeof dept.readDesktopDeptCatalog, "function");
++  assert.equal(typeof dept.readDesktopDeptDetail, "function");
++  assert.equal(typeof flowControl.readDesktopFlows, "function");
++  assert.equal(typeof flowControl.runDesktopFlowCommand, "function");
++  assert.equal(typeof desktop.readDesktopPending, "function");
++  assert.equal(typeof kanban, "function");
++  assert.equal(typeof workboardSession.readDesktopExecution, "function");
++  assert.equal(typeof workboardSession.readDesktopWorkflowMinister, "function");
++  assert.equal(typeof plans.readDesktopPlans, "function");
++  assert.equal(typeof workflow.readDesktopRecipeCatalog, "function");
++  assert.equal(typeof workflow.previewDesktopWorkflow, "function");
++  assert.equal(typeof workflow.installDesktopTemplate, "function");
++  assert.equal(typeof workflow.saveDesktopRecipe, "function");
++  assert.equal(typeof workflow.deleteDesktopRecipe, "function");
++  assert.equal(typeof workflow.startDesktopWorkflow, "function");
++  assert.equal(typeof workboard.workflowInstances, "function");
++  const fs = await import("node:fs/promises");
++  const { tmpdir } = await import("node:os");
++  const home = await fs.mkdtemp(`${tmpdir()}/pao-public-bridge-`);
++  try {
++    assert.deepEqual(canvas(home).配方, []);
++    const project = runtime.readDesktopProject(home, "missing-session");
++    assert.equal(resolve(project.projectRoot), resolve(home));
++    assert.deepEqual(project.cards, []);
++    assert.deepEqual(project.execution, []);
++    assert.deepEqual(project.issues, []);
++    const catalog = workflow.readDesktopRecipeCatalog(home);
++    assert.ok(Array.isArray(catalog.recipes));
++    assert.ok(Array.isArray(catalog.departments));
++    assert.ok(Array.isArray(catalog.tiers));
++    assert.deepEqual(flowControl.readDesktopFlows(home), { 工作流: [], 问题: [] });
++    assert.deepEqual(plans.readDesktopPlans(home), { 计划: [], 问题: [] });
++    assert.throws(
++      () => dept.readDesktopDeptCatalog("missing-session", home, { paoHome: home }),
++      /原会话 owner 不可用或已切换/,
++    );
++    assert.deepEqual(await workboard.workflowInstances(home), {
++      挂起: [],
++      异常: [],
++    });
++    assert.deepEqual(await workboard.pending(home), []);
++  } finally {
++    await fs.rm(home, { recursive: true, force: true });
++  }
++});
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/pao-workboard.test.mts
++++ after/desktop/packages/pi-sdk-driver/test/pao-workboard.test.mts
+@@ -4,9 +4,9 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { join, resolve } from "node:path";
+-import { loadPaoWorkboardAggregates } from "../src/pao-workboard.ts";
++import { loadPaoWorkboardAggregates } from "../dist/pao-workboard.js";
+ 
+ const base = resolve("D:/AI/workspace/临时文件夹/PAO-看板聚合测试-20261004");
+ mkdirSync(base, { recursive: true });
+ 
+
+===================================================================
+--- before/desktop/packages/pi-sdk-driver/test/public-contract.compat.mts
++++ after/desktop/packages/pi-sdk-driver/test/public-contract.compat.mts
+@@ -0,0 +1,255 @@
++/**
++ * 公开契约编译探针：本文件由 tsconfig.lint.json 编译，不参与运行测试。
++ * 锁住本轮重构前的公开最小形状和函数签名，防止 loader 迁移再次收窄调用方替身。
++ */
++import type {
++  PaoCanvasNodeSummary,
++  PaoCanvasRecipeEntry,
++  PaoCanvasView,
++  PaoCardOpsCard,
++  PaoCardOpsModule,
++  PaoCardStatusChangeInput,
++  PaoDesktopCanvasReader,
++  PaoDesktopDeptModule,
++  PaoDesktopFlowControlModule,
++  PaoDesktopNodeDetailReader,
++  PaoDesktopPlanModule,
++  PaoDesktopRuntimeReader,
++  PaoDesktopWorkflowModule,
++  PaoDeptCatalog,
++  PaoDeptDetail,
++  PaoDeptViewOptions,
++  PaoDesktopSessionIncrement,
++  PaoFlowControlManifest,
++  PaoPlanArtifact,
++  PaoPlanReadResult,
++  PaoPlanStep,
++  PaoPlanStepProgress,
++  PaoPlanStepRecord,
++  PaoPreflightReport,
++  PaoRecipeCatalog,
++  PaoWorkflowPreview,
++  PaoWorkflowRecipe,
++} from "../dist/index.js";
++
++const card: PaoCardOpsCard = {
++  path: "卡0001-test.md",
++  card_no: 1,
++  frontmatter: { status: "in_progress" },
++};
++
++const statusChange: PaoCardStatusChangeInput = {
++  操作者: "用户",
++  to: "canceled",
++  时间: "2026-10-22 12:00",
++};
++
++const cardOps: PaoCardOpsModule = {
++  readCard: () => card,
++  changeCardStatus: () => card,
++};
++void cardOps.changeCardStatus(card, statusChange);
++
++const recipeNode: PaoCanvasNodeSummary = {
++  名字: "实现",
++  部门: "工程",
++  depends_on: [],
++  人工确认: false,
++};
++const recipeEntry: PaoCanvasRecipeEntry = {
++  名字: "最小画布",
++  可用: true,
++  配方: {
++    版本: 2,
++    自动执行: false,
++    参数: [],
++    占位符: [],
++    拓扑序: ["实现"],
++    节点: [recipeNode],
++  },
++};
++const canvas: PaoCanvasView = {
++  配方: [recipeEntry],
++  实例: [],
++  异常: [],
++};
++const canvasReader: PaoDesktopCanvasReader = () => canvas;
++const nodeDetailReader: PaoDesktopNodeDetailReader = (_home, _instance, node) => ({
++  节点: node,
++  实例: "最小实例",
++  执行: [],
++});
++void nodeDetailReader("home", "instance.md", "实现", "卡0001");
++
++const sessionIncrement: PaoDesktopSessionIncrement = {
++  会话路径: "session.jsonl",
++  下次偏移: 0,
++  末行未完: false,
++  还有更多: false,
++  行: [],
++  本段统计: { 响应: 0, 工具: 0, token: 0, 未知用量: 0 },
++};
++const runtimeReader: PaoDesktopRuntimeReader = {
++  readDesktopProject: () => ({
++    projectRoot: ".",
++    cards: [],
++    execution: [],
++    issues: [],
++  }),
++  readDesktopSessionIncrement: () => sessionIncrement,
++};
++void runtimeReader.readDesktopSessionIncrement("session.jsonl");
++
++const flow: PaoFlowControlManifest = {
++  实例: "flow-1",
++  owner: "session-1",
++  工作流: "最小流程",
++  卡目录: "cards",
++  状态: "运行中",
++  节点: [{ 名字: "实现", 轮次: 1 }],
++};
++const flowControl: PaoDesktopFlowControlModule = {
++  readDesktopFlows: () => ({ 工作流: [], 问题: [] }),
++  runDesktopFlowCommand: async () => {},
++};
++void flow.owner;
++void flowControl.readDesktopFlows(".");
++
++const recipe: PaoWorkflowRecipe = {
++  名字: "最小流程",
++  参数: [],
++  节点: [{ 名字: "实现", 部门: "工程" }],
++};
++const preflight: PaoPreflightReport = {
++  project: ".",
++  checkedAt: "2026-10-22 12:00",
++  canStart: true,
++  items: [{ level: "自定义级别", subject: "主体", reason: "原因", suggestion: "建议" }],
++};
++const preview: PaoWorkflowPreview = {
++  report: preflight,
++  节点数: 1,
++  节点: [
++    { 名字: "实现", 部门: "工程", 工人上限: 1, 模型: "model", 思考强度: "high", 技能: [] },
++  ],
++  预算: { cost: null, turns: null, toolCalls: null, 说明: "" },
++  将落卡数: "1",
++};
++const catalog: PaoRecipeCatalog = {
++  recipes: [{ recipe, revision: "1", content: "content" }],
++  departments: ["工程"],
++  skills: [],
++  tiers: [{ 名: "默认", provider: "p", model: "m", thinkingLevel: "high" }],
++  thinkingLevels: ["high"],
++  templates: [{ id: "starter" }],
++  errors: [],
++};
++const workflow: PaoDesktopWorkflowModule = {
++  readDesktopRecipeCatalog: () => catalog,
++  previewDesktopWorkflow: () => preview,
++  installDesktopTemplate: async () => {},
++  saveDesktopRecipe: async () => {},
++  deleteDesktopRecipe: async () => {},
++  startDesktopWorkflow: async () => {},
++};
++void workflow.previewDesktopWorkflow(".", ".", recipe, {});
++
++const planStep: PaoPlanStep = {
++  步骤ID: "s1",
++  标题: "实现",
++  部门: "工程",
++  要求: "完成",
++  依赖: [],
++  人工门: false,
++  只读: false,
++  审核: false,
++};
++const planArtifact: PaoPlanArtifact = {
++  路径: "成果/实现.md",
++  相对路径: "成果/实现.md",
++  轮次: 1,
++  卡号: "卡0001",
++  存在: true,
++};
++const planStepRecord: PaoPlanStepRecord = {
++  轮次: 1,
++  卡: ["卡0001"],
++  判定: "delivered",
++};
++const planStepProgress: PaoPlanStepProgress = {
++  步骤ID: "s1",
++  状态: "delivered",
++  需要人工确认: false,
++  等待人工确认: false,
++  卡: ["卡0001"],
++  记录: [planStepRecord],
++  产出: [planArtifact],
++};
++const planRead: PaoPlanReadResult = {
++  计划: [
++    {
++      计划ID: "p1",
++      显示名: "最小计划",
++      定义版本: 1,
++      已撤销: false,
++      创建时刻: "2026-10-22 12:00",
++      更新时刻: "2026-10-22 12:00",
++      步骤: [planStep],
++      启动: [],
++      意见: [],
++    },
++  ],
++  问题: [],
++};
++const plans: PaoDesktopPlanModule = {
++  readDesktopPlans: () => planRead,
++};
++void plans.readDesktopPlans(".");
++void planStepProgress;
++
++const viewOptions: PaoDeptViewOptions = { paoHome: "isolated-home" };
++const deptCatalog: PaoDeptCatalog = {
++  版本: 1,
++  session: "session-1",
++  project: ".",
++  paoHome: "isolated-home",
++  读取时间: "2026-10-22 12:00",
++  注册表路径: "部门/注册表.md",
++  部门: [],
++  问题: [],
++  工具技能人设区别: [],
++};
++const deptDetail: PaoDeptDetail = {
++  版本: 1,
++  session: "session-1",
++  project: ".",
++  paoHome: "isolated-home",
++  读取时间: "2026-10-22 12:00",
++  名字: "工程",
++  标签: [],
++  库路径: "知识库",
++  路径: { 部门目录: "部门/工程", 配方: "配方.md", 知识库: "知识库" },
++  职责: { 原文: "", 出处: null, 待填: false },
++  工具: { 原值: null, 白名单: [], 混写技能名: [] },
++  技能: [],
++  默认档位: { 生效: "默认", 来源: "缺省兜底", provider: null, model: null, thinkingLevel: null },
++  标准: [],
++  知识入口: {
++    索引: { 路径: "索引", 相对路径: null, 可读: false, 字节: null, 行数: null },
++    干法: null,
++  },
++  配置问题: [],
++  负载: { 活卡数: 0, 卡片总数: 0, 热部长数: 0, 挂起节点数: 0, 归档卡数: 0, 读取问题: [] },
++  读取问题: [],
++};
++const dept: PaoDesktopDeptModule = {
++  readDesktopDeptCatalog: (_session, _project, options) => {
++    void options;
++    return deptCatalog;
++  },
++  readDesktopDeptDetail: (_session, _project, _dept, options) => {
++    void options;
++    return deptDetail;
++  },
++};
++void dept.readDesktopDeptCatalog("session-1", ".", viewOptions);
+
+===================================================================
+--- before/desktop/packages/session-driver/package.json
++++ after/desktop/packages/session-driver/package.json
+@@ -23,7 +23,8 @@
+     "dist"
+   ],
+   "scripts": {
+     "build": "tsc -p tsconfig.json",
+-    "typecheck": "tsc -p tsconfig.json --noEmit"
++    "typecheck": "tsc -p tsconfig.json --noEmit",
++    "test": "node --test \"test/**/*.test.mts\""
+   }
+ }
+
+===================================================================
+--- before/desktop/packages/session-driver/src/index.ts
++++ after/desktop/packages/session-driver/src/index.ts
+@@ -68,8 +68,9 @@
+   RuntimeSourceOrigin,
+   RuntimeSourceScope,
+   RuntimeSnapshot,
+ } from "./runtime-types.js";
++export { mergeEnabledModelPatterns } from "./runtime-types.js";
+ 
+ export type {
+   ExtensionCard,
+   ExtensionCardRow,
+
+===================================================================
+--- before/desktop/packages/session-driver/src/runtime-types.ts
++++ after/desktop/packages/session-driver/src/runtime-types.ts
+@@ -121,8 +121,25 @@
+   readonly defaultThinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+   readonly enabledModelPatterns: readonly string[];
+ }
+ 
++/** 追加提供方模型模式，保留用户已有顺序，并避免现有项或追加项重复。 */
++export function mergeEnabledModelPatterns(
++  existingPatterns: readonly string[],
++  providerPatterns: readonly string[],
++): readonly string[] {
++  const merged = [...existingPatterns];
++  const seen = new Set(existingPatterns);
++  for (const pattern of providerPatterns) {
++    if (seen.has(pattern)) {
++      continue;
++    }
++    seen.add(pattern);
++    merged.push(pattern);
++  }
++  return merged;
++}
++
+ export interface RuntimeSnapshot {
+   readonly workspace: WorkspaceRef;
+   readonly providers: readonly RuntimeProviderRecord[];
+   readonly models: readonly RuntimeModelRecord[];
+
+===================================================================
+--- before/desktop/packages/session-driver/test/merge-enabled-model-patterns.test.mts
++++ after/desktop/packages/session-driver/test/merge-enabled-model-patterns.test.mts
+@@ -0,0 +1,26 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++import { mergeEnabledModelPatterns } from "../src/runtime-types.ts";
++
++test("merges provider model patterns after existing entries without duplicates", () => {
++  assert.deepEqual(
++    mergeEnabledModelPatterns(
++      ["provider-a/first", "provider-b/second"],
++      ["provider-a/first", "provider-c/third", "provider-c/third"],
++    ),
++    ["provider-a/first", "provider-b/second", "provider-c/third"],
++  );
++});
++
++test("returns the existing order and length when every provider pattern is already present", () => {
++  const current = ["provider-b/second", "provider-a/first"] as const;
++  const merged = mergeEnabledModelPatterns(current, ["provider-a/first", "provider-b/second"]);
++
++  assert.deepEqual(merged, current);
++  assert.equal(merged.length, current.length);
++});
++
++test("handles empty inputs without manufacturing a model pattern", () => {
++  assert.deepEqual(mergeEnabledModelPatterns([], []), []);
++  assert.deepEqual(mergeEnabledModelPatterns([], ["provider/model"]), ["provider/model"]);
++});

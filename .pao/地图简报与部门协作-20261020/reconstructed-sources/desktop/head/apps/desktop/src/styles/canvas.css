@@ -1,0 +1,910 @@
+/* 工作流画布整页视图 v1（只读）：三区布局（左列表/中 DAG/右详情），对齐 workboard-view 的从简口径。 */
+.canvas-view {
+  padding: 16px 18px;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.canvas-status {
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.canvas-search {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.workflow-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.workflow-surface {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+.workflow-surface .recipe-panels,
+.workflow-surface .recipe-canvas-editor {
+  min-height: 0;
+}
+.workflow-surface .workflow-graph {
+  min-height: 160px;
+}
+.workflow-chat-separator {
+  height: 8px;
+  background: var(--line);
+}
+.embedded-chat {
+  height: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+.embedded-chat__toggle {
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.embedded-chat__body {
+  overflow: hidden;
+}
+.embedded-chat__body .canvas--thread {
+  flex: 1;
+  min-height: 0;
+}
+.embedded-chat__body .composer-panel {
+  flex-shrink: 0;
+}
+.workflow-tab {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.workflow-tab--active {
+  background: var(--surface);
+  border-color: var(--muted-strong);
+}
+.workflow-tab__select,
+.workflow-tab__close {
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.canvas-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(220px, 300px);
+  gap: 16px;
+  align-items: stretch;
+}
+.canvas-layout--library-collapsed { grid-template-columns: 48px minmax(0, 1fr) minmax(220px, 300px); }
+/* S4-2 单工作流嵌入视图：无工作流库时画布占满左列。 */
+.canvas-layout--no-library { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); }
+.canvas-library-heading { display: flex; align-items: center; justify-content: space-between; }
+.canvas-library-expand { align-self: start; writing-mode: vertical-rl; }
+.recipe-library__filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.recipe-library__filter { padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; }
+.recipe-library__filter[aria-pressed="true"] { background: var(--surface-overlay-hover); font-weight: 600; }
+
+.recipe-canvas-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+  gap: 8px;
+  overflow: hidden;
+}
+.recipe-panels {
+  grid-column: span 2;
+  min-height: 480px;
+}
+.workflow-separator {
+  flex-basis: 10px;
+  position: relative;
+}
+.workflow-separator::after {
+  content: "";
+  position: absolute;
+  background: var(--line);
+  width: 2px;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+}
+.recipe-panels .recipe-canvas-editor {
+  height: 100%;
+}
+.recipe-panels .workflow-inspector {
+  padding-left: 10px;
+  height: 100%;
+  max-height: 100%;
+}
+.workflow-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.workflow-graph {
+  flex: 1;
+  min-height: 380px;
+  height: 100%;
+}
+.canvas-flow-node {
+  display: grid;
+  gap: 4px;
+  width: 176px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.canvas-flow-node span {
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.workflow-inspector fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.workflow-inspector label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.workflow-inspector label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+}
+
+.workflow-inspector input:not([type="checkbox"]),
+.workflow-inspector textarea,
+.workflow-inspector select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px;
+  color: inherit;
+  background: var(--surface);
+  font: inherit;
+}
+
+.workflow-inspector textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.canvas-list,
+.canvas-detail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.canvas-board {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+  overflow: auto;
+  min-height: 320px;
+}
+
+.canvas-board__inner {
+  position: relative;
+}
+
+.canvas-panel__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 640;
+  color: var(--text-strong);
+}
+
+.canvas-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.canvas-row {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.canvas-row:hover {
+  border-color: var(--muted-strong);
+}
+
+.canvas-row--active {
+  border-color: var(--accent, #4b7bec);
+}
+
+.canvas-row--bad {
+  border-color: var(--danger, #d63031);
+  cursor: default;
+}
+
+.canvas-row__meta {
+  color: var(--muted-strong);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.canvas-row__meta--error {
+  color: var(--danger, #d63031);
+}
+
+.canvas-empty {
+  color: var(--muted-strong);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* DAG：节点框 absolute 定位，SVG 直线边（回边虚线），状态着色。 */
+.canvas-edges {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas-edge {
+  stroke: var(--muted-strong);
+  stroke-width: 1.5;
+}
+
+.canvas-edge--back {
+  stroke-dasharray: 6 4;
+}
+
+.canvas-node {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.canvas-node--active {
+  outline: 2px solid var(--accent, #4b7bec);
+}
+
+.canvas-node__name {
+  font-weight: 620;
+  font-size: 13px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.canvas-node__meta {
+  font-size: 12px;
+  color: var(--muted-strong);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 状态着色（设计包 §1.2）：灰=未落卡 蓝=进行中 绿=已交付 黄=人工门等待 橙=挂起 红=读取异常/失败 */
+.canvas-node--grey {
+  border-color: var(--muted-strong);
+}
+
+.canvas-node--blue {
+  border-color: #2f80ed;
+  background: color-mix(in srgb, #2f80ed 12%, var(--surface));
+}
+
+.canvas-node--green {
+  border-color: #27ae60;
+  background: color-mix(in srgb, #27ae60 12%, var(--surface));
+}
+
+.canvas-node--yellow {
+  border-color: #f2c94c;
+  background: color-mix(in srgb, #f2c94c 16%, var(--surface));
+}
+
+.canvas-node--orange {
+  border-color: #f2994a;
+  background: color-mix(in srgb, #f2994a 14%, var(--surface));
+}
+
+.canvas-node--red {
+  border-color: #d63031;
+  background: color-mix(in srgb, #d63031 12%, var(--surface));
+}
+
+/* 运行中节点呼吸动画（波3 §2b）：蓝＝进行中是唯一在途色调，动画只挂在蓝节点上，
+ * 其余状态静止；向导编辑器同名类（canvas-node--blue）一并生效。 */
+@keyframes canvas-node-breath {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.canvas-node--blue {
+  animation: canvas-node-breath 1.8s ease-in-out infinite;
+}
+
+/* 运行记录行的在途 badge（波3 §2c）：实例清单状态＝运行中时点名在途。 */
+.canvas-row__running-badge {
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid #2f80ed;
+  color: #2f80ed;
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.canvas-detail__fields {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.canvas-detail__field {
+  display: grid;
+  gap: 2px;
+}
+
+.canvas-detail__field dt {
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.canvas-detail__field dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.canvas-detail__value--red {
+  color: #d63031;
+}
+
+.canvas-detail__value--orange {
+  color: #f2994a;
+}
+
+.canvas-detail__value--yellow {
+  color: #b98900;
+}
+
+.canvas-detail__value--green {
+  color: #27ae60;
+}
+
+.canvas-detail__value--blue {
+  color: #2f80ed;
+}
+
+/* ── 启流向导（P4-3）：覆盖层四步流 ── */
+
+.wizard-overlay {
+  position: fixed;
+  inset: 0;
+  /* 层级链正本见 main.css .extension-dialog-backdrop 注释（向导 25 在其下、树模态与全局浮层在其上）。 */
+  z-index: 25;
+  background: var(--background, #202020);
+  color: var(--foreground, #f0f0f0);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 26px;
+  overflow: auto;
+}
+
+.wizard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wizard__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.wizard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.wizard__steps {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.wizard-step {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #8886;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.wizard-step--active {
+  opacity: 1;
+  border-color: var(--accent, #4b96eb);
+  color: var(--accent, #4b96eb);
+}
+
+.wizard-step--done {
+  opacity: 1;
+  border-color: #27ae6055;
+}
+
+.wizard-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wizard-pane h3 {
+  margin: 8px 0 2px;
+  font-size: 14px;
+}
+
+.wizard-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.wizard-template {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #8886;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.wizard-template:hover:not(:disabled) {
+  border-color: var(--accent, #4b96eb);
+}
+
+.wizard-template__desc {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.wizard-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wizard-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 7px 10px;
+  border: 1px solid #8885;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.wizard-row:hover:not(:disabled) {
+  border-color: var(--accent, #4b96eb);
+}
+
+.wizard-row__meta {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.wizard-errors {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #d63031;
+}
+
+.wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.wizard-field input,
+.wizard-field select {
+  padding: 5px 8px;
+  border: 1px solid #8886;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+}
+
+.wizard-required {
+  color: #d63031;
+  font-style: normal;
+  font-size: 12px;
+}
+
+.wizard-preview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.wizard-preview li {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px dashed #8884;
+  padding: 2px 0;
+}
+
+.wizard-node {
+  border: 1px solid #8885;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wizard-node legend {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+.wizard-budget {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.wizard-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wizard-check {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 3px solid #8886;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.wizard-check--red {
+  border-left-color: #d63031;
+}
+
+.wizard-check--warn {
+  border-left-color: #b98900;
+}
+
+.wizard-ok {
+  color: #27ae60;
+  font-size: 13px;
+}
+
+.wizard-hint {
+  font-size: 12px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.wizard-status {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.wizard-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+/* ── D8d 节点详情（P4-4）：模板值 vs 卡面值/回执轮次/执行锚点 ──────────────── */
+.canvas-detail__d8d {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.canvas-detail__section {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 8px 0 2px;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.canvas-detail__value--diff {
+  color: var(--warning, #b45309);
+  font-weight: 600;
+}
+
+.canvas-detail__value-note {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.canvas-detail__note {
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.canvas-detail__error {
+  color: var(--danger, #b91c1c);
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.canvas-detail__rounds,
+.canvas-detail__executions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.canvas-detail__round-head {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.canvas-detail__evidence {
+  font-size: 11px;
+  list-style: disc;
+  margin: 2px 0 0;
+  padding-left: 18px;
+  word-break: break-all;
+}
+
+.canvas-detail__executions li {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  justify-content: space-between;
+}
+
+.canvas-detail__actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.canvas-detail__actions-note {
+  color: var(--danger, #b91c1c);
+  font-size: 12px;
+}
+.workflow-runtime-controls {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.workflow-runtime-controls p { margin: 4px 0; }
+.workflow-runtime-controls label { display: inline-flex; gap: 8px; margin: 6px 12px 6px 0; align-items: center; }
+
+/* ── S3-2：右键菜单、连线模式与连接桩（§8.1）── */
+
+/* 菜单与浮层的定位基准。 */
+.recipe-canvas-editor,
+.canvas-list,
+.workflow-graph {
+  position: relative;
+}
+
+/* 连接桩：默认 12px（此前未定制，用 xyflow 默认 6px 太小），hover 放大。 */
+.workflow-graph .react-flow__handle {
+  width: 12px;
+  height: 12px;
+}
+.workflow-graph .react-flow__handle:hover {
+  width: 16px;
+  height: 16px;
+}
+
+/* 连线模式：起点标识、合法目标高亮、非法置灰。 */
+.react-flow__node.canvas-link-source .canvas-flow-node {
+  outline: 2px solid var(--accent, #4b7bec);
+}
+.react-flow__node.canvas-link-target .canvas-flow-node {
+  border-color: #27ae60;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #27ae60 35%, transparent);
+}
+.react-flow__node.canvas-link-blocked .canvas-flow-node {
+  opacity: 0.45;
+}
+
+/* 跟随光标/操作的连线反馈浮层：拒绝原因、已存在依赖、连线模式 hover 判定。
+   层级低于向导（25）、守卫（26）与扩展确认框（30），只盖画布内容。 */
+.canvas-connect-float {
+  position: absolute;
+  z-index: 24;
+  pointer-events: none;
+  transform: translate(16px, -26px);
+  max-width: 320px;
+  padding: 6px 10px;
+  border: 1px solid var(--danger, #d63031);
+  border-radius: 8px;
+  background: var(--surface, #262626);
+  color: var(--danger, #d63031);
+  font-size: 12px;
+}
+
+/* 右键菜单（画布节点/边＋配方库行预留位）。 */
+.canvas-context-menu {
+  position: absolute;
+  z-index: 24;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.canvas-context-menu button {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.canvas-context-menu button:hover:not(:disabled) {
+  background: var(--surface-overlay-hover, rgba(127, 127, 127, 0.15));
+}
+.canvas-context-menu button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* =============================================================================
+ * 执行中节点的边框弧线（S6-D1）：与看板执行中卡（.kanban-arc）同款旋转弧线；
+ * 只给六态蓝（真在跑且未挂起）的节点，排队/挂起节点不动画。
+ * ========================================================================== */
+
+@property --canvas-arc-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.canvas-flow-node--running {
+  position: relative;
+}
+
+.canvas-flow-node--running::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: -2px; /* 压在节点自己的边框线外圈 */
+  border-radius: inherit;
+  padding: 1.5px; /* 弧线粗细 */
+  background: conic-gradient(
+    from var(--canvas-arc-angle),
+    transparent 0deg,
+    #2f80ed 55deg,
+    transparent 110deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: canvas-arc-spin 2.2s linear infinite;
+}
+
+@keyframes canvas-arc-spin {
+  to {
+    --canvas-arc-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-flow-node--running::after {
+    animation: none;
+  }
+}

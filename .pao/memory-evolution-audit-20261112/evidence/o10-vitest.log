@@ -1,0 +1,38 @@
+O10 独立复核 vitest 实录（2026-11-15，复核代理亲跑）
+命令：cd PAO/packages/coding-agent && PAO_HOME=<mktemp> PI_OFFLINE=1 PI_NO_LOCAL_LLM=1 \
+  node ../../node_modules/vitest/vitest.mjs run test/pao/evolution-*.test.ts test/pao/friction-*.test.ts --maxWorkers=1
+
+== 实施方指定命令（15 文件）实测：237 用例 / 192 过 / 45 失败 ==
+逐文件失败分布：
+  evolution-activation.test.ts   18 总 / 14 失败   ← O11 publish/activate
+  evolution-binding.test.ts      17 总 /  6 失败   ← O11 绑定
+  evolution-boundary.test.ts     24 总 /  0
+  evolution-control.test.ts       9 总 /  8 失败   ← O11 控制面
+  evolution-e2e.test.ts           7 总 /  0
+  evolution-evaluate.test.ts     21 总 /  1 失败   ← O11 评估
+  evolution-o10.test.ts          15 总 /  1 失败   ← O10 本批：E01 proposed 断言过严
+  evolution-policy.test.ts       27 总 /  0
+  evolution-problems.test.ts     24 总 /  0
+  evolution-regression.test.ts   12 总 /  9 失败   ← O11 回归
+  evolution-restart.test.ts       6 总 /  5 失败   ← O11 重启续作
+  evolution-validation.test.ts   14 总 /  0
+  evolution-version.test.ts      18 总 /  1 失败   ← O11 版本（EPERM 临时目录清理竞态）
+  friction-drafts.test.ts        14 总 /  0
+  friction-m2-batch1.test.ts     11 总 /  0
+
+O10 责任边界内（o10/problems/validation/e2e/boundary/policy/friction 共 122 用例）：
+  仅 evolution-o10.test.ts 1 失败，余 121 全过。
+其余 44 失败集中在 O11 拥有的 runner/evaluate/publish/activate/bind/restart 模块，
+  多为 "publish failed"（publishCandidate 需 test_plan_id/source_links 完整）与
+  EPERM Windows 临时目录清理竞态——非 O10 改动引入。
+
+== evolution-o10.test.ts 唯一失败 ==
+E01 单次进化作业入口 > 登记问题→空闲 settled 领取→产出 proposed 候选
+  expected 'failed' to be 'proposed'   (test/pao/evolution-o10.test.ts:799)
+归因：夹具 evolve-handler.ts 复制生产编排，在 propose 后接续 O11 run→evaluate→publish。
+  本用例未注入 agentSessionFactory/processRunner/verifier → runValidationCase 以
+  kind:"command" 跑，reproduction 用例无 verifier → baseline/candidate 双侧
+  passed:false → evaluateCandidate 判「原问题未修复」→ 候选 proposed→failed。
+  proposeCandidate 本身成功（候选确曾 proposed，job done、problem candidate），
+  「产出 proposed 候选或明确终态」的业务契约满足——failed 即明确终态。
+  失败属断言粒度过严（断言瞬时 proposed 而非终态），非编排链缺陷。

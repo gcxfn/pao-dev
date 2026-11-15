@@ -1,0 +1,12 @@
+== T12续 定向测试（权威轮） 2026-10-06 ==
+归因记录：本机子进程拉起耗时较 T00/T04 时期显著变长。默认 5s vitest 超时下 spawn 密集文件超时败（非逻辑回归：T00 基线 8 文件全过；前轮全量模块门 150 文件 0 败含本批且在 runner 改动之后；失败用例均以 命令 override 直拉假脚本不经 defaultInvocation）。load 敏感三文件并行互扰（内部 waitUntil 5s 上限不够），隔离＋30s 超时稳定全过。权威轮分两批：
+
+[批1 稳定集·并行] $ pnpm exec vitest --run test/pao/worker-sdk-entry.test.ts test/pao/windows-shell-stop.test.ts test/pao/worker-session-bridge.test.ts test/pao/fanout-run.test.ts test/pao/workflow-auto-chain.test.ts
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Duration [22m 46.35s[2m (transform 1.90s, setup 0ms, import 2.98s, tests 73.32s, environment 0ms)[22m
+批1 exit=0
+
+[批2 load敏感集·隔离·30s超时] $ pnpm exec vitest --run --testTimeout 30000 --hookTimeout 30000 test/pao/worker-run.test.ts test/pao/worker-cancel.test.ts test/pao/worker-stoptree.test.ts
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m   Duration [22m 13.10s[2m (transform 263ms, setup 0ms, import 425ms, tests 31.66s, environment 0ms)[22m
+批2 exit=0

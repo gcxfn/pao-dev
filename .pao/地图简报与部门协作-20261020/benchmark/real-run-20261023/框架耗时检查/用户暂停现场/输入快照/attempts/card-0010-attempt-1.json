@@ -1,0 +1,80 @@
+{
+	"schemaVersion": 1,
+	"kind": "dispatch-input-snapshot",
+	"cardsDir": "/app/.pao/benchmark/卡",
+	"card": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardPath": "/app/.pao/benchmark/卡/卡0010-修复appfilter.py中B-1的残.md",
+		"cardNo": 10,
+		"attempt": 1,
+		"owner": "主控",
+		"sourceHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b"
+	},
+	"execution": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardNo": 10,
+		"attempt": 1,
+		"projectRoot": "/app",
+		"repositoryRoot": "/app",
+		"executionRoot": "/app",
+		"commonGitDir": "/app/.git",
+		"versionControl": "git",
+		"baseHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b",
+		"baseTreeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"inputVersion": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"bindingDigest": "sha256:b8bca25f69037306eb624854a6dd04b428d51b20cffb7a2947c297e76349067a"
+	},
+	"cardDefinition": {
+		"goal": "修复 /app/filter.py 中 B-1 的残余分支：raw-text 元素位于 template/rt/rp 容器内时，其文本节点为 TemplateString/RubyTextString/RubyParenthesisString，被 filter.py:275 的类型判断跳过，导致实体重复转义与输出无界增长；同时修复复审报告 N-2。修复后各类容器连跑两次必须字节一致，且清洗效果无回退。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。",
+		"dept": "实施",
+		"inputs": [
+			"/app/filter.py",
+			"/app/.pao/benchmark/复审报告.md"
+		],
+		"constraints": "定点修 B-1 残余，不重构、不放宽清洗口径；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；夹具只放 /tmp。\n\n缺陷：raw-text 元素落在 template/rt/rp 等容器内时，其文本不是裸 NavigableString，而是 TemplateString / RubyTextString / RubyParenthesisString。filter.py:275 的 `type(node) is not NavigableString` 把它们整体跳过，于是不转义保护失效，settle 循环每轮放大转义：实测 <template><iframe> 109→145→181→217B，ruby/rt 113→149→185B，template+plaintext 395→719→1043→1367B。\n\n要求：\n- 修法必须覆盖 bs4 所有 NavigableString 子类（建议用 isinstance 并显式排除 Comment/CData/Doctype/ProcessingInstruction/Declaration/PreformattedString 之外的危险类型，或把这三类字符串类型一并纳入保护），并说明为何不会再漏。\n- 修复后 4 类容器（裸挂载、template、rt、rp 与 plaintext 组合）各连跑两次，cmp 必须完全相同。\n- 必须回归确认 template/rt/rp 内的 <script>、on*=、javascript: 载荷仍然被清除（不因不转义而漏清）。\n- 同时修复复审报告 N-2（注释内 on*= 载荷在 ; . / ( , : 或紧邻字母前接时漏删）：注释内载荷判定应能识别 on<name>= 前不是字母数字的常见接续情形；给出保留无害注释与删除真载荷两侧证据。\n\n交付时务必给出每类容器的真实 cmp 输出与字节数，不要只写结论。",
+		"acceptance": "1. 自查：夹具 <template><iframe>a &amp; b</iframe></template> 连跑两次 cmp 相同，且 iframe 文本稳定为 a &amp; b\n2. 自查：<rt>/<rp> 内 raw-text 同场景连跑两次 cmp 相同\n3. 自查：<template> 内 <script>/on*/javascript: 载荷仍被清除（不漏清）\n4. 自查：普通 HTML（doctype/表格/中文/实体/注释/CRLF/BOM）运行后二次运行字节不变",
+		"depends_on": [
+			"卡0009"
+		],
+		"tier": "primary",
+		"budget": {
+			"toolCalls": 120,
+			"turns": 120
+		},
+		"priority": "high",
+		"created": "2026-10-23 06:11",
+		"definitionDigest": "sha256:458d46cba26e03b044c446bdd4d4effd8b382c5a27541aca038b3806481dbf49"
+	},
+	"briefMarkdown": "# 卡0010 执行简报\n\n## 任务目标\n修复 /app/filter.py 中 B-1 的残余分支：raw-text 元素位于 template/rt/rp 容器内时，其文本节点为 TemplateString/RubyTextString/RubyParenthesisString，被 filter.py:275 的类型判断跳过，导致实体重复转义与输出无界增长；同时修复复审报告 N-2。修复后各类容器连跑两次必须字节一致，且清洗效果无回退。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。\n\n- 部门：实施\n- owner：主控\n- 卡与尝试：/app/.pao/benchmark/卡/卡0010-修复appfilter.py中B-1的残.md，尝试 1\n- 执行根：/app\n- 仓库根：/app\n\n## 范围与限制\n定点修 B-1 残余，不重构、不放宽清洗口径；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；夹具只放 /tmp。\n\n缺陷：raw-text 元素落在 template/rt/rp 等容器内时，其文本不是裸 NavigableString，而是 TemplateString / RubyTextString / RubyParenthesisString。filter.py:275 的 `type(node) is not NavigableString` 把它们整体跳过，于是不转义保护失效，settle 循环每轮放大转义：实测 <template><iframe> 109→145→181→217B，ruby/rt 113→149→185B，template+plaintext 395→719→1043→1367B。\n\n要求：\n- 修法必须覆盖 bs4 所有 NavigableString 子类（建议用 isinstance 并显式排除 Comment/CData/Doctype/ProcessingInstruction/Declaration/PreformattedString 之外的危险类型，或把这三类字符串类型一并纳入保护），并说明为何不会再漏。\n- 修复后 4 类容器（裸挂载、template、rt、rp 与 plaintext 组合）各连跑两次，cmp 必须完全相同。\n- 必须回归确认 template/rt/rp 内的 <script>、on*=、javascript: 载荷仍然被清除（不因不转义而漏清）。\n- 同时修复复审报告 N-2（注释内 on*= 载荷在 ; . / ( , : 或紧邻字母前接时漏删）：注释内载荷判定应能识别 on<name>= 前不是字母数字的常见接续情形；给出保留无害注释与删除真载荷两侧证据。\n\n交付时务必给出每类容器的真实 cmp 输出与字节数，不要只写结论。\n输入入口：`/app/filter.py`、`/app/.pao/benchmark/复审报告.md`\n\n## 已确认事实\n- 卡面给出的目标、范围和验收视为已确认；地图未贡献额外事实。\n\n## 未知与待复核\n- 未列出的行为只能通过目标任务内定点核查确认，不能猜为事实。\n\n## 按任务目的装配\n- 执行者携带本卡目标、范围、验收和必要事实，并允许读取目标代码及直接调用点核验。\n- 不得遍历整个目录，也不得把未知项当作既定事实。\n\n## 上游必要结论\n本节面向实现所需结论；只按保存时的显式 category 归类，不补写未保存的语义。\n\n### worker 直接注入的冻结执行简报\n来源：`pao-brief://brief-card-0009-attempt-1?digest=sha256%3A4c5c292e36f59b0d438f194e8f3d9c6938f6e65be9e21e41f6946e07d593ff50`（attempt 1）\n\n保存时未提供结构化分类。本节不内联历史简报正文；按需读取上面的精确引用，并以当前尝试回执核对实际结果。\n\n\n## 相关地图\n- 本卡没有声明结构化地图；以下按卡面任务和证据入口开工。\n\n- 本卡没有声明外部接口契约。\n\n## 前置成果\n### 卡0009（attempt 1）\n- 卡面结果：delivered\n- 当前尝试回执：总判定不通过：B-2 已真修好（options=/buttons=/icons=/lessons= 逐字节保留，onclick=/onload=/on-error=/javascript:/<script 仍删），但 B-1 仅修好裸挂载分支——raw-text 在 <template>/<rt>/<rp> 内仍逐轮放大（109→145→181→217B，cmp 必失败，54 格矩阵 15 格 fail，GBK 同中招），根因 filter.py:275 的 type(node) is not NavigableString 漏掉 TemplateString/RubyTextString/RubyParenthesisString。卡0007 的 7 个 pass 项与保留性 23 条断言无回退；新风险 N-2：注释内 on*= 载荷判定面收窄（;./ /( , : 或紧邻字母前接时漏删，注释不执行故仅一般级）。未改 /app/filter.py（sha256 与认领基线同 blob），夹具全在 /tmp/rv9。\n- 自报改动：created .pao/benchmark/复审报告.md（本次唯一盲审产物：总判定不通过、B-1 残余（template/rt/rp）+ 最小复现 + 修法验证、B-2 pass 两侧证据、9 项逐条复检、新风险 N-2/N-3、未验证段）；modified .pao/benchmark/黑板.md（追加一条指向复审报告的便签（结论、最小复现、根因 filter.py:275、/tmp 验证过的修法与 diff=0/26））\n- 自报验收：存在:/app/.pao/benchmark/复审报告.md=pass（ls -la 显示 38386B，sha256 6a94ad7c14004ef54fda9763f094cf676101770c6f2f031c5c3ef2fe8b1d3e05）；包含:复审报告.md :: 判定=pass（grep -c 判定 = 22（§0 判定总表 + 各节判定行 + 总判定））；包含:复审报告.md :: 未验证=pass（grep -c 未验证 = 12，§10 独立成节列 9 条未验证项）；对 B-1、B-2 与 9 项核查逐一给出复检结论并附真实命令与输出=pass（§0 总表 11 行、§2 B-1（8 例 cmp=IDENTICAL + template/rt/rp 109→145→181→217B + 54 格矩阵 + 140 组 fuzz 54 fail）、§3 B-2（5 例保留/6 类删除）、§4 九项（CLI 2/1/0、inode=581869 不变、13 组危险面 fails=0/13、保留性 fails=0/23、diff 逐条归因、健壮性、imports=['__future__','bs4','copy','html','os','re','sys']、PASS_compile），命令输出均为 /tmp/rv9 实跑原文）；B-1 确已修复（连跑两次 cmp 相同）=fail（printf '<html><body><template><iframe>t &amp; u</iframe></template></body></html>' → 4 次运行 109/145/181/217B，cmp tpl_iframe.r1 tpl_iframe.r2 → differ: byte 74, exit=1；ruby/rt 113→149→185，template/plaintext 395→719→1043→1367；裸挂载 8 例全 IDENTICAL）；B-2 确已修复（无害注释保留、真载荷删除）=pass（options=/buttons=/icons=/lessons=/模板 options= 全部逐字节保留；onclick=/foo onload=/on-error=/'\"onmouseover=…\"/a javascript:/<script 全部删除）；卡0007 已 pass 的 7 项无回退=pass（CLI noarg=2/twoarg=2/missing=1/dir=1/ok=0 且 UNTOUCHED_BY_ERRORS；inode=581869 mode=644 不变无旁路文件；13 组危险面 DOM fails=0/13 且新旧 22 组危险输出 danger_changed=0/22；健壮性 9 例 exit 可解释 bad_unchanged=YES；imports 仅 stdlib+bs4；PASS_compile）；新增风险检查（raw-text 不转义是否漏清 javascript:/on*）=pass（<iframe><img src=x onerror=alert(1)></iframe> 等 6 例 bs4 DOM bad_attrs=[]、script_tags=0，lxml 解析无 img/svg 元素、仅 iframe.text 字面串；字面 <script 被中和为 &lt;script）；普通 HTML（doctype/中文/表格/表单/实体/注释/CRLF/BOM）差异仅限解析规范化且幂等=pass（/tmp/rv9/fmt2/m.html 680→657B，diff -u 各差异逐条对应 docstring 第 1-6/9 条；idem2=PASS、idem3=PASS）；本次尝试 1 相对认领基线的程序候选改动=pass（基线 /app/.pao/benchmark/基线/卡0009-尝试1-基线.json；无候选改动）\n- 证据入口：/app/.pao/benchmark/worker-evidence/卡0009-尝试1-8193c9f1ce7a-f4690edc-24c9-4ffc-98c6-0c92f91fd278.live.jsonl.gz\n\n\n## 验收\n- 卡面验收原文：1. 自查：夹具 <template><iframe>a &amp; b</iframe></template> 连跑两次 cmp 相同，且 iframe 文本稳定为 a &amp; b\n2. 自查：<rt>/<rp> 内 raw-text 同场景连跑两次 cmp 相同\n3. 自查：<template> 内 <script>/on*/javascript: 载荷仍被清除（不漏清）\n4. 自查：普通 HTML（doctype/表格/中文/实体/注释/CRLF/BOM）运行后二次运行字节不变\n- 执行者逐项给出 pass/fail/not_run 与证据；程序仍按机械验收规则复核。\n\n## 风险\n- 地图未另列风险；仍按卡面限制和未知项核查。\n\n## 证据入口\n- [input] `/app/filter.py`；任务输入或证据入口\n- [input] `/app/.pao/benchmark/复审报告.md`；任务输入或证据入口\n- [upstream] `/app/.pao/benchmark/输入快照/brief/brief-card-0009-attempt-1.json`；worker 直接注入的冻结执行简报\n\n## 整合责任\n由 owner 按任务卡和并行计划指定；worker 不自行整合其他任务成果。\n\n## 输入有效性\n- 上游简报 brief-card-0009-attempt-1 的内容已作为卡片输入引用，本简报保留其结论入口。\n",
+	"brief": {
+		"ref": "pao-brief://brief-card-0010-attempt-1?digest=sha256%3A2ce32bcfa3ccb0b2fb2e2b2583a198adb8791ff04bfc59f0046bb33daa2fd680",
+		"digest": "sha256:2ce32bcfa3ccb0b2fb2e2b2583a198adb8791ff04bfc59f0046bb33daa2fd680"
+	},
+	"evidence": [
+		{
+			"kind": "input",
+			"path": "/app/filter.py",
+			"ref": "/app/filter.py",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "input",
+			"path": "/app/.pao/benchmark/复审报告.md",
+			"ref": "/app/.pao/benchmark/复审报告.md",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "upstream",
+			"path": "/app/.pao/benchmark/输入快照/brief/brief-card-0009-attempt-1.json",
+			"ref": "pao-brief://brief-card-0009-attempt-1?digest=sha256%3A4c5c292e36f59b0d438f194e8f3d9c6938f6e65be9e21e41f6946e07d593ff50",
+			"purpose": "worker 直接注入的冻结执行简报",
+			"digest": "sha256:4c5c292e36f59b0d438f194e8f3d9c6938f6e65be9e21e41f6946e07d593ff50"
+		}
+	],
+	"contracts": [],
+	"warnings": [
+		"上游简报 brief-card-0009-attempt-1 的内容已作为卡片输入引用，本简报保留其结论入口。"
+	],
+	"frozenAt": "2026-10-23T06:11:56.996Z",
+	"snapshotDigest": "sha256:2f064a4ee5afc54c3c5b3b2965e9cbd3eae3d280a60391885c22bedfea1c143c"
+}

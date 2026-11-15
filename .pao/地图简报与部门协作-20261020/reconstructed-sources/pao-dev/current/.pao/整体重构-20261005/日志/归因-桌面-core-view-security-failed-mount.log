@@ -1,0 +1,46 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  x  1 apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend (23.1s)
+
+
+  1) apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+    Expected: [32m"Count [7m1[27m · activations 1"[39m
+    Received: [31m"Count [7m0[27m · activations 1"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')[22m
+    [2m    8 × locator resolved to <output id="counter">Count 0 · activations 1</output>[22m
+    [2m      - unexpected value "Count 0 · activations 1"[22m
+
+
+      132 |     await expectExtensionViewReady(window);
+      133 |     await frame.getByRole("button", { name: "Increment", exact: true }).click();
+    > 134 |     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+          |                                             ^
+      135 |   } finally {
+      136 |     await harness.close();
+      137 |   }
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\extension-view-security.spec.ts:134:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\trace.zip
+    Usage:
+
+        npx playwright show-trace apps\desktop\test-results\core-extension-view-securi-3a617-w-recovers-the-same-backend\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\extension-view-security.spec.ts:111:5 › a failed author mount keeps conversation editable and Reload view recovers the same backend 

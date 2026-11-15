@@ -1,0 +1,63 @@
+Skipping image OS validation for hb__12b4b5ba8dbc7587bb7a587dfb70f06f: docker inspect returned 1
+Running command: python3 -c 'import zipfile, tarfile, lzma'
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' c744583041598f7b80c9cd2c904f8352024b356f3a2e7314d54c0dfd30125b21 /tmp/pao-system-dependencies.zip | sha256sum -c -; python3 -m zipfile -e /tmp/pao-system-dependencies.zip /tmp/pao-system-dependencies; dpkg --install /tmp/pao-system-dependencies/*.deb
+Command outputs captured
+Running command: python3 -c 'import json,pathlib,subprocess; data={name:subprocess.check_output([name,'"'"'--version'"'"'],text=True).strip() for name in ('"'"'git'"'"','"'"'python3'"'"')}; pathlib.Path('"'"'/tmp/benchmark-prerequisites.json'"'"').write_text(json.dumps(data))'
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' 9a373ae0323726e0bb7bcbeb36ff8b18d72b86d803999b734c367cf12316cdbf /tmp/harbor-pao-source.tar.gz | sha256sum -c -; mkdir -p /tmp/harbor-pao-source; python3 -m zipfile -e /tmp/harbor-pao-source.tar.gz /tmp/harbor-pao-source
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a /tmp/harbor-model-data.zip | sha256sum -c -; python3 -m zipfile -e /tmp/harbor-model-data.zip /tmp/harbor-pao-source
+Command outputs captured
+Running command: set -euo pipefail; NODE_DIR=$HOME/.local/pao-node; if [ ! -x "$NODE_DIR/bin/node" ]; then mkdir -p "$HOME/.local"; printf '%s  %s\n' 55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742 /tmp/pao-node.tar.xz | sha256sum -c -; NODE_STAGE=$(mktemp -d "$HOME/.local/pao-node-unpack.XXXXXX"); python3 -m tarfile -e /tmp/pao-node.tar.xz "$NODE_STAGE"; mv "$NODE_STAGE"/node-*-linux-x64 "$NODE_DIR"; rmdir "$NODE_STAGE"; fi; export PATH="$NODE_DIR/bin:$PATH"; "$NODE_DIR/bin/node" --version; "$NODE_DIR/bin/npm" --version
+Command outputs captured
+Running command: set -euo pipefail; mkdir -p /logs/agent; { export PATH="$HOME/.local/pao-node/bin:$PATH"; cd /tmp/harbor-pao-source; npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline; test -f /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js; node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js --version; } 2>&1 | tee /logs/agent/source-build.log
+Command outputs captured
+Running command: mkdir -p /tmp/harbor-pao-probe
+Command outputs captured
+Running command: "$HOME/.local/pao-node/bin/node" /tmp/harbor-pao-probe/probe-single.mjs /tmp/harbor-pao-source /logs/agent/single-sdk-probe
+Command outputs captured
+Running command: printf '%s' '#!/bin/sh
+export PAO_BENCH_SOURCE=/tmp/harbor-pao-source
+exec "$HOME/.local/pao-node/bin/node" /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js "$@"
+' > /tmp/harbor-pao-launch && chmod 755 /tmp/harbor-pao-launch
+Command outputs captured
+Running command: mkdir -p /tmp/benchmark-organization /logs/agent/organization
+Command outputs captured
+Running command: "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/setup.mjs /tmp/harbor-pao-source /tmp/benchmark-organization/kit.json /tmp/harbor-pao-home /tmp/harbor-pi-agent /logs/agent/organization /app /tmp/benchmark-model-binding.json
+Command outputs captured
+Running command: printf '%s' '#!/bin/sh
+export PAO_BENCH_SOURCE=/tmp/harbor-pao-source
+exec "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/benchmark-organized-entry.mjs "$@"
+' > /tmp/harbor-pao-launch && chmod 755 /tmp/harbor-pao-launch
+Command outputs captured
+Running command: "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/probe-tools.mjs /tmp/harbor-pao-source /tmp/harbor-pi-agent /logs/agent/organization/probes/main main
+Command outputs captured
+Running command: "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/probe-tools.mjs /tmp/harbor-pao-source /tmp/harbor-pi-agent /logs/agent/organization/probes/minister minister
+Command outputs captured
+Running command: "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/probe-tools.mjs /tmp/harbor-pao-source /tmp/harbor-pi-agent /logs/agent/organization/probes/worker worker
+Command outputs captured
+Running command: PAO_BENCH_SOURCE=/tmp/harbor-pao-source "$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/probe-child-rpc.mjs /logs/agent/organization/child-rpc
+Command outputs captured
+Running command: set -eu; test -s /tmp/benchmark-prerequisites.json; test -s /logs/agent/organization/git-baseline.json; test -s /tmp/benchmark-model-binding.json; cp /tmp/benchmark-prerequisites.json /logs/agent/prerequisites.json; cp /tmp/benchmark-model-binding.json /logs/agent/model-binding.json; printf '%s\n' preparation_complete_no_model_calls > /logs/agent/preparation-complete.txt
+Command outputs captured
+Collecting main service artifacts
+compose cp failed; retrying download with engine cp: Docker compose command failed for environment html-js-filter. Command: docker compose --project-name html-js-filter__ldxbxhy__env --project-directory /root/.cache/harbor/tasks/packages/terminal-bench/html-js-filter/f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3/environment -f /tmp/tmpe009vkd7/html-js-filter__LDxBxHY__env-docker-compose-resources.json -f /mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker-compose-build.yaml -f /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r37/network-override.yaml -f /tmp/tmpc6mk8zoz/docker-compose-environment.json -f /tmp/tmpnw5krxrw/docker-compose-mounts.json cp main:/app/filter.py /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r37/jobs/pao-audit-first-20261028-r37-preflight/html-js-filter__LDxBxHY/artifacts/app/filter.py. Return code: 1. Stdout:  html-js-filter__ldxbxhy__env-main-1 Copying html-js-filter__ldxbxhy__env-main-1:/app/filter.py to /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r37/jobs/pao-audit-first-20261028-r37-preflight/html-js-filter__LDxBxHY/artifacts/app/filter.py
+Error response from daemon: Could not find the file /app/filter.py in container 759dd6fce324236a13ac19d458bde43a9a4fd39a0cf163ed0becb2a6be78271e
+. Stderr: None. 
+Failed to download artifact '/app/filter.py' from service 'main' (best-effort)
+Traceback (most recent call last):
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/artifact_handler.py", line 313, in _download_artifact
+    await source_env.service_download_file(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1322, in service_download_file
+    await self.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1307, in download_file
+    await self._platform.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 278, in download_file
+    await self._download_via_engine_cp(source_path, target_path, service)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 253, in _download_via_engine_cp
+    await self._engine_cp(f"{container}:{container_path}", str(target_path))
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 244, in _engine_cp
+    raise RuntimeError(
+RuntimeError: Engine cp failed ('759dd6fce324:/app/filter.py' -> '/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261028-prepared-r37/jobs/pao-audit-first-20261028-r37-preflight/html-js-filter__LDxBxHY/artifacts/app/filter.py'): Error response from daemon: Could not find the file /app/filter.py in container 759dd6fce324
+

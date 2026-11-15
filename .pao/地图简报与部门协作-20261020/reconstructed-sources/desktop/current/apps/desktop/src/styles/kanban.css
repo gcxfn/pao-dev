@@ -1,0 +1,835 @@
+/* =============================================================================
+ * 卡看板视图 v2（只读五列）：列 / 卡 / 详情三块结构抄改自 Hermes-Agent 的
+ * kanban 看板（apps/desktop/src/plugins/kanban/board.tsx、drawer.tsx、
+ * kanban.css），配色与圆角改用 PAO 设计令牌（styles/tokens.css）。
+ * 运行中卡片的边框弧线（.kanban-arc）为上游原样式，仅替换色调变量。
+ *
+ * 上游来源：Hermes-Agent（https://github.com/NousResearch/Hermes-Agent）
+ * MIT License
+ *
+ * Copyright (c) 2025 Nous Research
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ========================================================================== */
+
+.workboard-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.workboard-view-switch {
+  display: flex;
+  gap: 8px;
+  padding: 8px 22px;
+}
+.workboard-shell > .kanban-view,
+.workboard-shell > .workboard-view {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow: auto;
+}
+.kanban-view {
+  padding: 20px 22px 24px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.view-read-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.view-read-status p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--danger-ink, var(--warning-ink));
+}
+
+.kanban-status {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+/* ── 读取问题（issues）：逐条列路径与原因，不吞错 ── */
+.kanban-issues {
+  display: grid;
+  gap: 6px;
+}
+
+.kanban-issues__title {
+  margin: 0;
+}
+
+.kanban-issues__list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+  font-weight: 400;
+}
+
+.kanban-issues__path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.kanban-issues__message {
+  margin-left: 6px;
+}
+
+/* ── 工具栏：搜索 + project/dept 筛选 + 计数 ── */
+.kanban-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.kanban-toolbar__field {
+  display: grid;
+  gap: 4px;
+}
+
+.kanban-toolbar__label {
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.kanban-search,
+.kanban-select {
+  min-width: 160px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+
+.kanban-search {
+  min-width: 220px;
+}
+
+.kanban-toolbar__count {
+  margin-left: auto;
+  padding-bottom: 6px;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.kanban-empty {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+/* ── 五列 + 详情：单列选中卡片时详情栏出现，未选中时看板占满 ── */
+.kanban-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.kanban-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.kanban-columns {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 0;
+  padding-bottom: 4px;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-muted);
+}
+
+.kanban-column__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.kanban-column__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-round);
+  background: var(--status-neutral);
+}
+
+.kanban-column__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.kanban-column__count {
+  margin-left: auto;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kanban-column__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.kanban-column__empty {
+  margin: 0;
+  padding: 6px 2px;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+/* 状态着色：data-status＝卡状态英文现读值（灰=待认领 绿=进行中/已交付 红=失败 中性=取消）。 */
+.kanban-column[data-status="unclaimed"] .kanban-column__dot {
+  background: var(--status-neutral);
+}
+
+.kanban-column[data-status="in_progress"] .kanban-column__dot {
+  background: var(--status-running);
+}
+
+.kanban-column[data-status="delivered"] .kanban-column__dot {
+  background: var(--status-success);
+}
+
+.kanban-column[data-status="failed"] .kanban-column__dot {
+  background: var(--status-error);
+}
+
+.kanban-column[data-status="canceled"] .kanban-column__dot {
+  background: var(--muted-strong);
+}
+
+/* ── 卡片 ── */
+.kanban-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--motion-base) var(--ease-out);
+}
+
+.kanban-column__cards > li {
+  position: relative;
+  min-width: 0;
+}
+
+.kanban-card__more {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--muted-strong);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kanban-card__more:hover,
+.kanban-card__more:focus-visible {
+  background: var(--surface-overlay-hover);
+  color: var(--text-strong);
+}
+
+.kanban-card__more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.kanban-selection-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.kanban-selection-tools > span {
+  overflow-wrap: anywhere;
+}
+
+.kanban-card:hover {
+  border-color: var(--muted-strong);
+}
+
+.kanban-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.kanban-card--selected {
+  border-color: var(--accent);
+  background: var(--accent-tint-bg);
+}
+
+.kanban-card[data-status="unclaimed"] {
+  --kanban-tone: var(--status-neutral);
+  border-left-color: var(--status-neutral);
+}
+
+.kanban-card[data-status="in_progress"] {
+  --kanban-tone: var(--status-running);
+  border-left-color: var(--status-running);
+}
+
+.kanban-card[data-status="delivered"] {
+  --kanban-tone: var(--status-success);
+  border-left-color: var(--status-success);
+}
+
+.kanban-card[data-status="failed"] {
+  --kanban-tone: var(--status-error);
+  border-left-color: var(--status-error);
+}
+
+.kanban-card[data-status="canceled"] {
+  --kanban-tone: var(--muted-strong);
+  border-left-color: var(--muted-strong);
+}
+
+.kanban-card__goal {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  font-weight: 560;
+  line-height: var(--leading-snug);
+  color: var(--text-strong);
+}
+
+.kanban-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted-strong);
+}
+
+.kanban-card__chip {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  white-space: nowrap;
+}
+
+.kanban-card__chip--stale {
+  background: color-mix(in srgb, var(--warning) 18%, var(--surface));
+  color: var(--warning-ink);
+  font-weight: 600;
+}
+
+.kanban-card__chip--muted {
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--muted-strong);
+}
+
+.kanban-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kanban-detail__command-text {
+  width: 100%;
+  min-height: 140px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.kanban-detail__command-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.kanban-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted-strong);
+}
+
+.kanban-card__project {
+  margin-left: auto;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 详情栏：正文／验收／输入／依赖／回执／执行记录 ── */
+.kanban-detail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+.kanban-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-detail__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 640;
+  color: var(--text-strong);
+}
+
+.kanban-detail__header .button {
+  margin-left: auto;
+}
+
+.kanban-detail__goal {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 560;
+  color: var(--text-strong);
+}
+
+.kanban-detail__fields {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.kanban-detail__field {
+  display: grid;
+  gap: 2px;
+}
+
+.kanban-detail__field dt {
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.kanban-detail__field dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.kanban-detail__section {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--text-strong);
+}
+
+.kanban-detail__prose {
+  margin: 0;
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kanban-detail__note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-strong);
+  overflow-wrap: anywhere;
+}
+
+/* 预算里不认识的键：只在展开后出现，等宽、可换行，不撑破详情栏。 */
+.kanban-detail__raw {
+  margin: 6px 0 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kanban-detail__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.kanban-detail__records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.kanban-detail__record {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  font-size: 12px;
+}
+
+.kanban-detail__record-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted-strong);
+}
+
+.kanban-detail__record-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-strong);
+}
+
+.kanban-detail__evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  color: var(--muted-strong);
+  overflow-wrap: anywhere;
+}
+
+/* =============================================================================
+ * 运行中卡片的边框弧线（上游原样式，色调改走 --kanban-tone）：
+ * 只有 agent 真的在干活才动——排队中的卡不该有会动的边框。
+ * ========================================================================== */
+
+@property --kanban-arc-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.kanban-arc {
+  pointer-events: none;
+  position: absolute;
+  inset: -1px; /* 压在卡片自己的边框线上 */
+  border-radius: inherit;
+  padding: 1.5px; /* 弧线粗细 */
+  background: conic-gradient(
+    from var(--kanban-arc-angle),
+    transparent 0deg,
+    var(--kanban-tone, var(--accent)) 55deg,
+    transparent 110deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: kanban-arc-spin 2.2s linear infinite;
+}
+
+@keyframes kanban-arc-spin {
+  to {
+    --kanban-arc-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kanban-arc {
+    animation: none;
+  }
+}
+
+/* =============================================================================
+ * 证据/产物/会话路径行（S7-A）：文本原样＋「定位」按钮；失败显式报错不静默。
+ * ========================================================================== */
+
+.kanban-evidence-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.kanban-evidence-reveal {
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.kanban-evidence-error {
+  color: var(--danger, var(--warning-ink));
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+/* =============================================================================
+ * 工作流节点全卡查看（S7-A 路径 b）：节点→卡号映射全量列出，点卡开详情。
+ * ========================================================================== */
+
+.kanban-workflows {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.kanban-workflow {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  font-size: 12px;
+}
+
+.kanban-workflow__head {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted-strong);
+}
+
+.kanban-workflow__nodes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.kanban-workflow__node {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.kanban-workflow__node-name {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.kanban-workflow__node-round {
+  color: var(--muted-strong);
+}
+
+.kanban-workflow__card {
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.kanban-workflow__card--missing {
+  border-style: dashed;
+  color: var(--muted-strong);
+}
+
+/* ---- S7-B 操作侧：多选/批量条/操作回执/右键菜单/拖放提示/租约三态 ---- */
+
+/* 多选勾选态：与单选详情态（--selected）视觉区分，同用 aria-pressed。 */
+.kanban-card--checked {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 拖放悬停列高亮：合法性由 drop 时的裁决给出，悬停只提示「这里是目标」。 */
+.kanban-column--drop {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+
+/* 批量操作条：多选非空时出现在工具栏下，操作与清空并列。 */
+.kanban-batch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.kanban-batch__count {
+  font-weight: 600;
+}
+
+/* 逐项操作回执：一张卡一行，成功/失败与内核原因原样展示，不合并。 */
+.kanban-op-results {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.kanban-op-result {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--ok, var(--accent));
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.kanban-op-result--failed {
+  border-left-color: var(--danger, var(--warning));
+}
+
+.kanban-op-result__message {
+  color: var(--ink-muted, inherit);
+  overflow-wrap: anywhere;
+}
+
+/* 右键菜单：fixed 定位在指针处，遮罩点击关闭。 */
+.kanban-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.kanban-menu {
+  position: fixed;
+  z-index: 61;
+  min-width: 220px;
+  max-width: 360px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  display: grid;
+  gap: 2px;
+}
+
+.kanban-menu__title {
+  margin: 2px 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted, inherit);
+  overflow-wrap: anywhere;
+}
+
+.kanban-menu__item {
+  text-align: left;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.kanban-menu__item:hover {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+/* 租约三态：未到期 amber（沿 --stale 警示色）；已到期/被接管升级为危险色。 */
+.kanban-card__chip--expired,
+.kanban-card__chip--taken-over {
+  background: color-mix(in srgb, var(--danger, var(--warning)) 18%, var(--surface));
+  color: var(--danger-ink, var(--warning-ink));
+  font-weight: 600;
+}

@@ -1,0 +1,3209 @@
+packages\coding-agent\src\pao\cards\baseline.ts:87:58 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    85 │ async function runGit(args: string[], cwd: string, signal?: AbortSignal): Promise<string> {
+    86 │ 	const result = await runCardProcess("git", ["-c", "core.quotepath=off", ...args], cwd, Infinity, undefined, signal);
+  > 87 │ 	if (result.code !== 0) throw new Error(result.stderr || "git exited with code " + result.code);
+       │ 	                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    88 │ 	return result.stdout;
+    89 │ }
+  
+  i Unsafe fix: Use a template literal.
+  
+     85  85 │   async function runGit(args: string[], cwd: string, signal?: AbortSignal): Promise<string> {
+     86  86 │   	const result = await runCardProcess("git", ["-c", "core.quotepath=off", ...args], cwd, Infinity, undefined, signal);
+     87     │ - → if·(result.code·!==·0)·throw·new·Error(result.stderr·||·"git·exited·with·code·"·+·result.code);
+         87 │ + → if·(result.code·!==·0)·throw·new·Error(result.stderr·||·`git·exited·with·code·${result.code}`);
+     88  88 │   	return result.stdout;
+     89  89 │   }
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:87:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    85 │ 		const file = writeConfig(tempDir("safe-ok"), "保温.json", WARM_SHAPE);
+    86 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+  > 87 │ 		expect(parsed["空闲分钟"]).toBe(30);
+       │ 		              ^^^^^^^^^^
+    88 │ 		expect(parsed["部门并发上限"]).toBe(5);
+    89 │ 	});
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     85  85 │   		const file = writeConfig(tempDir("safe-ok"), "保温.json", WARM_SHAPE);
+     86  86 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     87     │ - → → expect(parsed["空闲分钟"]).toBe(30);
+         87 │ + → → expect(parsed.空闲分钟).toBe(30);
+     88  88 │   		expect(parsed["部门并发上限"]).toBe(5);
+     89  89 │   	});
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:88:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    86 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+    87 │ 		expect(parsed["空闲分钟"]).toBe(30);
+  > 88 │ 		expect(parsed["部门并发上限"]).toBe(5);
+       │ 		              ^^^^^^^^^^^^^^
+    89 │ 	});
+    90 │ 
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     86  86 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     87  87 │   		expect(parsed["空闲分钟"]).toBe(30);
+     88     │ - → → expect(parsed["部门并发上限"]).toBe(5);
+         88 │ + → → expect(parsed.部门并发上限).toBe(5);
+     89  89 │   	});
+     90  90 │   
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:94:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    92 │ 		const file = writeConfig(tempDir("safe-bom"), "保温.json", `\uFEFF${WARM_SHAPE}`);
+    93 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+  > 94 │ 		expect(parsed["空闲分钟"]).toBe(30);
+       │ 		              ^^^^^^^^^^
+    95 │ 	});
+    96 │ 
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     92  92 │   		const file = writeConfig(tempDir("safe-bom"), "保温.json", `\uFEFF${WARM_SHAPE}`);
+     93  93 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     94     │ - → → expect(parsed["空闲分钟"]).toBe(30);
+         94 │ + → → expect(parsed.空闲分钟).toBe(30);
+     95  95 │   	});
+     96  96 │   
+  
+
+packages\coding-agent\test\user-message.test.ts:61:16 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    59 │ 	test("preserves long Chinese multiline text while resizing and scrolling", () => {
+    60 │ 		initTheme("dark");
+  > 61 │ 		const text = "中文用户约束".repeat(15) + "\n第二行必须保留\n末行";
+       │ 		             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    62 │ 		const component = new UserMessageComponent(text);
+    63 │ 		for (const width of [80, 20, 8, 40]) {
+  
+  i Unsafe fix: Use a template literal.
+  
+    59 59 │   	test("preserves long Chinese multiline text while resizing and scrolling", () => {
+    60 60 │   		initTheme("dark");
+    61    │ - → → const·text·=·"中文用户约束".repeat(15)·+·"\n第二行必须保留\n末行";
+       61 │ + → → const·text·=·`${"中文用户约束".repeat(15)}\n第二行必须保留\n末行`;
+    62 62 │   		const component = new UserMessageComponent(text);
+    63 63 │   		for (const width of [80, 20, 8, 40]) {
+  
+
+packages\coding-agent\src\pao\index.ts:33:10 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    31 │ import { openPaoPanel } from "./panel/index.ts";
+    32 │ import { registerPanorama } from "./panorama/index.ts";
+  > 33 │ import { createPatrolHook, patrolAfterInspect } from "./patrol/hook.ts";
+       │          ^^^^^^^^^^^^^^^^
+    34 │ import { registerShellGuard } from "./patrol/wire.ts";
+    35 │ import { registerPreflight } from "./preflight/index.ts";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    33 │ import·{·createPatrolHook,·patrolAfterInspect·}·from·"./patrol/hook.ts";
+       │          ------------------                                             
+
+packages\coding-agent\test\pao\desktop-read-model.test.ts:278:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable outsider is unused.
+  
+    276 │ 		};
+    277 │ 		const origin = makeSession("origin-owner");
+  > 278 │ 		const outsider = makeSession("final-owner");
+        │ 		      ^^^^^^^^
+    279 │ 		const base = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查" };
+    280 │ 		// 非 owner 会话提交确认：trusted 终审拒绝，不进入命令执行。
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend outsider with an underscore.
+  
+    276 276 │   		};
+    277 277 │   		const origin = makeSession("origin-owner");
+    278     │ - → → const·outsider·=·makeSession("final-owner");
+        278 │ + → → const·_outsider·=·makeSession("final-owner");
+    279 279 │   		const base = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查" };
+    280 280 │   		// 非 owner 会话提交确认：trusted 终审拒绝，不进入命令执行。
+  
+
+packages\coding-agent\test\pao\memory-vendor-contract.test.ts:12:24 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    10 │  */
+    11 │ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+  > 12 │ import { createServer, type Server } from "node:http";
+       │                        ^^^^^^^^^^^
+    13 │ import { tmpdir } from "node:os";
+    14 │ import { join } from "node:path";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    12 │ import·{·createServer,·type·Server·}·from·"node:http";
+       │                        ------------                   
+
+packages\coding-agent\src\core\extensions\loader.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    100 100 │   
+    101 101 │   	_aliases = {
+    102     │ - → → "@earendil-works/pi-coding-agent/pao/desktop":·path.join(path.dirname(piCodingAgentEntry),·"pao/desktop/index.js"),
+        102 │ + → → "@earendil-works/pi-coding-agent/pao/desktop":·path.join(
+        103 │ + → → → path.dirname(piCodingAgentEntry),
+        104 │ + → → → "pao/desktop/index.js",
+        105 │ + → → ),
+    103 106 │   		"@earendil-works/pi-coding-agent": piCodingAgentEntry,
+    104 107 │   		"@earendil-works/pi-agent-core": piAgentCoreEntry,
+  
+
+packages\coding-agent\src\modes\interactive\components\user-message.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { Container, Markdown, type MarkdownTheme, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import type { MarkdownTransformer } from "../../../core/extensions/types.ts";
+    3 │ import { getMarkdownTheme, theme } from "../theme/theme.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     2  2 │   import type { MarkdownTransformer } from "../../../core/extensions/types.ts";
+     3  3 │   import { getMarkdownTheme, theme } from "../theme/theme.ts";
+     4    │ - import·{·createMarkdownTransform·}·from·"./markdown-transform.ts";
+     5    │ - import·{·DynamicBorder·}·from·"./dynamic-border.ts";
+        4 │ + import·{·DynamicBorder·}·from·"./dynamic-border.ts";
+        5 │ + import·{·createMarkdownTransform·}·from·"./markdown-transform.ts";
+     6  6 │   
+     7  7 │   const OSC133_ZONE_START = "\x1b]133;A\x07";
+  
+
+packages\coding-agent\src\pao\cards\baseline.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     48  48 │   	const atRoot = segments.length === 1;
+     49  49 │   	const inBaselineDir = segments.at(-2) === "基线";
+     50     │ - → return·(
+     51     │ - → → (atRoot·&&·SYSTEM_FILE_BASENAMES.has(name))·||
+     52     │ - → → (inBaselineDir·&&·SYSTEM_FILE_PATTERN.test(name))
+     53     │ - → );
+         50 │ + → return·(atRoot·&&·SYSTEM_FILE_BASENAMES.has(name))·||·(inBaselineDir·&&·SYSTEM_FILE_PATTERN.test(name));
+     54  51 │   }
+     55  52 │   
+    ······· │ 
+    341 338 │   	if (unverifiable.length > 0) footerNote.push(`检测面外声明 ${unverifiable.length} 项不经 git 核验`);
+    342 339 │   	const verdict =
+    343     │ - → → falseReport.length·>·0·&&·outOfScope.length·>·0·?·"虚报+越界"·:·falseReport.length·>·0·?·"虚报"·:·outOfScope.length·>·0·?·"越界"·:·"干净";
+        340 │ + → → falseReport.length·>·0·&&·outOfScope.length·>·0
+        341 │ + → → → ?·"虚报+越界"
+        342 │ + → → → :·falseReport.length·>·0
+        343 │ + → → → → ?·"虚报"
+        344 │ + → → → → :·outOfScope.length·>·0
+        345 │ + → → → → → ?·"越界"
+        346 │ + → → → → → :·"干净";
+    344 347 │   	const totals =
+    345 348 │   		verdict === "干净"
+  
+
+packages\coding-agent\src\pao\cards\cardfile.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    173 173 │   		throw new PaoCardError("INVALID_CARD", `卡文件名不符合 卡NNNN-目标简述.md：${fileName}`, { filePath });
+    174 174 │   	}
+    175     │ - → return·{·路径:·filePath,·文件名:·fileName,·卡号:·cardNo,·frontmatter:·fm,·正文:·body,·回执:·parseReceipts(body,·cardNo)·};
+        175 │ + → return·{
+        176 │ + → → 路径:·filePath,
+        177 │ + → → 文件名:·fileName,
+        178 │ + → → 卡号:·cardNo,
+        179 │ + → → frontmatter:·fm,
+        180 │ + → → 正文:·body,
+        181 │ + → → 回执:·parseReceipts(body,·cardNo),
+        182 │ + → };
+    176 183 │   }
+    177 184 │   
+    ······· │ 
+    189 196 │   	const fileName = findCardFile(cardsDir, cardNo);
+    190 197 │   	if (!fileName) {
+    191     │ - → → throw·new·PaoCardError("CARD_NOT_FOUND",·`在·${cardsDir}·找不到卡${formatCardNumber(cardNo)}`,·{·cardsDir,·卡号:·cardNo·});
+        198 │ + → → throw·new·PaoCardError("CARD_NOT_FOUND",·`在·${cardsDir}·找不到卡${formatCardNumber(cardNo)}`,·{
+        199 │ + → → → cardsDir,
+        200 │ + → → → 卡号:·cardNo,
+        201 │ + → → });
+    192 202 │   	}
+    193 203 │   	return readCard(join(cardsDir, fileName));
+  
+
+packages\coding-agent\src\pao\cards\delivery.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    115 115 │    * 只 commit 不 push。
+    116 116 │    */
+    117     │ - export·async·function·deliverCard(cardsDir:·string,·cardNo:·number,·options?:·DeliverOptions):·Promise<SubmissionResult>·{
+        117 │ + export·async·function·deliverCard(
+        118 │ + → cardsDir:·string,
+        119 │ + → cardNo:·number,
+        120 │ + → options?:·DeliverOptions,
+        121 │ + ):·Promise<SubmissionResult>·{
+    118 122 │   	options?.signal?.throwIfAborted();
+    119 123 │   	const card = loadCard(cardsDir, cardNo);
+  
+
+packages\coding-agent\src\pao\cards\handoff.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { baselineSnapshotPath, diffAgainstBaseline } from "./baseline.ts";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { listCards } from "./cardfile.ts";
+    3 │ import { formatCardNumber } from "./counter.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      1     │ - import·{·baselineSnapshotPath,·diffAgainstBaseline·}·from·"./baseline.ts";
+      2     │ - import·{·listCards·}·from·"./cardfile.ts";
+      3     │ - import·{·formatCardNumber·}·from·"./counter.ts";
+      4     │ - import·{·nowString·}·from·"../shared/time.ts";
+          1 │ + import·{·nowString·}·from·"../shared/time.ts";
+          2 │ + import·{·baselineSnapshotPath,·diffAgainstBaseline·}·from·"./baseline.ts";
+          3 │ + import·{·listCards·}·from·"./cardfile.ts";
+          4 │ + import·{·formatCardNumber·}·from·"./counter.ts";
+      5   5 │   import { isPendingReview } from "./receipts.ts";
+      6   6 │   import { renderQueue } from "./render.ts";
+  
+
+packages\coding-agent\src\pao\cards\handoff.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     82  82 │   	// 一、当前目标：队列里非终态卡的目标列表（renderQueue 纯读渲染，含依赖边/待审标记）
+     83  83 │   	sections.push(
+     84     │ - → → ["##·当前目标",·liveCard.length·>·0·?·renderQueue(liveCard.map(toQueueView))·:·"无活卡（队列为空或全部终态）。"].join(
+     85     │ - → → → "\n",
+     86     │ - → → ),
+         84 │ + → → [
+         85 │ + → → → "##·当前目标",
+         86 │ + → → → liveCard.length·>·0·?·renderQueue(liveCard.map(toQueueView))·:·"无活卡（队列为空或全部终态）。",
+         87 │ + → → ].join("\n"),
+     87  88 │   	);
+     88  89 │   
+    ······· │ 
+    104 105 │   		}
+    105 106 │   	}
+    106     │ - → sections.push(["##·已发生改动",·...(changedLine.length·>·0·?·changedLine·:·["（无活卡，无改动可盘点）"])].join("\n"));
+        107 │ + → sections.push(
+        108 │ + → → ["##·已发生改动",·...(changedLine.length·>·0·?·changedLine·:·["（无活卡，无改动可盘点）"])].join("\n"),
+        109 │ + → );
+    107 110 │   
+    108 111 │   	// 三、验证结果：卡正文 `## 机械验收` 最近结论；无记录标未验收（「已验证的」与「还在猜的」分界线）
+    ······· │ 
+    118 121 │   	const pendingLine: string[] = [];
+    119 122 │   	for (const card of cards.filter((candidate) => isPendingReview(candidate))) {
+    120     │ - → → pendingLine.push(`-·${formatCardNumber(card.卡号)}·${card.frontmatter.目标}：待审（回执已交，待·owner·审核落终态）`);
+        123 │ + → → pendingLine.push(
+        124 │ + → → → `-·${formatCardNumber(card.卡号)}·${card.frontmatter.目标}：待审（回执已交，待·owner·审核落终态）`,
+        125 │ + → → );
+    121 126 │   	}
+    122 127 │   	for (const card of cards.filter(
+  
+
+packages\coding-agent\src\pao\cards\metrics.ts:22:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    20 │  * 写盘点（薄 IO，原子写复用 writeFileAtomic），路径推导独立成 metricsLedgerPath，测试打纯函数。
+    21 │  */
+  > 22 │ import { existsSync, readFileSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    23 │ import { dirname, join, resolve } from "node:path";
+    24 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     25  25 │   import { parseFrontmatter } from "../../utils/frontmatter.ts";
+     26  26 │   import type { WorkerUsage } from "../worker/receipt.ts";
+     27     │ - import·{·usageLineFromEventState,·totalsUsage·}·from·"../worker/usage.ts";
+         27 │ + import·{·totalsUsage,·usageLineFromEventState·}·from·"../worker/usage.ts";
+     28  28 │   import { writeFileAtomic } from "./atomic.ts";
+     29  29 │   import { formatCardNumber } from "./counter.ts";
+  
+
+packages\coding-agent\src\pao\cards\statemachine.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     98  98 │   	if (to === "取消" && operator === "用户") return;
+     99  99 │   	if (currentOwner === undefined) {
+    100     │ - → → throw·new·PaoCardError("FORBIDDEN_WRITER",·`卡未设·owner，只有认领（待认领→进行中）或用户取消可写入`,·{·操作者:·operator·});
+        100 │ + → → throw·new·PaoCardError("FORBIDDEN_WRITER",·`卡未设·owner，只有认领（待认领→进行中）或用户取消可写入`,·{
+        101 │ + → → → 操作者:·operator,
+        102 │ + → → });
+    101 103 │   	}
+    102 104 │   	if (operator === currentOwner) return;
+  
+
+packages\coding-agent\src\pao\cards\tools.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    175 175 │   			// 全已交付的历史环放行（M2-02 定案：程序只拒死等，不翻旧账）——环里只要有
+    176 176 │   			// 任一卡未交付才是活死锁
+    177     │ - → → → const·undeliveredInCycle·=·cycle.filter((n)·=>·existing.find((c)·=>·c.卡号·===·n)?.frontmatter.状态·!==·"已交付");
+        177 │ + → → → const·undeliveredInCycle·=·cycle.filter(
+        178 │ + → → → → (n)·=>·existing.find((c)·=>·c.卡号·===·n)?.frontmatter.状态·!==·"已交付",
+        179 │ + → → → );
+    178 180 │   			if (undeliveredInCycle.length > 0) {
+    179 181 │   				const names = undeliveredInCycle.map((n) => formatCardNumber(n)).join("、");
+    ······· │ 
+    417 419 │   		const card = loadCard(cardsDir, parseCardRef(String(params.卡号)));
+    418 420 │   		const takeFromReceipt = params.产物路径 === undefined;
+    419     │ - → → const·declared·=·params.产物路径·??·normalizedArtifacts(card.回执.at(-1)?.产物路径·as·string[]·|·string·|·undefined);
+        421 │ + → → const·declared·=
+        422 │ + → → → params.产物路径·??·normalizedArtifacts(card.回执.at(-1)?.产物路径·as·string[]·|·string·|·undefined);
+    420 423 │   		const snapshotPath = baselineSnapshotPath(cardsDir, card.卡号);
+    421 424 │   		const diff = await diffAgainstBaseline(snapshotPath);
+  
+
+packages\coding-agent\src\pao\cards\verifier.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     95  95 │   				const substring = rest.slice(sep.index + sep[0].length).trim();
+     96  96 │   				if (path.length === 0 || substring.length === 0) break;
+     97     │ - → → → → mechanicalEntry.push({·序号:·mechanicalEntry.length·+·1,·类型:·type,·主体:·path,·子串:·substring,·原文:·line·});
+         97 │ + → → → → mechanicalEntry.push({
+         98 │ + → → → → → 序号:·mechanicalEntry.length·+·1,
+         99 │ + → → → → → 类型:·type,
+        100 │ + → → → → → 主体:·path,
+        101 │ + → → → → → 子串:·substring,
+        102 │ + → → → → → 原文:·line,
+        103 │ + → → → → });
+     98 104 │   			} else {
+     99 105 │   				mechanicalEntry.push({ 序号: mechanicalEntry.length + 1, 类型: type, 主体: rest, 原文: line });
+    ······· │ 
+    216 222 │   		if (isAbsolutePath(token)) violation.push(`禁绝对路径（${token}，只收相对沙箱的相对路径）`);
+    217 223 │   	}
+    218     │ - → if·(/node_modules/.test(command.toLowerCase()))·violation.push("禁·node_modules·路径（联接指回真目录，写它＝写真项目）");
+        224 │ + → if·(/node_modules/.test(command.toLowerCase()))
+        225 │ + → → violation.push("禁·node_modules·路径（联接指回真目录，写它＝写真项目）");
+    219 226 │   	return { 过: violation.length === 0, 违规: violation };
+    220 227 │   }
+    ······· │ 
+    614 621 │   				description = `读取失败：${String((error as Error).message).slice(0, 120)}`;
+    615 622 │   			}
+    616     │ - → → → results.push({·序号:·e.序号,·类型:·e.类型,·摘要:·`${e.主体}·::·${e.子串}`,·结果:·ok·?·"过"·:·"未过",·说明:·description·});
+        623 │ + → → → results.push({
+        624 │ + → → → → 序号:·e.序号,
+        625 │ + → → → → 类型:·e.类型,
+        626 │ + → → → → 摘要:·`${e.主体}·::·${e.子串}`,
+        627 │ + → → → → 结果:·ok·?·"过"·:·"未过",
+        628 │ + → → → → 说明:·description,
+        629 │ + → → → });
+    617 630 │   		}
+    618 631 │   	}
+  
+
+packages\coding-agent\src\pao\collab\index.ts:8:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     6 │  * - 纯库函数与类型：校验协作卡 / 落协作卡 / 审计追加。
+     7 │  */
+   > 8 │ import { isAbsolute, join, resolve } from "node:path";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     9 │ import { type Static, Type } from "typebox";
+    10 │ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     18  18 │   import { resolvePaoHome } from "../routing/config.ts";
+     19  19 │   import { nowString } from "../shared/time.ts";
+     20     │ - import·{·type·CollabAuditRecord,·USER_DIRECT_VERDICT,·auditAppend·}·from·"./audit.ts";
+         20 │ + import·{·auditAppend,·type·CollabAuditRecord,·USER_DIRECT_VERDICT·}·from·"./audit.ts";
+     21  21 │   import { writeCollabCard } from "./dispatch.ts";
+     22  22 │   import { type CollabCardDraft, type CollabRejectionReason, type CollabReviewResult, validateCollabCard } from "./review.ts";
+  
+
+packages\coding-agent\src\pao\collab\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     20  20 │   import { type CollabAuditRecord, USER_DIRECT_VERDICT, auditAppend } from "./audit.ts";
+     21  21 │   import { writeCollabCard } from "./dispatch.ts";
+     22     │ - import·{·type·CollabCardDraft,·type·CollabRejectionReason,·type·CollabReviewResult,·validateCollabCard·}·from·"./review.ts";
+         22 │ + import·{
+         23 │ + → type·CollabCardDraft,
+         24 │ + → type·CollabRejectionReason,
+         25 │ + → type·CollabReviewResult,
+         26 │ + → validateCollabCard,
+         27 │ + }·from·"./review.ts";
+     23  28 │   
+     24  29 │   export * from "./audit.ts";
+    ······· │ 
+    304 309 │   					.filter(Boolean);
+    305 310 │   	const acceptance = fourth ?? third;
+    306     │ - → const·card·=·await·createCard(cardsDir,·{·目标:·goal,·部门:·dept,·验收:·acceptance,·输入:·input,·创建:·nowString()·});
+        311 │ + → const·card·=·await·createCard(cardsDir,·{
+        312 │ + → → 目标:·goal,
+        313 │ + → → 部门:·dept,
+        314 │ + → → 验收:·acceptance,
+        315 │ + → → 输入:·input,
+        316 │ + → → 创建:·nowString(),
+        317 │ + → });
+    307 318 │   	const record: CollabAuditRecord = {
+    308 319 │   		时间: nowString(),
+  
+
+packages\coding-agent\src\pao\collab\review.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    113 113 │   }
+    114 114 │   
+    115     │ - function·renderRulingSummary(card:·CollabCardDraft,·parentCardNo:·number,·declaration:·Partial<Record<RulingFlag,·string>>):·string·{
+        115 │ + function·renderRulingSummary(
+        116 │ + → card:·CollabCardDraft,
+        117 │ + → parentCardNo:·number,
+        118 │ + → declaration:·Partial<Record<RulingFlag,·string>>,
+        119 │ + ):·string·{
+    116 120 │   	const lines = [
+    117 121 │   		`协作卡机械校验全部通过，但带裁决标记，待主控裁决（未落队列）：`,
+    ······· │ 
+    199 203 │   	if (parentCardNo !== undefined && !isBlank(card.部门)) {
+    200 204 │   		const alreadyExists = existingCardStatus.find(
+    201     │ - → → → (c)·=>·c.frontmatter.部门·===·card.部门·&&·ACTIVE_STATUSES.includes(c.frontmatter.状态)·&&·sameParent(c,·parentCardNo),
+        205 │ + → → → (c)·=>
+        206 │ + → → → → c.frontmatter.部门·===·card.部门·&&
+        207 │ + → → → → ACTIVE_STATUSES.includes(c.frontmatter.状态)·&&
+        208 │ + → → → → sameParent(c,·parentCardNo),
+    202 209 │   		);
+    203 210 │   		if (alreadyExists) {
+    ······· │ 
+    275 282 │   	// 机械全过：带裁决标记 → 待主控裁决；无声明 → 放行
+    276 283 │   	if (Object.keys(declaration).length > 0 && parentCardNo !== undefined) {
+    277     │ - → → return·{·裁决:·"待主控裁决",·原因:·[],·裁决声明:·declaration,·裁决摘要:·renderRulingSummary(card,·parentCardNo,·declaration)·};
+        284 │ + → → return·{
+        285 │ + → → → 裁决:·"待主控裁决",
+        286 │ + → → → 原因:·[],
+        287 │ + → → → 裁决声明:·declaration,
+        288 │ + → → → 裁决摘要:·renderRulingSummary(card,·parentCardNo,·declaration),
+        289 │ + → → };
+    278 290 │   	}
+    279 291 │   	return { 裁决: "放行", 原因: [], 裁决声明: declaration };
+  
+
+packages\coding-agent\src\pao\dept\registry.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { existsSync, mkdirSync, readFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { dirname } from "node:path";
+    3 │ import { writeFileAtomic } from "../cards/atomic.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      1   1 │   import { existsSync, mkdirSync, readFileSync } from "node:fs";
+      2   2 │   import { dirname } from "node:path";
+      3     │ - import·{·writeFileAtomic·}·from·"../cards/atomic.ts";
+      4     │ - import·lockfile·from·"proper-lockfile";
+          3 │ + import·lockfile·from·"proper-lockfile";
+          4 │ + import·{·writeFileAtomic·}·from·"../cards/atomic.ts";
+      5   5 │   
+      6   6 │   /** 部门总目录名(相对 PAO_HOME) */
+  
+
+packages\coding-agent\src\pao\desktop\canvas.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    288 288 │   		} catch (error) {
+    289 289 │   			if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; // 无 .pao＝无实例，如实跳过
+    290     │ - → → → exception.push({·路径:·paoDir,·原因:·`目录读取失败:${error·instanceof·Error·?·error.message·:·String(error)}`·});
+        290 │ + → → → exception.push({
+        291 │ + → → → → 路径:·paoDir,
+        292 │ + → → → → 原因:·`目录读取失败:${error·instanceof·Error·?·error.message·:·String(error)}`,
+        293 │ + → → → });
+    291 294 │   			continue;
+    292 295 │   		}
+    ······· │ 
+    297 300 │   			} catch (error) {
+    298 301 │   				if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; // 扫描间隙被删，如实反映
+    299     │ - → → → → exception.push({·路径:·dir,·原因:·`目录读取失败:${error·instanceof·Error·?·error.message·:·String(error)}`·});
+        302 │ + → → → → exception.push({
+        303 │ + → → → → → 路径:·dir,
+        304 │ + → → → → → 原因:·`目录读取失败:${error·instanceof·Error·?·error.message·:·String(error)}`,
+        305 │ + → → → → });
+    300 306 │   				continue;
+    301 307 │   			}
+  
+
+packages\coding-agent\src\pao\desktop\editor.ts:2:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    1 │ /** 工作流编辑器的只读目录、版本与启动预检；写入由原 owner 命令完成。 */
+  > 2 │ import { createHash } from "node:crypto";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ import { existsSync, readdirSync, readFileSync } from "node:fs";
+    4 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      7   7 │   import { loadTierConfig, THINKING_LEVELS, TIER_CONFIG_RELATIVE_PATH } from "../routing/config.ts";
+      8   8 │   import { emitRecipeMarkdown } from "../workflow/distill.ts";
+      9     │ - import·{·parseRecipe,·recipePath,·substituteParams,·type·WorkflowRecipe,·validateRecipeName·}·from·"../workflow/recipe.ts";
+          9 │ + import·{·parseRecipe,·recipePath,·substituteParams,·validateRecipeName,·type·WorkflowRecipe·}·from·"../workflow/recipe.ts";
+     10  10 │   import { listStarterTemplates } from "../workflow/templates.ts";
+     11  11 │   import { readDesktopPending } from "./read-model.ts";
+  
+
+packages\coding-agent\src\pao\desktop\editor.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      7   7 │   import { loadTierConfig, THINKING_LEVELS, TIER_CONFIG_RELATIVE_PATH } from "../routing/config.ts";
+      8   8 │   import { emitRecipeMarkdown } from "../workflow/distill.ts";
+      9     │ - import·{·parseRecipe,·recipePath,·substituteParams,·type·WorkflowRecipe,·validateRecipeName·}·from·"../workflow/recipe.ts";
+          9 │ + import·{
+         10 │ + → parseRecipe,
+         11 │ + → recipePath,
+         12 │ + → substituteParams,
+         13 │ + → type·WorkflowRecipe,
+         14 │ + → validateRecipeName,
+         15 │ + }·from·"../workflow/recipe.ts";
+     10  16 │   import { listStarterTemplates } from "../workflow/templates.ts";
+     11  17 │   import { readDesktopPending } from "./read-model.ts";
+  
+
+packages\coding-agent\src\pao\desktop\maintenance.ts:2:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    1 │ /** 桌面机械子进程的只读巡检/本地索引预读；没有模型、派卡或入库入口。 */
+  > 2 │ import { existsSync, lstatSync, readdirSync, realpathSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ import { readFile } from "node:fs/promises";
+    4 │ import { join, relative, isAbsolute } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     2  2 │   import { existsSync, lstatSync, readdirSync, realpathSync } from "node:fs";
+     3  3 │   import { readFile } from "node:fs/promises";
+     4    │ - import·{·join,·relative,·isAbsolute·}·from·"node:path";
+        4 │ + import·{·isAbsolute,·join,·relative·}·from·"node:path";
+     5  5 │   import { readRegistry } from "../dept/registry.ts";
+     6    │ - import·{·inspectHook,·checkIndexConsistency·}·from·"../knowledge/inspect.ts";
+        6 │ + import·{·checkIndexConsistency,·inspectHook·}·from·"../knowledge/inspect.ts";
+     7  7 │   import { ENTRY_TYPES } from "../knowledge/types.ts";
+     8  8 │   
+  
+
+packages\coding-agent\src\pao\desktop\maintenance.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     7  7 │   import { ENTRY_TYPES } from "../knowledge/types.ts";
+     8  8 │   
+     9    │ - export·async·function·readMechanicalMaintenance(home:·string,·mode:·"巡检"·|·"保温",·checkpoint:·()·=>·Promise<void>·=·async·()·=>·{}):·Promise<string>·{
+        9 │ + export·async·function·readMechanicalMaintenance(
+       10 │ + → home:·string,
+       11 │ + → mode:·"巡检"·|·"保温",
+       12 │ + → checkpoint:·()·=>·Promise<void>·=·async·()·=>·{},
+       13 │ + ):·Promise<string>·{
+    10 14 │   	const root = realpathSync(home);
+    11 15 │   	const checked = (path: string) => {
+    ····· │ 
+    33 37 │   				await checkpoint();
+    34 38 │   				bytes += Buffer.byteLength(body);
+    35    │ - → → → → if·(mode·===·"巡检"·&&·file·!==·"子索引.md")·findings.push({·文件:·`${area}/${file}`,·...inspectHook(body.split(/\r?\n/)[0]·??·"")·});
+       39 │ + → → → → if·(mode·===·"巡检"·&&·file·!==·"子索引.md")
+       40 │ + → → → → → findings.push({·文件:·`${area}/${file}`,·...inspectHook(body.split(/\r?\n/)[0]·??·"")·});
+    36 41 │   			}
+    37 42 │   		}
+    38    │ - → → reports.push({·部门:·dept.名字,·读取字节:·bytes,·...(mode·===·"巡检"·?·{·findings,·一致性:·checkIndexConsistency(library)·}·:·{})·});
+       43 │ + → → reports.push({
+       44 │ + → → → 部门:·dept.名字,
+       45 │ + → → → 读取字节:·bytes,
+       46 │ + → → → ...(mode·===·"巡检"·?·{·findings,·一致性:·checkIndexConsistency(library)·}·:·{}),
+       47 │ + → → });
+    39 48 │   	}
+    40    │ - → return·JSON.stringify({·操作:·mode,·边界:·"只读；不改子索引、不落卡、不写知识条目、不调用模型或嵌入。保温仅操作系统文件缓存预读，不宣称持久语义索引已刷新。",·reports·},·null,·2);
+       49 │ + → return·JSON.stringify(
+       50 │ + → → {
+       51 │ + → → → 操作:·mode,
+       52 │ + → → → 边界:·"只读；不改子索引、不落卡、不写知识条目、不调用模型或嵌入。保温仅操作系统文件缓存预读，不宣称持久语义索引已刷新。",
+       53 │ + → → → reports,
+       54 │ + → → },
+       55 │ + → → null,
+       56 │ + → → 2,
+       57 │ + → );
+    41 58 │   }
+    42 59 │   
+  
+
+packages\coding-agent\src\pao\healthcheck\cache-probe.ts:9:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     7 │  * 时钟与「发一次请求」全部注入,本模块不做任何网络/落盘;单点采样失败只记失败,不炸整份报告。
+     8 │  */
+   > 9 │ import type { Message, Usage } from "@earendil-works/pi-ai";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    10 │ 
+    11 │ import { type HealthcheckCaller, type HealthcheckCallOptions, truncateText, emptyUsage, addUsage } from "./probes.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      9   9 │   import type { Message, Usage } from "@earendil-works/pi-ai";
+     10  10 │   
+     11     │ - import·{·type·HealthcheckCaller,·type·HealthcheckCallOptions,·truncateText,·emptyUsage,·addUsage·}·from·"./probes.ts";
+         11 │ + import·{·addUsage,·emptyUsage,·type·HealthcheckCaller,·type·HealthcheckCallOptions,·truncateText·}·from·"./probes.ts";
+     12  12 │   
+     13  13 │   /** 探针时钟:now 取当前毫秒时戳;sleep 等待指定毫秒(测试注入即时兑现的假件) */
+  
+
+packages\coding-agent\src\pao\healthcheck\cache-probe.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     89  89 │   		}
+     90  90 │   	}
+     91     │ - → if·(params.衰减阈值·!==·undefined·&&·(!Number.isFinite(params.衰减阈值)·||·params.衰减阈值·<=·0·||·params.衰减阈值·>·1))·{
+         91 │ + → if·(
+         92 │ + → → params.衰减阈值·!==·undefined·&&
+         93 │ + → → (!Number.isFinite(params.衰减阈值)·||·params.衰减阈值·<=·0·||·params.衰减阈值·>·1)
+         94 │ + → )·{
+     92  95 │   		throw new Error(`缓存探针参数不合法:衰减阈值须在 (0,1] 区间,收到 ${params.衰减阈值}`);
+     93  96 │   	}
+    ······· │ 
+    121 124 │   
+    122 125 │   /** 单次采样:调一次记一条;抛错记失败(截断防刷屏),不炸整份报告 */
+    123     │ - async·function·sampleOnce(call:·HealthcheckCaller,·context:·Message[],·offsetSeconds:·number):·Promise<CacheSampleRecord>·{
+        126 │ + async·function·sampleOnce(
+        127 │ + → call:·HealthcheckCaller,
+        128 │ + → context:·Message[],
+        129 │ + → offsetSeconds:·number,
+        130 │ + ):·Promise<CacheSampleRecord>·{
+    124 131 │   	try {
+    125 132 │   		const reply = await call(context, probeCallOptions());
+    ······· │ 
+    138 145 │    * 时钟与调用器都注入;任何单点失败只记失败,继续跑完剩余采样点。
+    139 146 │    */
+    140     │ - export·async·function·runCacheProbe(call:·HealthcheckCaller,·clock:·ProbeClock,·params:·CacheProbeParams):·Promise<CacheProbeResult>·{
+        147 │ + export·async·function·runCacheProbe(
+        148 │ + → call:·HealthcheckCaller,
+        149 │ + → clock:·ProbeClock,
+        150 │ + → params:·CacheProbeParams,
+        151 │ + ):·Promise<CacheProbeResult>·{
+    141 152 │   	validateCacheProbeParams(params);
+    142 153 │   	const decayThreshold = params.衰减阈值 ?? DEFAULT_DECAY_THRESHOLD;
+    ······· │ 
+    158 169 │   	// 基线之后读到 0 是真衰减到底,照实显示 0.0%
+    159 170 │   	for (const [index, entry] of samples.entries()) {
+    160     │ - → → entry.命中率·=·baselineUsage·&&·entry.用量·&&·index·>=·baselineIndex·?·cacheHitRate(baselineUsage,·entry.用量)·:·undefined;
+        171 │ + → → entry.命中率·=
+        172 │ + → → → baselineUsage·&&·entry.用量·&&·index·>=·baselineIndex·?·cacheHitRate(baselineUsage,·entry.用量)·:·undefined;
+    161 173 │   	}
+    162 174 │   	const totalUsage = emptyUsage();
+    ······· │ 
+    177 189 │   		return "结论:全程无缓存读命中(缓存未建立或供应商未回报 cacheRead),无法评估衰减;先确认供应商缓存开关与计费口径再重测";
+    178 190 │   	}
+    179     │ - → const·breach·=·samples.find((entry)·=>·entry.状态·===·"成功"·&&·entry.偏移秒·>·0·&&·entry.命中率·!==·undefined·&&·entry.命中率·<·threshold);
+        191 │ + → const·breach·=·samples.find(
+        192 │ + → → (entry)·=>·entry.状态·===·"成功"·&&·entry.偏移秒·>·0·&&·entry.命中率·!==·undefined·&&·entry.命中率·<·threshold,
+        193 │ + → );
+    180 194 │   	if (!breach) {
+    181 195 │   		const farthest = Math.max(0, ...samples.map((entry) => entry.偏移秒));
+  
+
+packages\coding-agent\src\pao\healthcheck\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    160 160 │   			const baseCaller = options.resolveCaller?.(model, auth, signal) ?? defaultCaller(model, auth, signal);
+    161 161 │   			let callCount = 0;
+    162     │ - → → → const·countingCaller·=·async·(messages:·Parameters<HealthcheckCaller>[0],·opts?:·HealthcheckCallOptions):·Promise<AssistantMessage>·=>·{
+        162 │ + → → → const·countingCaller·=·async·(
+        163 │ + → → → → messages:·Parameters<HealthcheckCaller>[0],
+        164 │ + → → → → opts?:·HealthcheckCallOptions,
+        165 │ + → → → ):·Promise<AssistantMessage>·=>·{
+    163 166 │   				callCount++;
+    164 167 │   				return baseCaller(messages, opts);
+    ······· │ 
+    195 198 │   				textBlocks.push({ type: "text", text: renderCacheProbeReport(cacheProbeResult) });
+    196 199 │   			}
+    197     │ - → → → const·details:·HealthcheckReportWithPaths·=·{·...report,·落盘路径:·outPath,·...(cacheProbeResult·?·{·缓存探针:·cacheProbeResult·}·:·{})·};
+        200 │ + → → → const·details:·HealthcheckReportWithPaths·=·{
+        201 │ + → → → → ...report,
+        202 │ + → → → → 落盘路径:·outPath,
+        203 │ + → → → → ...(cacheProbeResult·?·{·缓存探针:·cacheProbeResult·}·:·{}),
+        204 │ + → → → };
+    198 205 │   			return { content: textBlocks, details };
+    199 206 │   		},
+  
+
+packages\coding-agent\src\pao\healthcheck\index.ts:7:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    5 │  * 真跑即 M0-06 验收的机械化补充;密钥只在调用层经手,不进报告/日志/测试。
+    6 │  */
+  > 7 │ import { dirname, join } from "node:path";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    8 │ import { fileURLToPath } from "node:url";
+    9 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     18  18 │   import { nowString } from "../shared/time.ts";
+     19  19 │   import {
+     20     │ - → type·ProbeClock,
+     21     │ - → validateCacheProbeParams,
+     22     │ - → renderCacheProbeReport,
+     23     │ - → realClock,
+     24     │ - → type·CacheProbeResult,
+     25     │ - → runCacheProbe,
+         20 │ + → type·CacheProbeResult,
+         21 │ + → type·ProbeClock,
+         22 │ + → realClock,
+         23 │ + → renderCacheProbeReport,
+         24 │ + → runCacheProbe,
+         25 │ + → validateCacheProbeParams,
+     26  26 │   } from "./cache-probe.ts";
+     27     │ - import·{·runHealthcheck,·type·HealthcheckCaller,·type·HealthcheckCallOptions·}·from·"./probes.ts";
+         27 │ + import·{·type·HealthcheckCaller,·type·HealthcheckCallOptions,·runHealthcheck·}·from·"./probes.ts";
+     28  28 │   import { type HealthcheckReport, sumProbeUsage, writeEvalEntry } from "./report.ts";
+     29  29 │   
+  
+
+packages\coding-agent\src\pao\healthcheck\probes.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    137 137 │   		addUsage(usage, firstHop.usage);
+    138 138 │   		const toolCallHit = firstHop.content.find(
+    139     │ - → → → (block):·block·is·Extract<(typeof·firstHop.content)[number],·{·type:·"toolCall"·}>·=>·block.type·===·"toolCall",
+        139 │ + → → → (block):·block·is·Extract<(typeof·firstHop.content)[number],·{·type:·"toolCall"·}>·=>
+        140 │ + → → → → block.type·===·"toolCall",
+    140 141 │   		);
+    141 142 │   		if (!toolCallHit) {
+    ······· │ 
+    144 145 │   				状态: "失败",
+    145 146 │   				说明: "模型未发起工具调用(首跳无 toolCall 块)",
+    146     │ - → → → → 观察:·[`首跳停止原因·${firstHop.stopReason}`,·`首跳文本:${truncateText(concatTextBlocks(firstHop)·||·"(空)",·60)}`],
+        147 │ + → → → → 观察:·[
+        148 │ + → → → → → `首跳停止原因·${firstHop.stopReason}`,
+        149 │ + → → → → → `首跳文本:${truncateText(concatTextBlocks(firstHop)·||·"(空)",·60)}`,
+        150 │ + → → → → ],
+    147 151 │   				用量: usage,
+    148 152 │   				持续毫秒: Date.now() - startedAt,
+    ······· │ 
+    272 276 │   
+    273 277 │   /** 按固定顺序跑探针表;深度=false 时第四条记跳过(不花钱) */
+    274     │ - export·async·function·runHealthcheck(call:·HealthcheckCaller,·model:·Model<any>,·options:·{·深度?:·boolean·}·=·{}):·Promise<ProbeResult[]>·{
+        278 │ + export·async·function·runHealthcheck(
+        279 │ + → call:·HealthcheckCaller,
+        280 │ + → model:·Model<any>,
+        281 │ + → options:·{·深度?:·boolean·}·=·{},
+        282 │ + ):·Promise<ProbeResult[]>·{
+    275 283 │   	const results = [await probeChat(call), await probeToolCall(call), await probeReasoning(call, model)];
+    276 284 │   	if (options.深度) {
+  
+
+packages\coding-agent\src\pao\healthcheck\report.ts:6:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    4 │  * 不用 YAML frontmatter(读者是模型)。密钥永不写入:报告只记鉴权方式,不记值。
+    5 │  */
+  > 6 │ import { existsSync, mkdirSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    7 │ import { join } from "node:path";
+    8 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      6   6 │   import { existsSync, mkdirSync } from "node:fs";
+      7   7 │   import { join } from "node:path";
+      8     │ - 
+      9     │ - import·{·writeFileAtomic·}·from·"../cards/atomic.ts";
+     10     │ - 
+     11     │ - import·type·{·Usage·}·from·"@earendil-works/pi-ai";
+          8 │ + import·type·{·Usage·}·from·"@earendil-works/pi-ai";
+          9 │ + import·{·writeFileAtomic·}·from·"../cards/atomic.ts";
+     12  10 │   
+     13  11 │   import type { ProbeResult } from "./probes.ts";
+  
+
+packages\coding-agent\src\pao\host\handle.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     90  90 │   	if (k > 0 && input.最近工具签名.length >= k) {
+     91  91 │   		const tailWindow = input.最近工具签名.slice(-k);
+     92     │ - → → if·(tailWindow.every((signature)·=>·signature·===·tailWindow[0]))·mark.push(`疑似循环(最近·${k}·次调用同为·${tailWindow[0]})`);
+         92 │ + → → if·(tailWindow.every((signature)·=>·signature·===·tailWindow[0]))
+         93 │ + → → → mark.push(`疑似循环(最近·${k}·次调用同为·${tailWindow[0]})`);
+     93  94 │   	}
+     94  95 │   	if (
+  
+
+packages\coding-agent\src\pao\host\handoff.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    171 171 │   			if (pageHasFingerprint) reason.push(`配方指纹不匹配(页上 ${pageFingerprint.slice(0, 8)},当前无配方)`);
+    172 172 │   		} else if (!pageHasFingerprint || pageFingerprint !== input.当前指纹) {
+    173     │ - → → → reason.push(`配方指纹不匹配(页上·${pageHasFingerprint·?·pageFingerprint.slice(0,·8)·:·"无"},当前·${input.当前指纹.slice(0,·8)})`);
+        173 │ + → → → reason.push(
+        174 │ + → → → → `配方指纹不匹配(页上·${pageHasFingerprint·?·pageFingerprint.slice(0,·8)·:·"无"},当前·${input.当前指纹.slice(0,·8)})`,
+        175 │ + → → → );
+    174 176 │   		}
+    175 177 │   	}
+  
+
+packages\coding-agent\src\pao\host\host.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { type ChildProcess, spawn } from "node:child_process";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { randomUUID } from "node:crypto";
+    3 │ import { join, resolve } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     11  11 │   import { defaultInvocation } from "../worker/runner.ts";
+     12  12 │   import { readWarmConfig, WARM_DEFAULTS, type WarmConfig } from "./config.ts";
+     13     │ - import·{·absorbMinisterEvent,·createMinisterEventState,·type·MinisterEventState,·type·EventDelta·}·from·"./events.ts";
+         13 │ + import·{·absorbMinisterEvent,·createMinisterEventState,·type·EventDelta,·type·MinisterEventState·}·from·"./events.ts";
+     14  14 │   import {
+     15     │ - → type·MinisterHandle,
+     16     │ - → PAO_DEPT_ENV,
+     17     │ - → renderSupervisionSnapshot,
+     18     │ - → bindingKeyValue,
+     19     │ - → assessLiveness,
+     20     │ - → type·MinisterInventoryLine,
+     21     │ - → projectName,
+         15 │ + → assessLiveness,
+         16 │ + → bindingKeyValue,
+         17 │ + → type·MinisterHandle,
+         18 │ + → type·MinisterInventoryLine,
+         19 │ + → PAO_DEPT_ENV,
+         20 │ + → projectName,
+         21 │ + → renderSupervisionSnapshot,
+     22  22 │   } from "./handle.ts";
+     23  23 │   import { richHandoffPointerText, writeHandoffPage } from "./handoff.ts";
+     24  24 │   import {
+     25  25 │   	buildMinisterLedgerLine,
+     26     │ - → type·SupervisionAuditRecord,
+     27     │ - → supervisionAuditPath,
+     28     │ - → writeSupervisionAudit,
+         26 │ + → ministerLedgerPath,
+         27 │ + → type·SupervisionAuditRecord,
+         28 │ + → supervisionAuditPath,
+     29  29 │   	writeMinisterLedger,
+     30     │ - → ministerLedgerPath,
+         30 │ + → writeSupervisionAudit,
+     31  31 │   } from "./ledger.ts";
+     32  32 │   
+  
+
+packages\coding-agent\src\pao\host\host.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    172 172 │   		const paoHome = this.#paoHome();
+    173 173 │   		if (!paoHome) return;
+    174     │ - → → const·record:·SupervisionAuditRecord·=·{·时间:·this.#时钟().toISOString(),·动作:·action,·目标:·goal,·原因:·reason·};
+        174 │ + → → const·record:·SupervisionAuditRecord·=·{
+        175 │ + → → → 时间:·this.#时钟().toISOString(),
+        176 │ + → → → 动作:·action,
+        177 │ + → → → 目标:·goal,
+        178 │ + → → → 原因:·reason,
+        179 │ + → → };
+    175 180 │   		try {
+    176 181 │   			writeSupervisionAudit(supervisionAuditPath(paoHome), record);
+    ······· │ 
+    195 200 │   	/** 查某绑定 key 的热会话句柄(无则 undefined) */
+    196 201 │   	hotSession(dept: string, projectRoot: string, context?: string): MinisterHandle | undefined {
+    197     │ - → → return·this.#entries.get(bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}))?.handle;
+        202 │ + → → return·this.#entries.get(bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}))
+        203 │ + → → → ?.handle;
+    198 204 │   	}
+    199 205 │   
+    ······· │ 
+    567 573 │   	 */
+    568 574 │   	inject(dept: string, projectRoot: string, text: string, context?: string): { ok: boolean; 原因?: string } {
+    569     │ - → → const·entry·=·this.#entries.get(bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}));
+        575 │ + → → const·entry·=·this.#entries.get(
+        576 │ + → → → bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}),
+        577 │ + → → );
+    570 578 │   		if (!entry) return { ok: false, 原因: `无热部长会话(部门「${dept}」项目 ${projectRoot});拉起是主控专有动作` };
+    571 579 │   		if (!entry.proc.stdin?.writable) return { ok: false, 原因: `pid=${entry.handle.pid} 的标准输入不可写,无法注入` };
+    ······· │ 
+    596 604 │   
+    597 605 │   	/** 显式散场(主控干涉/手动):同保险丝的散场语义,但不要求空闲 */
+    598     │ - → async·teardown(dept:·string,·projectRoot:·string,·reason·=·"主控显式散场",·context?:·string):·Promise<TeardownRecord·|·undefined>·{
+    599     │ - → → const·entry·=·this.#entries.get(bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}));
+        606 │ + → async·teardown(
+        607 │ + → → dept:·string,
+        608 │ + → → projectRoot:·string,
+        609 │ + → → reason·=·"主控显式散场",
+        610 │ + → → context?:·string,
+        611 │ + → ):·Promise<TeardownRecord·|·undefined>·{
+        612 │ + → → const·entry·=·this.#entries.get(
+        613 │ + → → → bindingKeyValue({·部门:·dept,·项目根:·projectRoot,·脉络:·context·??·this.#默认脉络·}),
+        614 │ + → → );
+    600 615 │   		if (!entry) return undefined;
+    601 616 │   		return this.#散场Entry(entry, reason);
+    ······· │ 
+    732 747 │   			最近输出: input.最近回执标题,
+    733 748 │   		});
+    734     │ - → → const·injectionResult·=·this.inject(input.部门,·input.项目根,·`${snapshot}\n(上级监督唤醒:看一眼,可不动或走干涉)`);
+        749 │ + → → const·injectionResult·=·this.inject(
+        750 │ + → → → input.部门,
+        751 │ + → → → input.项目根,
+        752 │ + → → → `${snapshot}\n(上级监督唤醒:看一眼,可不动或走干涉)`,
+        753 │ + → → );
+    735 754 │   		if (injectionResult.ok) {
+    736 755 │   			this.#审计(
+  
+
+packages\coding-agent\src\pao\host\tools.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    157 157 │   			if (!dept) return errorReply("散场未执行:部门 必填");
+    158 158 │   			const projectRoot = params.项目根?.trim() || process.cwd();
+    159     │ - → → → const·record·=·await·host.teardown(dept,·projectRoot,·params.原因?.trim()·||·"主控显式散场",·resolveContext?.());
+        159 │ + → → → const·record·=·await·host.teardown(
+        160 │ + → → → → dept,
+        161 │ + → → → → projectRoot,
+        162 │ + → → → → params.原因?.trim()·||·"主控显式散场",
+        163 │ + → → → → resolveContext?.(),
+        164 │ + → → → );
+    160 165 │   			if (!record) {
+    161 166 │   				return errorReply(`散场未执行:无热部长会话(部门「${dept}」项目 ${projectRoot})`);
+  
+
+packages\coding-agent\src\pao\knowledge\auto-route.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     61  61 │    * 后与 部门名/能力标签 做子串匹配；全部不匹配 → 退化为查全部注册库。
+     62  62 │    */
+     63     │ - export·function·routeByLabel(query:·string,·registryLine:·readonly·DeptRegistryRow[],·paoHomeDir:·string):·RouteVerdict·{
+         63 │ + export·function·routeByLabel(
+         64 │ + → query:·string,
+         65 │ + → registryLine:·readonly·DeptRegistryRow[],
+         66 │ + → paoHomeDir:·string,
+         67 │ + ):·RouteVerdict·{
+     64  68 │   	const wordBlock = splitQueryTerms(query);
+     65  69 │   	const hit = registryLine.filter((row) =>
+  
+
+packages\coding-agent\src\pao\knowledge\index.ts:10:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     9 │ // 查库自动路由（§18.3 门面，M2-05）
+  > 10 │ export {
+       │ ^^^^^^^^
+  > 11 │ 	AUTO_PER_LIB_TOP_K,
+        ...
+  > 21 │ 	autoPatrol,
+  > 22 │ } from "./auto-route.ts";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^
+    23 │ export {
+    24 │ 	type CachedVector,
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     13  13 │   	AUTO_TOTAL_LIMIT,
+     14  14 │   	type AutoRouteResult,
+     15     │ - → formatAutoRouteResult,
+     16     │ - → type·VendorRecall,
+     17     │ - → type·FailureLibRecord,
+     18     │ - → type·SourcedHit,
+         15 │ + → autoPatrol,
+         16 │ + → type·FailureLibRecord,
+         17 │ + → formatAutoRouteResult,
+         18 │ + → labelHit,
+     19  19 │   	routeByLabel,
+     20     │ - → labelHit,
+     21     │ - → autoPatrol,
+         20 │ + → type·SourcedHit,
+         21 │ + → type·VendorRecall,
+     22  22 │   } from "./auto-route.ts";
+     23  23 │   export {
+  
+
+packages\coding-agent\src\pao\knowledge\tools.ts:7:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    5 │  */
+    6 │ 
+  > 7 │ import { statSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    8 │ import { join } from "node:path";
+    9 │ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     16  16 │   	AUTO_TOTAL_LIMIT,
+     17  17 │   	type AutoRouteResult,
+     18     │ - → formatAutoRouteResult,
+     19     │ - → autoPatrol,
+         18 │ + → autoPatrol,
+         19 │ + → formatAutoRouteResult,
+     20  20 │   } from "./auto-route.ts";
+     21  21 │   import { type EmbedClient, type FetchLike, loadEmbedConfig } from "./embed.ts";
+  
+
+packages\coding-agent\src\pao\memory\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     91  91 │   			},
+     92  92 │   		],
+     93     │ - → → details:·{·供应商:·manager.vendorName,·状态:·manager.status,·...(reason·===·undefined·?·{}·:·{·降级原因:·reason·})·},
+         93 │ + → → details:·{
+         94 │ + → → → 供应商:·manager.vendorName,
+         95 │ + → → → 状态:·manager.status,
+         96 │ + → → → ...(reason·===·undefined·?·{}·:·{·降级原因:·reason·}),
+         97 │ + → → },
+     94  98 │   	};
+     95  99 │   }
+    ······· │ 
+    199 203 │   				"召回",
+    200 204 │   				async (vendor) => {
+    201     │ - → → → → → const·hits·=·sessionMemory(pi).record(await·vendor.recall(params.检索词,·params.上限),·vendor.vendorName);
+        205 │ + → → → → → const·hits·=·sessionMemory(pi).record(
+        206 │ + → → → → → → await·vendor.recall(params.检索词,·params.上限),
+        207 │ + → → → → → → vendor.vendorName,
+        208 │ + → → → → → );
+    202 209 │   					return {
+    203 210 │   						content: [{ type: "text", text: formatHits(hits) }],
+    ······· │ 
+    234 241 │   				return {
+    235 242 │   					content: [
+    236     │ - → → → → → → {·type:·"text",·text:·entryCount·>·0·?·`已忘却·${entryCount}·条。`·:·"未找到该记忆·ID，未删除任何记忆。"·},
+        243 │ + → → → → → → {
+        244 │ + → → → → → → → type:·"text",
+        245 │ + → → → → → → → text:·entryCount·>·0·?·`已忘却·${entryCount}·条。`·:·"未找到该记忆·ID，未删除任何记忆。",
+        246 │ + → → → → → → },
+    237 247 │   					],
+    238 248 │   					details: { 供应商: manager.vendorName, 状态: manager.status, 条数: entryCount },
+  
+
+packages\coding-agent\src\pao\memory\mnemosyne.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    240 240 │   
+    241 241 │   	async recall(searchQuery: string, limit: number = DEFAULT_RECALL_LIMIT): Promise<MemoryHit[]> {
+    242     │ - → → const·payload·=·payloadFromResult(await·this.callRequired(this.params.工具.召回,·{·query:·searchQuery,·limit:·limit·}));
+        242 │ + → → const·payload·=·payloadFromResult(
+        243 │ + → → → await·this.callRequired(this.params.工具.召回,·{·query:·searchQuery,·limit:·limit·}),
+        244 │ + → → );
+    243 245 │   		if (payload.status !== "ok" || !Array.isArray(payload.results)) {
+    244 246 │   			throw new Error("mnemosyne 召回未返回 ok 状态与 results 数组");
+  
+
+packages\coding-agent\src\pao\panel\settings.ts:26:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    24 │  */
+    25 │ 
+  > 26 │ import { existsSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │ import { join } from "node:path";
+    28 │ import { writeFileAtomic } from "../cards/atomic.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     27  27 │   import { join } from "node:path";
+     28  28 │   import { writeFileAtomic } from "../cards/atomic.ts";
+     29     │ - import·{·readJsonRaw·}·from·"../shared/json.ts";
+     30     │ - import·{·WARM_CONFIG_RELATIVE_PATH·}·from·"../host/config.ts";
+     31     │ - import·{·MEMORY_CONFIG_RELATIVE_PATH·}·from·"../memory/memory-vendor.ts";
+         29 │ + import·{·WARM_CONFIG_RELATIVE_PATH·}·from·"../host/config.ts";
+         30 │ + import·{·MEMORY_CONFIG_RELATIVE_PATH·}·from·"../memory/memory-vendor.ts";
+         31 │ + import·{·readJsonRaw·}·from·"../shared/json.ts";
+     32  32 │   
+     33  33 │   /** 保温.json 全路径（相对路径与 host/config 同源） */
+  
+
+packages\coding-agent\src\pao\patrol\shell-guard.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     84  84 │   const splitSegments = (path: string): string[] => path.split(/[\\/]+/).filter(Boolean);
+     85  85 │   
+     86     │ - const·reject·=·(type:·RejectionKind,·description:·string):·GuardVerdict·=>·({·放行:·false,·类型:·type,·说明:·description·});
+         86 │ + const·reject·=·(type:·RejectionKind,·description:·string):·GuardVerdict·=>·({
+         87 │ + → 放行:·false,
+         88 │ + → 类型:·type,
+         89 │ + → 说明:·description,
+         90 │ + });
+     87  91 │   
+     88  92 │   interface word {
+    ······· │ 
+    175 179 │    * 展开值含空白时补引号——否则含空格的路径（如 C:\Users\John Doe）会被切词拆散、丢失锚点。
+    176 180 │    */
+    177     │ - const·VAR_REF_PATTERN·=·/%([A-Za-z0-9_\u4e00-\u9fff]+)%|\$\{([A-Za-z0-9_\u4e00-\u9fff]+)\}|\$([A-Za-z0-9_\u4e00-\u9fff]+)/g;
+        181 │ + const·VAR_REF_PATTERN·=
+        182 │ + → /%([A-Za-z0-9_\u4e00-\u9fff]+)%|\$\{([A-Za-z0-9_\u4e00-\u9fff]+)\}|\$([A-Za-z0-9_\u4e00-\u9fff]+)/g;
+    178 183 │   
+    179 184 │   function expandKnownVars(command: string, knownVars: Map<string, string>): { 文本: string; 未知: string[] } {
+    ······· │ 
+    241 246 │   			return foldDotSegments(wordSegments, /^[a-z]:/.test(wordSegments[0] ?? ""));
+    242 247 │   		case "posix绝对":
+    243     │ - → → → return·foldDotSegments(workspaceDrive·?·[workspaceSegments[0],·...wordSegments]·:·[...wordSegments],·workspaceDrive);
+        248 │ + → → → return·foldDotSegments(
+        249 │ + → → → → workspaceDrive·?·[workspaceSegments[0],·...wordSegments]·:·[...wordSegments],
+        250 │ + → → → → workspaceDrive,
+        251 │ + → → → );
+    244 252 │   		case "相对":
+    245 253 │   			return foldDotSegments([...workspaceSegments, ...wordSegments], workspaceDrive);
+    ······· │ 
+    315 323 │   /** 引号词取引号内原文；裸词取行余部整段（cmd /c、env 的命令参数都是行余部语义；过近似，宁可多审）。 */
+    316 324 │   const takeCommandOrRest = (wordList: WordSegment, startAt: number): string =>
+    317     │ - → wordList[startAt]!.引号·!==·null·?·wordList[startAt]!.文本·:·wordList.slice(startAt).map((w)·=>·w.文本).join("·");
+        325 │ + → wordList[startAt]!.引号·!==·null
+        326 │ + → → ?·wordList[startAt]!.文本
+        327 │ + → → :·wordList
+        328 │ + → → → → .slice(startAt)
+        329 │ + → → → → .map((w)·=>·w.文本)
+        330 │ + → → → → .join("·");
+    318 331 │   
+    319 332 │   /**
+    ······· │ 
+    411 424 │   			inner.push(wordText.slice(eq + 1));
+    412 425 │   		}
+    413     │ - → → if·(i·<·wordList.length)·inner.push(wordList.slice(i).map((w)·=>·w.文本).join("·"));
+        426 │ + → → if·(i·<·wordList.length)
+        427 │ + → → → inner.push(
+        428 │ + → → → → wordList
+        429 │ + → → → → → .slice(i)
+        430 │ + → → → → → .map((w)·=>·w.文本)
+        431 │ + → → → → → .join("·"),
+        432 │ + → → → );
+    414 433 │   		return inner;
+    415 434 │   	}
+    ······· │ 
+    417 436 │   	if (program === "wsl") {
+    418 437 │   		// wsl 之后的整段按内层命令再审：wsl 自己的选项词是裸词按常规漏过，路径词（--cd /etc 等）照判
+    419     │ - → → if·(wordList.length·>·1)·inner.push(wordList.slice(1).map((w)·=>·w.文本).join("·"));
+        438 │ + → → if·(wordList.length·>·1)
+        439 │ + → → → inner.push(
+        440 │ + → → → → wordList
+        441 │ + → → → → → .slice(1)
+        442 │ + → → → → → .map((w)·=>·w.文本)
+        443 │ + → → → → → .join("·"),
+        444 │ + → → → );
+    420 445 │   		return inner;
+    421 446 │   	}
+    ······· │ 
+    473 498 │   
+    474 499 │   	// 2. 已知变量展开后判定；表外变量与展开不掉的 $ 一律拒（规格④）。
+    475     │ - → const·knownVars·=·new·Map(Object.entries(config.已知变量·??·{}).map(([varName,·value])·=>·[varName.toLowerCase(),·value]));
+        500 │ + → const·knownVars·=·new·Map(
+        501 │ + → → Object.entries(config.已知变量·??·{}).map(([varName,·value])·=>·[varName.toLowerCase(),·value]),
+        502 │ + → );
+    476 503 │   	const expansion = expandKnownVars(command, knownVars);
+    477 504 │   	if (expansion.未知.length > 0)
+    ······· │ 
+    496 523 │   		const stuckDots = wordSegments.filter((segment) => segment.includes("..") && segment !== "..");
+    497 524 │   		if (stuckDots.length > 0)
+    498     │ - → → → return·reject("无法确定",·`路径「${word.文本}」含未独立的·..·段（${stuckDots.join("、")}），落点无法机械确定，拒绝`);
+        525 │ + → → → return·reject(
+        526 │ + → → → → "无法确定",
+        527 │ + → → → → `路径「${word.文本}」含未独立的·..·段（${stuckDots.join("、")}），落点无法机械确定，拒绝`,
+        528 │ + → → → );
+    499 529 │   
+    500 530 │   		const kind = classifyPath(tilde.文本);
+    501     │ - → → const·landingSegments·=·resolveLanding(wordSegments,·kind,·workspaceSegments).map((segment)·=>·segment.toLowerCase());
+        531 │ + → → const·landingSegments·=·resolveLanding(wordSegments,·kind,·workspaceSegments).map((segment)·=>
+        532 │ + → → → segment.toLowerCase(),
+        533 │ + → → );
+    502 534 │   
+    503 535 │   		// 4. 敏感文件名黑名单：即使在允许范围内也拒（规格②）。
+    ······· │ 
+    508 540 │   		//    归一成小写段表后再比较；win32前缀 预切成段表（键按整表覆写，未传的键用缺省表）。
+    509 541 │   		const tables = {
+    510     │ - → → → win32前缀:·(config.系统目录?.win32前缀·??·DEFAULT_SYSTEM_DIR_TABLE.win32前缀).map((prefix)·=>·splitSegments(prefix.toLowerCase())),
+    511     │ - → → → win32段:·(config.系统目录?.win32段·??·DEFAULT_SYSTEM_DIR_TABLE.win32段).map((segment)·=>·segment.toLowerCase()),
+    512     │ - → → → posix段:·(config.系统目录?.posix段·??·DEFAULT_SYSTEM_DIR_TABLE.posix段).map((segment)·=>·segment.toLowerCase()),
+        542 │ + → → → win32前缀:·(config.系统目录?.win32前缀·??·DEFAULT_SYSTEM_DIR_TABLE.win32前缀).map((prefix)·=>
+        543 │ + → → → → splitSegments(prefix.toLowerCase()),
+        544 │ + → → → ),
+        545 │ + → → → win32段:·(config.系统目录?.win32段·??·DEFAULT_SYSTEM_DIR_TABLE.win32段).map((segment)·=>
+        546 │ + → → → → segment.toLowerCase(),
+        547 │ + → → → ),
+        548 │ + → → → posix段:·(config.系统目录?.posix段·??·DEFAULT_SYSTEM_DIR_TABLE.posix段).map((segment)·=>
+        549 │ + → → → → segment.toLowerCase(),
+        550 │ + → → → ),
+    513 551 │   		};
+    514 552 │   		if (kind === "win32盘符") {
+    515     │ - → → → const·prefixHit·=·tables.win32前缀.some((prefixSection)·=>·prefixSection.every((segment,·i)·=>·landingSegments[i]·===·segment));
+        553 │ + → → → const·prefixHit·=·tables.win32前缀.some((prefixSection)·=>
+        554 │ + → → → → prefixSection.every((segment,·i)·=>·landingSegments[i]·===·segment),
+        555 │ + → → → );
+    516 556 │   			const segmentHit = landingSegments.some((segment) => tables.win32段.includes(segment));
+    517     │ - → → → if·(prefixHit·||·segmentHit)·return·reject("系统目录",·`路径「${word.文本}」解析后命中·Windows·系统目录黑名单，拒绝`);
+    518     │ - → → }·else·if·(kind·===·"posix绝对"·&&·wordSegments.length·>·0·&&·tables.posix段.includes(wordSegments[0].toLowerCase()))·{
+    519     │ - → → → return·reject("系统目录",·`路径「${word.文本}」为·POSIX·绝对路径且根目录命中系统目录黑名单（/${wordSegments[0]}），拒绝`);
+        557 │ + → → → if·(prefixHit·||·segmentHit)
+        558 │ + → → → → return·reject("系统目录",·`路径「${word.文本}」解析后命中·Windows·系统目录黑名单，拒绝`);
+        559 │ + → → }·else·if·(
+        560 │ + → → → kind·===·"posix绝对"·&&
+        561 │ + → → → wordSegments.length·>·0·&&
+        562 │ + → → → tables.posix段.includes(wordSegments[0].toLowerCase())
+        563 │ + → → )·{
+        564 │ + → → → return·reject(
+        565 │ + → → → → "系统目录",
+        566 │ + → → → → `路径「${word.文本}」为·POSIX·绝对路径且根目录命中系统目录黑名单（/${wordSegments[0]}），拒绝`,
+        567 │ + → → → );
+    520 568 │   		}
+    521 569 │   
+  
+
+packages\coding-agent\src\pao\routing\config.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     81  81 │   	for (const tier of tiers) {
+     82  82 │   		if (seen.has(tier.名)) {
+     83     │ - → → → throw·new·Error(`档位配置·${source}·存在重复档名「${tier.名}」(档位名即虚拟模型·id,须唯一,否则注册时静默覆盖丢档)`);
+         83 │ + → → → throw·new·Error(
+         84 │ + → → → → `档位配置·${source}·存在重复档名「${tier.名}」(档位名即虚拟模型·id,须唯一,否则注册时静默覆盖丢档)`,
+         85 │ + → → → );
+     84  86 │   		}
+     85  87 │   		seen.add(tier.名);
+  
+
+packages\coding-agent\src\pao\status\results.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    13 │  * 本模块只读：「拟续跑」只给建议命令文案（同 pending.ts 口径），续跑必须由用户在对话/控制入口显式发起。
+    14 │  */
+  > 15 │ import { execFile } from "node:child_process";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 │ import { existsSync, readdirSync, readFileSync } from "node:fs";
+    17 │ import { basename, dirname, join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     18  18 │   
+     19  19 │   import { parseFrontmatter } from "../../utils/frontmatter.ts";
+     20     │ - import·{·baselineSnapshotPath,·checkBoundaryWrite,·type·BaselineDiff·}·from·"../cards/baseline.ts";
+         20 │ + import·{·type·BaselineDiff,·baselineSnapshotPath,·checkBoundaryWrite·}·from·"../cards/baseline.ts";
+     21  21 │   import { listCards, loadCard } from "../cards/cardfile.ts";
+     22  22 │   import { formatCardNumber, parseCardRef } from "../cards/counter.ts";
+    ······· │ 
+     24  24 │   import { readLatestVerdict } from "../cards/verifier.ts";
+     25  25 │   import { listProjects } from "../dept/projects.ts";
+     26     │ - import·{·controlReport,·readControl,·type·FlowControl·}·from·"../workflow/control.ts";
+         26 │ + import·{·controlReport,·type·FlowControl,·readControl·}·from·"../workflow/control.ts";
+     27  27 │   import { humanGateSuspendReason, parseManifest, parseWorkflowMarker } from "../workflow/driver.ts";
+     28  28 │   import { loadFrozenRecipe } from "../workflow/minister.ts";
+  
+
+packages\coding-agent\src\pao\status\results.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    146 146 │   			["-c", "core.quotepath=false", ...args],
+    147 147 │   			{ cwd, windowsHide: true, maxBuffer: 16 * 1024 * 1024 },
+    148     │ - → → → (error,·stdout,·stderr)·=>
+    149     │ - → → → → done({·code:·error·?·1·:·0,·stdout,·stderr:·stderr·||·error?.message·||·""·}),
+        148 │ + → → → (error,·stdout,·stderr)·=>·done({·code:·error·?·1·:·0,·stdout,·stderr:·stderr·||·error?.message·||·""·}),
+    150 149 │   		),
+    151 150 │   	);
+    ······· │ 
+    286 285 │   			record.push({ 卡: formatCardNumber(card.卡号), 时间: verdict.时间, 结论: verdict.结论 || "（段内未记结论）" });
+    287 286 │   	}
+    288     │ - → const·judgement·=·node.判定
+    289     │ - → → ?·{·结果:·node.判定.结果,·理由:·node.判定.理由,·时间:·node.判定.时间·}
+    290     │ - → → :·undefined;
+        287 │ + → const·judgement·=·node.判定·?·{·结果:·node.判定.结果,·理由:·node.判定.理由,·时间:·node.判定.时间·}·:·undefined;
+    291 288 │   	const acceptance: NodeAcceptance = {
+    292 289 │   		记录: record,
+    ······· │ 
+    296 293 │   	// 遗留·越界核查：每卡重算（认领基线快照＋当前 git 真值＋回执声明），非干净结论透传
+    297 294 │   	for (const card of cards) leftover.push(...(await outOfScopeLeftover(flow.卡目录, card, runGit)));
+    298     │ - → return·{·节点:·node.名字,·轮次:·node.轮次,·卡:·[...node.卡],·要求:·requirement,·实际diff:·actualDiff,·验收:·acceptance,·遗留:·leftover·};
+        295 │ + → return·{
+        296 │ + → → 节点:·node.名字,
+        297 │ + → → 轮次:·node.轮次,
+        298 │ + → → 卡:·[...node.卡],
+        299 │ + → → 要求:·requirement,
+        300 │ + → → 实际diff:·actualDiff,
+        301 │ + → → 验收:·acceptance,
+        302 │ + → → 遗留:·leftover,
+        303 │ + → };
+    299 304 │   }
+    300 305 │   
+    ······· │ 
+    336 341 │   	let editedUnverified = false;
+    337 342 │   	for (const node of nodeResult) {
+    338     │ - → → const·editCount·=·node.实际diff.可用
+    339     │ - → → → ?·node.实际diff.文件.length·+·node.实际diff.新增未跟踪.length
+    340     │ - → → → :·undefined;
+        343 │ + → → const·editCount·=·node.实际diff.可用·?·node.实际diff.文件.length·+·node.实际diff.新增未跟踪.length·:·undefined;
+    341 344 │   		const unverified = node.验收.记录.length === 0 && !node.验收.判定;
+    342 345 │   		if (editCount === undefined) {
+    ······· │ 
+    383 386 │   		suggestion.push("拍板后用 pao_节点控制 动作=确认 放行，或停流改配方后建新实例（不改进已冻结实例）");
+    384 387 │   	if (suggestion.length === 0 && report.状态 === "挂起")
+    385     │ - → → suggestion.push(
+    386     │ - → → → `pao_节点控制·动作=恢复·名字=${flow.工作流}·实例=${flow.实例}·理由=<现场核查>（须你在界面确认）`,
+    387     │ - → → );
+        388 │ + → → suggestion.push(`pao_节点控制·动作=恢复·名字=${flow.工作流}·实例=${flow.实例}·理由=<现场核查>（须你在界面确认）`);
+    388 389 │   	for (const command of suggestion) line.push({ 态: "拟续跑", 文案: command, 证据: [path] });
+    389     │ - → return·{·已完成:·completed,·已中断:·interrupted,·已改未验:·editedUnverified,·拟续跑:·suggestion.length·>·0,·行:·line·};
+        390 │ + → return·{
+        391 │ + → → 已完成:·completed,
+        392 │ + → → 已中断:·interrupted,
+        393 │ + → → 已改未验:·editedUnverified,
+        394 │ + → → 拟续跑:·suggestion.length·>·0,
+        395 │ + → → 行:·line,
+        396 │ + → };
+    390 397 │   }
+    391 398 │   
+  
+
+packages\coding-agent\src\pao\status\workflow-instances.ts:11:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     9 │  * - 目录读取失败区分 ENOENT（无 .pao 目录＝无实例,如实跳过）与其他错误（不可达≠空,显式上报路径+原因）。
+    10 │  */
+  > 11 │ import { readdirSync, readFileSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    12 │ import { basename, dirname, join } from "node:path";
+    13 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     15  15 │   import { listProjects } from "../dept/projects.ts";
+     16  16 │   import { controlReport, readControl } from "../workflow/control.ts";
+     17     │ - import·{·parseManifest,·humanGateSuspendReason·}·from·"../workflow/driver.ts";
+         17 │ + import·{·humanGateSuspendReason,·parseManifest·}·from·"../workflow/driver.ts";
+     18  18 │   import { loadFrozenRecipe } from "../workflow/minister.ts";
+     19  19 │   
+  
+
+packages\coding-agent\src\pao\worker\dispatch-core.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    228 228 │   		时间: input.时间,
+    229 229 │   	});
+    230     │ - → return·{·可派:·true,·card:·prepared.card,·尝试号:·prepared.card.frontmatter.尝试,·原状态:·previousStatus,·claimBaseline:·claimBaseline·};
+        230 │ + → return·{
+        231 │ + → → 可派:·true,
+        232 │ + → → card:·prepared.card,
+        233 │ + → → 尝试号:·prepared.card.frontmatter.尝试,
+        234 │ + → → 原状态:·previousStatus,
+        235 │ + → → claimBaseline:·claimBaseline,
+        236 │ + → };
+    231 237 │   }
+    232 238 │   
+  
+
+packages\coding-agent\src\pao\worker\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     16  16 │   import { parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+     17  17 │   import { DEFAULT_WORKER_SILENCE_MINUTES, readWorkerSilenceMinutes } from "../host/config.ts";
+     18     │ - import·{·defaultMinisterHost,·type·MinisterHost,·renderMinisterInventoryLine,·globalHotSessionLimit·}·from·"../host/index.ts";
+         18 │ + import·{
+         19 │ + → defaultMinisterHost,
+         20 │ + → type·MinisterHost,
+         21 │ + → renderMinisterInventoryLine,
+         22 │ + → globalHotSessionLimit,
+         23 │ + }·from·"../host/index.ts";
+     19  24 │   import { nowString } from "../shared/time.ts";
+     20  25 │   import { resolveWorkflowDispatch } from "../workflow/dispatch-context.ts";
+    ······· │ 
+    279 284 │   				for (const target of targets) {
+    280 285 │   					const proof: StopProof = await runner.terminate(target.卡路径 ?? cardNo);
+    281     │ - → → → → → stopMethods.push(proof.stoppedProcesses.map((p)·=>·p.方式).join(";")·||·"无在跑进程可杀(可能刚自然退出)");
+        286 │ + → → → → → stopMethods.push(
+        287 │ + → → → → → → proof.stoppedProcesses.map((p)·=>·p.方式).join(";")·||·"无在跑进程可杀(可能刚自然退出)",
+        288 │ + → → → → → );
+    282 289 │   				}
+    283 290 │   				// 放锁:在途派卡链的 executeDispatch finally 凭 confirmStopped/StopProof 放写锁并回收
+  
+
+packages\coding-agent\src\pao\worker\index.ts:11:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     9 │  */
+    10 │ 
+  > 11 │ import { join, resolve } from "node:path";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    12 │ 
+    13 │ import { type Static, Type } from "typebox";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     16  16 │   import { parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+     17  17 │   import { DEFAULT_WORKER_SILENCE_MINUTES, readWorkerSilenceMinutes } from "../host/config.ts";
+     18     │ - import·{·defaultMinisterHost,·type·MinisterHost,·renderMinisterInventoryLine,·globalHotSessionLimit·}·from·"../host/index.ts";
+         18 │ + import·{·defaultMinisterHost,·globalHotSessionLimit,·type·MinisterHost,·renderMinisterInventoryLine·}·from·"../host/index.ts";
+     19  19 │   import { nowString } from "../shared/time.ts";
+     20  20 │   import { resolveWorkflowDispatch } from "../workflow/dispatch-context.ts";
+  
+
+packages\coding-agent\src\pao\worker\inventory.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     95  95 │   	const run = (args: string[]): Promise<string> =>
+     96  96 │   		new Promise((resolve, reject) => {
+     97     │ - → → → execFile("git",·args,·{·cwd:·projectRoot,·windowsHide:·true,·maxBuffer:·1024·*·1024·},·(error,·stdout,·stderr)·=>·{
+     98     │ - → → → → if·(error)·reject(new·Error(stderr·||·String(error)));
+     99     │ - → → → → else·resolve(stdout);
+    100     │ - → → → });
+         97 │ + → → → execFile(
+         98 │ + → → → → "git",
+         99 │ + → → → → args,
+        100 │ + → → → → {·cwd:·projectRoot,·windowsHide:·true,·maxBuffer:·1024·*·1024·},
+        101 │ + → → → → (error,·stdout,·stderr)·=>·{
+        102 │ + → → → → → if·(error)·reject(new·Error(stderr·||·String(error)));
+        103 │ + → → → → → else·resolve(stdout);
+        104 │ + → → → → },
+        105 │ + → → → );
+    101 106 │   		});
+    102 107 │   	try {
+    ······· │ 
+    116 121 │   				? "工作树干净(与基线无差异)"
+    117 122 │   				: `${change.length} 个文件有改动:${[...counts].map(([k, v]) => `${k} ${v}`).join("、")}`;
+    118     │ - → → return·{·可用:·true,·分支:·branch.trim()·||·undefined,·head:·head.trim()·||·undefined,·变更:·change,·汇总:·totals·};
+        123 │ + → → return·{
+        124 │ + → → → 可用:·true,
+        125 │ + → → → 分支:·branch.trim()·||·undefined,
+        126 │ + → → → head:·head.trim()·||·undefined,
+        127 │ + → → → 变更:·change,
+        128 │ + → → → 汇总:·totals,
+        129 │ + → → };
+    119 130 │   	} catch (error) {
+    120 131 │   		return { 可用: false, 变更: [], 汇总: "git 状态不可用", 原因: String((error as Error).message).slice(0, 300) };
+  
+
+packages\coding-agent\src\pao\worker\lock.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     67  67 │   		throw error;
+     68  68 │   	}
+     69     │ - → const·lock:·ProjectWriteLock·=·{·项目根:·projectRoot,·锁路径:·lockPath,·持有者:·options.持有者,·获得时间:·new·Date().toISOString()·};
+         69 │ + → const·lock:·ProjectWriteLock·=·{
+         70 │ + → → 项目根:·projectRoot,
+         71 │ + → → 锁路径:·lockPath,
+         72 │ + → → 持有者:·options.持有者,
+         73 │ + → → 获得时间:·new·Date().toISOString(),
+         74 │ + → };
+     70  75 │   	pendingRelease.set(lock, release);
+     71  76 │   	return lock;
+  
+
+packages\coding-agent\src\pao\worker\runner.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    401 401 │   		});
+    402 402 │   		const pid = proc.pid ?? -1;
+    403     │ - → → const·entry:·ActiveEntry·=·{·pid,·卡号:·cardNo,·proc,·命令:·commandLine,·取消:·false,·执行标识:·runId,·createdBefore:·Date.now()·};
+        403 │ + → → const·entry:·ActiveEntry·=·{
+        404 │ + → → → pid,
+        405 │ + → → → 卡号:·cardNo,
+        406 │ + → → → proc,
+        407 │ + → → → 命令:·commandLine,
+        408 │ + → → → 取消:·false,
+        409 │ + → → → 执行标识:·runId,
+        410 │ + → → → createdBefore:·Date.now(),
+        411 │ + → → };
+    404 412 │   		if (pid > 0)
+    405 413 │   			this.registry.register({
+    ······· │ 
+    591 599 │   		// 回执化审计补漏:正本落盘失败也是一条终路径,回执形状不许破
+    592 600 │   		if (masterWriteFailed !== undefined) {
+    593     │ - → → → const·note·=·live.可用·?·`证据正本落盘失败，改引·live·流：${masterWriteFailed}`·:·`证据落盘失败：${masterWriteFailed}`;
+        601 │ + → → → const·note·=·live.可用
+        602 │ + → → → → ?·`证据正本落盘失败，改引·live·流：${masterWriteFailed}`
+        603 │ + → → → → :·`证据落盘失败：${masterWriteFailed}`;
+    594 604 │   			summary = [...summary.split("\n").slice(0, 2), note].join("\n"); // 摘要 ≤3 行约束不破
+    595 605 │   			if (!live.可用 && status === "成功") {
+    ······· │ 
+    603 613 │   		try {
+    604 614 │   			sessionPath = bridge?.sessionPath();
+    605     │ - → → → bridge?.record(stopFailed·?·"停止未确认"·:·status,·{·pid,·exitCode,·会话路径:·sessionPath,·证据路径:·evidencePath·});
+        615 │ + → → → bridge?.record(stopFailed·?·"停止未确认"·:·status,·{
+        616 │ + → → → → pid,
+        617 │ + → → → → exitCode,
+        618 │ + → → → → 会话路径:·sessionPath,
+        619 │ + → → → → 证据路径:·evidencePath,
+        620 │ + → → → });
+    606 621 │   		} catch (error) {
+    607 622 │   			// 进程已结算，映射损坏不能使调用方丢失本次费用和原始证据。
+  
+
+packages\coding-agent\src\pao\worker\session-bridge.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    24 24 │   	mkdirSync(mappingDir, { recursive: true });
+    25 25 │   	const mappedPath = join(mappingDir, `${input.执行标识}.jsonl`);
+    26    │ - → const·identity·=·{·...input,·项目根:·projectRoot,·卡路径:·resolve(input.卡路径),·会话目录:·sessionDir,·ownerPid:·process.pid·};
+       26 │ + → const·identity·=·{
+       27 │ + → → ...input,
+       28 │ + → → 项目根:·projectRoot,
+       29 │ + → → 卡路径:·resolve(input.卡路径),
+       30 │ + → → 会话目录:·sessionDir,
+       31 │ + → → ownerPid:·process.pid,
+       32 │ + → };
+    27 33 │   	writeFileSync(mappedPath, `${JSON.stringify({ ...identity, 状态: "启动", 时间: utcNow() })}\n`, { flag: "wx" });
+    28 34 │   	return {
+  
+
+packages\coding-agent\src\pao\worker\usage-display.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import type { ExtensionAPI, ExtensionContext } from "../../core/extensions/types.ts";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { writeRawStdout } from "../../core/output-guard.ts";
+    3 │ import type { ReadonlySessionManager, SessionEntry } from "../../core/session-manager.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      5   5 │   import { nativeEntryUsage, nativeUsageTotals } from "./native-usage.ts";
+      6   6 │   import type { WorkerReceipt } from "./receipt.ts";
+      7     │ - import·{·type·UsageAggregate,·type·UsageLine,·usageLineFromEventState,·totalsUsage·}·from·"./usage.ts";
+          7 │ + import·{·totalsUsage,·type·UsageAggregate,·type·UsageLine,·usageLineFromEventState·}·from·"./usage.ts";
+      8   8 │   
+      9   9 │   export type { UsageLine } from "./usage.ts";
+  
+
+packages\coding-agent\src\pao\worker\usage.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    124 124 │   	}
+    125 125 │   	if (overLimit.length > 0) {
+    126     │ - → → return·{·允许新请求:·false,·超限:·overLimit,·原因:·`预算耗尽:${overLimit.join("、")}，不开新请求（在途请求费用不承诺为零）`·};
+        126 │ + → → return·{
+        127 │ + → → → 允许新请求:·false,
+        128 │ + → → → 超限:·overLimit,
+        129 │ + → → → 原因:·`预算耗尽:${overLimit.join("、")}，不开新请求（在途请求费用不承诺为零）`,
+        130 │ + → → };
+    127 131 │   	}
+    128 132 │   	if (unknownReason) {
+  
+
+packages\coding-agent\src\pao\workflow\auto.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    124 124 │   					const settled = await Promise.allSettled(
+    125 125 │   						batch.map((ref) =>
+    126     │ - → → → → → → → runChainForCard(
+    127     │ - → → → → → → → → flow.冻结配方,
+    128     │ - → → → → → → → → node.名字,
+    129     │ - → → → → → → → → ref,
+    130     │ - → → → → → → → → options,
+    131     │ - → → → → → → → → steps,
+    132     │ - → → → → → → → → {·nodeDefinition:·def,·round:·node.轮次·},
+    133     │ - → → → → → → → ),
+        126 │ + → → → → → → → runChainForCard(flow.冻结配方,·node.名字,·ref,·options,·steps,·{
+        127 │ + → → → → → → → → nodeDefinition:·def,
+        128 │ + → → → → → → → → round:·node.轮次,
+        129 │ + → → → → → → → }),
+    134 130 │   						),
+    135 131 │   					);
+  
+
+packages\coding-agent\src\pao\workflow\distill.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    160 160 │    *   新增条目点名进说明正文——点名不搬内容,细节仍查知识库本体。
+    161 161 │    */
+    162     │ - export·function·distillRecipe(cardsDir:·string,·recipeName:·string,·distillTime:·string,·paoHome?:·string):·DistillResult·{
+        162 │ + export·function·distillRecipe(
+        163 │ + → cardsDir:·string,
+        164 │ + → recipeName:·string,
+        165 │ + → distillTime:·string,
+        166 │ + → paoHome?:·string,
+        167 │ + ):·DistillResult·{
+    163 168 │   	const entries = readdirSync(cardsDir); // 目录不存在直接抛 ENOENT（调用方转人话）
+    164 169 │   	const cardFiles = entries.filter((name) => /^卡0*\d+-.*\.md$/.test(name));
+  
+
+packages\coding-agent\src\pao\workflow\driver.ts:7:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    5 │  * 与叫人去重记录（§23 toast②），可从卡正文 pao-workflow 标记重建，永不反向成为任务真相。
+    6 │  */
+  > 7 │ import { existsSync, mkdirSync, readFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    8 │ import { dirname, join, resolve } from "node:path";
+    9 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     22  22 │   	requireParams,
+     23  23 │   	substituteParams,
+     24     │ - → type·WorkflowRecipe,
+     25     │ - → WorkflowRecipeError,
+     26     │ - → validateRecipeName,
+         24 │ + → validateRecipeName,
+         25 │ + → type·WorkflowRecipe,
+         26 │ + → WorkflowRecipeError,
+     27  27 │   } from "./recipe.ts";
+     28  28 │   
+  
+
+packages\coding-agent\src\pao\workflow\recipe.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    455 455 │   	const scanNode = (node: RecipeNode) => {
+    456 456 │   		for (const field of [node.部门, node.模型, node.思考强度, node.部门标准, ...(node.技能 ?? [])])
+    457     │ - → → → for·(const·found·of·collectPlaceholders(field))·if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+    458     │ - → → for·(const·found·of·collectPlaceholders(node.目标))·if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+    459     │ - → → for·(const·found·of·collectPlaceholders(node.验收))·if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+        457 │ + → → → for·(const·found·of·collectPlaceholders(field))
+        458 │ + → → → → if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+        459 │ + → → for·(const·found·of·collectPlaceholders(node.目标))
+        460 │ + → → → if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+        461 │ + → → for·(const·found·of·collectPlaceholders(node.验收))
+        462 │ + → → → if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+    460 463 │   		if (node.约束)
+    461 464 │   			for (const found of collectPlaceholders(node.约束))
+    ······· │ 
+    463 466 │   		if (node.输入)
+    464 467 │   			for (const item of node.输入)
+    465     │ - → → → → for·(const·found·of·collectPlaceholders(item))·if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+        468 │ + → → → → for·(const·found·of·collectPlaceholders(item))
+        469 │ + → → → → → if·(!foundPlaceholders.includes(found))·foundPlaceholders.push(found);
+    466 470 │   	};
+    467 471 │   	for (const node of nodes) scanNode(node);
+  
+
+packages\coding-agent\src\pao\workflow\review.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    131 131 │   	});
+    132 132 │   
+    133     │ - → return·{·工作流:·recipe.名字,·实例状态:·manifest?.状态,·启动:·manifest?.启动,·节点:·node,·孤儿卡:·orphanCard,·结晶候选:·crystallizeCandidate·};
+        133 │ + → return·{
+        134 │ + → → 工作流:·recipe.名字,
+        135 │ + → → 实例状态:·manifest?.状态,
+        136 │ + → → 启动:·manifest?.启动,
+        137 │ + → → 节点:·node,
+        138 │ + → → 孤儿卡:·orphanCard,
+        139 │ + → → 结晶候选:·crystallizeCandidate,
+        140 │ + → };
+    134 141 │   }
+    135 142 │   
+    ······· │ 
+    169 176 │   	const totalDispatch = report.节点.reduce((sum, row) => sum + row.派发次数, 0);
+    170 177 │   	const totalRejected = report.节点.reduce((sum, row) => sum + row.打回, 0);
+    171     │ - → lines.push("",·`总账:节点·${report.节点.length}、尝试·${totalAttempts}、派发·${totalDispatch}、打回·${totalRejected}。`);
+        178 │ + → lines.push(
+        179 │ + → → "",
+        180 │ + → → `总账:节点·${report.节点.length}、尝试·${totalAttempts}、派发·${totalDispatch}、打回·${totalRejected}。`,
+        181 │ + → );
+    172 182 │   	if (report.孤儿卡.length > 0)
+    173 183 │   		lines.push(
+  
+
+packages\coding-agent\src\pao\workflow\tools.ts:10:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     8 │  */
+     9 │ 
+  > 10 │ import { existsSync, readFileSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    11 │ 
+    12 │ import { Type } from "typebox";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     38  38 │   	type DriveReport,
+     39  39 │   	type DriverOptions,
+     40     │ - → manifestPath,
+     41     │ - → parseManifest,
+     42     │ - → queryWorkflow,
+     43     │ - → renderReport,
+     44     │ - → startWorkflow,
+     45     │ - → tickWorkflow,
+     46     │ - → WorkflowDriverError,
+     47     │ - → humanGateSuspendReason,
+     48     │ - → humanCalled,
+     49     │ - → suspendCallHumanKey,
+     50     │ - → recordCalledHuman,
+         40 │ + → humanCalled,
+         41 │ + → humanGateSuspendReason,
+         42 │ + → manifestPath,
+         43 │ + → parseManifest,
+         44 │ + → queryWorkflow,
+         45 │ + → recordCalledHuman,
+         46 │ + → renderReport,
+         47 │ + → startWorkflow,
+         48 │ + → suspendCallHumanKey,
+         49 │ + → tickWorkflow,
+         50 │ + → WorkflowDriverError,
+     51  51 │   } from "./driver.ts";
+     52  52 │   import {
+    ······· │ 
+     55  55 │   	listRecipes,
+     56  56 │   	loadRecipe,
+     57     │ - → type·WorkflowRecipe,
+     58     │ - → WorkflowRecipeError,
+     59     │ - → validateRecipeName,
+         57 │ + → validateRecipeName,
+         58 │ + → type·WorkflowRecipe,
+         59 │ + → WorkflowRecipeError,
+     60  60 │   } from "./recipe.ts";
+     61  61 │   import { buildReviewReport, renderReviewReport, WORKFLOW_REVIEW_SECTION } from "./review.ts";
+  
+
+packages\coding-agent\src\pao\workflow\tools.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    531 531 │   					return emitRecipeMarkdown({ ...flow.冻结配方, 名字: params.配方名 });
+    532 532 │   				}
+    533     │ - → → → → const·{·content,·cardCount,·edgeCount,·skipped·}·=·distillRecipe(params.卡目录,·params.配方名,·toolTimestamp(),·paoHome);
+        533 │ + → → → → const·{·content,·cardCount,·edgeCount,·skipped·}·=·distillRecipe(
+        534 │ + → → → → → params.卡目录,
+        535 │ + → → → → → params.配方名,
+        536 │ + → → → → → toolTimestamp(),
+        537 │ + → → → → → paoHome,
+        538 │ + → → → → );
+    534 539 │   				return [
+    535 540 │   					content,
+    ······· │ 
+    633 638 │   					params[pair.slice(0, eq)] = pair.slice(eq + 1);
+    634 639 │   				}
+    635     │ - → → → → text·=·await·startWorkflowCore(loadRecipeFor({·名字:·name·},·options),·params,·commandAutoOptions(paoHome),·common);
+        640 │ + → → → → text·=·await·startWorkflowCore(
+        641 │ + → → → → → loadRecipeFor({·名字:·name·},·options),
+        642 │ + → → → → → params,
+        643 │ + → → → → → commandAutoOptions(paoHome),
+        644 │ + → → → → → common,
+        645 │ + → → → → );
+    636 646 │   			}
+    637 647 │   		} catch (error) {
+  
+
+packages\coding-agent\test\package-command-paths.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     596  596 │   			const stderr = errorSpy.mock.calls.map(([message]) => String(message)).join("\n");
+     597  597 │   			expect(stderr).toContain('Unknown option --unknown for "install".');
+     598      │ - → → → expect(stderr).toContain(`Use·"${APP_NAME}·--help"·or·"${APP_NAME}·install·<source>·[-l]·[--approve|--no-approve]".`);
+          598 │ + → → → expect(stderr).toContain(
+          599 │ + → → → → `Use·"${APP_NAME}·--help"·or·"${APP_NAME}·install·<source>·[-l]·[--approve|--no-approve]".`,
+          600 │ + → → → );
+     599  601 │   			expect(process.exitCode).toBe(1);
+     600  602 │   		} finally {
+    ········· │ 
+     714  716 │   		expect(readFileSync(join(managedRoot, "current-version"), "utf8")).toBe(`${VERSION}\n`);
+     715  717 │   		expect(existsSync(npmRecordPath)).toBe(false);
+     716      │ - → → expect(logSpy.mock.calls.map(([message])·=>·String(message)).join("\n")).not.toContain(`Updated·${APP_NAME}·from`);
+          718 │ + → → expect(logSpy.mock.calls.map(([message])·=>·String(message)).join("\n")).not.toContain(
+          719 │ + → → → `Updated·${APP_NAME}·from`,
+          720 │ + → → );
+     717  721 │   		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain(
+     718  722 │   			"Another managed Pi update is already running.",
+    ········· │ 
+     750  754 │   		expect(existsSync(join(managedRoot, "releases", targetVersion))).toBe(false);
+     751  755 │   		expect(readdirSync(join(managedRoot, "staging"))).toEqual([]);
+     752      │ - → → expect(logSpy.mock.calls.map(([message])·=>·String(message)).join("\n")).not.toContain(`Updated·${APP_NAME}·from`);
+          756 │ + → → expect(logSpy.mock.calls.map(([message])·=>·String(message)).join("\n")).not.toContain(
+          757 │ + → → → `Updated·${APP_NAME}·from`,
+          758 │ + → → );
+     753  759 │   		expect(errorSpy.mock.calls.map(([message]) => String(message)).join("\n")).toContain("exited with code 23");
+     754  760 │   		expect(process.exitCode).toBe(1);
+  
+
+packages\coding-agent\test\pao\baseline-boundary.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    274 274 │   
+    275 275 │   	it("声明里含派发链自写文件:算检测面外,不算虚报", () => {
+    276     │ - → → const·check·=·checkBoundaryWrite(
+    277     │ - → → → diffOf([{·文件:·"产出/a.txt"·}]),
+    278     │ - → → → ["产出/a.txt",·"黑板.md",·"四指标账.txt",·"基线/卡0001-基线.txt"],
+    279     │ - → → );
+        276 │ + → → const·check·=·checkBoundaryWrite(diffOf([{·文件:·"产出/a.txt"·}]),·[
+        277 │ + → → → "产出/a.txt",
+        278 │ + → → → "黑板.md",
+        279 │ + → → → "四指标账.txt",
+        280 │ + → → → "基线/卡0001-基线.txt",
+        281 │ + → → ]);
+    280 282 │   		expect(check.结论).toBe("干净");
+    281 283 │   		expect(check.虚报).toEqual([]);
+  
+
+packages\coding-agent\test\pao\card-metrics.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    174 174 │   		const { cardsDir } = makeWorkspace();
+    175 175 │   		const manifestPath = join(cardsDir, "..", "工作流实例-侦察流.md");
+    176     │ - → → writeFileSync(manifestPath,·manifestContent(["··-·名字:·侦察",·"····卡号:·卡0001",·'····确认:·"2026-10-02·11:00"']));
+        176 │ + → → writeFileSync(
+        177 │ + → → → manifestPath,
+        178 │ + → → → manifestContent(["··-·名字:·侦察",·"····卡号:·卡0001",·'····确认:·"2026-10-02·11:00"']),
+        179 │ + → → );
+    177 180 │   		expect(countGateConfirms(markerCard(cardsDir))).toBe(1);
+    178 181 │   
+    ······· │ 
+    180 183 │   		expect(countGateConfirms(markerCard(cardsDir))).toBe(0);
+    181 184 │   
+    182     │ - → → writeFileSync(manifestPath,·manifestContent(["··-·名字:·侦察",·"····卡号:·卡0002",·'····确认:·"2026-10-02·11:00"']));
+        185 │ + → → writeFileSync(
+        186 │ + → → → manifestPath,
+        187 │ + → → → manifestContent(["··-·名字:·侦察",·"····卡号:·卡0002",·'····确认:·"2026-10-02·11:00"']),
+        188 │ + → → );
+    183 189 │   		expect(countGateConfirms(markerCard(cardsDir))).toBe(0);
+    184 190 │   	});
+  
+
+packages\coding-agent\test\pao\card-templates.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    185 185 │   		const cardDir = makeCardsDir();
+    186 186 │   		const tools = setup({ resolveCardsDir: () => cardDir });
+    187     │ - → → await·runTool(tools.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·join(templateDir,·"巡库.md")·});
+        187 │ + → → await·runTool(tools.get("pao_建卡")!,·{
+        188 │ + → → → ...createCardInput,
+        189 │ + → → → 卡目录:·cardDir,
+        190 │ + → → → 模板:·join(templateDir,·"巡库.md"),
+        191 │ + → → });
+    188 192 │   		expect(readCard(join(cardDir, "卡0001-带模板的卡.md")).正文).toContain("巡库目标示例");
+    189 193 │   	});
+    ······· │ 
+    193 197 │   		const cardDir = makeCardsDir();
+    194 198 │   		const tools = setup({ resolveCardsDir: () => cardDir, resolvePaoHome: () => home });
+    195     │ - → → await·expect(runTool(tools.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"没有的"·})).rejects.toThrow(
+    196     │ - → → → /找不到卡模板.*可用：侦察、巡库/s,
+    197     │ - → → );
+        199 │ + → → await·expect(
+        200 │ + → → → runTool(tools.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"没有的"·}),
+        201 │ + → → ).rejects.toThrow(/找不到卡模板.*可用：侦察、巡库/s);
+    198 202 │   		const noHomeTool = setup({ resolveCardsDir: () => cardDir });
+    199     │ - → → await·expect(runTool(noHomeTool.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"侦察"·})).rejects.toThrow(
+    200     │ - → → → /只收绝对路径/,
+    201     │ - → → );
+        203 │ + → → await·expect(
+        204 │ + → → → runTool(noHomeTool.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"侦察"·}),
+        205 │ + → → ).rejects.toThrow(/只收绝对路径/);
+    202 206 │   		// resolvePaoHome 抛错（如环境未配置 PAO_HOME）同样落在「只收绝对路径」，不静默
+    203 207 │   		const throwingTool = setup({
+    ······· │ 
+    207 211 │   			},
+    208 212 │   		});
+    209     │ - → → await·expect(runTool(throwingTool.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"侦察"·})).rejects.toThrow(
+    210     │ - → → → /只收绝对路径/,
+    211     │ - → → );
+        213 │ + → → await·expect(
+        214 │ + → → → runTool(throwingTool.get("pao_建卡")!,·{·...createCardInput,·卡目录:·cardDir,·模板:·"侦察"·}),
+        215 │ + → → ).rejects.toThrow(/只收绝对路径/);
+    212 216 │   	});
+    213 217 │   });
+  
+
+packages\coding-agent\test\pao\cards-tools.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    166 166 │   		// 前置交付后放行
+    167 167 │   		await runTool(tools.get("pao_改状态")!, { 卡目录: cardDir, 卡号: 1, 操作者: "部长A", 新状态: "进行中" });
+    168     │ - → → await·runTool(tools.get("pao_交回执")!,·{·卡目录:·cardDir,·卡号:·"卡#1",·尝试号:·1,·结果:·"完成",·摘要:·"地图已落盘"·});
+    169     │ - → → await·runTool(tools.get("pao_改状态")!,·{·卡目录:·cardDir,·卡号:·1,·操作者:·"部长A",·新状态:·"已交付",·依据:·"验收通过"·});
+        168 │ + → → await·runTool(tools.get("pao_交回执")!,·{
+        169 │ + → → → 卡目录:·cardDir,
+        170 │ + → → → 卡号:·"卡#1",
+        171 │ + → → → 尝试号:·1,
+        172 │ + → → → 结果:·"完成",
+        173 │ + → → → 摘要:·"地图已落盘",
+        174 │ + → → });
+        175 │ + → → await·runTool(tools.get("pao_改状态")!,·{
+        176 │ + → → → 卡目录:·cardDir,
+        177 │ + → → → 卡号:·1,
+        178 │ + → → → 操作者:·"部长A",
+        179 │ + → → → 新状态:·"已交付",
+        180 │ + → → → 依据:·"验收通过",
+        181 │ + → → });
+    170 182 │   
+    171     │ - → → const·claim·=·await·runTool(tools.get("pao_改状态")!,·{·卡目录:·cardDir,·卡号:·2,·操作者:·"部长A",·新状态:·"进行中"·});
+        183 │ + → → const·claim·=·await·runTool(tools.get("pao_改状态")!,·{
+        184 │ + → → → 卡目录:·cardDir,
+        185 │ + → → → 卡号:·2,
+        186 │ + → → → 操作者:·"部长A",
+        187 │ + → → → 新状态:·"进行中",
+        188 │ + → → });
+    172 189 │   		expect(claim).toContain("尝试 1");
+    173 190 │   		expect(claim).toContain("owner=部长A");
+    ······· │ 
+    221 238 │   		await runTool(tools.get("pao_改状态")!, { 卡目录: cardDir, 卡号: 1, 操作者: "部长A", 新状态: "待认领" });
+    222 239 │   		await runTool(tools.get("pao_改状态")!, { 卡目录: cardDir, 卡号: 1, 操作者: "部长A", 新状态: "进行中" });
+    223     │ - → → await·runTool(tools.get("pao_改状态")!,·{·卡目录:·cardDir,·卡号:·1,·操作者:·"部长A",·新状态:·"失败",·失败类型:·"缺输入"·});
+        240 │ + → → await·runTool(tools.get("pao_改状态")!,·{
+        241 │ + → → → 卡目录:·cardDir,
+        242 │ + → → → 卡号:·1,
+        243 │ + → → → 操作者:·"部长A",
+        244 │ + → → → 新状态:·"失败",
+        245 │ + → → → 失败类型:·"缺输入",
+        246 │ + → → });
+    224 247 │   		await expect(
+    225 248 │   			runTool(tools.get("pao_改状态")!, {
+  
+
+packages\coding-agent\test\pao\collab-review.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      5   5 │   import { formatCardNumber } from "../../src/pao/cards/counter.ts";
+      6   6 │   import type { CardFrontmatter, ParsedCard } from "../../src/pao/cards/types.ts";
+      7     │ - import·{·type·CollabAuditRecord,·auditAppend·}·from·"../../src/pao/collab/audit.ts";
+          7 │ + import·{·auditAppend,·type·CollabAuditRecord·}·from·"../../src/pao/collab/audit.ts";
+      8   8 │   import { writeCollabCard } from "../../src/pao/collab/dispatch.ts";
+      9   9 │   import { type CollabCardDraft, DEFAULT_COLLAB_QUOTA, RULING_FLAGS, validateCollabCard } from "../../src/pao/collab/review.ts";
+  
+
+packages\coding-agent\test\pao\collab-review.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      7   7 │   import { type CollabAuditRecord, auditAppend } from "../../src/pao/collab/audit.ts";
+      8   8 │   import { writeCollabCard } from "../../src/pao/collab/dispatch.ts";
+      9     │ - import·{·type·CollabCardDraft,·DEFAULT_COLLAB_QUOTA,·RULING_FLAGS,·validateCollabCard·}·from·"../../src/pao/collab/review.ts";
+          9 │ + import·{
+         10 │ + → type·CollabCardDraft,
+         11 │ + → DEFAULT_COLLAB_QUOTA,
+         12 │ + → RULING_FLAGS,
+         13 │ + → validateCollabCard,
+         14 │ + }·from·"../../src/pao/collab/review.ts";
+     10  15 │   import type { DeptRegistryRow } from "../../src/pao/dept/index.ts";
+     11  16 │   
+    ······· │ 
+     79  84 │   
+     80  85 │   	it("档位/优先级非法 → 字段非法", () => {
+     81     │ - → → const·result·=·validateCollabCard(makeDraft({·档位:·"极速"·as·never,·优先级:·"最高"·as·never·}),·registry,·[parentCard()]);
+         86 │ + → → const·result·=·validateCollabCard(makeDraft({·档位:·"极速"·as·never,·优先级:·"最高"·as·never·}),·registry,·[
+         87 │ + → → → parentCard(),
+         88 │ + → → ]);
+     82  89 │   		expect(result.原因.map((r) => r.类型)).toEqual(["字段非法", "字段非法"]);
+     83  90 │   		expect(result.原因[0].字段).toBe("档位");
+    ······· │ 
+    170 177 │   	it("四类裁决标记逐一带声明 → 待主控裁决,摘要含声明内容,不判拒绝", () => {
+    171 178 │   		for (const flag of RULING_FLAGS) {
+    172     │ - → → → const·result·=·validateCollabCard(makeDraft({·[flag]:·"理由说明"·}·as·Partial<CollabCardDraft>),·registry,·[parentCard()]);
+        179 │ + → → → const·result·=·validateCollabCard(makeDraft({·[flag]:·"理由说明"·}·as·Partial<CollabCardDraft>),·registry,·[
+        180 │ + → → → → parentCard(),
+        181 │ + → → → ]);
+    173 182 │   			expect(result.裁决, flag).toBe("待主控裁决");
+    174 183 │   			expect(result.原因).toEqual([]);
+    ······· │ 
+    181 190 │   
+    182 191 │   	it("多项声明同时给出时全部进入裁决声明", () => {
+    183     │ - → → const·result·=·validateCollabCard(makeDraft({·插队:·"用户在等",·超预算覆写:·"需·20·turns,超父卡池"·}),·registry,·[parentCard()]);
+        192 │ + → → const·result·=·validateCollabCard(makeDraft({·插队:·"用户在等",·超预算覆写:·"需·20·turns,超父卡池"·}),·registry,·[
+        193 │ + → → → parentCard(),
+        194 │ + → → ]);
+    184 195 │   		expect(result.裁决).toBe("待主控裁决");
+    185 196 │   		expect(Object.keys(result.裁决声明).sort()).toEqual(["超预算覆写", "插队"].sort());
+  
+
+packages\coding-agent\test\pao\delivery-commit.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     49  49 │   	const cardDir = join(repo, ".pao", "卡");
+     50  50 │   	mkdirSync(cardDir, { recursive: true });
+     51     │ - → const·card·=·await·createCard(cardDir,·{·目标:·goal,·部门:·"核心机制",·验收:·"存在:·产物.txt",·创建:·"2026-10-02·10:00"·});
+         51 │ + → const·card·=·await·createCard(cardDir,·{
+         52 │ + → → 目标:·goal,
+         53 │ + → → 部门:·"核心机制",
+         54 │ + → → 验收:·"存在:·产物.txt",
+         55 │ + → → 创建:·"2026-10-02·10:00",
+         56 │ + → });
+     52  57 │   	changeCardStatus(card, { 操作者: "部长A", to: "进行中", 时间: "2026-10-02 10:01" });
+     53  58 │   	// R14：认领时落基线快照（pao_改状态 工具里的接线动作，此处直接调同一入口）
+    ······· │ 
+     93  98 │   		expect(git(repo, ["log", "-1", "--pretty=%B"]).trim()).toBe(r.提交信息);
+     94  99 │   		// 提交后工作树对本卡差异清零（.pao 编排区在差分面外）
+     95     │ - → → const·diff·=·await·diffAgainstBaseline(join(repo,·".pao",·"基线",·`卡${String(cardNo).padStart(4,·"0")}-基线.txt`));
+        100 │ + → → const·diff·=·await·diffAgainstBaseline(
+        101 │ + → → → join(repo,·".pao",·"基线",·`卡${String(cardNo).padStart(4,·"0")}-基线.txt`),
+        102 │ + → → );
+     96 103 │   		expect(diff.worker改动).toEqual([]);
+     97 104 │   		// 卡文件状态不被交卷改动
+    ······· │ 
+    389 396 │   		const cardDir = join(repo, "卡");
+    390 397 │   		mkdirSync(cardDir, { recursive: true });
+    391     │ - → → const·card·=·await·createCard(cardDir,·{·目标:·"豁免卡",·部门:·"核心机制",·验收:·"存在:·产出/hello.txt",·创建:·"2026-10-05·10:00"·});
+        398 │ + → → const·card·=·await·createCard(cardDir,·{
+        399 │ + → → → 目标:·"豁免卡",
+        400 │ + → → → 部门:·"核心机制",
+        401 │ + → → → 验收:·"存在:·产出/hello.txt",
+        402 │ + → → → 创建:·"2026-10-05·10:00",
+        403 │ + → → });
+    392 404 │   		changeCardStatus(card, { 操作者: "部长A", to: "进行中", 时间: "2026-10-05 10:01" });
+    393 405 │   		await snapshotClaimBaseline(cardDir, card.卡号, { owner: "部长A", 时间: "2026-10-05 10:01" });
+  
+
+packages\coding-agent\test\pao\delivery-wakeup.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    147 147 │   		registerCardTools(pi, {});
+    148 148 │   		const makeCard = tools.get("pao_建卡")!;
+    149     │ - → → await·runTool(makeCard,·{·卡目录:·cardsDir,·目标:·"上游活",·部门:·"测试",·验收:·"存在:·上游.txt",·depends_on:·[]·});
+        149 │ + → → await·runTool(makeCard,·{
+        150 │ + → → → 卡目录:·cardsDir,
+        151 │ + → → → 目标:·"上游活",
+        152 │ + → → → 部门:·"测试",
+        153 │ + → → → 验收:·"存在:·上游.txt",
+        154 │ + → → → depends_on:·[],
+        155 │ + → → });
+    150 156 │   		await runTool(makeCard, {
+    151 157 │   			卡目录: cardsDir,
+  
+
+packages\coding-agent\test\pao\desktop-canvas.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     81  81 │   	writeFileSync(
+     82  82 │   		join(paoHome, "项目清单.md"),
+     83     │ - → → formatProjectList([{·项目名:·"项目",·项目根:·projectRoot,·首次服务:·"2026-10-05·09:00",·最近服务:·"2026-10-05·09:00"·}]),
+         83 │ + → → formatProjectList([
+         84 │ + → → → {·项目名:·"项目",·项目根:·projectRoot,·首次服务:·"2026-10-05·09:00",·最近服务:·"2026-10-05·09:00"·},
+         85 │ + → → ]),
+     84  86 │   	);
+     85  87 │   }
+  
+
+packages\coding-agent\test\pao\desktop-maintenance.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { join, resolve } from "node:path";
+    3 │ import { afterEach, expect, test } from "vitest";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1    │ - import·{·mkdtempSync,·mkdirSync,·readFileSync,·writeFileSync,·readdirSync,·rmSync·}·from·"node:fs";
+        1 │ + import·{·mkdirSync,·mkdtempSync,·readdirSync,·readFileSync,·rmSync,·writeFileSync·}·from·"node:fs";
+     2  2 │   import { join, resolve } from "node:path";
+     3  3 │   import { afterEach, expect, test } from "vitest";
+     4  4 │   import { readMechanicalMaintenance } from "../../src/pao/desktop/maintenance.ts";
+        5 │ + 
+     5  6 │   const base = resolve("D:/AI/workspace/临时文件夹/PAO-机械巡检测试-20261004");
+     6  7 │   mkdirSync(base, { recursive: true });
+  
+
+packages\coding-agent\test\pao\desktop-maintenance.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     6  6 │   mkdirSync(base, { recursive: true });
+     7  7 │   const homes: string[] = [];
+     8    │ - afterEach(()·=>·{·for·(const·home·of·homes.splice(0))·rmSync(home,·{·recursive:·true,·force:·true·});·});
+        8 │ + afterEach(()·=>·{
+        9 │ + → for·(const·home·of·homes.splice(0))·rmSync(home,·{·recursive:·true,·force:·true·});
+       10 │ + });
+     9 11 │   function fixture() {
+    10    │ - ··const·home·=·mkdtempSync(join(base,·"home-"));·homes.push(home);
+    11    │ - ··mkdirSync(join(home,·"部门",·"测试",·"教训"),·{·recursive:·true·});
+    12    │ - ··writeFileSync(join(home,·"部门",·"注册表.md"),·"|·名字·|·标签·|·库路径·|\n|·测试·|·测试·|·部门/测试·|\n");
+    13    │ - ··writeFileSync(join(home,·"部门",·"测试",·"教训",·"旧条目.md"),·"#·缺日期夹具\n原正文不得变\n");
+    14    │ - ··return·home;
+       12 │ + → const·home·=·mkdtempSync(join(base,·"home-"));
+       13 │ + → homes.push(home);
+       14 │ + → mkdirSync(join(home,·"部门",·"测试",·"教训"),·{·recursive:·true·});
+       15 │ + → writeFileSync(join(home,·"部门",·"注册表.md"),·"|·名字·|·标签·|·库路径·|\n|·测试·|·测试·|·部门/测试·|\n");
+       16 │ + → writeFileSync(join(home,·"部门",·"测试",·"教训",·"旧条目.md"),·"#·缺日期夹具\n原正文不得变\n");
+       17 │ + → return·home;
+    15 18 │   }
+    16 19 │   test("机械巡检复用规则但零写入，不创建子索引和巡库卡", async () => {
+    17    │ - ··const·home·=·fixture();·const·dir·=·join(home,·"部门",·"测试",·"教训");
+    18    │ - ··const·before·=·readFileSync(join(dir,·"旧条目.md"),·"utf8");
+    19    │ - ··const·report·=·await·readMechanicalMaintenance(home,·"巡检");
+    20    │ - ··expect(report).toContain("缺最后核验日期");·expect(report).toContain("entriesWithoutRow");
+    21    │ - ··expect(readdirSync(dir)).toEqual(["旧条目.md"]);·expect(readFileSync(join(dir,·"旧条目.md"),·"utf8")).toBe(before);
+    22    │ - ··expect(readdirSync(home)).toEqual(["部门"]);
+       20 │ + → const·home·=·fixture();
+       21 │ + → const·dir·=·join(home,·"部门",·"测试",·"教训");
+       22 │ + → const·before·=·readFileSync(join(dir,·"旧条目.md"),·"utf8");
+       23 │ + → const·report·=·await·readMechanicalMaintenance(home,·"巡检");
+       24 │ + → expect(report).toContain("缺最后核验日期");
+       25 │ + → expect(report).toContain("entriesWithoutRow");
+       26 │ + → expect(readdirSync(dir)).toEqual(["旧条目.md"]);
+       27 │ + → expect(readFileSync(join(dir,·"旧条目.md"),·"utf8")).toBe(before);
+       28 │ + → expect(readdirSync(home)).toEqual(["部门"]);
+    23 29 │   });
+    24 30 │   test("保温只读且明确不宣称嵌入或语义索引刷新；登记路径越界拒绝", async () => {
+    25    │ - ··const·home·=·fixture();·expect(await·readMechanicalMaintenance(home,·"保温")).toContain("不宣称持久语义索引已刷新");
+    26    │ - ··writeFileSync(join(home,·"部门",·"注册表.md"),·"|·逃逸·|·测试·|·../·|\n");
+    27    │ - ··await·expect(readMechanicalMaintenance(home,·"巡检")).rejects.toThrow(/越界/);
+       31 │ + → const·home·=·fixture();
+       32 │ + → expect(await·readMechanicalMaintenance(home,·"保温")).toContain("不宣称持久语义索引已刷新");
+       33 │ + → writeFileSync(join(home,·"部门",·"注册表.md"),·"|·逃逸·|·测试·|·../·|\n");
+       34 │ + → await·expect(readMechanicalMaintenance(home,·"巡检")).rejects.toThrow(/越界/);
+    28 35 │   });
+    29 36 │   
+  
+
+packages\coding-agent\test\pao\desktop-read-model.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    250 250 │   });
+    251 251 │   
+    252     │ - → it("跨进程控制消息内核终审：非owner确认、旧轮次、恢复原owner不符一律拒绝；合规请求带磁盘真值放行",·async·()·=>·{
+    253     │ - → → const·f·=·fixture();
+    254     │ - → → const·recipe·=·parseRecipe(
+    255     │ - → → → `---\n${stringify({·版本:·2,·名字:·"终审流",·参数:·[],·节点:·[{·名字:·"审查",·部门:·"工程",·目标:·"查",·验收:·"证据",·人工确认:·true·}]·})}---\n`,
+    256     │ - → → → join(f.root,·"终审流.md"),
+    257     │ - → → );
+    258     │ - → → const·options·=·{·cardsDir:·join(f.root,·".pao",·"卡"),·ownerSessionId:·"origin-owner"·};
+    259     │ - → → await·startControl(recipe,·{},·options);
+    260     │ - → → const·flow·=·readControl(recipe,·options);
+    261     │ - → → const·makeSession·=·(id:·string)·=>·{
+    262     │ - → → → const·handlers·=·new·Map<string,·(event:·unknown,·ctx:·ExtensionContext)·=>·void>();
+    263     │ - → → → const·pi·=·{
+    264     │ - → → → → on:·(name:·string,·fn:·(event:·unknown,·ctx:·ExtensionContext)·=>·void)·=>·handlers.set(name,·fn),
+    265     │ - → → → }·as·unknown·as·ExtensionAPI;
+    266     │ - → → → const·ctx·=·{
+    267     │ - → → → → cwd:·f.root,
+    268     │ - → → → → sessionManager:·{·getSessionId:·()·=>·id·},
+    269     │ - → → → → ui:·{·confirm:·async·()·=>·true·},
+    270     │ - → → → → isIdle:·()·=>·true,
+    271     │ - → → → }·as·unknown·as·ExtensionContext;
+    272     │ - → → → registerDesktopOwner(pi);
+    273     │ - → → → handlers.get("session_start")!({},·ctx);
+    274     │ - → → → addPaoSubcommand(pi,·{·name:·"runtime",·label:·"控制",·description:·"测试",·run:·vi.fn()·});
+    275     │ - → → → return·pi;
+    276     │ - → → };
+    277     │ - → → const·origin·=·makeSession("origin-owner");
+    278     │ - → → const·outsider·=·makeSession("final-owner");
+    279     │ - → → const·base·=·{·名字:·recipe.名字,·卡目录:·options.cardsDir,·实例:·flow.实例,·节点:·"审查"·};
+    280     │ - → → //·非·owner·会话提交确认：trusted·终审拒绝，不进入命令执行。
+    281     │ - → → await·expect(
+    282     │ - → → → runDesktopFlowCommand("final-owner",·f.root,·{·...base,·轮次:·flow.节点[0]!.轮次,·动作:·"确认"·}),
+    283     │ - → → ).rejects.toThrow("请跳转原·owner·会话处理");
+    284     │ - → → //·owner·会话但轮次过期（跨进程消息的请求关联在内核侧的最后一道）。
+    285     │ - → → await·expect(
+    286     │ - → → → runDesktopFlowCommand("origin-owner",·f.root,·{·...base,·轮次:·999,·动作:·"确认"·}),
+    287     │ - → → ).rejects.toThrow("实例/卡目录/节点/轮次已变化，请刷新");
+    288     │ - → → //·恢复允许任何已注册会话发起，但原owner必须与磁盘现值一致。
+    289     │ - → → await·expect(
+    290     │ - → → → runDesktopFlowCommand("final-owner",·f.root,·{
+    291     │ - → → → → ...base,
+    292     │ - → → → → 轮次:·flow.节点[0]!.轮次,
+    293     │ - → → → → 动作:·"恢复",
+    294     │ - → → → → 原owner:·"someone-else",
+    295     │ - → → → }),
+    296     │ - → → ).rejects.toThrow("原·owner·已变化，请刷新");
+    297     │ - → → //·合规请求：trusted·放行，磁盘真值原样进入·flow·control·命令。
+    298     │ - → → const·seen:·string[]·=·[];
+    299     │ - → → addPaoSubcommand(origin,·{
+    300     │ - → → → name:·"flow",
+    301     │ - → → → label:·"流",
+    302     │ - → → → description:·"测试",
+    303     │ - → → → run:·async·(_pi,·args)·=>·{
+    304     │ - → → → → seen.push(args);
+    305     │ - → → → },
+    306     │ - → → });
+    307     │ - → → await·runDesktopFlowCommand("origin-owner",·f.root,·{·...base,·轮次:·flow.节点[0]!.轮次,·动作:·"确认"·});
+    308     │ - → → expect(seen).toHaveLength(1);
+    309     │ - → → expect(JSON.parse(seen[0]!.slice("control·".length))).toEqual({
+    310     │ - → → → 名字:·recipe.名字,
+    311     │ - → → → 卡目录:·options.cardsDir,
+    312     │ - → → → 实例:·flow.实例,
+    313     │ - → → → 节点:·"审查",
+    314     │ - → → → 轮次:·flow.节点[0]!.轮次,
+    315     │ - → → → 原owner:·"origin-owner",
+    316     │ - → → → 动作:·"确认",
+    317     │ - → → });
+    318     │ - → });
+        252 │ + it("跨进程控制消息内核终审：非owner确认、旧轮次、恢复原owner不符一律拒绝；合规请求带磁盘真值放行",·async·()·=>·{
+        253 │ + → const·f·=·fixture();
+        254 │ + → const·recipe·=·parseRecipe(
+        255 │ + → → `---\n${stringify({·版本:·2,·名字:·"终审流",·参数:·[],·节点:·[{·名字:·"审查",·部门:·"工程",·目标:·"查",·验收:·"证据",·人工确认:·true·}]·})}---\n`,
+        256 │ + → → join(f.root,·"终审流.md"),
+        257 │ + → );
+        258 │ + → const·options·=·{·cardsDir:·join(f.root,·".pao",·"卡"),·ownerSessionId:·"origin-owner"·};
+        259 │ + → await·startControl(recipe,·{},·options);
+        260 │ + → const·flow·=·readControl(recipe,·options);
+        261 │ + → const·makeSession·=·(id:·string)·=>·{
+        262 │ + → → const·handlers·=·new·Map<string,·(event:·unknown,·ctx:·ExtensionContext)·=>·void>();
+        263 │ + → → const·pi·=·{
+        264 │ + → → → on:·(name:·string,·fn:·(event:·unknown,·ctx:·ExtensionContext)·=>·void)·=>·handlers.set(name,·fn),
+        265 │ + → → }·as·unknown·as·ExtensionAPI;
+        266 │ + → → const·ctx·=·{
+        267 │ + → → → cwd:·f.root,
+        268 │ + → → → sessionManager:·{·getSessionId:·()·=>·id·},
+        269 │ + → → → ui:·{·confirm:·async·()·=>·true·},
+        270 │ + → → → isIdle:·()·=>·true,
+        271 │ + → → }·as·unknown·as·ExtensionContext;
+        272 │ + → → registerDesktopOwner(pi);
+        273 │ + → → handlers.get("session_start")!({},·ctx);
+        274 │ + → → addPaoSubcommand(pi,·{·name:·"runtime",·label:·"控制",·description:·"测试",·run:·vi.fn()·});
+        275 │ + → → return·pi;
+        276 │ + → };
+        277 │ + → const·origin·=·makeSession("origin-owner");
+        278 │ + → const·outsider·=·makeSession("final-owner");
+        279 │ + → const·base·=·{·名字:·recipe.名字,·卡目录:·options.cardsDir,·实例:·flow.实例,·节点:·"审查"·};
+        280 │ + → //·非·owner·会话提交确认：trusted·终审拒绝，不进入命令执行。
+        281 │ + → await·expect(
+        282 │ + → → runDesktopFlowCommand("final-owner",·f.root,·{·...base,·轮次:·flow.节点[0]!.轮次,·动作:·"确认"·}),
+        283 │ + → ).rejects.toThrow("请跳转原·owner·会话处理");
+        284 │ + → //·owner·会话但轮次过期（跨进程消息的请求关联在内核侧的最后一道）。
+        285 │ + → await·expect(runDesktopFlowCommand("origin-owner",·f.root,·{·...base,·轮次:·999,·动作:·"确认"·})).rejects.toThrow(
+        286 │ + → → "实例/卡目录/节点/轮次已变化，请刷新",
+        287 │ + → );
+        288 │ + → //·恢复允许任何已注册会话发起，但原owner必须与磁盘现值一致。
+        289 │ + → await·expect(
+        290 │ + → → runDesktopFlowCommand("final-owner",·f.root,·{
+        291 │ + → → → ...base,
+        292 │ + → → → 轮次:·flow.节点[0]!.轮次,
+        293 │ + → → → 动作:·"恢复",
+        294 │ + → → → 原owner:·"someone-else",
+        295 │ + → → }),
+        296 │ + → ).rejects.toThrow("原·owner·已变化，请刷新");
+        297 │ + → //·合规请求：trusted·放行，磁盘真值原样进入·flow·control·命令。
+        298 │ + → const·seen:·string[]·=·[];
+        299 │ + → addPaoSubcommand(origin,·{
+        300 │ + → → name:·"flow",
+        301 │ + → → label:·"流",
+        302 │ + → → description:·"测试",
+        303 │ + → → run:·async·(_pi,·args)·=>·{
+        304 │ + → → → seen.push(args);
+        305 │ + → → },
+        306 │ + → });
+        307 │ + → await·runDesktopFlowCommand("origin-owner",·f.root,·{·...base,·轮次:·flow.节点[0]!.轮次,·动作:·"确认"·});
+        308 │ + → expect(seen).toHaveLength(1);
+        309 │ + → expect(JSON.parse(seen[0]!.slice("control·".length))).toEqual({
+        310 │ + → → 名字:·recipe.名字,
+        311 │ + → → 卡目录:·options.cardsDir,
+        312 │ + → → 实例:·flow.实例,
+        313 │ + → → 节点:·"审查",
+        314 │ + → → 轮次:·flow.节点[0]!.轮次,
+        315 │ + → → 原owner:·"origin-owner",
+        316 │ + → → 动作:·"确认",
+        317 │ + → });
+        318 │ + });
+    319 319 │   
+    320     │ - → it("桌面活性只读投影：当前尝试判定、阈值现读、无注入即无信号",·()·=>·{
+        320 │ + it("桌面活性只读投影：当前尝试判定、阈值现读、无注入即无信号",·()·=>·{
+    321 321 │   	const f = fixture();
+    322 322 │   	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => void>();
+  
+
+packages\coding-agent\test\pao\dispatch-workflow-check.test.ts:10:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     8 │  * 全离线：runner 为桩,不调用模型。
+     9 │  */
+  > 10 │ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    11 │ import { tmpdir } from "node:os";
+    12 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     15  15 │   import { serializeCard } from "../../src/pao/cards/cardfile.ts";
+     16  16 │   import { createCard, loadCard, parseCardRef, readCard } from "../../src/pao/cards/index.ts";
+     17     │ - import·{·executeDispatch·}·from·"../../src/pao/worker/dispatch-core.ts";
+     18     │ - import·type·{·WorkerReceipt·}·from·"../../src/pao/worker/receipt.ts";
+     19     │ - import·{·WorkerRunner,·type·WorkerRunOptions·}·from·"../../src/pao/worker/runner.ts";
+     20     │ - import·{·addNodeCards,·bindMinister,·pauseControl,·readControl,·startControl·}·from·"../../src/pao/workflow/control.ts";
+     21     │ - import·type·{·ParsedCard·}·from·"../../src/pao/cards/types.ts";
+     22     │ - import·{·type·WorkflowDispatchContext,·resolveWorkflowDispatch·}·from·"../../src/pao/workflow/dispatch-context.ts";
+         17 │ + import·type·{·ParsedCard·}·from·"../../src/pao/cards/types.ts";
+         18 │ + import·{·executeDispatch·}·from·"../../src/pao/worker/dispatch-core.ts";
+         19 │ + import·type·{·WorkerReceipt·}·from·"../../src/pao/worker/receipt.ts";
+         20 │ + import·{·WorkerRunner,·type·WorkerRunOptions·}·from·"../../src/pao/worker/runner.ts";
+         21 │ + import·{·addNodeCards,·bindMinister,·pauseControl,·readControl,·startControl·}·from·"../../src/pao/workflow/control.ts";
+         22 │ + import·{·resolveWorkflowDispatch,·type·WorkflowDispatchContext·}·from·"../../src/pao/workflow/dispatch-context.ts";
+     23  23 │   import { emitRecipeMarkdown } from "../../src/pao/workflow/distill.ts";
+     24  24 │   import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
+  
+
+packages\coding-agent\test\pao\friction-m2-batch1.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    103 103 │   		const tools = setupCardTools();
+    104 104 │   
+    105     │ - → → await·runTool(tools.get("pao_建卡")!,·{·卡目录:·cardDir,·目标:·"定位超时",·部门:·"核心机制",·验收:·"复现脚本落盘"·});
+        105 │ + → → await·runTool(tools.get("pao_建卡")!,·{
+        106 │ + → → → 卡目录:·cardDir,
+        107 │ + → → → 目标:·"定位超时",
+        108 │ + → → → 部门:·"核心机制",
+        109 │ + → → → 验收:·"复现脚本落盘",
+        110 │ + → → });
+    106 111 │   		await runTool(tools.get("pao_改状态")!, { 卡目录: cardDir, 卡号: 1, 操作者: "部长A", 新状态: "进行中" });
+    107 112 │   		const receipt = await runTool(tools.get("pao_交回执")!, {
+  
+
+packages\coding-agent\test\pao\healthcheck-cache-probe.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    273 273 │   	it("中间采样抛错:记失败继续跑,曲线与合计不受牵连", async () => {
+    274 274 │   		const { clock } = fakeClock();
+    275     │ - → → const·{·caller·}·=·scriptedCaller([makeUsage(100,·8,·400,·400),·new·Error("connect·ETIMEDOUT"),·makeUsage(100,·8,·100,·0)]);
+        275 │ + → → const·{·caller·}·=·scriptedCaller([
+        276 │ + → → → makeUsage(100,·8,·400,·400),
+        277 │ + → → → new·Error("connect·ETIMEDOUT"),
+        278 │ + → → → makeUsage(100,·8,·100,·0),
+        279 │ + → → ]);
+    276 280 │   		const result = await runCacheProbe(caller, clock, { 上下文字符数: 400, 采样点: [30, 60] });
+    277 281 │   
+    ······· │ 
+    437 441 │   
+    438 442 │   		const probeCaller = scriptedCaller([makeUsage(100, 8, 400, 400)]);
+    439     │ - → → const·cacheProbeRun·=·await·runCacheProbe(probeCaller.caller,·fakeClock().clock,·{·上下文字符数:·400,·采样点:·[30]·});
+        443 │ + → → const·cacheProbeRun·=·await·runCacheProbe(probeCaller.caller,·fakeClock().clock,·{
+        444 │ + → → → 上下文字符数:·400,
+        445 │ + → → → 采样点:·[30],
+        446 │ + → → });
+    440 447 │   		expect(cacheProbeRun.采样).toHaveLength(2);
+    441 448 │   	});
+  
+
+packages\coding-agent\test\pao\healthcheck-cache-probe.test.ts:5:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    3 │  * 覆盖:缺省不触发、显式参数触发、注入时钟下采样序列、衰减曲线计算、单点失败容错。
+    4 │  */
+  > 5 │ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    6 │ import { tmpdir } from "node:os";
+    7 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     12  12 │   import type { ExtensionAPI, ToolDefinition } from "../../src/core/extensions/types.ts";
+     13  13 │   import {
+     14     │ - → registerHealthcheck,
+     15     │ - → runHealthcheck,
+     16     │ - → type·HealthcheckReportWithPaths,
+         14 │ + → buildFixedContext,
+         15 │ + → type·CacheProbeParams,
+         16 │ + → type·CacheSampleRecord,
+         17 │ + → cacheHitRate,
+         18 │ + → decayVerdict,
+     17  19 │   	type HealthcheckCaller,
+     18  20 │   	type HealthcheckCallOptions,
+     19     │ - → type·ProbeClock,
+     20     │ - → buildFixedContext,
+     21     │ - → validateCacheProbeParams,
+     22     │ - → renderCacheProbeReport,
+     23     │ - → realClock,
+     24     │ - → cacheHitRate,
+     25     │ - → type·CacheProbeParams,
+     26     │ - → type·CacheSampleRecord,
+     27     │ - → decayVerdict,
+     28     │ - → runCacheProbe,
+         21 │ + → type·HealthcheckReportWithPaths,
+         22 │ + → type·ProbeClock,
+         23 │ + → realClock,
+         24 │ + → registerHealthcheck,
+         25 │ + → renderCacheProbeReport,
+         26 │ + → runCacheProbe,
+         27 │ + → runHealthcheck,
+         28 │ + → validateCacheProbeParams,
+     29  29 │   } from "../../src/pao/healthcheck/index.ts";
+     30  30 │   
+  
+
+packages\coding-agent\test\pao\healthcheck.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      7   7 │   import type { ExtensionAPI, ToolDefinition } from "../../src/core/extensions/types.ts";
+      8   8 │   import {
+      9     │ - → registerHealthcheck,
+     10     │ - → runHealthcheck,
+          9 │ + → type·HealthcheckCaller,
+     11  10 │   	type HealthcheckReportWithPaths,
+     12     │ - → type·HealthcheckCaller,
+     13     │ - → sumProbeUsage,
+         11 │ + → type·ProbeResult,
+         12 │ + → probeChat,
+     14  13 │   	probeContextLimit,
+     15     │ - → probeChat,
+         14 │ + → probeReasoning,
+     16  15 │   	probeToolCall,
+     17     │ - → probeReasoning,
+     18     │ - → type·ProbeResult,
+     19     │ - → renderEvalEntry,
+         16 │ + → registerHealthcheck,
+         17 │ + → renderEvalEntry,
+         18 │ + → runHealthcheck,
+         19 │ + → sumProbeUsage,
+     20  20 │   	writeEvalEntry,
+     21  21 │   } from "../../src/pao/healthcheck/index.ts";
+  
+
+packages\coding-agent\test\pao\host-fuse.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     98  98 │   			try {
+     99  99 │   				const result = await killTree(pid);
+    100     │ - → → → → diagnose.push({·wall:·new·Date().toISOString(),·phase:·"树杀完成",·pid,·elapsedMs:·performance.now()·-·start·});
+        100 │ + → → → → diagnose.push({
+        101 │ + → → → → → wall:·new·Date().toISOString(),
+        102 │ + → → → → → phase:·"树杀完成",
+        103 │ + → → → → → pid,
+        104 │ + → → → → → elapsedMs:·performance.now()·-·start,
+        105 │ + → → → → });
+    101 106 │   				return result;
+    102 107 │   			} catch (error) {
+    ······· │ 
+    199 204 │   		});
+    200 205 │   		hosts.push(host);
+    201     │ - → → const·result·=·await·host.spawn({·部门:·"前端",·项目根:·projectRoot,·命令:·process.execPath,·参数:·[script,·"0"]·});
+        206 │ + → → const·result·=·await·host.spawn({
+        207 │ + → → → 部门:·"前端",
+        208 │ + → → → 项目根:·projectRoot,
+        209 │ + → → → 命令:·process.execPath,
+        210 │ + → → → 参数:·[script,·"0"],
+        211 │ + → → });
+    202 212 │   		if (!result.ok) throw new Error(`拉起失败:${result.原因}`);
+    203 213 │   		// 第二个会话供注入:注入只刷新自己的最近事件时间,前端保持闲置可熔断
+  
+
+packages\coding-agent\test\pao\host-handoff-gate.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      6   6 │   import { recipeFingerprint } from "../../src/pao/dept/render.ts";
+      7   7 │   import { createDept } from "../../src/pao/dept/scaffold.ts";
+      8     │ - import·{·handoffFreshnessMs,·handoffPagePath,·judgeHandoffTimeliness,·richHandoffPointerText,·writeHandoffPage·}·from·"../../src/pao/host/handoff.ts";
+          8 │ + import·{
+          9 │ + → handoffFreshnessMs,
+         10 │ + → handoffPagePath,
+         11 │ + → judgeHandoffTimeliness,
+         12 │ + → richHandoffPointerText,
+         13 │ + → writeHandoffPage,
+         14 │ + }·from·"../../src/pao/host/handoff.ts";
+      9  15 │   
+     10  16 │   /**
+    ······· │ 
+     77  83 │   	it("负例:指纹不匹配——页有指纹当前不同 / 当前无配方而页有 / 当前有而页上「无」均降级", () => {
+     78  84 │   		const page = makePageText({ 指纹: "a".repeat(40) });
+     79     │ - → → expect(judgeHandoffTimeliness(page,·{·现在:·now,·当前指纹:·"b".repeat(40)·}).原因.join(";")).toContain("配方指纹不匹配");
+         85 │ + → → expect(judgeHandoffTimeliness(page,·{·现在:·now,·当前指纹:·"b".repeat(40)·}).原因.join(";")).toContain(
+         86 │ + → → → "配方指纹不匹配",
+         87 │ + → → );
+     80  88 │   		expect(judgeHandoffTimeliness(page, { 现在: now, 当前指纹: null }).原因.join(";")).toContain("配方指纹不匹配");
+     81     │ - → → expect(judgeHandoffTimeliness(makePageText({·指纹:·"无"·}),·{·现在:·now,·当前指纹:·"a".repeat(40)·}).新鲜).toBe(false);
+         89 │ + → → expect(judgeHandoffTimeliness(makePageText({·指纹:·"无"·}),·{·现在:·now,·当前指纹:·"a".repeat(40)·}).新鲜).toBe(
+         90 │ + → → → false,
+         91 │ + → → );
+     82  92 │   	});
+     83  93 │   
+     84  94 │   	it("负例:缺最近服务时间 / 时间不可解析 → 降级", () => {
+     85     │ - → → const·missingTime·=·judgeHandoffTimeliness(makePageText({·去时间:·true·}),·{·现在:·now,·当前指纹:·"a".repeat(40)·});
+         95 │ + → → const·missingTime·=·judgeHandoffTimeliness(makePageText({·去时间:·true·}),·{
+         96 │ + → → → 现在:·now,
+         97 │ + → → → 当前指纹:·"a".repeat(40),
+         98 │ + → → });
+     86  99 │   		expect(missingTime.新鲜).toBe(false);
+     87 100 │   		expect(missingTime.原因.join(";")).toContain("缺最近服务时间");
+     88     │ - → → const·unparseable·=·judgeHandoffTimeliness(makePageText({·时间:·"三天前"·}),·{·现在:·now,·当前指纹:·"a".repeat(40)·});
+        101 │ + → → const·unparseable·=·judgeHandoffTimeliness(makePageText({·时间:·"三天前"·}),·{
+        102 │ + → → → 现在:·now,
+        103 │ + → → → 当前指纹:·"a".repeat(40),
+        104 │ + → → });
+     89 105 │   		expect(unparseable.新鲜).toBe(false);
+     90 106 │   		expect(unparseable.原因.join(";")).toContain("不可解析");
+    ······· │ 
+     92 108 │   
+     93 109 │   	it("负例:缺配方指纹字段 / 头部注释整体缺失 → 降级", () => {
+     94     │ - → → const·missingFingerprint·=·judgeHandoffTimeliness(makePageText({·去指纹:·true·}),·{·现在:·now,·当前指纹:·"a".repeat(40)·});
+        110 │ + → → const·missingFingerprint·=·judgeHandoffTimeliness(makePageText({·去指纹:·true·}),·{
+        111 │ + → → → 现在:·now,
+        112 │ + → → → 当前指纹:·"a".repeat(40),
+        113 │ + → → });
+     95 114 │   		expect(missingFingerprint.新鲜).toBe(false);
+     96 115 │   		expect(missingFingerprint.原因.join(";")).toContain("缺配方指纹字段");
+    ······· │ 
+    137 156 │   		writeRecipe(home);
+    138 157 │   		const projectRoot = tempDir("proj");
+    139     │ - → → const·path·=·await·writeHandoffPage({·paoHome:·home,·部门:·"前端",·项目根:·projectRoot,·卡目录:·join(projectRoot,·".pao",·"卡")·});
+        158 │ + → → const·path·=·await·writeHandoffPage({
+        159 │ + → → → paoHome:·home,
+        160 │ + → → → 部门:·"前端",
+        161 │ + → → → 项目根:·projectRoot,
+        162 │ + → → → 卡目录:·join(projectRoot,·".pao",·"卡"),
+        163 │ + → → });
+    140 164 │   
+    141 165 │   		// 新鲜:富指针给「背景核对」＋时效核对通过
+  
+
+packages\coding-agent\test\pao\host-handoff.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      4   4 │   import { afterEach, describe, expect, it } from "vitest";
+      5   5 │   
+      6     │ - import·{·handoffPointerText,·handoffFileName,·writeHandoffPage·}·from·"../../src/pao/host/handoff.ts";
+          6 │ + import·{·handoffFileName,·handoffPointerText,·writeHandoffPage·}·from·"../../src/pao/host/handoff.ts";
+      7   7 │   import { MinisterHost } from "../../src/pao/host/host.ts";
+      8   8 │   
+  
+
+packages\coding-agent\test\pao\host-inventory-dispatch.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    211 211 │   			const projectRoot = tempDir(`inv9-${i}`);
+    212 212 │   			mkdirSync(projectRoot, { recursive: true });
+    213     │ - → → → const·spawn·=·await·host.spawn({·部门:·`部门${i}`,·项目根:·projectRoot,·命令:·process.execPath,·参数:·[script]·});
+        213 │ + → → → const·spawn·=·await·host.spawn({
+        214 │ + → → → → 部门:·`部门${i}`,
+        215 │ + → → → → 项目根:·projectRoot,
+        216 │ + → → → → 命令:·process.execPath,
+        217 │ + → → → → 参数:·[script],
+        218 │ + → → → });
+    214 219 │   			expect(spawn.ok).toBe(true);
+    215 220 │   		}
+    ······· │ 
+    278 283 │   		const tool = captured.tools.find((t) => t.name === "pao_派单")!;
+    279 284 │   
+    280     │ - → → const·result·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"配方变更后的派发"·},·undefined,·undefined,·{}·as·never);
+        285 │ + → → const·result·=·await·tool.execute(
+        286 │ + → → → "t",
+        287 │ + → → → {·卡号:·cardNo,·理由:·"配方变更后的派发"·},
+        288 │ + → → → undefined,
+        289 │ + → → → undefined,
+        290 │ + → → → {}·as·never,
+        291 │ + → → );
+    281 292 │   		expect(result.content[0]?.text).toContain("配方已变更");
+    282 293 │   		expect(result.content[0]?.text).toContain("建议重开");
+  
+
+packages\coding-agent\test\pao\host-lifecycle.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    148 148 │   		await expect(f.host.executeTask({ ...first, 文本: "ok" })).resolves.toBe("simulated complete");
+    149 149 │   		await expect(f.host.executeTask({ ...first, 文本: "fail" })).rejects.toThrow("fixture rejection");
+    150     │ - → → await·expect(f.host.executeTask({·...first,·文本:·"provider-error"·})).rejects.toThrow("fixture·provider·terminal");
+        150 │ + → → await·expect(f.host.executeTask({·...first,·文本:·"provider-error"·})).rejects.toThrow(
+        151 │ + → → → "fixture·provider·terminal",
+        152 │ + → → );
+    151 153 │   		await expect(f.host.executeTask({ ...first, 文本: "provider-aborted" })).rejects.toThrow(
+    152 154 │   			"fixture provider terminal",
+    ······· │ 
+    168 170 │   });
+    169 171 │   
+    170     │ - async·function·spawnFakeMinister(fixture:·FakeFixture,·dept·=·"前端",·rounds·=·0,·toolCalls·=·0,·projectRoot·=·fixture.项目根)·{
+        172 │ + async·function·spawnFakeMinister(
+        173 │ + → fixture:·FakeFixture,
+        174 │ + → dept·=·"前端",
+        175 │ + → rounds·=·0,
+        176 │ + → toolCalls·=·0,
+        177 │ + → projectRoot·=·fixture.项目根,
+        178 │ + )·{
+    171 179 │   	const result = await fixture.host.spawn({
+    172 180 │   		部门: dept,
+  
+
+packages\coding-agent\test\pao\host-supervision.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      4   4 │   import { afterEach, describe, expect, it } from "vitest";
+      5   5 │   
+      6     │ - import·{·type·LivenessInput,·assessLiveness·}·from·"../../src/pao/host/handle.ts";
+          6 │ + import·{·assessLiveness,·type·LivenessInput·}·from·"../../src/pao/host/handle.ts";
+      7   7 │   import { MinisterHost } from "../../src/pao/host/host.ts";
+      8   8 │   
+  
+
+packages\coding-agent\test\pao\knowledge-auto-route.test.ts:6:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    4 │  * 隔离临时目录建多库＋注册表（照抄 knowledge-search.test.ts 的建库夹具模式），不触真实 PAO_HOME。
+    5 │  */
+  > 6 │ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    7 │ import { tmpdir } from "node:os";
+    8 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     11  11 │   import { afterEach, beforeEach, describe, expect, test } from "vitest";
+     12  12 │   import { type DeptRegistryRow, formatRegistry } from "../../src/pao/dept/registry.ts";
+     13     │ - import·{·type·AutoRouteResult,·labelHit,·autoPatrol·}·from·"../../src/pao/knowledge/auto-route.ts";
+         13 │ + import·{·type·AutoRouteResult,·autoPatrol,·labelHit·}·from·"../../src/pao/knowledge/auto-route.ts";
+     14  14 │   import type { OutboundConfig } from "../../src/pao/knowledge/outbound.ts";
+     15  15 │   import { registerKnowledgeTools } from "../../src/pao/knowledge/tools.ts";
+  
+
+packages\coding-agent\test\pao\knowledge-crystallize.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    106 106 │   
+    107 107 │   	it("三问全过：有出处则要求落出处行,没出处只能挂待验证", () => {
+    108     │ - → → const·hasProvenance·=·judgeCrystallizeWrite({·执行过:·true,·可定位:·true,·验证出处:·"卡0007·2026-10-04·真机验收"·});
+        108 │ + → → const·hasProvenance·=·judgeCrystallizeWrite({
+        109 │ + → → → 执行过:·true,
+        110 │ + → → → 可定位:·true,
+        111 │ + → → → 验证出处:·"卡0007·2026-10-04·真机验收",
+        112 │ + → → });
+    109 113 │   		expect(hasProvenance.允许).toBe(true);
+    110 114 │   		expect(hasProvenance.要求[0]).toContain("验证出处: 卡0007 2026-10-04 真机验收");
+  
+
+packages\coding-agent\test\pao\memory-resident.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    289 289 │   			return pending;
+    290 290 │   		};
+    291     │ - → → const·home·=·tempHome({·记忆供应商:·{·供应商:·"假供应商",·自动召回:·true·},·外发项目:·[currentProject·??·"未知"]·});
+        291 │ + → → const·home·=·tempHome({
+        292 │ + → → → 记忆供应商:·{·供应商:·"假供应商",·自动召回:·true·},
+        293 │ + → → → 外发项目:·[currentProject·??·"未知"],
+        294 │ + → → });
+    292 295 │   		const captured = capturePi();
+    293 296 │   		const manager = makeManager([]);
+    ······· │ 
+    302 305 │   	it("宿主 cwd 获准不能代替另一个会话项目的外发许可", async () => {
+    303 306 │   		currentFake = fakeVendor({ hits: exampleHit });
+    304     │ - → → const·home·=·tempHome({·记忆供应商:·{·供应商:·"假供应商",·自动召回:·true·},·外发项目:·[currentProject·??·"未知"]·});
+        307 │ + → → const·home·=·tempHome({
+        308 │ + → → → 记忆供应商:·{·供应商:·"假供应商",·自动召回:·true·},
+        309 │ + → → → 外发项目:·[currentProject·??·"未知"],
+        310 │ + → → });
+    305 311 │   		const captured = capturePi();
+    306 312 │   		registerResident(captured.pi, home, () => makeManager([]));
+  
+
+packages\coding-agent\test\pao\memory-vendor-contract.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     55  55 │   			}
+     56  56 │   			if (message.method === "initialize") {
+     57     │ - → → → → reply({·protocolVersion:·"2025-03-26",·capabilities:·{},·serverInfo:·{·name:·"fake-gbrain-contract",·version:·"0.0.0"·}·});
+         57 │ + → → → → reply({
+         58 │ + → → → → → protocolVersion:·"2025-03-26",
+         59 │ + → → → → → capabilities:·{},
+         60 │ + → → → → → serverInfo:·{·name:·"fake-gbrain-contract",·version:·"0.0.0"·},
+         61 │ + → → → → });
+     58  62 │   				return;
+     59  63 │   			}
+  
+
+packages\coding-agent\test\pao\panorama-page.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     73  73 │   	writeFileSync(
+     74  74 │   		join(home, "项目清单.md"),
+     75     │ - → → formatProjectList([{·项目名:·projectName,·项目根:·projectRoot,·首次服务:·"2026-10-01·09:00",·最近服务:·"2026-10-01·09:00"·}]),
+         75 │ + → → formatProjectList([
+         76 │ + → → → {·项目名:·projectName,·项目根:·projectRoot,·首次服务:·"2026-10-01·09:00",·最近服务:·"2026-10-01·09:00"·},
+         77 │ + → → ]),
+     76  78 │   		"utf8",
+     77  79 │   	);
+  
+
+packages\coding-agent\test\pao\parent-lifecycle.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    21  21 │   	"受管进程安装生命周期后挂 SIGHUP(控制台关闭自停)与 disconnect(父亡自停)监听",
+    22  22 │   	async () => {
+    23     │ - → → const·probe·=·spawn(process.execPath,·[fileURLToPath(new·URL("./parent-lifecycle-child.ts",·import.meta.url)),·"probe"],·{
+    24     │ - → → → stdio:·["ignore",·"pipe",·"pipe",·"ipc"],
+    25     │ - → → → env:·{·...process.env,·PAO_MANAGED_PARENT:·"1"·},
+    26     │ - → → });
+        23 │ + → → const·probe·=·spawn(
+        24 │ + → → → process.execPath,
+        25 │ + → → → [fileURLToPath(new·URL("./parent-lifecycle-child.ts",·import.meta.url)),·"probe"],
+        26 │ + → → → {
+        27 │ + → → → → stdio:·["ignore",·"pipe",·"pipe",·"ipc"],
+        28 │ + → → → → env:·{·...process.env,·PAO_MANAGED_PARENT:·"1"·},
+        29 │ + → → → },
+        30 │ + → → );
+    27  31 │   		try {
+    28  32 │   			const line = await new Promise<string>((resolve, reject) => {
+  
+
+packages\coding-agent\test\pao\patrol-drop.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     45  45 │   
+     46  46 │   async function seedCard(goal: string, dept: string, status: "待认领" | "进行中" | "已交付" | "失败"): Promise<void> {
+     47     │ - → const·card·=·await·createCard(cardsDir,·{·目标:·goal,·部门:·dept,·验收:·"测试占位",·创建:·created·},·{·counterPath·});
+         47 │ + → const·card·=·await·createCard(
+         48 │ + → → cardsDir,
+         49 │ + → → {·目标:·goal,·部门:·dept,·验收:·"测试占位",·创建:·created·},
+         50 │ + → → {·counterPath·},
+         51 │ + → );
+     48  52 │   	// 直接改写状态字段落盘（绕过状态机，仅为构造幂等场景的假数据）
+     49  53 │   	const mutated = { ...card.frontmatter, 状态: status };
+  
+
+packages\coding-agent\test\pao\patrol-shell-guard-wire.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    120 120 │   	it("powershell 同门；非 shell 工具（read）不拦", () => {
+    121 121 │   		const mock = installGuard();
+    122     │ - → → const·verdict·=·fireToolCall(mock,·{·toolName:·"powershell",·input:·{·command:·"Get-Content·C:\\Windows\\x.ini"·}·});
+        122 │ + → → const·verdict·=·fireToolCall(mock,·{
+        123 │ + → → → toolName:·"powershell",
+        124 │ + → → → input:·{·command:·"Get-Content·C:\\Windows\\x.ini"·},
+        125 │ + → → });
+    123 126 │   		expect(verdict?.block).toBe(true);
+    124 127 │   		expect(fireToolCall(mock, { toolName: "read", input: { command: "C:\\Windows\\x.ini" } })).toBeUndefined();
+  
+
+packages\coding-agent\test\pao\patrol-shell-guard.test.ts:6:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    4 │  * 路径是否存在不是判定对象（纯函数不碰文件系统，这一条本身也是被测行为）。
+    5 │  */
+  > 6 │ import { describe, expect, test } from "vitest";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    7 │ import { reviewShellCommand, DEFAULT_SYSTEM_DIR_TABLE } from "../../src/pao/patrol/shell-guard.ts";
+    8 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      5   5 │    */
+      6   6 │   import { describe, expect, test } from "vitest";
+      7     │ - import·{·reviewShellCommand,·DEFAULT_SYSTEM_DIR_TABLE·}·from·"../../src/pao/patrol/shell-guard.ts";
+          7 │ + import·{·DEFAULT_SYSTEM_DIR_TABLE,·reviewShellCommand·}·from·"../../src/pao/patrol/shell-guard.ts";
+      8   8 │   
+      9   9 │   const workspaceDir = "D:\\pao-workspace\\巡库";
+  
+
+packages\coding-agent\test\pao\patrol-shell-guard.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     42  42 │   
+     43  43 │   	test("已知变量指向工作区内：展开后判定，放行", () => {
+     44     │ - → → expect(reviewShellCommand("ls·$巡库根/教训",·{·工作区:·workspaceDir,·已知变量:·{·巡库根:·workspaceDir·}·}).放行).toBe(true);
+         44 │ + → → expect(
+         45 │ + → → → reviewShellCommand("ls·$巡库根/教训",·{·工作区:·workspaceDir,·已知变量:·{·巡库根:·workspaceDir·}·}).放行,
+         46 │ + → → ).toBe(true);
+     45  47 │   	});
+     46  48 │   
+  
+
+packages\coding-agent\test\pao\project-list.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join, relative } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      8   8 │   import { registerCardTools } from "../../src/pao/cards/tools.ts";
+      9   9 │   import { listPaoSubcommands, resetPaoSubcommandsForTest } from "../../src/pao/command-router.ts";
+     10     │ - import·{·listProjects,·parseProjectList,·recordProjectServed,·projectListPath·}·from·"../../src/pao/dept/projects.ts";
+         10 │ + import·{·listProjects,·parseProjectList,·projectListPath,·recordProjectServed·}·from·"../../src/pao/dept/projects.ts";
+     11  11 │   
+     12  12 │   const tempDirs: string[] = [];
+  
+
+packages\coding-agent\test\pao\results-aggregate.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     15  15 │   import { createCard, loadCard, parseCardRef, serializeCard } from "../../src/pao/cards/index.ts";
+     16  16 │   import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+     17     │ - import·{
+     18     │ - → collectInstanceResults,
+     19     │ - → type·InstanceResultRow,
+     20     │ - → type·ResultsRunGit,
+     21     │ - }·from·"../../src/pao/status/results.ts";
+         17 │ + import·{·collectInstanceResults,·type·InstanceResultRow,·type·ResultsRunGit·}·from·"../../src/pao/status/results.ts";
+     22  18 │   import {
+     23  19 │   	addNodeCards,
+    ······· │ 
+    375 371 │   		writeFileSync(snapshotPath, `# 卡${String(card.卡号).padStart(4, "0")} 认领基线\n# 既有条目数: 0\n`);
+    376 372 │   		const missingRoot = await collectInstanceResults(s.home, { runGit: fakeGit({ status: "?? x.txt\0" }) });
+    377     │ - → → expect(findLine(missingRoot.line,·"验流").节点结果[0]!.遗留.join("\n")).toContain("越界比对无法进行：快照缺项目根");
+        373 │ + → → expect(findLine(missingRoot.line,·"验流").节点结果[0]!.遗留.join("\n")).toContain(
+        374 │ + → → → "越界比对无法进行：快照缺项目根",
+        375 │ + → → );
+    378 376 │   	});
+    379 377 │   
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     50  50 │   describe("stripUtf8Bom:只剥首字符 BOM,无 BOM 逐字节不变", () => {
+     51  51 │   	it("有 BOM 剥掉,无 BOM 原样,正文中间的 U+FEFF 不动", () => {
+     52     │ - → → expect(stripUtf8Bom("\uFEFF{\"a\":1}")).toBe('{"a":1}');
+         52 │ + → → expect(stripUtf8Bom('\uFEFF{"a":1}')).toBe('{"a":1}');
+     53  53 │   		expect(stripUtf8Bom('{"a":1}')).toBe('{"a":1}');
+     54  54 │   		expect(stripUtf8Bom('{"a":"\uFEFF"}')).toBe('{"a":"\uFEFF"}');
+  
+
+packages\coding-agent\test\pao\tier-editor-config.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     99  99 │   		content2.部门默认 = {}; // 换档集后原部门默认引用的「快」已不存在,不清会被写前自校验拒写
+    100 100 │   		saveTierConfig(path, content2, fixedNow);
+    101     │ - → → const·backups·=·readdirSync(dir).filter((f)·=>·f.includes("bak")).sort();
+        101 │ + → → const·backups·=·readdirSync(dir)
+        102 │ + → → → .filter((f)·=>·f.includes("bak"))
+        103 │ + → → → .sort();
+    102 104 │   		expect(backups).toEqual(["档位.json.bak-20261003-140506-789", "档位.json.bak-20261003-140506-789-1"]);
+    103 105 │   		expect(JSON.parse(readFileSync(join(dir, backups[0]!), "utf8")).档位[0].名).toBe("旧档");
+  
+
+packages\coding-agent\test\pao\usage-rollup.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { describe, expect, it } from "vitest";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ 
+    3 │ import { absorbEvent, createEventState } from "../../src/pao/worker/receipt.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      3   3 │   import { absorbEvent, createEventState } from "../../src/pao/worker/receipt.ts";
+      4   4 │   import type { UsageLine } from "../../src/pao/worker/usage.ts";
+      5     │ - import·{·usageLineFromEventState,·totalsUsage,·budgetGate·}·from·"../../src/pao/worker/usage.ts";
+          5 │ + import·{·budgetGate,·totalsUsage,·usageLineFromEventState·}·from·"../../src/pao/worker/usage.ts";
+      6   6 │   
+      7   7 │   /**
+  
+
+packages\coding-agent\test\pao\verifier-parse.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     34  34 │   
+     35  35 │   	it("机械条目与人话句可混写；人话句照旧归人工/审查口径", () => {
+     36     │ - → → const·{·mechanicalEntry,·plainSentence·}·=·parseAcceptance('跑:·node·-e·""\n代码评审过目，命名统一中文拼音\n\n存在:·包.txt');
+         36 │ + → → const·{·mechanicalEntry,·plainSentence·}·=·parseAcceptance(
+         37 │ + → → → '跑:·node·-e·""\n代码评审过目，命名统一中文拼音\n\n存在:·包.txt',
+         38 │ + → → );
+     37  39 │   		expect(mechanicalEntry.map((e) => e.类型)).toEqual(["跑", "存在"]);
+     38  40 │   		expect(plainSentence).toEqual(["代码评审过目，命名统一中文拼音"]);
+  
+
+packages\coding-agent\test\pao\worker-dispatch.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    226 226 │   		process.env.PAO_DEPT = "前端";
+    227 227 │   		const { tool, face, captured, runner, cardsDir, cardNo } = await setup("前端");
+    228     │ - → → const·result·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"本部门积压,加派"·},·undefined,·undefined,·{}·as·never);
+        228 │ + → → const·result·=·await·tool.execute(
+        229 │ + → → → "t",
+        230 │ + → → → {·卡号:·cardNo,·理由:·"本部门积压,加派"·},
+        231 │ + → → → undefined,
+        232 │ + → → → undefined,
+        233 │ + → → → {}·as·never,
+        234 │ + → → );
+    229 235 │   		expect(result.isError).toBeUndefined();
+    230 236 │   		const notice = await settle(face, captured);
+    ······· │ 
+    251 257 │   		delete process.env.PAO_DEPT;
+    252 258 │   		const { tool, runner, cardNo } = await setup("前端");
+    253     │ - → → const·result·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"没设部门也想派"·},·undefined,·undefined,·{}·as·never);
+        259 │ + → → const·result·=·await·tool.execute(
+        260 │ + → → → "t",
+        261 │ + → → → {·卡号:·cardNo,·理由:·"没设部门也想派"·},
+        262 │ + → → → undefined,
+        263 │ + → → → undefined,
+        264 │ + → → → {}·as·never,
+        265 │ + → → );
+    254 266 │   		expect(result.isError).toBe(true);
+    255 267 │   		expect(textOf(result)).toContain("PAO_DEPT");
+    ······· │ 
+    261 273 │   		delete process.env.PAO_DEPT;
+    262 274 │   		const { tool, runner, cardsDir, cardNo } = await setup("前端");
+    263     │ - → → const·result·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"worker·也想派"·},·undefined,·undefined,·{}·as·never);
+        275 │ + → → const·result·=·await·tool.execute(
+        276 │ + → → → "t",
+        277 │ + → → → {·卡号:·cardNo,·理由:·"worker·也想派"·},
+        278 │ + → → → undefined,
+        279 │ + → → → undefined,
+        280 │ + → → → {}·as·never,
+        281 │ + → → );
+    264 282 │   		expect(result.isError).toBe(true);
+    265 283 │   		expect(textOf(result)).toContain("worker 角色不得派单");
+    ······· │ 
+    351 369 │   		seedAlive(runner, "测试", 3);
+    352 370 │   
+    353     │ - → → const·rejected·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"配置空着也想派"·},·undefined,·undefined,·{}·as·never);
+        371 │ + → → const·rejected·=·await·tool.execute(
+        372 │ + → → → "t",
+        373 │ + → → → {·卡号:·cardNo,·理由:·"配置空着也想派"·},
+        374 │ + → → → undefined,
+        375 │ + → → → undefined,
+        376 │ + → → → {}·as·never,
+        377 │ + → → );
+    354 378 │   		expect(rejected.isError).toBeUndefined();
+    355 379 │   		const notice = await settle(face, captured);
+    ······· │ 
+    368 392 │   		seedAlive(runner, "测试", 1);
+    369 393 │   
+    370     │ - → → const·rejected·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"上限1也想塞"·},·undefined,·undefined,·{}·as·never);
+        394 │ + → → const·rejected·=·await·tool.execute(
+        395 │ + → → → "t",
+        396 │ + → → → {·卡号:·cardNo,·理由:·"上限1也想塞"·},
+        397 │ + → → → undefined,
+        398 │ + → → → undefined,
+        399 │ + → → → {}·as·never,
+        400 │ + → → );
+    371 401 │   		expect(rejected.isError).toBeUndefined();
+    372 402 │   		const reject = await settle(face, captured);
+    ······· │ 
+    376 406 │   
+    377 407 │   		runner.registry.markExited(800000);
+    378     │ - → → const·allowed·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"腾出一个坑位了"·},·undefined,·undefined,·{}·as·never);
+        408 │ + → → const·allowed·=·await·tool.execute(
+        409 │ + → → → "t",
+        410 │ + → → → {·卡号:·cardNo,·理由:·"腾出一个坑位了"·},
+        411 │ + → → → undefined,
+        412 │ + → → → undefined,
+        413 │ + → → → {}·as·never,
+        414 │ + → → );
+    379 415 │   		expect(allowed.isError).toBeUndefined();
+    380 416 │   		const ok = await settle(face, captured);
+    ······· │ 
+    394 430 │   		const tool = dispatchTool(captured);
+    395 431 │   
+    396     │ - → → const·result·=·await·tool.execute("t",·{·卡号:·cardNo,·理由:·"单卡加急,派一个"·},·undefined,·undefined,·{}·as·never);
+        432 │ + → → const·result·=·await·tool.execute(
+        433 │ + → → → "t",
+        434 │ + → → → {·卡号:·cardNo,·理由:·"单卡加急,派一个"·},
+        435 │ + → → → undefined,
+        436 │ + → → → undefined,
+        437 │ + → → → {}·as·never,
+        438 │ + → → );
+    397 439 │   		expect(result.isError).toBeUndefined();
+    398 440 │   		const notice = await settle(face, captured); // B 档:认领/基线/回执都在后台链里
+  
+
+packages\coding-agent\test\pao\worker-inventory.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     60  60 │   		"## 回执(尝试1)\n失败:测试环境起不来\n\n## 回执(尝试2)\n差一个断言没过,进度 80%\n证据在 产物/日志.txt",
+     61  61 │   	);
+     62     │ - → writeCard(join(workspace,·"卡"),·"卡0002-写文档.md",·"目标:·补文档\n尝试:·1\n状态:·已交付",·"##·回执(尝试1)\n已写完");
+         62 │ + → writeCard(
+         63 │ + → → join(workspace,·"卡"),
+         64 │ + → → "卡0002-写文档.md",
+         65 │ + → → "目标:·补文档\n尝试:·1\n状态:·已交付",
+         66 │ + → → "##·回执(尝试1)\n已写完",
+         67 │ + → );
+     63  68 │   	writeCard(cardDir, "卡0003-侦察.md", "目标: 侦察路由结构\n尝试: 0\n状态: 待认领", "还没开工");
+     64  69 │   	return workspace;
+  
+
+packages\coding-agent\test\pao\worker-usage-display.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      9   9 │   import {
+     10  10 │   	absorbTurnUsage,
+     11     │ - → createUsageFooterState,
+     12     │ - → formatCost,
+     13     │ - → formatFooterStatus,
+     14     │ - → formatTokens,
+     15     │ - → formatTurnUsage,
+     16     │ - → formatUsageLine,
+     17     │ - → registerUsageFooter,
+     18     │ - → type·UsageLine,
+     19     │ - → receiptUsageLine,
+     20     │ - → batchUsageLine,
+     21     │ - → usageStatusKey,
+     22     │ - → aggregateLineToUsageLine,
+     23     │ - → deptUsageLine,
+         11 │ + → aggregateLineToUsageLine,
+         12 │ + → batchUsageLine,
+         13 │ + → createUsageFooterState,
+         14 │ + → deptUsageLine,
+         15 │ + → formatCost,
+         16 │ + → formatFooterStatus,
+         17 │ + → formatTokens,
+         18 │ + → formatTurnUsage,
+         19 │ + → formatUsageLine,
+         20 │ + → receiptUsageLine,
+         21 │ + → registerUsageFooter,
+         22 │ + → type·UsageLine,
+         23 │ + → usageStatusKey,
+     24  24 │   } from "../../src/pao/worker/usage-display.ts";
+     25  25 │   
+  
+
+packages\coding-agent\test\pao\worker-usage-display.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    239 239 │   
+    240 240 │   		const sameReceiptTwice = usageLine("0003", { input: 1, turns: 1 });
+    241     │ - → → expect(()·=>·deptUsageLine("前端部",·[sameReceiptTwice,·{·...sameReceiptTwice·}])).toThrow(/同一\(卡号,尝试\)出现多次/);
+        241 │ + → → expect(()·=>·deptUsageLine("前端部",·[sameReceiptTwice,·{·...sameReceiptTwice·}])).toThrow(
+        242 │ + → → → /同一\(卡号,尝试\)出现多次/,
+        243 │ + → → );
+    242 244 │   		// 同卡不同尝试 = 真实重试花费,不拒
+    243 245 │   		const attempt1 = { ...usageLine("0003", { input: 1, turns: 1 }), 尝试: 1 };
+  
+
+packages\coding-agent\test\pao\workflow-driver.test.ts:6:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    4 │  * 真相在卡上：卡交付用 cards 既有 changeCardStatus 推进（与 pao_改状态 同一迁移规则）。
+    5 │  */
+  > 6 │ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    7 │ import { tmpdir } from "node:os";
+    8 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     16  16 │   import {
+     17  17 │   	confirmWorkflowNode,
+     18     │ - → manifestPath,
+         18 │ + → humanCalled,
+         19 │ + → manifestPath,
+     19  20 │   	parseManifest,
+     20  21 │   	queryWorkflow,
+     21  22 │   	rebuildEntriesFromCards,
+     22     │ - → renderReport,
+     23     │ - → startWorkflow,
+     24     │ - → tickWorkflow,
+     25     │ - → workflowMarker,
+     26     │ - → humanCalled,
+     27     │ - → suspendCallHumanKey,
+     28     │ - → recordCalledHuman,
+         23 │ + → recordCalledHuman,
+         24 │ + → renderReport,
+         25 │ + → startWorkflow,
+         26 │ + → suspendCallHumanKey,
+         27 │ + → tickWorkflow,
+         28 │ + → workflowMarker,
+     29  29 │   } from "../../src/pao/workflow/driver.ts";
+     30  30 │   import { loadRecipe, recipePath } from "../../src/pao/workflow/recipe.ts";
+  
+
+Checked 1775 files in 5s. No fixes applied.
+Found 103 errors.
+Found 3 warnings.
+Found 5 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+

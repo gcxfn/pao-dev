@@ -1,0 +1,340 @@
+diff --git a/apps/desktop/tests/unit/canvas.spec.ts b/apps/desktop/tests/unit/canvas.spec.ts
+index 8f8d81f..879abcb 100644
+--- a/apps/desktop/tests/unit/canvas.spec.ts
++++ b/apps/desktop/tests/unit/canvas.spec.ts
+@@ -42,11 +42,12 @@ beforeAll(() => {
+     loaded: true,
+     exports: real,
+   } as never;
+-  ({ CanvasPageView, resolveEditorEntry, pullCanvasAfterStart } = require("../../src/features/canvas/canvas-page") as {
+-    CanvasPageView: typeof CanvasPageView;
+-    resolveEditorEntry: typeof resolveEditorEntry;
+-    pullCanvasAfterStart: typeof pullCanvasAfterStart;
+-  });
++  ({ CanvasPageView, resolveEditorEntry, pullCanvasAfterStart } =
++    require("../../src/features/canvas/canvas-page") as {
++      CanvasPageView: typeof CanvasPageView;
++      resolveEditorEntry: typeof resolveEditorEntry;
++      pullCanvasAfterStart: typeof pullCanvasAfterStart;
++    });
+ });
+ 
+ const snapshot: CanvasSnapshot = {
+@@ -127,8 +128,12 @@ describe("canvas node tone", () => {
+   test("状态着色六态：灰/蓝/绿/黄/橙/红", () => {
+     expect(canvasNodeTone({ status: "未落卡" })).toBe("grey");
+     expect(canvasNodeTone({ status: "unclaimed" })).toBe("grey");
++    expect(canvasNodeTone({ status: "canceled" })).toBe("grey");
++    expect(canvasNodeTone({ status: "任意未知值" })).toBe("grey");
+     expect(canvasNodeTone({ status: "in_progress" })).toBe("blue");
++    expect(canvasNodeTone({ status: "进行中" })).toBe("blue");
+     expect(canvasNodeTone({ status: "delivered" })).toBe("green");
++    expect(canvasNodeTone({ status: "已交付" })).toBe("green");
+     expect(canvasNodeTone({ status: "未落卡", suspended: "等待人工确认" })).toBe("yellow");
+     expect(canvasNodeTone({ status: "in_progress", suspended: "缺输入停" })).toBe("orange");
+     expect(canvasNodeTone({ status: "读取异常" })).toBe("red");
+@@ -903,9 +908,9 @@ describe("S6-D1 实例失败可见（instanceFailedNodes＋渲染）", () => {
+     expect(
+       instanceFailedNodes({ ...instance, nodes: [{ name: "甲", status: "读取异常" }] }),
+     ).toEqual([]);
+-    expect(instanceFailedNodes({ ...instance, nodes: [{ name: "甲", status: "delivered" }] })).toEqual(
+-      [],
+-    );
++    expect(
++      instanceFailedNodes({ ...instance, nodes: [{ name: "甲", status: "delivered" }] }),
++    ).toEqual([]);
+   });
+ 
+   test("失败实例运行图有明确横幅（含节点名），运行记录列表行有失败标记", () => {
+@@ -1032,7 +1037,10 @@ describe("S6-D2 启动后补拉迟到失败守卫（波审 P2-1）", () => {
+     changeTabs: async () => undefined,
+   };
+   /** 手动定决的 getCanvas：让测试控制失败到达前 requestId 是否已被更新请求取代。 */
+-  function deferredCanvas(): { getCanvas: () => Promise<CanvasResult>; reject: (error: unknown) => void } {
++  function deferredCanvas(): {
++    getCanvas: () => Promise<CanvasResult>;
++    reject: (error: unknown) => void;
++  } {
+     let reject!: (error: unknown) => void;
+     return {
+       getCanvas: () =>
+diff --git a/packages/pi-sdk-driver/extensions/pao/todo-summary.ts b/packages/pi-sdk-driver/extensions/pao/todo-summary.ts
+index eb8671e..229ee01 100644
+--- a/packages/pi-sdk-driver/extensions/pao/todo-summary.ts
++++ b/packages/pi-sdk-driver/extensions/pao/todo-summary.ts
+@@ -2,126 +2,32 @@
+  * S8-桌面常驻摘要：输入区附近的会话待办折叠呈现（rpc 皮肤）。与内核 TUI1（pao/ui/todo-summary）
+  * 同一权威源不同皮：TUI1 走 setStatus/setWidget 渲染 footer 与挂件（仅 tui 模式）；桌面会话的
+  * mode 是 rpc（session-supervisor bindExtensions 定死），内核皮肤零输出，本模块补桌面皮。
++ * S9 起扫描与口径格式化取自内核公开面「@earendil-works/pi-coding-agent/pao/todo」
++ * （scanTodoState 同款扫描＋formatTodoStatusLine/formatTodoWidgetLines 同 renderTodoList 口径），
++ * 本模块只留桌面特有的 rpc 投影。
+  *
+  * - 通道零新增：ctx.ui.setStatus/setWidget 由桌面 supervisor 桥为既有 hostUiRequest
+  *   status/widget 事件（extension-ui-state 维护每会话状态、订阅时重放＝查询＋订阅恢复），
+  *   renderer 输入区上方既有 ExtensionDock 消费（composer-surface 挂点，空载荷即隐藏）。
+  * - 取数与 TUI 同源：成功 todo_write 的 toolResult details 权威信封（CustomToolResultEvent
+  *   自带 details，事件先于 toolResult 落会话，故刷新用事件载荷）；session_start/session_tree
+- *   按分支重扫恢复（内核 scanTodoState 同款口径，含 pao-todo-snapshot 压缩快照条目），
+- *   不重放时间线。
+- * - 口径同内核 renderTodoList：完成 n/m 分母扣 cancelled；四态符号 ○◐✓⊘；展开上限 8 行＋
+- *   剩余计数（pi-desktop TodoDock VISIBLE_LIMIT 先例）；条目换行折空格保单行结构。
+- * - 工具名 todo_write 与内核 TODO_WRITE_TOOL_NAME 同名（卡协议级工具名，不另建常量源）。
++ *   按分支重扫恢复（内核 scanTodoState，含 pao-todo-snapshot 压缩快照条目），不重放时间线。
++ * - 展开上限 8 行＋剩余计数、四态符号、分母扣 cancelled 全在内核格式化函数里（renderTodoList
++ *   口径）；工具名 todo_write 与内核 TODO_WRITE_TOOL_NAME 同名（卡协议级工具名，取内核常量）。
+  */
++import {
++  formatTodoStatusLine,
++  formatTodoWidgetLines,
++  isTodoState,
++  scanTodoState,
++  TODO_WRITE_TOOL_NAME,
++  type TodoItem,
++} from "@earendil-works/pi-coding-agent/pao/todo";
+ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+ 
+-export type TodoStatus = "pending" | "in_progress" | "completed" | "cancelled";
+-
+-export interface TodoItem {
+-  content: string;
+-  status: TodoStatus;
+-  activeForm?: string;
+-}
+-
+-const TODO_STATUSES: readonly TodoStatus[] = ["pending", "in_progress", "completed", "cancelled"];
+-
+ /** 状态行键与挂件键与内核 TUI1 同名（模式门互斥，不双写） */
+ export const TODO_STATUS_KEY = "待办";
+ export const TODO_WIDGET_KEY = "todo-summary";
+-/** 展开列表可见上限（pi-desktop TodoDock 同款 8；超出走剩余计数） */
+-export const VISIBLE_LIMIT = 8;
+-const TODO_WRITE_TOOL_NAME = "todo_write";
+-/** 压缩快照条目类型（与内核 pao-todo-snapshot 同名，压缩边界持久化载体） */
+-const SNAPSHOT_CUSTOM_TYPE = "pao-todo-snapshot";
+-
+-const STATUS_GLYPH: Record<TodoStatus, string> = {
+-  pending: "○",
+-  in_progress: "◐",
+-  completed: "✓",
+-  cancelled: "⊘",
+-};
+-
+-function isTodoStatus(value: unknown): value is TodoStatus {
+-  return typeof value === "string" && (TODO_STATUSES as readonly string[]).includes(value);
+-}
+-
+-/** toolResult details／快照条目共用的整表信封守卫（内核 isTodoState 同口径） */
+-export function isTodoState(value: unknown): value is { version: 1; todos: TodoItem[] } {
+-  if (!value || typeof value !== "object") return false;
+-  const state = value as { version?: unknown; todos?: unknown };
+-  if (state.version !== 1 || !Array.isArray(state.todos)) return false;
+-  return state.todos.every((item) => {
+-    if (!item || typeof item !== "object") return false;
+-    const entry = item as { content?: unknown; status?: unknown; activeForm?: unknown };
+-    return (
+-      typeof entry.content === "string" &&
+-      entry.content.trim() !== "" &&
+-      isTodoStatus(entry.status) &&
+-      (entry.activeForm === undefined || typeof entry.activeForm === "string")
+-    );
+-  });
+-}
+-
+-/** 单行化：条目文本里的换行/制表折成空格（状态行与挂件行结构不破） */
+-function oneLine(text: string): string {
+-  return text.replace(/[\r\n\t]+/g, " ").trim();
+-}
+-
+-/**
+- * 分支扫描重建（内核 scanTodoState 同款口径，只取清单）：成功 todo_write 的 toolResult
+- * details 与 pao-todo-snapshot 快照条目同为载体，后者胜；错误结果不改状态。
+- * getBranch 含被压缩条目，文件级恢复安全；S8 内核包 §六明示桌面用「scanTodoState 同款扫描」。
+- */
+-export function scanTodoItems(entries: readonly unknown[]): TodoItem[] {
+-  let todos: TodoItem[] = [];
+-  for (const entry of entries) {
+-    const record = entry as {
+-      type?: unknown;
+-      customType?: unknown;
+-      data?: unknown;
+-      message?: unknown;
+-    };
+-    if (
+-      record.type === "custom" &&
+-      record.customType === SNAPSHOT_CUSTOM_TYPE &&
+-      isTodoState(record.data)
+-    ) {
+-      todos = record.data.todos;
+-      continue;
+-    }
+-    if (record.type !== "message") continue;
+-    const message = record.message as {
+-      role?: unknown;
+-      toolName?: unknown;
+-      isError?: unknown;
+-      details?: unknown;
+-    };
+-    if (message.role !== "toolResult" || message.toolName !== TODO_WRITE_TOOL_NAME) continue;
+-    if (!message.isError && isTodoState(message.details)) todos = message.details.todos;
+-  }
+-  return todos;
+-}
+-
+-/** 折叠行：「待办 n/m」或「待办 n/m · 当前任务」。分母扣 cancelled（renderTodoList 口径）。空清单 undefined（隐藏）。 */
+-export function formatTodoStatusLine(todos: readonly TodoItem[]): string | undefined {
+-  if (todos.length === 0) return undefined;
+-  const done = todos.filter((t) => t.status === "completed").length;
+-  const active = todos.filter((t) => t.status !== "cancelled").length;
+-  const current = todos.find((t) => t.status === "in_progress");
+-  return oneLine(
+-    `待办 ${done}/${active}${current ? ` · ${current.activeForm ?? current.content}` : ""}`,
+-  );
+-}
+-
+-/** 展开列表行：四态符号行（同 renderTodoList），超 8 行截断＋剩余计数。空清单 undefined。 */
+-export function formatTodoWidgetLines(todos: readonly TodoItem[]): string[] | undefined {
+-  if (todos.length === 0) return undefined;
+-  const rows = todos.map((t) => `${STATUS_GLYPH[t.status]} ${oneLine(t.content)}`);
+-  const visible = rows.slice(0, VISIBLE_LIMIT);
+-  if (rows.length > VISIBLE_LIMIT) visible.push(`… 还有 ${rows.length - VISIBLE_LIMIT} 项`);
+-  return visible;
+-}
+ 
+ /**
+  * 桌面皮接线（rpc 模式；tui 归内核 TUI1）。刷新＝整表重推：状态行驱动 dock 折叠摘要，
+@@ -135,7 +41,7 @@ export function registerDesktopTodoSummary(pi: ExtensionAPI): void {
+   };
+   const refresh = (ctx: ExtensionContext): void => {
+     if (ctx.mode !== "rpc") return;
+-    push(ctx, scanTodoItems(ctx.sessionManager.getBranch()));
++    push(ctx, scanTodoState(ctx.sessionManager.getBranch()).todos);
+   };
+   pi.on("session_start", (_event, ctx) => refresh(ctx));
+   pi.on("session_tree", (_event, ctx) => refresh(ctx));
+diff --git a/packages/pi-sdk-driver/test/pao-todo-summary.test.mts b/packages/pi-sdk-driver/test/pao-todo-summary.test.mts
+index 4745829..e5d4ebf 100644
+--- a/packages/pi-sdk-driver/test/pao-todo-summary.test.mts
++++ b/packages/pi-sdk-driver/test/pao-todo-summary.test.mts
+@@ -1,19 +1,21 @@
+ // S8-桌面常驻摘要包 driver 测试：桌面输入区会话待办折叠摘要（rpc 皮肤）。
+-// 取数与 TUI 同源：工具结果事件 details（权威信封）＋会话分支扫描（内核 scanTodoState 同款口径）；
++// S9 起扫描与口径格式化取自内核公开面「@earendil-works/pi-coding-agent/pao/todo」
++// （scanTodoState＋formatTodoStatusLine/formatTodoWidgetLines，扩展运行时同一导入，契约不放宽）；
+ // 零新增 IPC：经 ctx.ui.setStatus/setWidget → hostUiRequest 既有通道（supervisor 重放即订阅恢复）。
+ // 纯内存夹具：零文件、零网络、零环境依赖。
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
++import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+ import {
+-  TODO_STATUS_KEY,
+-  TODO_WIDGET_KEY,
+-  VISIBLE_LIMIT,
+   formatTodoStatusLine,
+   formatTodoWidgetLines,
+-  registerDesktopTodoSummary,
+-  scanTodoItems,
++  scanTodoState,
+   type TodoItem,
++} from "@earendil-works/pi-coding-agent/pao/todo";
++import {
++  TODO_STATUS_KEY,
++  TODO_WIDGET_KEY,
++  registerDesktopTodoSummary,
+ } from "../extensions/pao/todo-summary.ts";
+ 
+ const todo = (content: string, status: TodoItem["status"], activeForm?: string): TodoItem =>
+@@ -21,17 +23,33 @@ const todo = (content: string, status: TodoItem["status"], activeForm?: string):
+ 
+ const envelope = (todos: TodoItem[]) => ({ version: 1, todos });
+ 
+-/** 会话条目只带扫描关心的字段（内核 SessionEntry 的结构子集）。 */
+-const toolResultEntry = (toolName: string, isError: boolean, details?: unknown) => ({
++/** 会话条目（内核 SessionEntry 全形；扫描只读 type/customType/data/message 字段）。 */
++const toolResultEntry = (toolName: string, isError: boolean, details?: unknown): SessionEntry => ({
+   type: "message",
+-  message: { role: "toolResult", toolName, isError, details },
++  id: `m-${toolName}-${Math.random().toString(36).slice(2, 8)}`,
++  parentId: null,
++  timestamp: new Date().toISOString(),
++  message: {
++    role: "toolResult",
++    toolCallId: "t1",
++    toolName,
++    isError,
++    details,
++    content: [{ type: "text", text: "ok" }],
++  },
+ });
+-const snapshotEntry = (todos: TodoItem[]) => ({
++const snapshotEntry = (todos: TodoItem[]): SessionEntry => ({
+   type: "custom",
++  id: `c-${Math.random().toString(36).slice(2, 8)}`,
++  parentId: null,
++  timestamp: new Date().toISOString(),
+   customType: "pao-todo-snapshot",
+   data: envelope(todos),
+ });
+ 
++/** 内核 scanTodoState 只取清单（桌面皮不用 staleCount/快照字段）。 */
++const scanTodos = (entries: readonly SessionEntry[]): TodoItem[] => scanTodoState(entries).todos;
++
+ interface UiCalls {
+   status: Map<string, string | undefined>;
+   widgets: Map<string, string[] | undefined>;
+@@ -101,18 +119,17 @@ await test("展开列表与 TUI 同口径：四态符号、8 行上限＋剩余
+   assert.deepEqual(formatTodoWidgetLines(three), ["✓ 收集素材", "◐ 写代码", "○ 验证渲染"]);
+   const ten = Array.from({ length: 10 }, (_, i) => todo(`任务${i + 1}`, "pending"));
+   const lines = formatTodoWidgetLines(ten);
+-  assert.equal(lines?.length, VISIBLE_LIMIT + 1);
+-  assert.equal(lines?.[VISIBLE_LIMIT], "… 还有 2 项");
++  assert.equal(lines?.length, 9);
++  assert.equal(lines?.[8], "… 还有 2 项");
+   assert.equal(lines?.[0], "○ 任务1");
+   assert.equal(formatTodoWidgetLines([]), undefined);
+-  assert.equal(VISIBLE_LIMIT, 8, "上限循 pi-desktop TodoDock VISIBLE_LIMIT 先例");
+ });
+ 
+-await test("扫描与内核 scanTodoState 同口径：成功 details 后者胜、错误不改、快照条目续读", () => {
++await test("扫描取内核 scanTodoState 同口径：成功 details 后者胜、错误不改、快照条目续读", () => {
+   const a = [todo("任务A", "in_progress")];
+   const b = [todo("任务B", "pending")];
+   assert.deepEqual(
+-    scanTodoItems([
++    scanTodos([
+       toolResultEntry("bash", false, {}),
+       toolResultEntry("todo_write", false, envelope(a)),
+       toolResultEntry("todo_write", true, envelope(b)), // 错误结果不改状态
+@@ -120,7 +137,7 @@ await test("扫描与内核 scanTodoState 同口径：成功 details 后者胜
+     a,
+   );
+   assert.deepEqual(
+-    scanTodoItems([
++    scanTodos([
+       toolResultEntry("todo_write", false, envelope(a)),
+       toolResultEntry("todo_write", false, envelope(b)),
+     ]),
+@@ -128,7 +145,7 @@ await test("扫描与内核 scanTodoState 同口径：成功 details 后者胜
+     "后者胜",
+   );
+   assert.deepEqual(
+-    scanTodoItems([
++    scanTodos([
+       toolResultEntry("todo_write", false, envelope(a)),
+       snapshotEntry(b),
+       toolResultEntry("todo_write", false, envelope(a)),
+@@ -136,10 +153,10 @@ await test("扫描与内核 scanTodoState 同口径：成功 details 后者胜
+     a,
+     "快照条目是压缩边界载体，之后的成功 toolResult 仍后者胜",
+   );
+-  assert.deepEqual(scanTodoItems([snapshotEntry(b)]), b);
+-  assert.deepEqual(scanTodoItems([]), []);
++  assert.deepEqual(scanTodos([snapshotEntry(b)]), b);
++  assert.deepEqual(scanTodos([]), []);
+   assert.deepEqual(
+-    scanTodoItems([toolResultEntry("todo_write", true, envelope(a))]),
++    scanTodos([toolResultEntry("todo_write", true, envelope(a))]),
+     [],
+     "只有错误结果时清单为空",
+   );

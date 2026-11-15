@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+warning: in the working copy of 'source.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'source.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'source.txt', LF will be replaced by CRLF the next time Git touches it
+ ❯ packages/coding-agent/test/pao/workflow-pause-completion.test.ts (3 tests | 1 failed) 10600ms
+     × 成果变化使旧 pass 失效时仍允许挂起人工恢复 4569ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pause-completion.test.ts > 完成后关闭不得覆盖为挂起 > 成果变化使旧 pass 失效时仍允许挂起人工恢复
+AssertionError: expected 'running' to be 'hold' // Object.is equality
+
+Expected: "hold"
+Received: "running"
+
+ ❯ packages/coding-agent/test/pao/workflow-pause-completion.test.ts:131:61
+    129|   writeFileSync(join(s.root, "source.txt"), "changed after review\n");
+    130|   const flow = readControl(s.recipe, s.options);
+    131|   expect((await readControlReport(flow, s.options)).status).toBe("hold…
+       |                                                             ^
+    132|
+    133|   await expect(pauseControlIfUnpaused(s.recipe, s.options, "成果版本变化")).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  01:28:26
+   Duration  11.60s (transform 576ms, setup 0ms, import 846ms, tests 10.60s, environment 0ms)
+

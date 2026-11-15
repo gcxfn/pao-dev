@@ -1,0 +1,97 @@
+packages\coding-agent\src\pao\ui\todo-summary.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    49 49 │   export function formatTodoWidgetLines(todos: readonly TodoItem[]): string[] | undefined {
+    50 50 │   	if (todos.length === 0) return undefined;
+    51    │ - → const·lines·=·renderTodoList(displayTodos(todos))
+    52    │ - → → .split("\n")
+    53    │ - → → .slice(1);
+       51 │ + → const·lines·=·renderTodoList(displayTodos(todos)).split("\n").slice(1);
+    54 52 │   	const visible = lines.slice(0, VISIBLE_LIMIT);
+    55 53 │   	if (lines.length > VISIBLE_LIMIT) visible.push(`… 还有 ${lines.length - VISIBLE_LIMIT} 项`);
+  
+
+packages\coding-agent\test\pao\todo-tui-summary.test.ts:7:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    5 │  * 渲染复用 renderTodoList（四态符号与分母扣 cancelled 的唯一家在 todo/index.ts，这里不另立）。
+    6 │  */
+  > 7 │ import { visibleWidth } from "@earendil-works/pi-tui";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    8 │ import { describe, expect, it, vi } from "vitest";
+    9 │ import type { ExtensionContext } from "../../src/core/extensions/types.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     11  11 │   import { FooterComponent } from "../../src/modes/interactive/components/footer.ts";
+     12  12 │   import { initTheme } from "../../src/modes/interactive/theme/theme.ts";
+     13     │ - import·{·formatTodoStatusLine,·formatTodoWidgetLines,·registerTodoSummary,·TODO_STATUS_KEY·}·from·"../../src/pao/ui/todo-summary.ts";
+     14     │ - import·{·renderTodoList,·type·TodoItem·}·from·"../../src/pao/todo/index.ts";
+         13 │ + import·{·renderTodoList,·type·TodoItem·}·from·"../../src/pao/todo/index.ts";
+         14 │ + import·{·formatTodoStatusLine,·formatTodoWidgetLines,·registerTodoSummary,·TODO_STATUS_KEY·}·from·"../../src/pao/ui/todo-summary.ts";
+     15  15 │   
+     16  16 │   const LIST: TodoItem[] = [
+  
+
+packages\coding-agent\test\pao\todo-tui-summary.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     11  11 │   import { FooterComponent } from "../../src/modes/interactive/components/footer.ts";
+     12  12 │   import { initTheme } from "../../src/modes/interactive/theme/theme.ts";
+     13     │ - import·{·formatTodoStatusLine,·formatTodoWidgetLines,·registerTodoSummary,·TODO_STATUS_KEY·}·from·"../../src/pao/ui/todo-summary.ts";
+         13 │ + import·{
+         14 │ + → formatTodoStatusLine,
+         15 │ + → formatTodoWidgetLines,
+         16 │ + → registerTodoSummary,
+         17 │ + → TODO_STATUS_KEY,
+         18 │ + }·from·"../../src/pao/ui/todo-summary.ts";
+     14  19 │   import { renderTodoList, type TodoItem } from "../../src/pao/todo/index.ts";
+     15  20 │   
+    ······· │ 
+     23  28 │   /** 记录型 mock（与 wiring-smoke 同款口径）：捕获命令与事件，可手动派发 */
+     24  29 │   function capturePi() {
+     25     │ - → const·commands·=·new·Map<string,·{·description?:·string;·handler:·(args:·string,·ctx:·ExtensionContext)·=>·Promise<void>·}>();
+         30 │ + → const·commands·=·new·Map<
+         31 │ + → → string,
+         32 │ + → → {·description?:·string;·handler:·(args:·string,·ctx:·ExtensionContext)·=>·Promise<void>·}
+         33 │ + → >();
+     26  34 │   	const handlers = new Map<string, ((event: unknown, ctx: ExtensionContext) => unknown)[]>();
+     27  35 │   	const pi = {
+     28     │ - → → registerCommand:·(name:·string,·def:·{·description?:·string;·handler:·(args:·string,·ctx:·ExtensionContext)·=>·Promise<void>·})·=>
+     29     │ - → → → void·commands.set(name,·def),
+         36 │ + → → registerCommand:·(
+         37 │ + → → → name:·string,
+         38 │ + → → → def:·{·description?:·string;·handler:·(args:·string,·ctx:·ExtensionContext)·=>·Promise<void>·},
+         39 │ + → → )·=>·void·commands.set(name,·def),
+     30  40 │   		on: (event: string, handler: (event: unknown, ctx: ExtensionContext) => unknown) => {
+     31  41 │   			handlers.set(event, [...(handlers.get(event) ?? []), handler]);
+    ······· │ 
+     64  74 │   	it("无进行中项只显示完成度；全完成也不加尾巴", () => {
+     65  75 │   		expect(formatTodoStatusLine([{ content: "甲", status: "pending" }])).toBe("待办 0/1");
+     66     │ - → → const·done:·TodoItem[]·=·[{·content:·"甲",·status:·"completed"·},·{·content:·"乙",·status:·"cancelled"·}];
+         76 │ + → → const·done:·TodoItem[]·=·[
+         77 │ + → → → {·content:·"甲",·status:·"completed"·},
+         78 │ + → → → {·content:·"乙",·status:·"cancelled"·},
+         79 │ + → → ];
+     67  80 │   		expect(formatTodoStatusLine(done)).toBe("待办 1/1");
+     68  81 │   	});
+    ······· │ 
+    104 117 │   		registerTodoSummary(mock.pi, { currentTodos: () => todos });
+    105 118 │   		expect([...mock.commands.keys()]).toEqual(["todo"]);
+    106     │ - → → for·(const·event·of·["tool_result",·"session_start",·"session_tree"])·expect(mock.handlers.get(event)).toHaveLength(1);
+        119 │ + → → for·(const·event·of·["tool_result",·"session_start",·"session_tree"])
+        120 │ + → → → expect(mock.handlers.get(event)).toHaveLength(1);
+    107 121 │   
+    108 122 │   		const view = tuiCtx();
+  
+
+Checked 1796 files in 7s. No fixes applied.
+Found 3 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

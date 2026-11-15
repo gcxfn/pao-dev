@@ -1,0 +1,166 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 4 tests using 1 worker
+
+  x  1 tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (28.2s)
+  x  2 tests\core\workflow-control.spec.ts:102:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） (56.9s)
+  x  3 tests\core\workflow-control.spec.ts:171:5 › 向导内管理档位（S9-2）：新增直写档位.json＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认 (25.3s)
+  x  4 tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (23.8s)
+
+
+  1) tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })[22m
+    [2m    8 × locator resolved to <button disabled type="button" class="button">确认放行</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      74 |     const controls = page.getByTestId("workflow-runtime-controls");
+      75 |     await controls.getByRole("button", { name: "打开原主控", exact: true }).click();
+    > 76 |     await expect(controls.getByRole("button", { name: "确认放行", exact: true })).toBeEnabled();
+         |                                                                               ^
+      77 |     await controls.getByRole("button", { name: "确认放行", exact: true }).click();
+      78 |     await page
+      79 |       .getByRole("dialog")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:76:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\core\workflow-control.spec.ts:102:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） ─────────
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [pao] 本会话此前选用的档位「gpt-5」已不在当前档位配置(标准)中,恢复时回退到了最后作答的物理模型——该模型仍是此前档位路由的目标,但思考档推荐与换模型只改配置已失效。请尽快用 /model 重新选档,或修正 $PAO_HOME/pao配置/档位.json 后 /reload。
+    [app-store] sessionUpdated for unknown session C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-uW5lZC\workflow-start-project:01a11784-b1ad-7546-a106-428440e938fa skipped reload (refreshStateDepth=1); event state not applied
+    [app-store] hostUiRequest for unknown session C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-uW5lZC\workflow-start-project:01a11784-b1ad-7546-a106-428440e938fa skipped reload (refreshStateDepth=1); event state not applied
+    Update check failed: The update check timed out.
+    [test quit] before-quit
+    [test quit] before-quit
+    Debugger ending on ws://127.0.0.1:61442/748f2350-0743-4f7a-b26d-7a1b10c7bf78
+    For help, see: https://nodejs.org/en/docs/inspector
+    [test quit] before-quit
+    [test quit] window 1 close
+    [test quit] will-quit
+
+       at helpers\electron-app.ts:359
+
+      357 |         appProcess.kill("SIGKILL");
+      358 |       }
+    > 359 |       throw new Error(
+          |             ^
+      360 |         [
+      361 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      362 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:359:13)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:167:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests\core\workflow-control.spec.ts:171:5 › 向导内管理档位（S9-2）：新增直写档位.json＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认 ─
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('wizard-tier-status')
+    Expected substring: [32m"Tier saved."[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('wizard-tier-status')[22m
+
+
+      208 |     await page.getByTestId("wizard-tier-thinking").selectOption("high");
+      209 |     await page.getByTestId("wizard-tier-save").click();
+    > 210 |     await expect(page.getByTestId("wizard-tier-status")).toContainText("Tier saved.");
+          |                                                          ^
+      211 |     const tierFile = join(home, "pao配置", "档位.json");
+      212 |     const saved = JSON.parse(await readFile(tierFile, "utf8"));
+      213 |     expect(saved.档位.map((row: { 名: string }) => row.名)).toEqual(["标准", "专家"]);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:210:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-control-向导内管-c0c29-son＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-control-向导内管-c0c29-son＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-workflow-control-向导内管-c0c29-son＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ─────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })[22m
+    [2m    9 × locator resolved to <button disabled type="button" class="button">确认放行</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      304 |     const controls = page.getByTestId("workflow-runtime-controls");
+      305 |     await controls.getByRole("button", { name: "打开原主控", exact: true }).click();
+    > 306 |     await expect(controls.getByRole("button", { name: "确认放行", exact: true })).toBeEnabled();
+          |                                                                               ^
+      307 |     // 另一入口（终端同源内核）把轮次推进到 2；页面还停留在第 1 轮的旧视图。
+      308 |     const controlPath = join(task, "工作流实例-过期请求.md");
+      309 |     const before = await readFile(controlPath, "utf8");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:306:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ─────────────────────────
+    tests\core\workflow-control.spec.ts:102:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） ──────────
+    tests\core\workflow-control.spec.ts:171:5 › 向导内管理档位（S9-2）：新增直写档位.json＋备份＋重名拒绝＋下拉即时可选＋编辑保留部门默认 ──
+    tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ──────────────────────

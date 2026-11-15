@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should throw when prompt() called while streaming 225ms
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should allow steer() while streaming 96ms
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should allow followUp() while streaming 109ms
+ × test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should queue extension-origin steering messages while streaming 149ms
+   → expected false to be true // Object.is equality
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should allow prompt() after previous completes 92ms
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should wait for queued agent events before emitting tool_call 88ms
+ ✓ test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should persist message_end events in order with slow extension handlers 286ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/agent-session-concurrent.test.ts > AgentSession concurrent prompt guard > should queue extension-origin steering messages while streaming
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/agent-session-concurrent.test.ts:295:30
+    293|   await firstPrompt.catch(() => {});
+    294|
+    295|   expect(sawSteeringMessage).toBe(true);
+       |                              ^
+    296|  });
+    297|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  02:44:34
+   Duration  11.41s (transform 8.38s, setup 0ms, import 10.18s, tests 1.05s, environment 0ms)
+

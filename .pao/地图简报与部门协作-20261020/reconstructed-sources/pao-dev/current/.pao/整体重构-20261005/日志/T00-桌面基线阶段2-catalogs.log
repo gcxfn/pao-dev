@@ -1,0 +1,72 @@
+工作目录: D:/AI/workspace/pao-dev/桌面端
+命令: pnpm --filter @pi-gui/catalogs test
+开始: 2026-10-05 22:37:06
+
+> @pi-gui/catalogs@0.0.0 test D:\AI\workspace\pao-dev\桌面端\packages\catalogs
+> tsc -p tsconfig.json && node --test "test/**/*.test.mts"
+
+✔ writes new content and creates missing directories (8.6573ms)
+✔ leaves only the target file behind, no lingering temp files (6.5199ms)
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (33.1079ms)
+✔ same-path stores serialize concurrent workspace, session, and worktree mutations (89.1149ms)
+✔ new stores reload an externally replaced catalog and preserve it on mutation (7.4485ms)
+✔ an interrupted temp write leaves the last committed catalog readable (4.5348ms)
+▶ invalid catalog data rejects reads and writes without dropping any saved records
+  ✔ future version (3.3042ms)
+  ✔ null document (2.3392ms)
+  ✔ array document (2.2471ms)
+  ✔ missing v2 collection (2.7243ms)
+  ✔ wrong collection shape (3.045ms)
+  ✔ null workspace among valid records (4.5508ms)
+  ✔ workspace timestamp (2.3886ms)
+  ✔ workspace sort order (2.724ms)
+  ✔ workspace pinned (2.2845ms)
+  ✔ session reference (2.333ms)
+  ✔ session workspace mismatch (2.9425ms)
+  ✔ session status (2.5204ms)
+  ✔ session optional field (3.2266ms)
+  ✔ worktree kind (3.0084ms)
+  ✔ worktree status (2.4898ms)
+  ✔ worktree optional field (2.2303ms)
+  ✔ file map array (2.2136ms)
+  ✔ file map value (2.2395ms)
+  ✔ legacy malformed collection (3.3556ms)
+✔ invalid catalog data rejects reads and writes without dropping any saved records (54.3444ms)
+✔ legacy catalogs retain records and upgrade only when a mutation succeeds (4.4192ms)
+✔ a failed load can be retried after the original catalog is repaired (2.5543ms)
+✔ session writes that change nothing leave the catalog file alone (8.6649ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 321.4454
+
+✖ failing tests:
+
+test at test\atomic-write.test.mts:36:7
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (33.1079ms)
+  Error: EPERM: operation not permitted, rename 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-2WEBGb\catalog.json.45896.6.ba20f6962586.tmp' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-2WEBGb\catalog.json'
+      at async rename (node:internal/fs/promises:785:10)
+      at async writeFileAtomic (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/packages/catalogs/dist/node/atomic-write.js:36:9)
+      at async Promise.all (index 2)
+      at async file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/packages/catalogs/test/atomic-write.test.mts:41:5
+      at async withTempDir (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/packages/catalogs/test/atomic-write.test.mts:11:5)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/packages/catalogs/test/atomic-write.test.mts:37:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/%E6%A1%8C%E9%9D%A2%E7%AB%AF/packages/catalogs/test/atomic-write.test.mts:36:1 {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'rename',
+    path: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-2WEBGb\\catalog.json.45896.6.ba20f6962586.tmp',
+    dest: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-2WEBGb\\catalog.json'
+  }
+D:\AI\workspace\pao-dev\桌面端\packages\catalogs:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @pi-gui/catalogs@0.0.0 test: `tsc -p tsconfig.json && node --test "test/**/*.test.mts"`
+Exit status 1
+
+退出码: 1
+耗时: 2 秒

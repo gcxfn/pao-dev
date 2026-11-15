@@ -1,0 +1,116 @@
+{
+  "id": "I04",
+  "description": "页面纠正后旧提炼任务返回",
+  "sessions": [
+    {
+      "sessionId": "sess-e",
+      "messages": [
+        {
+          "role": "user",
+          "content": "自动召回每轮取几条？",
+          "timestamp": "2026-11-08T14:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "目前缺省 top3。",
+          "timestamp": "2026-11-08T14:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "改成 top5。",
+          "timestamp": "2026-11-08T14:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "自动召回每轮 top5",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "召回条数",
+          "mustContain": ["mem-recall-top5"],
+          "mustNotContain": []
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-e-page",
+      "messages": [
+        {
+          "role": "user",
+          "content": "[页面操作] 用户在记忆页把「自动召回每轮 top5」纠正为「自动召回每轮 top3」",
+          "timestamp": "2026-11-08T14:05:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "自动召回每轮 top3",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "召回条数",
+          "mustContain": ["mem-recall-top3"],
+          "mustNotContain": []
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-e-extraction",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "[后台提炼] 旧提炼任务返回：「自动召回每轮 top5」（基于 sess-e entry-003）",
+          "timestamp": "2026-11-08T14:10:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "自动召回每轮 top3",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "note": "旧提炼任务返回的 top5 不应覆盖页面纠正后的 top3"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "召回条数",
+          "mustContain": ["mem-recall-top3"],
+          "mustNotContain": ["mem-recall-top5"]
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-recall-top3",
+        "kind": "decision",
+        "conclusion": "自动召回每轮 top3",
+        "confirmation": "confirmed",
+        "usageState": "active",
+        "currentRevision": 2
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-e-001",
+        "sessionId": "sess-e",
+        "entryId": "entry-003"
+      },
+      {
+        "sourceId": "src-sess-e-page-001",
+        "sessionId": "sess-e-page",
+        "entryId": "entry-001"
+      }
+    ]
+  }
+}

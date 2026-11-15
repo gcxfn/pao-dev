@@ -1,0 +1,92 @@
+===== package-command-paths 清洁环境隔离复验（F3 订正补跑 2026-10-05） =====
+工作目录: D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+复跑脚本: 临时文件夹/整体重构-20261005/清洁环境复跑-package-command-paths.mjs
+开始: 2026-10-06 00:37:33
+
+命令: node D:\AI\workspace\pao-dev\PAO\node_modules\vitest\vitest.mjs run test/package-command-paths.test.ts --maxWorkers=1
+清洁环境: env 白名单继承（PATH/SYSTEMROOT 等 12 项）+ HOME/USERPROFILE→C:\Users\ASUS\AppData\Local\Temp\pao-cleanenv-pcp-6ZZ5Z0\home + PI_OFFLINE=1 + 空 npm userconfig/globalconfig + GIT_CONFIG_GLOBAL=NUL
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+Installing ./packages/local-package...
+Installing C:\Users\ASUS\AppData\Local\Temp\pao-cleanenv-pcp-6ZZ5Z0\tmp\pi-package-commands-1791218261526-ygiy0l6dabn\local-package/...
+[33m[39m[32m·[39mRemoving C:\Users\ASUS\AppData\Local\Temp\pao-cleanenv-pcp-6ZZ5Z0\tmp\pi-package-commands-1791218261526-ygiy0l6dabn\local-package/...
+Updating npm:fake-package...
+[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m30 passed[39m[22m[90m (33)[39m
+[2m   Start at [22m 00:37:33
+[2m   Duration [22m 9.63s[2m (transform 5.76s, setup 0ms, import 7.38s, tests 2.05s, environment 0ms)[22m
+
+[90mstderr[2m | test/package-command-paths.test.ts[2m > [22m[2mpackage commands[2m > [22m[2mallows local package install to initialize fresh project settings
+[22m[39mProject is not trusted. Use --approve to modify local package config.
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/package-command-paths.test.ts[2m > [22mpackage commands[2m > [22mallows local package install to initialize fresh project settings
+[31m[1mError[22m: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pao-cleanenv-pcp-6ZZ5Z0\tmp\pi-package-commands-1791218261840-yssbmbwdxk\project\.pi\settings.json'[39m
+[36m [2m❯[22m test/package-command-paths.test.ts:[2m436:31[22m[39m
+    [90m434|[39m
+    [90m435|[39m   [35mconst[39m settingsPath [33m=[39m [34mjoin[39m(projectDir[33m,[39m [32m".pi"[39m[33m,[39m [32m"settings.json"[39m)[33m;[39m
+    [90m436|[39m   const settings = JSON.parse(readFileSync(settingsPath, "utf-8")) as …
+    [90m   |[39m                               [31m^[39m
+    [90m437|[39m   [34mexpect[39m(settings[33m.[39mpackages[33m?.[39mlength)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m438|[39m   [35mconst[39m stored [33m=[39m settings[33m.[39mpackages[33m?.[39m[[34m0[39m] [33m??[39m [32m""[39m[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/package-command-paths.test.ts[2m > [22mpackage commands[2m > [22mcycles project package overrides in config local mode
+[31m[1mAssertionError[22m: expected [ { source: 'npm:pi-tools', …(2) } ] to deeply equal [ { source: 'npm:pi-tools', …(2) } ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "autoload": false,[22m
+[2m      "extensions": [[22m
+[32m-       "-extensions/bar.ts",[39m
+[31m+       "-extensions\\bar.ts",[39m
+[2m      ],[22m
+[2m      "source": "npm:pi-tools",[22m
+[2m    },[22m
+[2m  ][22m
+
+[36m [2m❯[22m test/package-command-paths.test.ts:[2m516:57[22m[39m
+    [90m514|[39m
+    [90m515|[39m   selector[33m.[39m[34mgetResourceList[39m()[33m.[39m[34mhandleInput[39m([32m" "[39m)[33m;[39m
+    [90m516|[39m   [34mexpect[39m(settingsManager[33m.[39m[34mgetProjectSettings[39m()[33m.[39mpackages)[33m.[39m[34mtoEqual[39m([
+    [90m   |[39m                                                         [31m^[39m
+    [90m517|[39m    { source: "npm:pi-tools", autoload: false, extensions: ["-extension…
+    [90m518|[39m   ])[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/package-command-paths.test.ts[2m > [22mpackage commands[2m > [22mprints a pnpm metadata hint when self-update fails
+[31m[1mAssertionError[22m: expected 'error: pao cannot self-update this in…' to contain 'exited with code 23'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- e[7mxited with code 23[27m[39m
+[31m+ e[7mrror: pao cannot self-update this installation.[27m[39m
+[31m+ This installation is not managed by a global pnpm install. Update it with the package manager, wrapper, or source checkout that provides it.[39m
+[31m+[39m
+[31m+ Location of pao executable: D:\AI\workspace\pao-dev\PAO\node_modules\vitest\dist\workers\forks.js[39m
+
+[36m [2m❯[22m test/package-command-paths.test.ts:[2m949:19[22m[39m
+    [90m947|[39m    const stderr = errorSpy.mock.calls.map(([message]) => String(messag…
+    [90m948|[39m    [34mexpect[39m(stdout)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m`Updated [39m[36m${[39m[33mAPP_NAME[39m[36m}[39m[32m`[39m)[33m;[39m
+    [90m949|[39m    [34mexpect[39m(stderr)[33m.[39m[34mtoContain[39m([32m"exited with code 23"[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m950|[39m    expect(stderr).toContain("If pnpm reports missing package versions"…
+    [90m951|[39m    expect(stderr).toContain(`Run \`pnpm store prune\` and retry \`${AP…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+临时环境目录（按约保留）: C:\Users\ASUS\AppData\Local\Temp\pao-cleanenv-pcp-6ZZ5Z0
+退出码: 1
+耗时: 10 秒

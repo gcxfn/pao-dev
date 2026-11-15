@@ -1,0 +1,55 @@
+COMMAND: playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/workbench-tabs.spec.ts --grep "wide workbench width controls"
+EXIT_CODE: 1
+BEGIN_OUTPUT
+
+Running 1 test using 1 worker
+
+(node:23252) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23252) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › wide workbench width controls announce and apply the CSS maximum (12.8s)
+
+
+  1) apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › wide workbench width controls announce and apply the CSS maximum 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByRole('separator', { name: 'Side panel width' })
+    Expected: [32m"676"[39m
+    Received: [31m"799"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('separator', { name: 'Side panel width' })[22m
+    [2m    4 × locator resolved to <div tabindex="0" role="separator" aria-valuenow="0" aria-valuemin="320" aria-valuemax="799" data-resizing="false" aria-orientation="vertical" aria-label="Side panel width" aria-controls="task-workbench" class="workbench__resize-handle"></div>[22m
+    [2m      - unexpected value "799"[22m
+    [2m    5 × locator resolved to <div tabindex="0" role="separator" aria-valuemin="320" aria-valuemax="799" aria-valuenow="360" data-resizing="false" aria-orientation="vertical" aria-label="Side panel width" aria-controls="task-workbench" class="workbench__resize-handle"></div>[22m
+    [2m      - unexpected value "799"[22m
+
+
+      489 |     expect(expectedMax).toBeLessThan(Math.floor(mainWidth * 0.65));
+      490 |     const handle = window.getByRole("separator", { name: "Side panel width" });
+    > 491 |     await expect(handle).toHaveAttribute("aria-valuemax", String(expectedMax));
+          |                          ^
+      492 |
+      493 |     await handle.focus();
+      494 |     await handle.press("End");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:491:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\independent-test-pre-build\core-workbench-tabs-wide-w-90d00-e-and-apply-the-CSS-maximum\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\independent-test-pre-build\core-workbench-tabs-wide-w-90d00-e-and-apply-the-CSS-maximum\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\independent-test-pre-build\core-workbench-tabs-wide-w-90d00-e-and-apply-the-CSS-maximum\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › wide workbench width controls announce and apply the CSS maximum 
+END_OUTPUT

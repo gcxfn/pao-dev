@@ -1,0 +1,68 @@
+== loadout-tiers-config.test.ts 配置解析面（:1-30 与 ：53-59 实摘）==
+/**
+ * M1-04 两档菜单配置:接真实配置文件 $PAO_HOME(使用现场)/pao配置/档位.json,
+ * 不在测试里硬编码另一份档位定义——测的就是将要跑的那份配置。
+ * 语义依据:架构 §98(两档起步:快/主力,每档封装物理模型+思考档)、§105(主控钉贵档、worker 默认便宜档)。
+ * 使用现场(2026-10-02 分仓定案)＝workspace/pao 独立仓库;测试缺省从本文件位置向上
+ * 六级到 workspace 再进 pao,与开发仓(pao-dev)解耦。
+ */
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import type { ExtensionVirtualModel } from "../../src/core/extensions/types.ts";
+import type { ModelRouteRequest } from "../../src/core/virtual-models.ts";
+import {
+	loadTierConfig,
+	registerTiers,
+	resolveTier,
+	resolveTierConfigPath,
+	validateTierConfig,
+} from "../../src/pao/routing/index.ts";
+
+/** 测试文件在 workspace/pao-dev/PAO/packages/coding-agent/test/pao/ 下,向上六级 = workspace,再进使用现场 pao */
+const siteTier = join(
+	resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..", ".."),
+	"pao",
+	"pao配置",
+	"档位.json",
+);
+/** 与生产同源的配置路径:PAO_HOME 优先,缺省落使用现场 */
+const configPath = process.env.PAO_HOME ? resolveTierConfigPath(process.env.PAO_HOME) : siteTier;
+
+describe("真实两档配置(pao配置/档位.json,与生产同源)", () => {
+	it("配置文件存在(交付物,缺失即失败)", () => {
+		expect(existsSync(configPath)).toBe(true);
+		if (process.env.PAO_HOME) {
+			expect(resolveTierConfigPath(process.env.PAO_HOME)).toBe(configPath);
+		}
+	});
+
+== routing/config.ts loadTierConfig 只读实证（:52-66）==
+export function loadTierConfig(configPath: string): TierConfig {
+	let raw: string;
+	try {
+		raw = readFileSync(configPath, "utf8");
+	} catch (error) {
+		throw new Error(`无法读取档位配置文件 ${configPath}:${(error as Error).message}`);
+	}
+	let parsed: unknown;
+	try {
+		parsed = parseJsonRaw(raw);
+	} catch (error) {
+		throw new Error(`档位配置文件 ${configPath} 不是合法 JSON:${(error as Error).message}`);
+	}
+	return validateTierConfig(parsed, configPath);
+}
+
+== 测试 import 面无写回口（grep saveTierConfig 于测试文件：零命中）==
+(grep 零命中＝测试不引用 saveTierConfig 写回口 config.ts:201)
+
+== 测试 import 语句原文（:14-20）==
+import {
+	loadTierConfig,
+	registerTiers,
+	resolveTier,
+	resolveTierConfigPath,
+	validateTierConfig,
+} from "../../src/pao/routing/index.ts";

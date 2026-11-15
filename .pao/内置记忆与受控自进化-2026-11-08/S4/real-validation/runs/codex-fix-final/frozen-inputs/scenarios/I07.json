@@ -1,0 +1,70 @@
+{
+  "id": "I07",
+  "description": "同一记忆压缩后恢复",
+  "sessions": [
+    {
+      "sessionId": "sess-h",
+      "messages": [
+        {
+          "role": "user",
+          "content": "记忆保留期限定多久？",
+          "timestamp": "2026-11-08T18:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "先不定淘汰策略。",
+          "timestamp": "2026-11-08T18:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "嗯，先这样。",
+          "timestamp": "2026-11-08T18:01:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "[压缩交接] 已压缩：「记忆不自动淘汰（未定）」等 3 条决定",
+          "timestamp": "2026-11-08T18:30:00Z"
+        },
+        {
+          "role": "user",
+          "content": "刚才说的淘汰策略，确认一下。",
+          "timestamp": "2026-11-08T18:31:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "记忆不自动淘汰",
+          "confirmation": "tentative",
+          "evidenceKind": "user_statement",
+          "conditions": "先不定淘汰策略"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "淘汰策略",
+          "mustContain": ["mem-no-eviction"],
+          "mustNotContain": []
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-no-eviction",
+        "kind": "decision",
+        "conclusion": "记忆不自动淘汰",
+        "confirmation": "tentative",
+        "usageState": "active"
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-h-001",
+        "sessionId": "sess-h",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

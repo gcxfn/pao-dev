@@ -1,0 +1,33 @@
+"""准备预检代理；只核对安装与组织证据，不调用模型。"""
+
+if __package__:
+    from .map_bench_pao_organized import OrganizedPAOAgent
+else:
+    from map_bench_pao_organized import OrganizedPAOAgent
+
+
+class PreparationOnlyAgent(OrganizedPAOAgent):
+    @staticmethod
+    def name():
+        return "pao-preparation-only"
+
+    async def run(self, instruction, environment, context):
+        result = await self.exec_as_agent(
+            environment,
+            command=(
+                "set -eu; test -s /tmp/benchmark-prerequisites.json; "
+                "test -s /logs/agent/organization/git-baseline.json; "
+                "test -s /tmp/benchmark-model-binding.json; "
+                "cp /tmp/benchmark-prerequisites.json /logs/agent/prerequisites.json; "
+                "cp /tmp/benchmark-model-binding.json /logs/agent/model-binding.json; "
+                "printf '%s\\n' preparation_complete_no_model_calls "
+                "> /logs/agent/preparation-complete.txt"
+            ),
+        )
+        if result.return_code != 0:
+            raise RuntimeError("准备证据核对失败")
+        context.metadata = {
+            **(context.metadata or {}),
+            "preparation_only": True,
+            "model_calls": 0,
+        }

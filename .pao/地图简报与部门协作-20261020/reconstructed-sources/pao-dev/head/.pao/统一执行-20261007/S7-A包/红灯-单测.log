@@ -1,0 +1,88 @@
+
+Running 9 tests using 1 worker
+
+  ok 1 apps\desktop\tests\unit\kanban-activity.spec.ts:47:5 › 无当前信号、预警关闭、已停止都显式区分，不冒充正常 (6ms)
+  ok 2 apps\desktop\tests\unit\kanban-activity.spec.ts:55:5 › amber 只在静默达到现读阈值时出现；最近输出缺失按登记时间算 (2ms)
+  x  3 apps\desktop\tests\unit\kanban-activity.spec.ts:87:5 › 租约占位：无字段不出芯片，有到期/接管如实亮 amber，到期只报事实不改状态 (1ms)
+  ok 4 apps\desktop\tests\unit\kanban-query.spec.ts:4:5 › 全卡聚合区分同卡号的不同项目，单卡损坏保留错误及其余卡 (6ms)
+  ok 5 apps\desktop\tests\unit\kanban-query.spec.ts:38:5 › 读取失败显式不可用，不把失败显示成空看板 (4ms)
+  ok 6 apps\desktop\tests\unit\kanban-query.spec.ts:51:5 › 活性按卡路径合并：当前尝试照带，无信号不编造，阈值 0 原样保留 (3ms)
+  x  7 apps\desktop\tests\unit\kanban-query.spec.ts:113:5 › 活性租约四字段透传占位：带则原样带出、缺省为 unknown 不编造 (2ms)
+  x  8 apps\desktop\tests\unit\kanban-query.spec.ts:175:5 › 工作流节点→卡号映射原样带出：多卡节点全量、坏工作流只落问题不拖卡 (7ms)
+  ok 9 apps\desktop\tests\unit\kanban-query.spec.ts:240:5 › 坏活性行只丢这一条信号并留问题，不拖掉整张卡 (8ms)
+
+
+  1) apps\desktop\tests\unit\kanban-activity.spec.ts:87:5 › 租约占位：无字段不出芯片，有到期/接管如实亮 amber，到期只报事实不改状态 
+
+    TypeError: (0 , _kanbanActivity.kanbanLeaseChip) is not a function
+
+      87 | test("租约占位：无字段不出芯片，有到期/接管如实亮 amber，到期只报事实不改状态", () => {
+      88 |   // 没有活性、或旧登记没有租约字段：不出租约芯片（unknown 兜底，不冒充）。
+    > 89 |   expect(kanbanLeaseChip(card(), NOW)).toBeUndefined();
+         |                         ^
+      90 |   expect(kanbanLeaseChip(card(activity()), NOW)).toBeUndefined();
+      91 |   // 有租约到期：未到期＝事实展示；已到期＝报「已到期」事实，不触发任何状态变更。
+      92 |   expect(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\kanban-activity.spec.ts:89:25
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-kanban-activity-租约占位：无字段不出芯片，有到期-接管如实亮-amber，到期只报事实不改状态\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-kanban-activity-租约占位：无字段不出芯片，有到期-接管如实亮-amber，到期只报事实不改状态\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\unit\kanban-query.spec.ts:113:5 › 活性租约四字段透传占位：带则原样带出、缺省为 unknown 不编造 ───────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"2026-10-05T10:01:00.000Z"[39m
+    Received: [31mundefined[39m
+
+      162 |   const legacy = result.cards[1]?.activity;
+      163 |   if (!leased || !legacy) throw new Error("期望两张卡都带活性行");
+    > 164 |   expect(leased.claimAt).toBe("2026-10-05T10:01:00.000Z");
+          |                          ^
+      165 |   expect(leased.leaseExpiresAt).toBe("2026-10-05T11:00:00.000Z");
+      166 |   expect(leased.claimGeneration).toBe(2);
+      167 |   expect(leased.takenOver).toBe(false);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\kanban-query.spec.ts:164:26
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-kanban-query-活性租约四字段透传占位：带则原样带出、缺省为-unknown-不编造\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-kanban-query-活性租约四字段透传占位：带则原样带出、缺省为-unknown-不编造\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\unit\kanban-query.spec.ts:175:5 › 工作流节点→卡号映射原样带出：多卡节点全量、坏工作流只落问题不拖卡 ────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    Expected: [32m[{"instance": "实例甲", "nodes": [{"cardRefs": ["卡0002", "卡0003"], "cardsDir": "/a/.pao/任务甲/卡", "name": "实现", "round": 1}], "path": "/a/.pao/任务甲/工作流实例-发布.md", "project": "/a", "status": "运行中", "workflow": "发布"}][39m
+    Received: [31mundefined[39m
+
+      219 |   // 旧构建产物可能没有「工作流」字段：缺省＝空数组。
+      220 |   expect(result.cards).toHaveLength(4);
+    > 221 |   expect(result.workflows).toEqual([
+          |                            ^
+      222 |     {
+      223 |       path: "/a/.pao/任务甲/工作流实例-发布.md",
+      224 |       project: "/a",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\kanban-query.spec.ts:221:28
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-kanban-query-工作流节点→卡号映射原样带出：多卡节点全量、坏工作流只落问题不拖卡\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-kanban-query-工作流节点→卡号映射原样带出：多卡节点全量、坏工作流只落问题不拖卡\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\unit\kanban-activity.spec.ts:87:5 › 租约占位：无字段不出芯片，有到期/接管如实亮 amber，到期只报事实不改状态 ─
+    apps\desktop\tests\unit\kanban-query.spec.ts:113:5 › 活性租约四字段透传占位：带则原样带出、缺省为 unknown 不编造 ────────
+    apps\desktop\tests\unit\kanban-query.spec.ts:175:5 › 工作流节点→卡号映射原样带出：多卡节点全量、坏工作流只落问题不拖卡 ─────────
+  6 passed (3.8s)

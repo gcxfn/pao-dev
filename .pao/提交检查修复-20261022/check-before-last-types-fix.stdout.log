@@ -1,0 +1,54 @@
+
+> pi-monorepo@0.0.3 check
+> biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:install-lock:coding-agent && tsc --noEmit && npm run check:browser-smoke
+
+Skipped 5 suggested fixes.
+If you wish to apply the suggested (unsafe) fixes, use the command biome check --write --unsafe
+
+Checked 1921 files in 71s. Fixed 5 files.
+Found 5 infos.
+
+> pi-monorepo@0.0.3 check:pinned-deps
+> node scripts/check-pinned-deps.mjs
+
+
+> pi-monorepo@0.0.3 check:runtime-deps
+> node scripts/check-runtime-deps.mjs
+
+Public package runtime imports have declared dependencies.
+
+> pi-monorepo@0.0.3 check:ts-imports
+> node scripts/check-ts-relative-imports.mjs
+
+
+> pi-monorepo@0.0.3 check:entry-graphs
+> node scripts/check-entry-graphs.mjs
+
+Entry point graphs are within budget.
+
+> pi-monorepo@0.0.3 check:install-lock:coding-agent
+> node scripts/generate-coding-agent-install-lock.mjs --check
+
+packages/coding-agent/install-lock is up to date.
+packages/coding-agent/test/pao/card-process-stop.test.ts(217,4): error TS2345: Argument of type '(_cmd: string, _args: readonly string[] | undefined | null, _options: ExecFileOptions | undefined | null, callback: TestExecFileCallback | undefined | null) => ChildProcess' is not assignable to parameter of type '(file: string, args: readonly string[] | null | undefined, options: ExecFileOptions | null | undefined, callback: ((error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void) | null | undefined) => ChildProcess'.
+  Types of parameters 'callback' and 'callback' are incompatible.
+    Type '((error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void) | null | undefined' is not assignable to type 'TestExecFileCallback | null | undefined'.
+      Type '(error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void' is not assignable to type 'TestExecFileCallback'.
+        Types of parameters 'stdout' and 'stdout' are incompatible.
+          Type 'string | Buffer<ArrayBufferLike>' is not assignable to type 'string | NonSharedBuffer'.
+            Type 'Buffer<ArrayBufferLike>' is not assignable to type 'string | NonSharedBuffer'.
+              Type 'Buffer<ArrayBufferLike>' is not assignable to type 'NonSharedBuffer'.
+                Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+                  Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+packages/coding-agent/test/pao/card-process-stop.test.ts(241,4): error TS2345: Argument of type '(_cmd: string, _args: readonly string[] | undefined | null, _options: ExecFileOptions | undefined | null, callback: TestExecFileCallback | undefined | null) => ChildProcess' is not assignable to parameter of type '(file: string, args: readonly string[] | null | undefined, options: ExecFileOptions | null | undefined, callback: ((error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void) | null | undefined) => ChildProcess'.
+  Types of parameters 'callback' and 'callback' are incompatible.
+    Type '((error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void) | null | undefined' is not assignable to type 'TestExecFileCallback | null | undefined'.
+      Type '(error: ExecFileException | null, stdout: string | NonSharedBuffer, stderr: string | NonSharedBuffer) => void' is not assignable to type 'TestExecFileCallback'.
+        Types of parameters 'stdout' and 'stdout' are incompatible.
+          Type 'string | Buffer<ArrayBufferLike>' is not assignable to type 'string | NonSharedBuffer'.
+            Type 'Buffer<ArrayBufferLike>' is not assignable to type 'string | NonSharedBuffer'.
+              Type 'Buffer<ArrayBufferLike>' is not assignable to type 'NonSharedBuffer'.
+                Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+                  Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+packages/coding-agent/test/pao/f-reopen-kill.test.ts(136,36): error TS2339: Property 'text' does not exist on type 'ImageContent | TextContent'.
+  Property 'text' does not exist on type 'ImageContent'.

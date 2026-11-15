@@ -1,0 +1,36 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o01-review.test.ts > O01-R1：同批真实重试不覆盖前一次费用 37ms
+   → expected 0.02 to be close to 0.04, received difference is 0.02, but expected 0.005
+ ↓ o01-review.test.ts > O01-R2：未产生候选的两次付费生成分别结算
+ ↓ o01-review.test.ts > O01-R3：没有外发许可时，候选生成不发模型请求
+ ↓ o01-review.test.ts > O01-R4：多批嵌入逐请求预留并结算未知费用，聚合不漏批
+ ↓ o01-review.test.ts > O01-R5：没有待嵌入记忆时不占预算
+ ↓ o01-review.test.ts > O01-R6：两个后台作业并行预留不能突破同一日上限
+ ↓ o01-review.test.ts > O01-R7：unlimited 的候选请求完成后正常返回，不结算不存在的预留
+ ↓ o01-review.test.ts > O01-R8：真实 SDK 的上下文快照可关联实际模型用量
+ ↓ o01-review.test.ts > O01-R9：标记用量未返回的默认零 usage 不按零费用结算
+ ↓ o01-review.test.ts > O01-R10：请求抛异常后，用量聚合保留一次未知请求
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o01-review.test.ts > O01-R1：同批真实重试不覆盖前一次费用
+AssertionError: expected 0.02 to be close to 0.04, received difference is 0.02, but expected 0.005
+ ❯ o01-review.test.ts:74:45
+     72|   const settled = reservations.reduce((sum, r) => sum + (r.已结算费用 ?? 0)…
+     73|   record("R1", { requests, reservations, settled });
+     74|   expect(requests).toBe(2); expect(settled).toBeCloseTo(.04);
+       |                                             ^
+     75| });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  20:56:59
+   Duration  7.62s (transform 5.88s, setup 0ms, import 7.43s, tests 39ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o01-retry-review-vitest.json

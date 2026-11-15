@@ -1,0 +1,97 @@
+
+Running 21 tests using 1 worker
+
+
+
+[1A[2K(node:32552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:32552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[1/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":99,"composerDraft":"future data"}
+[1A[2K[2/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"composerDraftsBySession":{"one":42}}
+[1A[2K[3/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"workspaceOrder":["valid",null]}
+[1A[2K[4/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"orchestrationChildren":[null]}
+[1A[2K[5/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"appGlobalModelSettings":{"defaultThinkingLevel":"unknown"}}
+[1A[2K[6/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"futureData":"retain"}
+[1A[2K[7/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":15,"notificationPreferences":{"futureSetting":true}}
+[1A[2K[8/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":16,"lastInteractedAtBySession":{"one":42}}
+[1A[2K[9/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":17,"threadGrouping":"priority"}
+[1A[2K[10/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":19,"extensionFlagsByWorkspace":{"ws":{"retries":3}}}
+[1A[2K[11/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":19,"extensionFlagsBySession":{"ws:sess":["plan"]}}
+[1A[2K[12/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state {"version":19,"collapsedWorkspaceIds":["alpha",42]}
+[1A[2K[13/21] apps\desktop\tests\unit\persisted-data.spec.ts:26:7 › preserves invalid UI state []
+[1A[2K[14/21] apps\desktop\tests\unit\persisted-data.spec.ts:38:5 › reads v15 ui-state without lastInteractedAt and writes v18
+[1A[2K[15/21] apps\desktop\tests\unit\persisted-data.spec.ts:56:5 › reads v16 ui-state without threadGrouping and writes the saved choice as v18
+[1A[2K[16/21] apps\desktop\tests\unit\persisted-data.spec.ts:74:5 › extension flag defaults and per-thread flags round-trip through ui-state
+[1A[2K[17/21] apps\desktop\tests\unit\persisted-data.spec.ts:87:5 › reads ui-state without folded folders and writes the collapsed ids
+[1A[2K[18/21] apps\desktop\tests\unit\persisted-data.spec.ts:101:5 › backup recovery retains damaged bytes and the good backup
+
+[1A[2Kapps\desktop\tests\unit\persisted-data.spec.ts:101:5 › backup recovery retains damaged bytes and the good backup
+[app-store] corrupt ui-state at C:\Users\ASUS\AppData\Local\Temp\ui-state-backup-28RL9k\ui-state.json — recovered from backup
+[1A[2K[19/21] apps\desktop\tests\unit\persisted-data.spec.ts:117:5 › unrecoverable syntax errors cannot be overwritten
+[1A[2K[20/21] apps\desktop\tests\unit\persisted-data.spec.ts:125:5 › attachment owner rejects malformed entries before read, replacement or pruning
+[1A[2K  1) apps\desktop\tests\unit\persisted-data.spec.ts:125:5 › attachment owner rejects malformed entries before read, replacement or pruning 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mrejects[2m.[22mtoThrow[2m()[22m
+
+    Received promise resolved instead of rejected
+    Resolved to value: [31m[{"data": "eA==", "id": "one", "kind": "image", "mimeType": "image/png", "name": "image.png"}][39m
+
+      137 |   const original = JSON.stringify([valid, null]);
+      138 |   await writeFile(path, original);
+    > 139 |   await expect(store.read("session")).rejects.toThrow(/Invalid saved attachment/);
+          |               ^
+      140 |   await expect(store.write("session", [])).rejects.toThrow(/Invalid saved attachment/);
+      141 |   await expect(store.remove("session")).rejects.toThrow(/Invalid saved attachment/);
+      142 |   expect(await readFile(path, "utf8")).toBe(original);
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\unit\persisted-data.spec.ts:139:15
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-persisted-data-attach-8483d-read-replacement-or-pruning\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-persisted-data-attach-8483d-read-replacement-or-pruning\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[1A[2K(node:13324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:13324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[21/21] apps\desktop\tests\unit\persisted-data.spec.ts:152:5 › unknown attachment fields survive rejected replacement and pruning
+[1A[2K  2) apps\desktop\tests\unit\persisted-data.spec.ts:152:5 › unknown attachment fields survive rejected replacement and pruning 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mrejects[2m.[22mtoThrow[2m()[22m
+
+    Received promise resolved instead of rejected
+    Resolved to value: [31m[][39m
+
+      159 |   ]);
+      160 |   await writeFile(path, original);
+    > 161 |   await expect(store.read("session")).rejects.toThrow(/unsupported field/);
+          |               ^
+      162 |   await expect(store.write("session", [])).rejects.toThrow(/unsupported field/);
+      163 |   await expect(store.remove("session")).rejects.toThrow(/unsupported field/);
+      164 |   expect(await readFile(path, "utf8")).toBe(original);
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\unit\persisted-data.spec.ts:161:15
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-persisted-data-unknow-535dc-ted-replacement-and-pruning\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-persisted-data-unknow-535dc-ted-replacement-and-pruning\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  2 failed
+    apps\desktop\tests\unit\persisted-data.spec.ts:125:5 › attachment owner rejects malformed entries before read, replacement or pruning 
+    apps\desktop\tests\unit\persisted-data.spec.ts:152:5 › unknown attachment fields survive rejected replacement and pruning 
+  19 passed (2.2s)

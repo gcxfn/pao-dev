@@ -1,0 +1,787 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "id": "I10",
+    "path": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\fixtures\\memory\\scenarios\\I10.json",
+    "input": {
+      "id": "I10",
+      "description": "嵌入端点不可用时关键词查",
+      "sessions": [
+        {
+          "sessionId": "sess-k",
+          "messages": [
+            {
+              "role": "user",
+              "content": "记忆供应商选哪个？",
+              "timestamp": "2026-11-08T21:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。",
+              "timestamp": "2026-11-08T21:00:05Z"
+            },
+            {
+              "role": "user",
+              "content": "用内置 SQLite，不依赖外部服务。",
+              "timestamp": "2026-11-08T21:01:00Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "记忆供应商使用内置 SQLite",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement",
+              "conditions": "不依赖外部服务"
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "记忆供应商",
+              "mustContain": [
+                "mem-builtin-sqlite"
+              ],
+              "mustNotContain": []
+            },
+            {
+              "query": "sqlite 记忆",
+              "mustContain": [
+                "mem-builtin-sqlite"
+              ],
+              "mustNotContain": [],
+              "note": "嵌入端点不可用时，关键词查询仍应命中"
+            }
+          ]
+        }
+      ],
+      "expectedFinalState": {
+        "memories": [
+          {
+            "id": "mem-builtin-sqlite",
+            "kind": "decision",
+            "conclusion": "记忆供应商使用内置 SQLite",
+            "confirmation": "confirmed",
+            "usageState": "active"
+          }
+        ],
+        "sources": [
+          {
+            "sourceId": "src-sess-k-001",
+            "sessionId": "sess-k",
+            "entryId": "entry-003"
+          }
+        ]
+      }
+    }
+  },
+  "mode": "real",
+  "status": "real_evidence_collected",
+  "acceptance": {
+    "realAcceptanceClaimed": false,
+    "eligibleForS4Review": true,
+    "reason": "本轮收集真实入口证据；是否通过由 S4-17 主对话判定"
+  },
+  "runRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109",
+  "workRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW",
+  "inputs": {
+    "authPath": "C:\\Users\\ASUS\\.pi\\agent\\auth.json",
+    "modelsPath": "C:\\Users\\ASUS\\.pi\\agent\\models.json",
+    "tierConfigSource": "options.tierConfig",
+    "executeReal": true,
+    "processEnvIsolation": {
+      "embeddingEnv": "disabled_for_run",
+      "envFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\embedding-disabled.env",
+      "outboundConfig": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\outbound-disabled.json",
+      "restoredAfterRun": true
+    }
+  },
+  "network": {
+    "modelRequests": 1,
+    "cloudEmbeddingRequests": 0,
+    "localFailureEndpointRequests": 1,
+    "cloudEmbeddingBasis": "EMBED_* 与 .env 在 adapter 运行期间隔离"
+  },
+  "scenarioEvidence": {
+    "actualMemoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+    "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+    "scope": {
+      "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+      "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+      "branch": "main",
+      "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+    },
+    "extractions": [
+      {
+        "job": {
+          "created": {
+            "jobId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364",
+            "sourceScope": "{\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"sourceIds\":[\"src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user\",\"src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant\",\"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\"]}",
+            "scopeKey": "session:01a1c104-175e-7625-8328-ef966acdb65e",
+            "status": "pending",
+            "attemptCount": 0,
+            "createdAt": "2026-11-09T15:53:53.257Z",
+            "updatedAt": "2026-11-09T15:53:53.257Z"
+          },
+          "claim": {
+            "job": {
+              "jobId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364",
+              "sourceScope": "{\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"sourceIds\":[\"src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user\",\"src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant\",\"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\"]}",
+              "scopeKey": "session:01a1c104-175e-7625-8328-ef966acdb65e",
+              "status": "running",
+              "attemptCount": 1,
+              "ownerProcess": "boundary-adapter:41140",
+              "createdAt": "2026-11-09T15:53:53.257Z",
+              "updatedAt": "2026-11-09T15:53:53.258Z"
+            },
+            "attemptId": "att-c62a2d80-d6f0-4233-b5cf-d85b5cf0b412"
+          }
+        },
+        "request": {
+          "input": {
+            "jobId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364",
+            "sourceSessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+            "entries": [
+              {
+                "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user",
+                "entryId": "d862f6c3",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"d862f6c3\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.247Z\",\"capturedAt\":\"2026-11-09T15:53:53.249Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆供应商选哪个？\",\"timestamp\":1794171600000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+              },
+              {
+                "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant",
+                "entryId": "1d8496aa",
+                "eventType": "assistant",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+              },
+              {
+                "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+                "entryId": "25ce5b86",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+              }
+            ],
+            "signal": {}
+          },
+          "output": {
+            "ok": true,
+            "requestId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364:extract:4763291e-35d8-44ee-abb2-cb59f3987924",
+            "candidates": [
+              {
+                "kind": "decision",
+                "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+                "conditions": "需要记忆存储方案时",
+                "rationale": "不依赖外部服务",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed",
+                "sourceIds": [
+                  "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+                    "text": "用内置 SQLite，不依赖外部服务。"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+                    "match": "exact",
+                    "offset": 235
+                  }
+                ]
+              }
+            ],
+            "rejected": [],
+            "usage": {
+              "input": 1546,
+              "output": 199,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 17,
+              "totalTokens": 1745,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            }
+          },
+          "modelRequests": [
+            {
+              "requestIndex": 1,
+              "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+              "callerSessionId": "unknown",
+              "startedAt": "2026-11-09T15:53:53.260Z",
+              "observerLatencyMs": 4579.1982,
+              "model": {
+                "provider": "magpie",
+                "id": "group/deepseek"
+              },
+              "requestContext": {
+                "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user entryId=d862f6c3 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"d862f6c3\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.247Z\",\"capturedAt\":\"2026-11-09T15:53:53.249Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆供应商选哪个？\",\"timestamp\":1794171600000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant entryId=1d8496aa eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user entryId=25ce5b86 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n\n请输出候选 JSON 数组。",
+                    "timestamp": 1794239633259
+                  }
+                ]
+              },
+              "payload": {
+                "status": "observed",
+                "raw": {
+                  "model": "group/deepseek",
+                  "messages": [
+                    {
+                      "role": "developer",
+                      "content": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。"
+                    },
+                    {
+                      "role": "user",
+                      "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user entryId=d862f6c3 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"d862f6c3\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.247Z\",\"capturedAt\":\"2026-11-09T15:53:53.249Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆供应商选哪个？\",\"timestamp\":1794171600000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant entryId=1d8496aa eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n--- 条目 sourceId=src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user entryId=25ce5b86 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}\n\n请输出候选 JSON 数组。"
+                    }
+                  ],
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "store": false,
+                  "max_completion_tokens": 4096,
+                  "reasoning_effort": "low"
+                },
+                "error": "unknown"
+              },
+              "response": {
+                "status": 200,
+                "raw": {
+                  "status": 200,
+                  "headers": {
+                    "cache-control": "no-cache",
+                    "content-type": "text/event-stream",
+                    "date": "Mon, 09 Nov 2026 15:53:57 GMT",
+                    "transfer-encoding": "chunked",
+                    "x-accel-buffering": "no",
+                    "x-magpie-model": "opencode-go/deepseek-v4.1-flash",
+                    "x-magpie-provider": "opencode-go"
+                  }
+                },
+                "headers": {
+                  "cache-control": "no-cache",
+                  "content-type": "text/event-stream",
+                  "date": "Mon, 09 Nov 2026 15:53:57 GMT",
+                  "transfer-encoding": "chunked",
+                  "x-accel-buffering": "no",
+                  "x-magpie-model": "opencode-go/deepseek-v4.1-flash",
+                  "x-magpie-provider": "opencode-go"
+                },
+                "requestId": "unknown",
+                "rawHTTPBody": "unavailable_public_surface",
+                "error": "unknown"
+              },
+              "output": {
+                "status": "observed",
+                "rawAssistantMessage": {
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "thinking",
+                      "thinking": "User explicitly chose built-in SQLite over gbrain. Decision confirmed user_statement.",
+                      "thinkingSignature": "reasoning_content"
+                    },
+                    {
+                      "type": "text",
+                      "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。\",\n    \"conditions\": \"需要记忆存储方案时\",\n    \"rationale\": \"不依赖外部服务\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\", \"text\": \"用内置 SQLite，不依赖外部服务。\"}\n    ]\n  }\n]\n```"
+                    }
+                  ],
+                  "api": "openai-completions",
+                  "provider": "magpie",
+                  "model": "group/deepseek",
+                  "usage": {
+                    "input": 1546,
+                    "output": 199,
+                    "cacheRead": 0,
+                    "cacheWrite": 0,
+                    "reasoning": 17,
+                    "totalTokens": 1745,
+                    "cost": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "total": 0
+                    }
+                  },
+                  "stopReason": "stop",
+                  "timestamp": 1794239633420,
+                  "responseId": "chatcmpl-a687a366fb3f9de2",
+                  "rawStopReason": "stop"
+                },
+                "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。\",\n    \"conditions\": \"需要记忆存储方案时\",\n    \"rationale\": \"不依赖外部服务\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user\", \"text\": \"用内置 SQLite，不依赖外部服务。\"}\n    ]\n  }\n]\n```",
+                "provider": "magpie",
+                "model": "group/deepseek",
+                "responseModel": "unknown",
+                "responseId": "chatcmpl-a687a366fb3f9de2",
+                "stopReason": "stop",
+                "errorMessage": "unknown",
+                "usage": {
+                  "input": 1546,
+                  "output": 199,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "cacheWrite1h": "unknown",
+                  "reasoning": 17,
+                  "totalTokens": 1745,
+                  "cost": {
+                    "input": "unknown",
+                    "output": "unknown",
+                    "cacheRead": "unknown",
+                    "cacheWrite": "unknown",
+                    "total": "unknown"
+                  },
+                  "costBasis": "unknown",
+                  "costSource": "unknown"
+                }
+              },
+              "iteratorEvents": [],
+              "failure": "unknown"
+            }
+          ],
+          "mockModelRecords": [],
+          "ledgerEntries": [
+            {
+              "type": "custom",
+              "customType": "pao-memory-extraction-attempt",
+              "data": {
+                "requestId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364:extract:4763291e-35d8-44ee-abb2-cb59f3987924",
+                "jobId": "job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364",
+                "sourceSessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+                "entryCount": 3
+              },
+              "id": "2fdfcd07",
+              "parentId": null,
+              "timestamp": "2026-11-09T15:53:53.259Z"
+            },
+            {
+              "type": "usage",
+              "id": "0f4fcdd7",
+              "parentId": "2fdfcd07",
+              "timestamp": "2026-11-09T15:53:57.839Z",
+              "kind": "memory_extraction",
+              "provider": "magpie",
+              "model": "group/deepseek",
+              "usage": {
+                "input": 1546,
+                "output": 199,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "reasoning": 17,
+                "totalTokens": 1745,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "note": "jobId=job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364 sourceSessionId=01a1c104-175e-7625-8328-ef966acdb65e requestId=job-da5122d5-7eaf-4bda-9b18-5ad1d76ec364:extract:4763291e-35d8-44ee-abb2-cb59f3987924"
+            }
+          ],
+          "usage": {
+            "mode": "real_model_request",
+            "raw": {
+              "input": 1546,
+              "output": 199,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 17,
+              "totalTokens": 1745,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "normalized": {
+              "input": 1546,
+              "output": 199,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "cacheWrite1h": "unknown",
+              "reasoning": 17,
+              "totalTokens": 1745,
+              "cost": {
+                "input": "unknown",
+                "output": "unknown",
+                "cacheRead": "unknown",
+                "cacheWrite": "unknown",
+                "total": "unknown"
+              },
+              "costBasis": "unknown",
+              "costSource": "unknown"
+            },
+            "costBasis": "unknown",
+            "costSource": "unknown",
+            "zeroIsRealCost": false
+          },
+          "latencyMs": 4586.097
+        },
+        "commit": {
+          "output": {
+            "outcomes": [
+              {
+                "status": "submitted",
+                "candidateIndex": 0,
+                "memoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+                "revision": 1
+              }
+            ],
+            "submitted": 1,
+            "duplicates": 0,
+            "flagged": 0,
+            "skipped": 0,
+            "rejected": 0
+          },
+          "latencyMs": 11.529
+        },
+        "entries": {
+          "entries": [
+            {
+              "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-d862f6c3-user",
+              "entryId": "d862f6c3",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"d862f6c3\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.247Z\",\"capturedAt\":\"2026-11-09T15:53:53.249Z\",\"content\":{\"role\":\"user\",\"content\":\"记忆供应商选哪个？\",\"timestamp\":1794171600000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+            },
+            {
+              "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-1d8496aa-assistant",
+              "entryId": "1d8496aa",
+              "eventType": "assistant",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"1d8496aa\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T15:53:53.248Z\",\"capturedAt\":\"2026-11-09T15:53:53.253Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794171605000}}\n{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+            },
+            {
+              "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+              "entryId": "25ce5b86",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}"
+            }
+          ],
+          "skipped": []
+        },
+        "actualMemoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+        "memory": {
+          "ok": true,
+          "memory": {
+            "id": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+            "kind": "decision",
+            "scope": {
+              "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+              "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+              "branch": "main",
+              "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+            },
+            "currentRevision": 1,
+            "content": {
+              "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+              "conditions": "需要记忆存储方案时",
+              "rationale": "不依赖外部服务",
+              "evidenceKind": "user_statement",
+              "confirmation": "confirmed"
+            },
+            "usageState": "active",
+            "createdAt": "2026-11-09T15:53:57.845Z",
+            "updatedAt": "2026-11-09T15:53:57.845Z"
+          },
+          "revisions": [
+            {
+              "revision": 1,
+              "content": {
+                "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+                "conditions": "需要记忆存储方案时",
+                "rationale": "不依赖外部服务",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "sourceIds": [
+                "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user"
+              ],
+              "createdAt": "2026-11-09T15:53:57.845Z",
+              "createdBy": "model"
+            }
+          ],
+          "sourceSummaries": [
+            {
+              "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+              "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+              "entryId": "25ce5b86",
+              "eventType": "user",
+              "capturedAt": "2026-11-09T15:53:53.255Z",
+              "readable": true
+            }
+          ],
+          "supersessionChain": [
+            {
+              "revision": 1
+            }
+          ]
+        },
+        "status": "committed",
+        "latencyMs": 4606.263
+      }
+    ],
+    "management": {
+      "getMemory": {
+        "ok": true,
+        "memory": {
+          "id": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+          "kind": "decision",
+          "scope": {
+            "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+            "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+            "branch": "main",
+            "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+          },
+          "currentRevision": 1,
+          "content": {
+            "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+            "conditions": "需要记忆存储方案时",
+            "rationale": "不依赖外部服务",
+            "evidenceKind": "user_statement",
+            "confirmation": "confirmed"
+          },
+          "usageState": "active",
+          "createdAt": "2026-11-09T15:53:57.845Z",
+          "updatedAt": "2026-11-09T15:53:57.845Z"
+        },
+        "sourceSummaries": [
+          {
+            "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+            "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+            "entryId": "25ce5b86",
+            "eventType": "user",
+            "capturedAt": "2026-11-09T15:53:53.255Z",
+            "readable": true
+          }
+        ],
+        "supersessionChain": [
+          {
+            "revision": 1
+          }
+        ]
+      },
+      "readSource": {
+        "ok": true,
+        "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+        "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+        "entryId": "25ce5b86",
+        "eventType": "user",
+        "content": "{\"v\":1,\"sessionId\":\"01a1c104-175e-7625-8328-ef966acdb65e\",\"entryId\":\"25ce5b86\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T15:53:53.249Z\",\"capturedAt\":\"2026-11-09T15:53:53.255Z\",\"content\":{\"role\":\"user\",\"content\":\"用内置 SQLite，不依赖外部服务。\",\"timestamp\":1794171660000}}",
+        "metadata": {
+          "source": {
+            "sourceId": "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user",
+            "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+            "entryId": "25ce5b86",
+            "eventType": "user",
+            "location": "seg-24feba07-74c7-4b81-8fac-867481496012#3",
+            "segmentId": "seg-24feba07-74c7-4b81-8fac-867481496012",
+            "capturedAt": "2026-11-09T15:53:53.255Z"
+          },
+          "segmentId": "seg-24feba07-74c7-4b81-8fac-867481496012",
+          "lineNo": 3,
+          "startLine": 3,
+          "endLine": 3,
+          "eventCount": 1,
+          "events": [
+            {
+              "entryId": "25ce5b86",
+              "eventType": "user",
+              "entryType": "message",
+              "timestamp": "2026-11-09T15:53:53.249Z",
+              "capturedAt": "2026-11-09T15:53:53.255Z"
+            }
+          ]
+        },
+        "archived": false,
+        "segmentId": "seg-24feba07-74c7-4b81-8fac-867481496012",
+        "hasMore": false,
+        "startLine": 3,
+        "endLine": 3
+      }
+    },
+    "license": {
+      "explicitDenyPath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\home\\知识库配置\\外发许可.deny.json",
+      "allowFailurePath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\home\\知识库配置\\外发许可.allow.json",
+      "missingPath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\home\\知识库配置\\外发许可.missing.json",
+      "missingPermissionMode": "isolated file temporarily absent",
+      "allowFailure": "isolated allow policy plus local HTTP 503; no successful fake vector",
+      "outboundEnv": "每分支显式指向隔离许可文件并恢复调用前 PAO_OUTBOUND_CONFIG",
+      "formalConfigurationTouched": false
+    },
+    "searches": {
+      "explicitDeny": {
+        "query": "记忆供应商",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+          "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+                "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+                "conditions": "需要记忆存储方案时",
+                "rationale": "不依赖外部服务",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 17.981,
+        "endpointRequests": 0
+      },
+      "missingPermission": {
+        "query": "记忆供应商",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+          "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+                "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+                "conditions": "需要记忆存储方案时",
+                "rationale": "不依赖外部服务",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 10.084,
+        "endpointRequests": 0
+      },
+      "allowedEndpointFailure": {
+        "query": "记忆供应商",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+          "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-5831048c-ac67-4a57-a762-54902fa990c3",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i10-20261109\\i10-1794239632792-8zi5ow\\projects\\pao-dev",
+                "sessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "记忆供应商选用内置 SQLite，不使用 gbrain 等外部常驻服务。",
+                "conditions": "需要记忆存储方案时",
+                "rationale": "不依赖外部服务",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c104-175e-7625-8328-ef966acdb65e-25ce5b86-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "嵌入调用失败（嵌入端点返回 503 Service Unavailable），语义路未参与"
+        },
+        "latencyMs": 37.797,
+        "endpointRequests": 1
+      }
+    },
+    "localEndpoint": {
+      "url": "http://127.0.0.1:55006/v1",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "at": "2026-11-09T15:53:57.955Z"
+        }
+      ],
+      "closed": true
+    },
+    "observations": {
+      "sameCommittedDecision": true,
+      "lexicalAndSourceAvailable": true,
+      "denyZeroRequests": true,
+      "missingPermissionDenied": true,
+      "allowedEndpointFailureDegrades": true
+    }
+  },
+  "cleanup": {
+    "sessions": [
+      {
+        "actualSessionId": "01a1c104-175e-7625-8328-ef966acdb65e",
+        "status": "flushed"
+      }
+    ],
+    "service": "closed",
+    "store": "closed",
+    "modelRuntime": {
+      "status": "unavailable_public_surface",
+      "error": "unknown"
+    },
+    "ledger": "flushed"
+  },
+  "error": "unknown",
+  "evidencePath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I10-20261109\\I10-1794239632792-8zI5OW\\boundary-result.json"
+}

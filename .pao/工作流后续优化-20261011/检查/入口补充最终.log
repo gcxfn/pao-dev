@@ -1,0 +1,65 @@
+
+Running 2 tests using 1 worker
+
+(node:15564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 apps\desktop\tests\core\kanban-board.spec.ts:528:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 (23.4s)
+  x  2 apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 (43.2s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 ─────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workflow-editor').locator('.react-flow__node[data-id="审查"]')[22m
+    [2m    - locator resolved to <div data-id="审查" tabindex="0" role="group" data-testid="rf__node-审查" aria-roledescription="node" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-worker nopan selectable draggable">…</div>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    11 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div> intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      206 |     await expect(graph.getByTestId("workflow-node")).toHaveCount(2);
+      207 |     // 右键节点弹菜单（编辑态）；复制后重名自动派生、副本选中。
+    > 208 |     await graph.locator('.react-flow__node[data-id="审查"]').click({ button: "right" });
+          |                                                            ^
+      209 |     const menu = page.getByTestId("canvas-context-menu");
+      210 |     await expect(menu).toBeVisible();
+      211 |     await menu.getByRole("menuitem", { name: "复制节点" }).click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:208:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\工作流后续优化-20261011\Electron记录\入口补充\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\工作流后续优化-20261011\Electron记录\入口补充\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\工作流后续优化-20261011\Electron记录\入口补充\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 ──────────────
+  1 passed (1.2m)

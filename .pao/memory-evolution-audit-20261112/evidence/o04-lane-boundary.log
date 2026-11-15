@@ -1,0 +1,50 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o04-lane-boundary.test.ts > A5：受限分支占满 perLane 时，词法及语义路仍应返有效条目 90ms
+   → expected [] to deeply equal [ Array(1) ]
+ × o04-lane-boundary.test.ts > A6：当前适用分支限制不能阻断同项目的历史查询 41ms
+   → expected [] to include 'mem-a6ec1114-2147-4b6c-a0fe-f490e2e60…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o04-lane-boundary.test.ts > A5：受限分支占满 perLane 时，词法及语义路仍应返有效条目
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "mem-6b96c7b6-9320-4420-814b-45a3e3739fcf",
+- ]
++ []
+
+ ❯ o04-lane-boundary.test.ts:60:52
+     58|   expect(semanticWide.hits.map(h => h.memoryId)).toContain(shared.id);
+     59|   expect(lexicalWide.hits.map(h => h.memoryId)).toContain(shared.id);
+     60|   expect(semanticNarrow.hits.map(h => h.memoryId)).toEqual([shared.id]…
+       |                                                    ^
+     61|   expect(lexicalNarrow.hits.map(h => h.memoryId)).toEqual([shared.id]);
+     62| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  o04-lane-boundary.test.ts > A6：当前适用分支限制不能阻断同项目的历史查询
+AssertionError: expected [] to include 'mem-a6ec1114-2147-4b6c-a0fe-f490e2e60…'
+ ❯ o04-lane-boundary.test.ts:73:45
+     71|   results.push({ id: "A6", memoryId: m.id, current, history });
+     72|   expect(current.hits).toHaveLength(0);
+     73|   expect(history.hits.map(h => h.memoryId)).toContain(m.id);
+       |                                             ^
+     74| });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  01:57:02
+   Duration  2.96s (transform 2.04s, setup 0ms, import 2.68s, tests 132ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o04-lane-boundary-vitest.json

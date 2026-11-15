@@ -1,0 +1,66 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+·····xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 第一次尝试的删除与重命名按旧、新路径累计提交
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:400:73
+    398|   const paths = git(root, ["diff-tree", "--no-commit-id", "--name-stat…
+    399|   expect(paths).toContain("D\t将删除.txt");
+    400|   expect(paths.some((line) => /^R\d*\t已跟踪\.txt\t新名字\.txt$/.test(line))…
+       |                                                                         ^
+    401|  }, 60000);
+    402| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 重试卡缺少当前真实校验证据时拒绝
+AssertionError: expected undefined to be '验收证据不匹配' // Object.is equality
+
+- Expected:
+"验收证据不匹配"
+
++ Received:
+undefined
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:408:21
+    406|   const fixture = await positiveFixture();
+    407|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    408|   expect(result.原因).toBe("验收证据不匹配");
+       |                     ^
+    409|   expect(result.消息).toContain("execution-context");
+    410|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 历史证据充足但当前回执漏报本次改动时仍拒绝
+PaoCardError: 不允许的状态迁移：delivered → delivered
+ ❯ checkTransition src/pao/cards/statemachine.ts:43:9
+     41|  const allowed = ALLOWED_TRANSITIONS[from];
+     42|  if (!allowed.includes(to)) {
+     43|   throw new PaoCardError("INVALID_TRANSITION", `不允许的状态迁移：${from} → ${t…
+       |         ^
+     44|  }
+     45|  if (from === "failed" && to === "unclaimed") {
+ ❯ changeCardStatus src/pao/cards/statemachine.ts:196:2
+ ❯ markDeliveredWithEvidence test/pao/delivery-retry-cumulative.test.ts:137:20
+ ❯ test/pao/delivery-retry-cumulative.test.ts:416:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  09:30:44
+   Duration  87.52s (transform 291ms, setup 0ms, import 520ms, tests 86.82s, environment 0ms)
+

@@ -1,0 +1,17 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[32m·[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m   Start at [22m 01:01:49
+[2m   Duration [22m 8.45s[2m (transform 509ms, setup 0ms, import 804ms, tests 7.49s, environment 0ms)[22m
+
+
+=== 补充：同命令连跑第2、3次（判定稳定性） ===
+第2次: Test Files 1 passed (1), Tests 1 passed (1), tests 7.47s
+第3次: Test Files 1 passed (1), Tests 1 passed (1), tests 7.36s
+判定：T02-模块门.log 中该测试失败为 taskkill 对子进程瞬时『拒绝访问』(Tree member still alive: 34676)，
+kill.ts 按 fail-loud 设计如实上报未确认停止，顶替 abort 错误——并行负载下的 Windows 杀进程竞态；
+测试文件/kill.ts/bash.ts 均不在 T02 改动内，T00 基线通过(16.16s)，连续3次隔离复跑全过 → 环境/计时抖动，非 T02 回归。

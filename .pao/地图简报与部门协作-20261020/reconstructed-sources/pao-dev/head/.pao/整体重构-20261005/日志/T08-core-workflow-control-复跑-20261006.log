@@ -1,0 +1,63 @@
+
+Running 3 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\workflow-control.spec.ts:29:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (25.9s)
+  x  2 apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） (48.8s)
+  ok 3 apps\desktop\tests\core\workflow-control.spec.ts:177:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (17.8s)
+
+
+  1) apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('dialog').getByRole('button', { name: /Confirm|确认/ })[22m
+    [2m    - locator resolved to <button type="button" class="button button--primary" data-testid="extension-dialog-confirm">Confirm</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <span>Thinking level</span> from <div id="_r_0_" data-group="true" data-testid="_r_0_" class="workflow-surface">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <span>Thinking level</span> from <div id="_r_0_" data-group="true" data-testid="_r_0_" class="workflow-surface">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    10 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <span>Thinking level</span> from <div id="_r_0_" data-group="true" data-testid="_r_0_" class="workflow-surface">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+
+
+      162 |     await expect(page.getByTestId("wizard-can-start")).toBeVisible();
+      163 |     await page.getByTestId("wizard-start").click();
+    > 164 |     await page.getByRole("dialog").getByRole("button", { name: /Confirm|确认/ }).click();
+          |                                                                                ^
+      165 |     await expect(page.getByTestId("wizard-started")).toBeVisible();
+      166 |     // 真实落盘：实例清单＋首批卡（手动配方只落卡不派发——隔离本地执行，非真实供应商）。
+      167 |     const instances = await walkNames(project, "工作流实例-");
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workflow-control.spec.ts:164:80
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+  2 passed (1.6m)

@@ -1,0 +1,96 @@
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:40:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │ 	},
+    39 │ };
+  > 40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+    42 │ 
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │   	},
+     39  39 │   };
+     40     │ - const·stdoutBody·=·`${JSON.stringify(update)}\n`.repeat(4000)·+·`${JSON.stringify(finalEvent)}\n`;
+         40 │ + const·stdoutBody·=·`${`${JSON.stringify(update)}\n`.repeat(4000)}${JSON.stringify(finalEvent)}\n`;
+     41  41 │   const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+     42  42 │   
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:41:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    39 │ };
+    40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+  > 41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    42 │ 
+    43 │ function fixture(exitCode = 0) {
+  
+  i Unsafe fix: Use a template literal.
+  
+     39  39 │   };
+     40  40 │   const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+     41     │ - const·stderrBody·=·"诊断🙂\r\n".repeat(30000)·+·"STDERR_DONE\n";
+         41 │ + const·stderrBody·=·`${"诊断🙂\r\n".repeat(30000)}STDERR_DONE\n`;
+     42  42 │   
+     43  43 │   function fixture(exitCode = 0) {
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:103:12 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    101 │ 				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 │ 				const lines = restored.toString("utf8").trimEnd().split("\n");
+  > 103 │ 				expect(lines.slice(1, -1).join("\n") + "\n").toBe(stdoutBody);
+        │ 				       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    104 │ 				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 │ 				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+  i Unsafe fix: Use a template literal.
+  
+    101 101 │   				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 102 │   				const lines = restored.toString("utf8").trimEnd().split("\n");
+    103     │ - → → → → expect(lines.slice(1,·-1).join("\n")·+·"\n").toBe(stdoutBody);
+        103 │ + → → → → expect(`${lines.slice(1,·-1).join("\n")}\n`).toBe(stdoutBody);
+    104 104 │   				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 105 │   				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:2:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     1 │ /** 真子进程、模拟 pi 事件；验证压缩前后的完整记录，不调用真实模型。 */
+   > 2 │ import {
+       │ ^^^^^^^^
+   > 3 │ 	existsSync,
+   > 4 │ 	mkdirSync,
+        ...
+  > 10 │ 	writeFileSync,
+  > 11 │ } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^
+    12 │ import { tmpdir } from "node:os";
+    13 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      4   4 │   	mkdirSync,
+      5   5 │   	mkdtempSync,
+      6     │ - → readFileSync,
+      7     │ - → readdirSync,
+          6 │ + → readdirSync,
+          7 │ + → readFileSync,
+      8   8 │   	rmSync,
+      9   9 │   	statSync,
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

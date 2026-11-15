@@ -1,0 +1,101 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/card-process-stop.test.ts[2m > [22mrunCardProcess：取消语义与树杀失败的优先级[2m > [22m取消时 AbortError 优先于树杀失败（stopError 不掩盖取消语义）
+[31m[1mAssertionError[22m: expected Error: 模拟：PowerShell 树杀超时失败 to match object { name: 'AbortError' }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- {[39m
+[32m-   "name": "AbortError",[39m
+[31m+ Error {[39m
+[31m+   "message": "模拟：PowerShell 树杀超时失败",[39m
+[2m  }[22m
+
+[36m [2m❯[22m test/pao/card-process-stop.test.ts:[2m84:19[22m[39m
+    [90m 82|[39m    [35mawait[39m [34mdelay[39m([34m200[39m)[33m;[39m
+    [90m 83|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+    [90m 84|[39m    [35mawait[39m [34mexpect[39m(op)[33m.[39mrejects[33m.[39m[34mtoMatchObject[39m({ name[33m:[39m [32m"AbortError"[39m })[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m 85|[39m   } [35mfinally[39m {
+    [90m 86|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/card-process-stop.test.ts[2m > [22mverifyCard：跑命令条目遇停止链失败的降级[2m > [22m树杀失败降级为「无法判」条目而非炸穿 verifyCard；沙箱按卡保留
+[31m[1mError[22m: 模拟：PowerShell 树杀超时失败[39m
+[36m [2m❯[22m test/pao/card-process-stop.test.ts:[2m101:34[22m[39m
+    [90m 99|[39m [34mdescribe[39m([32m"verifyCard：跑命令条目遇停止链失败的降级"[39m[33m,[39m () [33m=>[39m {
+    [90m100|[39m  [34mit[39m([32m"树杀失败降级为「无法判」条目而非炸穿 verifyCard；沙箱按卡保留"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m101|[39m   killTreeMock[33m.[39m[34mmockRejectedValue[39m([35mnew[39m [33mError[39m([32m"模拟：PowerShell 树杀超时失败"[39m))[33m;[39m
+    [90m   |[39m                                  [31m^[39m
+    [90m102|[39m   [35mconst[39m repo [33m=[39m [34mmakeRepo[39m()[33m;[39m
+    [90m103|[39m   const cardDir = await makeClaimedCard(repo, '跑: node -e "setInterval…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/card-process-stop.test.ts[2m > [22mverifyCard：跑命令条目遇停止链失败的降级[2m > [22m即便树杀失败，取消仍以 AbortError 向上传播（端到端取消语义）
+[31m[1mAssertionError[22m: expected Error: 模拟：PowerShell 树杀超时失败 to match object { name: 'AbortError' }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- {[39m
+[32m-   "name": "AbortError",[39m
+[31m+ Error {[39m
+[31m+   "message": "模拟：PowerShell 树杀超时失败",[39m
+[2m  }[22m
+
+[36m [2m❯[22m test/pao/card-process-stop.test.ts:[2m143:19[22m[39m
+    [90m141|[39m    }
+    [90m142|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+    [90m143|[39m    [35mawait[39m [34mexpect[39m(op)[33m.[39mrejects[33m.[39m[34mtoMatchObject[39m({ name[33m:[39m [32m"AbortError"[39m })[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m144|[39m   } [35mfinally[39m {
+    [90m145|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m首次失败重试成功：PS 调用两次、正常返回停止方式
+[31m[1mAssertionError[22m: promise rejected "Error: 模拟：PS 脚本超时" instead of resolving[39m
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m43:31[22m[39m
+    [90m 41|[39m    [34mfailOnce[39m()[33m;[39m
+    [90m 42|[39m    [34msucceedOnce[39m()[33m;[39m
+    [90m 43|[39m    [35mawait[39m [34mexpect[39m([34mkillTree[39m([34m4242[39m))[33m.[39mresolves[33m.[39m[34mtoContain[39m([32m"taskkill"[39m)[33m;[39m
+    [90m   |[39m                               [31m^[39m
+    [90m 44|[39m    [34mexpect[39m(execFileMock)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m2[39m)[33m;[39m
+    [90m 45|[39m   }[33m,[39m
+
+[31m[1mCaused by: Error[22m: 模拟：PS 脚本超时[39m
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m22:6[22m[39m
+[90m [2m❯[22m execFile test/pao/kill-tree-retry.test.ts:[2m15:36[22m[39m
+[90m [2m❯[22m src/pao/worker/kill.ts:[2m68:3[22m[39m
+[90m [2m❯[22m stopWindowsTree src/pao/worker/kill.ts:[2m67:8[22m[39m
+[90m [2m❯[22m Module.killTree src/pao/worker/kill.ts:[2m85:9[22m[39m
+[90m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m43:17[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m两次都失败才报错（真超时仍报错不吞），且不再第三次调用
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called 2 times, but got 1 times[39m
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m54:25[22m[39m
+    [90m 52|[39m    [34mfailOnce[39m()[33m;[39m
+    [90m 53|[39m    [35mawait[39m [34mexpect[39m([34mkillTree[39m([34m4242[39m))[33m.[39mrejects[33m.[39m[34mtoThrow[39m([32m"PS 脚本超时"[39m)[33m;[39m
+    [90m 54|[39m    [34mexpect[39m(execFileMock)[33m.[39m[34mtoHaveBeenCalledTimes[39m([34m2[39m)[33m;[39m
+    [90m   |[39m                         [31m^[39m
+    [90m 55|[39m   }[33m,[39m
+    [90m 56|[39m  )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 05:29:53
+[2m   Duration [22m 1.61s[2m (transform 131ms, setup 0ms, import 295ms, tests 980ms, environment 0ms)[22m
+

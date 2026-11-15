@@ -1,0 +1,189 @@
+
+Running 40 tests using 1 worker
+
+  ok  1 apps\desktop\tests\unit\canvas.spec.ts:124:7 › canvas node tone › 状态着色六态：灰/蓝/绿/黄/橙/红 (6ms)
+  ok  2 apps\desktop\tests\unit\canvas.spec.ts:138:7 › canvas dag layout › 分层布局：依赖链从左到右，边正向 (9ms)
+  ok  3 apps\desktop\tests\unit\canvas.spec.ts:154:7 › canvas dag layout › 回边（指向同层/更早依赖）标记 back，环依赖不炸 (1ms)
+  ok  4 apps\desktop\tests\unit\canvas.spec.ts:166:7 › canvas dag layout › 画布外依赖不参与分层 (1ms)
+  ok  5 apps\desktop\tests\unit\canvas.spec.ts:176:7 › instance dag join › 修改最新配方不能改变旧实例，缺冻结图不借最新配方 (1ms)
+  ok  6 apps\desktop\tests\unit\canvas.spec.ts:182:7 › instance dag join › 保存坐标从查询桥传到实例布局 (2ms)
+  ok  7 apps\desktop\tests\unit\canvas.spec.ts:200:7 › instance dag join › 卡现读状态为准，配方不可读退化为清单-only (3ms)
+  ok  8 apps\desktop\tests\unit\canvas.spec.ts:218:7 › canvas query shaping › normalizeCanvasView 整形中文键原始视图 (3ms)
+  ok  9 apps\desktop\tests\unit\canvas.spec.ts:294:7 › canvas query shaping › normalize* 拒绝非列表输入 (11ms)
+  ok 10 apps\desktop\tests\unit\canvas.spec.ts:311:7 › canvas query shaping › createCanvasQuery：缺 PAO_HOME 不加载读取器 (2ms)
+  ok 11 apps\desktop\tests\unit\canvas.spec.ts:327:7 › canvas query shaping › createCanvasQuery：读取器加载失败＝unavailable，不伪装空画布 (5ms)
+  ok 12 apps\desktop\tests\unit\canvas.spec.ts:341:7 › canvas query shaping › createCanvasQuery：happy path 透传＋整形（好/坏配方混合） (5ms)
+  ok 13 apps\desktop\tests\unit\canvas.spec.ts:419:7 › canvas page view (renderToString) › 三区渲染＋坏配方错误行＋异常行＋刷新按钮 (13ms)
+  ok 14 apps\desktop\tests\unit\canvas.spec.ts:435:7 › canvas page view (renderToString) › 选中实例：DAG 节点着色＋依赖边＋回边虚线类缺失 (21ms)
+  ok 15 apps\desktop\tests\unit\canvas.spec.ts:448:7 › canvas page view (renderToString) › 回边虚线：成环配方实例退化清单-only 无边 (16ms)
+  ok 16 apps\desktop\tests\unit\canvas.spec.ts:456:7 › canvas page view (renderToString) › 节点详情：选中节点后展示 v1 字段＋模板值 (22ms)
+  ok 17 apps\desktop\tests\unit\canvas.spec.ts:467:7 › canvas page view (renderToString) › 会话标识透出到详情（关联键） (25ms)
+  ok 18 apps\desktop\tests\unit\canvas.spec.ts:473:7 › canvas page view (renderToString) › unavailable 降级中文横幅；加载中刷新禁用 (3ms)
+  ok 19 apps\desktop\tests\unit\canvas.spec.ts:483:7 › canvas page view (renderToString) › 顶层错误横幅（配方目录不可读） (4ms)
+  ok 20 apps\desktop\tests\unit\canvas.spec.ts:546:7 › same-name instance resolution › resolveInstance：路径唯一／同名唯一才可定位，同名多实例＝ambiguous 不读第一个 (2ms)
+  ok 21 apps\desktop\tests\unit\canvas.spec.ts:575:7 › same-name instance resolution › instanceWorkflowModel：同名多实例无路径＝ambiguous，带路径命中具体实例 (2ms)
+  ok 22 apps\desktop\tests\unit\canvas.spec.ts:586:7 › same-name instance resolution › 同名旧标签无路径：不改读第一个，提示从配方库重新选择 (4ms)
+  ok 23 apps\desktop\tests\unit\canvas.spec.ts:592:7 › same-name instance resolution › 同名旧标签带路径：精确定位到该路径的实例（可读配方，无降级） (23ms)
+  ok 24 apps\desktop\tests\unit\canvas.spec.ts:599:7 › same-name instance resolution › 同名唯一时仍可按名回退到该实例 (22ms)
+  x  25 apps\desktop\tests\unit\canvas.spec.ts:634:7 › 未保存新配方骨架解析（per-tab，S3-1） › 两个标签的骨架各自解析，互不覆盖（per-tab 不互毁） (1ms)
+  x  26 apps\desktop\tests\unit\canvas.spec.ts:654:7 › 未保存新配方骨架解析（per-tab，S3-1） › 骨架命中优先于目录同名行（解析顺序显式化） (1ms)
+  x  27 apps\desktop\tests\unit\canvas.spec.ts:666:7 › 未保存新配方骨架解析（per-tab，S3-1） › 标签竞态（activeTab 仍是旧标签）时同名骨架兜底，不被目录旧行顶掉 (1ms)
+  x  28 apps\desktop\tests\unit\canvas.spec.ts:676:7 › 未保存新配方骨架解析（per-tab，S3-1） › 无骨架命中退回目录；实例选择、空选择与目录也没有的名字返回 undefined (1ms)
+  ok 29 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:33:7 › 审核回边连线规则 › readReviewEdges 按内核口径整形并跳过坏条目 (4ms)
+  ok 30 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:50:7 › 审核回边连线规则 › isReviewNode 只认 审核: true (2ms)
+  ok 31 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:56:7 › 审核回边连线规则 › dependencyAncestors 收集传递上游、不含自身 (2ms)
+  ok 32 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:61:7 › 审核回边连线规则 › 审核节点连到上游＝新增审核回边（默认 3／停滞） (1ms)
+  ok 33 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:76:7 › 审核回边连线规则 › 非审核节点连到上游＝拒绝成环；普通连线＝新增依赖 (2ms)
+  ok 34 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:88:7 › 审核回边连线规则 › 重复回边、自连给出拒绝，已存在的普通依赖为 noop (2ms)
+  ok 35 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:112:7 › 画布选中元素编码与恢复校验 › 节点用名字原文编码，未选中返回 undefined (1ms)
+  ok 36 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:118:7 › 画布选中元素编码与恢复校验 › 连线用 edge: 前缀加 JSON 编码，含 review 布尔 (3ms)
+  ok 37 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:127:7 › 画布选中元素编码与恢复校验 › decode 与 encode 往返一致；空串与坏格式当作未选中 (5ms)
+  ok 38 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:139:7 › 画布选中元素编码与恢复校验 › 节点选中在校验：存在为 true，被删/改名后为 false (2ms)
+  ok 39 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:144:7 › 画布选中元素编码与恢复校验 › 连线选中校验：依赖边与审核回边各自核对，删除后为 false (3ms)
+  x  40 apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:169:7 › 未保存判定单一谓词（S3-1） › 有内容改动或未落盘（revision 为空）都算未保存；已落盘且无改动才是已保存 (0ms)
+
+
+  1) apps\desktop\tests\unit\canvas.spec.ts:634:7 › 未保存新配方骨架解析（per-tab，S3-1） › 两个标签的骨架各自解析，互不覆盖（per-tab 不互毁） 
+
+    TypeError: resolveEditorEntry is not a function
+
+      635 |     const newEntries = { tabA: skeleton("新工作流1"), tabB: skeleton("新工作流2") };
+      636 |     expect(
+    > 637 |       resolveEditorEntry({
+          |       ^
+      638 |         selection: { kind: "recipe", name: "新工作流1" },
+      639 |         newEntries,
+      640 |         activeTabId: "tabA",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\canvas.spec.ts:637:7
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-51bd4-标签的骨架各自解析，互不覆盖（per-tab-不互毁）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-51bd4-标签的骨架各自解析，互不覆盖（per-tab-不互毁）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\unit\canvas.spec.ts:654:7 › 未保存新配方骨架解析（per-tab，S3-1） › 骨架命中优先于目录同名行（解析顺序显式化） 
+
+    TypeError: resolveEditorEntry is not a function
+
+      654 |   test("骨架命中优先于目录同名行（解析顺序显式化）", () => {
+      655 |     const draft = skeleton("编辑验证");
+    > 656 |     const resolved = resolveEditorEntry({
+          |                      ^
+      657 |       selection: { kind: "recipe", name: "编辑验证" },
+      658 |       newEntries: { tabA: draft },
+      659 |       activeTabId: "tabA",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\canvas.spec.ts:656:22
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-tab，S3-1）-骨架命中优先于目录同名行（解析顺序显式化）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-tab，S3-1）-骨架命中优先于目录同名行（解析顺序显式化）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\unit\canvas.spec.ts:666:7 › 未保存新配方骨架解析（per-tab，S3-1） › 标签竞态（activeTab 仍是旧标签）时同名骨架兜底，不被目录旧行顶掉 
+
+    TypeError: resolveEditorEntry is not a function
+
+      665 |
+      666 |   test("标签竞态（activeTab 仍是旧标签）时同名骨架兜底，不被目录旧行顶掉", () => {
+    > 667 |     const resolved = resolveEditorEntry({
+          |                      ^
+      668 |       selection: { kind: "recipe", name: "新工作流1" },
+      669 |       newEntries: { tabNew: skeleton("新工作流1") },
+      670 |       activeTabId: "tabOld",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\canvas.spec.ts:667:22
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-03efb-eTab-仍是旧标签）时同名骨架兜底，不被目录旧行顶掉\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-03efb-eTab-仍是旧标签）时同名骨架兜底，不被目录旧行顶掉\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\unit\canvas.spec.ts:676:7 › 未保存新配方骨架解析（per-tab，S3-1） › 无骨架命中退回目录；实例选择、空选择与目录也没有的名字返回 undefined 
+
+    TypeError: resolveEditorEntry is not a function
+
+      676 |   test("无骨架命中退回目录；实例选择、空选择与目录也没有的名字返回 undefined", () => {
+      677 |     expect(
+    > 678 |       resolveEditorEntry({
+          |       ^
+      679 |         selection: { kind: "recipe", name: "编辑验证" },
+      680 |         newEntries: { tabB: skeleton("新工作流2") },
+      681 |         activeTabId: "tabA",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\canvas.spec.ts:678:7
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-3cf4f-选择、空选择与目录也没有的名字返回-undefined\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-canvas-未保存新配方骨架解析（per-3cf4f-选择、空选择与目录也没有的名字返回-undefined\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:169:7 › 未保存判定单一谓词（S3-1） › 有内容改动或未落盘（revision 为空）都算未保存；已落盘且无改动才是已保存 
+
+    TypeError: (0 , _recipeCanvasEditor.editorUnsaved) is not a function
+
+      169 |   test("有内容改动或未落盘（revision 为空）都算未保存；已落盘且无改动才是已保存", () => {
+      170 |     // 全新骨架即使一字未动也算未保存（revision===null），与工具栏徽章同源。
+    > 171 |     expect(editorUnsaved(false, null)).toBe(true);
+          |                         ^
+      172 |     expect(editorUnsaved(true, null)).toBe(true);
+      173 |     expect(editorUnsaved(true, "指纹")).toBe(true);
+      174 |     expect(editorUnsaved(false, "指纹")).toBe(false);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:171:25
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-recipe-canvas-editor--ca405-ision-为空）都算未保存；已落盘且无改动才是已保存\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-recipe-canvas-editor--ca405-ision-为空）都算未保存；已落盘且无改动才是已保存\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    apps\desktop\tests\unit\canvas.spec.ts:634:7 › 未保存新配方骨架解析（per-tab，S3-1） › 两个标签的骨架各自解析，互不覆盖（per-tab 不互毁） 
+    apps\desktop\tests\unit\canvas.spec.ts:654:7 › 未保存新配方骨架解析（per-tab，S3-1） › 骨架命中优先于目录同名行（解析顺序显式化） 
+    apps\desktop\tests\unit\canvas.spec.ts:666:7 › 未保存新配方骨架解析（per-tab，S3-1） › 标签竞态（activeTab 仍是旧标签）时同名骨架兜底，不被目录旧行顶掉 
+    apps\desktop\tests\unit\canvas.spec.ts:676:7 › 未保存新配方骨架解析（per-tab，S3-1） › 无骨架命中退回目录；实例选择、空选择与目录也没有的名字返回 undefined 
+    apps\desktop\tests\unit\recipe-canvas-editor.spec.ts:169:7 › 未保存判定单一谓词（S3-1） › 有内容改动或未落盘（revision 为空）都算未保存；已落盘且无改动才是已保存 
+  35 passed (7.9s)
+
+===== e2e 红灯首跑：新增「两标签交替修改不串」（实现前） =====
+
+Running 1 test using 1 worker
+
+  x  1 apps\desktop\tests\core\workflow-canvas.spec.ts:440:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 (1.0m)
+[31mWorker teardown timeout of 60000ms exceeded.[39m
+
+[31mFailed worker ran 1 test:[39m
+apps\desktop\tests\core\workflow-canvas.spec.ts:440:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:440:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 ───────────
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:440:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 ────────────
+  1 error was not a part of any test, see above for details
+E2E_EXIT=1

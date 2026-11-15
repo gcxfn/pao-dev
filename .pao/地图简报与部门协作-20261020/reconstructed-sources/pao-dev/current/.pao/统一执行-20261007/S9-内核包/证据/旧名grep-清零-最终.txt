@@ -1,0 +1,295 @@
+S9 旧名清零 grep（2026-10-08，收尾口径）
+范围：src/pao + test/pao 活跃代码；允许残留：migrate.ts 本身及其测试旧卡样例、历史留档、kept 内码面（定名表未覆盖/明确保留项）
+
+-- A. src/pao frontmatter 序列化位旧键（命中均为 kept 内码面：CardCreateInput/状态机输入/内部视图）
+src/pao\cards\cardfile.ts:228:	目标: string;
+src/pao\cards\cardfile.ts:229:	部门: string;
+src/pao\cards\cardfile.ts:230:	验收: string;
+src/pao\cards\cardfile.ts:239:	创建: string;
+src/pao\cards\baseline.ts:55:	状态: string;
+src/pao\cards\baseline.ts:329:		状态: e.状态,
+src/pao\collab\dispatch.ts:29:		目标: card.目标,
+src/pao\collab\dispatch.ts:30:		部门: card.部门,
+src/pao\collab\dispatch.ts:31:		验收: card.验收,
+src/pao\collab\dispatch.ts:32:		输入: card.输入,
+src/pao\collab\dispatch.ts:33:		约束: card.约束,
+src/pao\collab\dispatch.ts:36:		档位: card.档位,
+src/pao\collab\dispatch.ts:37:		预算: card.预算,
+src/pao\collab\dispatch.ts:38:		优先级: card.优先级,
+src/pao\collab\dispatch.ts:39:		创建: created,
+src/pao\cards\deps.ts:7:	状态: CardStatus | "不存在";
+src/pao\cards\statemachine.ts:30:	尝试: number;
+src/pao\cards\statemachine.ts:57:				尝试: input.尝试,
+src/pao\cards\statemachine.ts:192:		尝试: fm.attempt,
+src/pao\collab\index.ts:112:		目标: params.goal,
+src/pao\collab\index.ts:113:		部门: params.dept,
+src/pao\collab\index.ts:114:		验收: params.acceptance,
+src/pao\collab\index.ts:116:		输入: params.inputs,
+src/pao\collab\index.ts:117:		约束: params.constraints,
+src/pao\collab\index.ts:120:		档位: params.tier,
+src/pao\collab\index.ts:121:		预算: params.budget,
+src/pao\collab\index.ts:122:		优先级: params.priority,
+src/pao\collab\index.ts:229:			目标: params.goal,
+src/pao\collab\index.ts:243:		目标: params.goal,
+src/pao\collab\index.ts:314:		目标: goal,
+src/pao\collab\index.ts:315:		部门: dept,
+src/pao\collab\index.ts:316:		验收: acceptance,
+src/pao\collab\index.ts:317:		输入: input,
+src/pao\collab\index.ts:318:		创建: nowString(),
+src/pao\collab\index.ts:326:		目标: goal,
+src/pao\cards\tools.ts:193:				目标: params.goal,
+src/pao\cards\tools.ts:194:				部门: params.dept,
+src/pao\cards\tools.ts:195:				验收: params.acceptance,
+src/pao\cards\tools.ts:196:				输入: params.inputs,
+src/pao\cards\tools.ts:197:				约束: params.constraints,
+src/pao\cards\tools.ts:200:				档位: params.tier,
+src/pao\cards\tools.ts:201:				预算: params.budget,
+src/pao\cards\tools.ts:202:				优先级: params.priority,
+src/pao\cards\tools.ts:204:				创建: nowString(),
+src/pao\context\index.ts:10:	状态: "待发预览" | "已发送且收到响应";
+src/pao\context\index.ts:65:			状态: "待发预览",
+src/pao\collab\review.ts:33:	目标: string;
+src/pao\collab\review.ts:34:	部门: string;
+src/pao\collab\review.ts:35:	验收: string;
+src/pao\desktop\editor.ts:142:		部门: substituteParams(node.部门, parameters),
+src/pao\desktop\editor.ts:145:		档位: node.档位 === undefined ? undefined : substituteParams(node.档位, parameters),
+src/pao\desktop\editor.ts:176:			部门: node.部门,
+src/pao\desktop\editor.ts:182:		预算: {
+src/pao\desktop\canvas.ts:39:	部门: string;
+src/pao\desktop\canvas.ts:67:	状态: string;
+src/pao\desktop\canvas.ts:88:	状态: string;
+src/pao\desktop\canvas.ts:201:			部门: node.部门,
+src/pao\desktop\canvas.ts:252:			状态: "未落卡",
+src/pao\desktop\canvas.ts:324:							状态: flow.状态,
+src/pao\desktop\canvas.ts:339:							状态: view.状态,
+src/pao\desktop\canvas.ts:353:						状态: manifest.状态,
+src/pao\desktop\canvas.ts:447:		部门: string;
+src/pao\desktop\canvas.ts:457:		状态: string;
+src/pao\desktop\canvas.ts:460:		尝试: number;
+src/pao\desktop\canvas.ts:461:		创建: string;
+src/pao\desktop\canvas.ts:504:				状态: flow.状态,
+src/pao\desktop\canvas.ts:530:				部门: substituteParams(node.部门, params),
+src/pao\desktop\canvas.ts:548:				状态: card.frontmatter.status,
+src/pao\desktop\canvas.ts:553:				尝试: card.frontmatter.attempt,
+src/pao\desktop\canvas.ts:554:				创建: card.frontmatter.created,
+src/pao\desktop\owners.ts:76:	尝试: number;
+src/pao\desktop\owners.ts:124:				尝试: typeof item.attempt === "number" ? item.attempt : -1,
+src/pao\desktop\read-model.ts:20:	尝试: number;
+src/pao\desktop\read-model.ts:21:	状态: string;
+src/pao\desktop\read-model.ts:36:	尝试: number;
+src/pao\desktop\read-model.ts:142:			尝试: row.尝试,
+src/pao\desktop\read-model.ts:189:				尝试: Number(row.尝试),
+src/pao\desktop\read-model.ts:190:				状态: row.状态,
+src/pao\dept\panels.ts:27:	部门: string;
+src/pao\dept\panels.ts:49:			部门: row.名字,
+src/pao\desktop\maintenance.ts:44:			部门: dept.名字,
+src/pao\desktop\index.ts:97:			目标: params.目标,
+src/pao\healthcheck\cache-probe.ts:59:	状态: "成功" | "失败";
+src/pao\healthcheck\cache-probe.ts:137:			状态: "失败",
+src/pao\healthcheck\probes.ts:28:	状态: ProbeStatus;
+src/pao\healthcheck\probes.ts:85:		状态: "失败",
+src/pao\healthcheck\probes.ts:105:			状态: text.length > 0 ? "通过" : "失败",
+src/pao\healthcheck\probes.ts:145:				状态: "失败",
+src/pao\healthcheck\probes.ts:177:			状态: consumed ? "通过" : "失败",
+src/pao\healthcheck\probes.ts:219:			状态: "观察完成",
+src/pao\healthcheck\probes.ts:257:			状态: "观察完成",
+src/pao\healthcheck\probes.ts:268:			状态: limitLike ? "通过" : "失败",
+src/pao\healthcheck\probes.ts:289:			状态: "跳过",
+src/pao\host\handoff.ts:60:	部门: string;
+src/pao\host\host.ts:75:	部门: string;
+src/pao\host\host.ts:95:	部门: string;
+src/pao\host\host.ts:177:			目标: goal,
+src/pao\host\host.ts:273:			部门: dept,
+src/pao\host\host.ts:451:				部门: entry.handle.部门,
+src/pao\host\host.ts:524:		部门: string;
+src/pao\host\host.ts:633:			部门: handle.部门,
+src/pao\host\host.ts:643:					部门: handle.部门,
+src/pao\host\host.ts:728:		部门: string;
+src/pao\host\host.ts:790:			部门: entry.handle.部门,
+src/pao\host\tools.ts:114:				部门: dept,
+src/pao\host\handle.ts:18:	部门: string;
+src/pao\host\handle.ts:39:	部门: string;
+src/pao\host\handle.ts:131:	部门: string;
+src/pao\host\ledger.ts:31:	部门: string;
+src/pao\host\ledger.ts:70:	目标: string;
+src/pao\knowledge\auto-route.ts:45:	部门: string;
+src/pao\knowledge\auto-route.ts:84:	部门: string;
+src/pao\knowledge\auto-route.ts:171:					部门: lib.部门,
+src/pao\memory\session.ts:98:	状态: "完成" | "部分成功";
+src/pao\memory\session.ts:125:			状态: "部分成功",
+src/pao\memory\memory-vendor.ts:47:	状态: string;
+src/pao\migration\migrate.ts:24:	目标: "goal",
+src/pao\migration\migrate.ts:25:	部门: "dept",
+src/pao\migration\migrate.ts:26:	输入: "inputs",
+src/pao\migration\migrate.ts:27:	约束: "constraints",
+src/pao\migration\migrate.ts:28:	验收: "acceptance",
+src/pao\migration\migrate.ts:29:	档位: "tier",
+src/pao\migration\migrate.ts:30:	预算: "budget",
+src/pao\migration\migrate.ts:31:	优先级: "priority",
+src/pao\migration\migrate.ts:32:	尝试: "attempt",
+src/pao\migration\migrate.ts:33:	创建: "created",
+src/pao\migration\migrate.ts:35:	状态: "status",
+src/pao\migration\migrate.ts:55:	状态: { 待认领: "unclaimed", 进行中: "in_progress", 已交付: "delivered", 失败: "failed", 取消: "canceled" },
+src/pao\migration\migrate.ts:56:	优先级: { 高: "high", 中: "medium", 低: "low" },
+src/pao\migration\migrate.ts:57:	档位: { 快: "fast", 主力: "primary" },
+src/pao\patrol\draft.ts:26:	目标: string;
+src/pao\patrol\draft.ts:27:	部门: string;
+src/pao\patrol\draft.ts:29:	输入: string[];
+src/pao\patrol\draft.ts:30:	约束: string;
+src/pao\patrol\draft.ts:31:	验收: string;
+src/pao\patrol\draft.ts:32:	档位: CardTier;
+src/pao\patrol\draft.ts:37:	部门: string;
+src/pao\patrol\draft.ts:60:		目标: `${PATROL_GOAL_PREFIX}消化 ${report.flaggedCount} 条 ⚠️ 标记（初判后待部长终审）`,
+src/pao\patrol\draft.ts:61:		部门: options.部门,
+src/pao\patrol\draft.ts:62:		输入: inputLines,
+src/pao\patrol\draft.ts:63:		约束: PATROL_CONSTRAINT,
+src/pao\patrol\draft.ts:64:		验收: `每条 ⚠️ 条目附一行初判；复跑 pao_inspect_kb，⚠️ 数下降或回执说明保留原因；条目正文与落卡时零差异`,
+src/pao\patrol\draft.ts:65:		档位: "fast",
+src/pao\patrol\drop.ts:46:		目标: draft.目标,
+src/pao\patrol\drop.ts:47:		部门: draft.部门,
+src/pao\patrol\drop.ts:48:		输入: draft.输入,
+src/pao\patrol\drop.ts:49:		约束: draft.约束,
+src/pao\patrol\drop.ts:50:		验收: draft.验收,
+src/pao\patrol\drop.ts:51:		档位: draft.档位,
+src/pao\patrol\drop.ts:52:		创建: created,
+src/pao\patrol\hook.ts:16:	部门: string;
+src/pao\patrol\hook.ts:96:				部门: dept,
+src/pao\routing\model-command.ts:156:		档位: config.档位.some((t) => t.名 === next.名)
+src/pao\routing\config.ts:46:	档位: TierDefinition[];
+src/pao\status\pending.ts:173:					部门: card.frontmatter.dept,
+src/pao\status\pending.ts:185:					部门: card.frontmatter.dept,
+src/pao\status\results.ts:47:	状态: string;
+src/pao\status\results.ts:79:	验收: NodeAcceptance;
+src/pao\status\results.ts:117:	状态: string;
+src/pao\status\results.ts:320:		验收: acceptance,
+src/pao\status\results.ts:445:		状态: manifest.状态,
+src/pao\status\results.ts:490:				验收: { 记录: [], 缺失说明: `节点段读取失败：${reason}` },
+src/pao\status\results.ts:514:		状态: view.状态,
+src/pao\status\workflow-instances.ts:50:	状态: string;
+src/pao\status\workflow-instances.ts:158:			状态: flow.状态,
+src/pao\status\workflow-instances.ts:173:		状态: manifest.状态,
+src/pao\worker\inventory.ts:23:	目标: string;
+src/pao\worker\inventory.ts:24:	状态: string;
+src/pao\worker\inventory.ts:25:	尝试: number;
+src/pao\worker\inventory.ts:152:			目标: typeof fields.goal === "string" ? fields.goal : "",
+src/pao\worker\inventory.ts:153:			状态: status,
+src/pao\worker\inventory.ts:154:			尝试: Number.parseInt(String(fields.attempt ?? "0"), 10) || 0,
+src/pao\worker\dispatch-core.ts:340:		验收: located.frontmatter.acceptance,
+src/pao\worker\dispatch-core.ts:378:		部门: input.card.frontmatter.dept ?? null,
+src/pao\worker\dispatch-core.ts:780:			部门: card.frontmatter.dept ?? null,
+src/pao\worker\session-bridge.ts:17:	尝试: number;
+src/pao\worker\usage.ts:39:			尝试: attempt,
+src/pao\workflow\distill.ts:30:	目标: string;
+src/pao\workflow\distill.ts:31:	部门: string;
+src/pao\workflow\distill.ts:32:	验收: string;
+src/pao\workflow\distill.ts:232:			目标: f.goal,
+src/pao\workflow\distill.ts:233:			部门: f.dept,
+src/pao\workflow\distill.ts:234:			验收: f.acceptance,
+src/pao\workflow\distill.ts:235:			输入: f.inputs,
+src/pao\workflow\distill.ts:236:			约束: f.constraints,
+src/pao\workflow\distill.ts:237:			档位: f.tier,
+src/pao\workflow\distill.ts:238:			预算: f.budget,
+src/pao\workflow\distill.ts:239:			优先级: f.priority,
+src/pao\worker\runner.ts:304:		部门: string | null;
+src/pao\worker\runner.ts:388:						尝试: attempt,
+src/pao\worker\runner.ts:769:		尝试: attempt,
+src/pao\worker\runner.ts:824:			尝试: attempt,
+src/pao\workflow\driver.ts:49:	状态: "运行中" | "挂起" | "已完成";
+src/pao\workflow\driver.ts:147:		状态: manifest.状态,
+src/pao\workflow\driver.ts:205:		状态: frontmatter.状态 as WorkflowManifest["状态"],
+src/pao\workflow\driver.ts:250:	状态: CardStatus | "未落卡" | "读取异常";
+src/pao\workflow\driver.ts:285:			状态: status,
+src/pao\workflow\driver.ts:429:						目标: substituteParams(state.node.目标, manifest.参数),
+src/pao\workflow\driver.ts:430:						部门: state.node.部门,
+src/pao\workflow\driver.ts:431:						验收: substituteParams(state.node.验收, manifest.参数),
+src/pao\workflow\driver.ts:432:						输入: state.node.输入?.map((item) => substituteParams(item, manifest.参数)),
+src/pao\workflow\driver.ts:433:						约束: state.node.约束 === undefined ? undefined : substituteParams(state.node.约束, manifest.参数),
+src/pao\workflow\driver.ts:434:						档位: state.node.档位,
+src/pao\workflow\driver.ts:435:						预算: state.node.预算,
+src/pao\workflow\driver.ts:436:						优先级: state.node.优先级,
+src/pao\workflow\driver.ts:438:						创建: now,
+src/pao\workflow\driver.ts:529:		状态: "运行中",
+src/pao\workflow\driver.ts:590:			状态: "运行中",
+src/pao\workflow\review.ts:27:	尝试: number;
+src/pao\workflow\review.ts:99:				尝试: 0,
+src/pao\workflow\review.ts:122:			尝试: card.frontmatter.attempt,
+src/pao\workflow\review.ts:130:			预算: node.预算,
+src/pao\workflow\recipe.ts:54:	目标: string;
+src/pao\workflow\recipe.ts:55:	部门: string;
+src/pao\workflow\recipe.ts:56:	验收: string;
+src/pao\workflow\recipe.ts:326:			目标: goal,
+src/pao\workflow\recipe.ts:327:			部门: dept,
+src/pao\workflow\recipe.ts:328:			验收: acceptance,
+src/pao\workflow\recipe.ts:329:			输入: input,
+src/pao\workflow\recipe.ts:330:			约束: typeof node.约束 === "string" ? node.约束 : undefined,
+src/pao\workflow\recipe.ts:331:			档位: tier as CardTier | undefined,
+src/pao\workflow\recipe.ts:332:			预算: budget,
+src/pao\workflow\recipe.ts:333:			优先级: priority as CardPriority | undefined,
+src/pao\workflow\templates.ts:32:			部门: dept,
+src/pao\workflow\templates.ts:33:			目标: goal,
+src/pao\workflow\templates.ts:34:			验收: "{验收}",
+src/pao\workflow\templates.ts:35:			输入: ["项目：{项目}", "目标：{目标}", "授权范围：{范围}"],
+src/pao\workflow\templates.ts:36:			约束: "只在 {范围} 内工作；保留已有修改。不编造运行与验收成功，缺证据明确报告。",
+src/pao\workflow\templates.ts:38:			预算: { ...budget },
+src/pao\workflow\templates.ts:39:			档位: "primary",
+src/pao\workflow\host-bridge.ts:90:						部门: def.部门,
+src/pao\workflow\host-bridge.ts:111:						部门: def.部门,
+src/pao\workflow\tools.ts:535:								目标: params.target,
+src/pao\workflow\minister.ts:123:				目标: params.target,
+src/pao\workflow\control.ts:49:	状态: "运行中" | "挂起" | "已完成";
+src/pao\workflow\control.ts:196:	状态: FlowControl["状态"];
+src/pao\workflow\control.ts:200:		状态: CardStatus | "已交付" | "进行中" | "未落卡";
+src/pao\workflow\control.ts:232:			状态: done
+src/pao\workflow\control.ts:246:		状态: flow.暂停
+src/pao\workflow\control.ts:325:			状态: "运行中",
+src/pao\workflow\control.ts:449:					部门: def.部门,
+src/pao\workflow\control.ts:450:					目标: substituteParams(input.goal, flow.参数),
+src/pao\workflow\control.ts:451:					验收: substituteParams(input.acceptance, flow.参数),
+src/pao\workflow\control.ts:452:					输入: [
+src/pao\workflow\control.ts:457:					约束: [def.约束, input.constraints]
+src/pao\workflow\control.ts:461:					档位: node.轮次 > 3 ? "primary" : def.档位,
+src/pao\workflow\control.ts:462:					预算: input.budget ?? def.预算,
+src/pao\workflow\control.ts:464:					创建: options.now?.() ?? nowString(),
+
+-- B. src/pao 旧状态值字面量（命中均为 kept 面：FanoutFinalState 计数面/体检探针内码）
+src/pao\fanout\execute.ts:49:export type FanoutFinalState = "成功" | "失败" | "结果未知" | "取消" | "未拉起";
+src/pao\fanout\execute.ts:55:	canceled: "取消",
+src/pao\fanout\execute.ts:166:			? { 卡号: cardNo, 终态: "取消", 未拉起原因: "扇出已停止,该卡仍在排队,未拉起" }
+src/pao\fanout\execute.ts:305:				终态: cancelled ? "取消" : "未拉起",
+src/pao\fanout\execute.ts:336:			const pendingWrapUp = known === undefined || known.终态 === "取消";
+src/pao\fanout\execute.ts:359:					...(known ?? { 卡号: item.cardNo, 终态: "取消" as const, 未拉起原因: "扇出已停止,该卡仍在排队,未拉起" }),
+src/pao\workflow\control.ts:200:		状态: CardStatus | "已交付" | "进行中" | "未落卡";
+src/pao\workflow\control.ts:233:				? ("已交付" as const)
+src/pao\workflow\control.ts:234:				: (bad?.frontmatter.status ?? (cards.length ? ("进行中" as const) : ("未落卡" as const))),
+src/pao\workflow\control.ts:269:				node.状态 === "已交付"
+src/pao\workflow\control.ts:271:					: node.状态 === "进行中"
+
+-- C. test/pao 原始卡文本旧键（--- 块；应只剩 migration-migrate 测试的旧卡样例）
+test/pao\migration-migrate.test.ts:38:目标: 全谱正例卡
+test/pao\migration-migrate.test.ts:39:部门: 核心机制
+test/pao\migration-migrate.test.ts:42:验收: 键值全对账
+test/pao\migration-migrate.test.ts:49:尝试: 2
+test/pao\migration-migrate.test.ts:50:创建: "2026-10-02 19:31"
+test/pao\migration-migrate.test.ts:52:状态: 已交付
+test/pao\migration-migrate.test.ts:79:目标: ${status}样本
+test/pao\migration-migrate.test.ts:80:部门: 核心
+test/pao\migration-migrate.test.ts:81:验收: 样本
+test/pao\migration-migrate.test.ts:82:尝试: 0
+test/pao\migration-migrate.test.ts:83:创建: "2026-10-02 19:31"
+test/pao\migration-migrate.test.ts:84:状态: ${status}
+test/pao\migration-migrate.test.ts:91:目标: 失败类型样本
+test/pao\migration-migrate.test.ts:92:部门: 核心
+test/pao\migration-migrate.test.ts:93:验收: 样本
+test/pao\migration-migrate.test.ts:94:尝试: 1
+test/pao\migration-migrate.test.ts:95:创建: "2026-10-02 19:31"
+test/pao\migration-migrate.test.ts:96:状态: 失败
+test/pao\migration-migrate.test.ts:229:目标: x
+test/pao\migration-migrate.test.ts:230:部门: 核心
+test/pao\migration-migrate.test.ts:231:验收: x
+test/pao\migration-migrate.test.ts:232:尝试: 1
+test/pao\migration-migrate.test.ts:233:创建: "2026-10-02 19:31"
+test/pao\migration-migrate.test.ts:234:状态: 进行中
+
+-- D. 工具注册名
+pao_* 英文名 39
+旧中文工具名注册（应为空）：

@@ -1,0 +1,43 @@
+T08 修复 F7 · PAO 仓根未登记残留处置 · 2026-10-06
+对象：PAO/pnpm-lock.yaml 与 PAO/pnpm-workspace.yaml（R18-P2-③，执行记录 CP27 主控裁定①）
+
+== 删除前状态 ==
+/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml | 大小=32668字节 | mtime=2026-10-06 10:43:03.020347900 +0800
+/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml | 大小=50字节 | mtime=2026-10-06 10:43:03.397887800 +0800
+
+pnpm-lock.yaml 首行: lockfileVersion: '9.0'
+pnpm-workspace.yaml 首行: allowBuilds:
+（workspace 全文即 allowBuilds 占位 stub；lock 为 pnpm lockfileVersion 9.0 自动生成）
+
+== 核证 ==
+1) git -C PAO status --porcelain：两文件均显示 ?? (untracked) — 成立，EXIT=0
+2) 内容核证：均为 pnpm 自动生成物（stub+lockfile） — 成立
+3) 开工快照 D:\AI\workspace\临时文件夹\整体重构-20261005\开工快照\PAO-status.txt（2026-10-05 21:08）清单及 PAO-untracked/ 副本树均无此两文件 — 开工时不存在，成立
+
+== 删除 ==
+removed '/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml'
+rm pnpm-lock.yaml EXIT=0
+removed '/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml'
+rm pnpm-workspace.yaml EXIT=0
+
+== 删除后 ==
+ls: cannot access '/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml': No such file or directory
+ls: cannot access '/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml': No such file or directory
+grep pnpm 残留 EXIT=1（1=已无残留）
+
+═══ 补记（同日 11:49–11:51，F7 项②重跑引发）═══
+项②按令用原始命令 pnpm --dir … exec tsc --noEmit 重跑时，pnpm run 前依赖检查自动 install，
+再次生成同名两生成物并再次失败于同一审批门（TSC_EXIT=1，见 T08-类型3-修复重跑-20261006.log）：
+/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml | 大小=32668字节 | mtime=2026-10-06 11:49:45.448460600 +0800
+/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml | 大小=50字节 | mtime=2026-10-06 11:49:46.100958600 +0800
+pnpm-workspace.yaml 首行: allowBuilds:
+（与删除前完全同款：lockfile 32668 字节、stub 50 字节——证实两文件即该失败路径的自动产物，R18 归因成立）
+removed '/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml'
+rm pnpm-lock.yaml EXIT=0
+removed '/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml'
+rm pnpm-workspace.yaml EXIT=0
+ls: cannot access '/d/AI/workspace/pao-dev/PAO/pnpm-lock.yaml': No such file or directory
+ls: cannot access '/d/AI/workspace/pao-dev/PAO/pnpm-workspace.yaml': No such file or directory
+
+提示（留档，不在本任务修复面）：只要 pnpm run 前依赖检查在 PAO 根触发 install，两生成物就会再生；
+根治须 harness 方处理审批门（CP25 偏离③已移交）或正式登记 pnpm-workspace.yaml。

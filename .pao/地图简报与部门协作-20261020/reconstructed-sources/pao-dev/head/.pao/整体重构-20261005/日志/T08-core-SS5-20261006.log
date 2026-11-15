@@ -1,0 +1,78 @@
+
+=== SS5 2026-10-06 09:50:18 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts apps/desktop/tests/core/workspace-file-lines.spec.ts apps/desktop/tests/core/workspace-files.spec.ts apps/desktop/tests/core/workspace-menu.spec.ts apps/desktop/tests/core/worktrees.spec.ts
+
+Running 9 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external (54.3s)
+  ok 2 apps\desktop\tests\core\workspace-files.spec.ts:36:5 › Files workbench puts the explorer to the right of an open file pane (18.6s)
+  ok 3 apps\desktop\tests\core\workspace-files.spec.ts:95:5 › Files explorer drops the previous workspace tree after a folder switch (28.7s)
+  ok 4 apps\desktop\tests\core\workspace-menu.spec.ts:12:5 › supports workspace rename and remove from the sidebar menu (18.1s)
+  ok 5 apps\desktop\tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI (10.6s)
+  x  6 apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile (4.5s)
+  ok 7 apps\desktop\tests\core\worktrees.spec.ts:232:5 › shows a worktree icon in the sidebar without a local text badge (23.3s)
+  ok 8 apps\desktop\tests\core\worktrees.spec.ts:284:5 › keeps orphaned worktree workspaces visible after removing the root workspace (12.1s)
+  ok 9 apps\desktop\tests\core\worktrees.spec.ts:336:5 › a git worktree the user opens is its own folder and nests the worktrees made from it (13.4s)
+
+
+  1) apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.timeline-item--assistant').getByRole('button', { name: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-TGRaaJ\\file-line-workspace/src/app.ts:3', exact: true })[22m
+
+
+      170 |       "marker-3",
+      171 |     );
+    > 172 |     await fileButton(assistant, `${workspacePath}/src/app.ts:3`).click();
+          |                                                                  ^
+      173 |     await expect(window.locator('[data-testid="file-line-mark"][data-line="3"]')).toBeVisible();
+      174 |
+      175 |     await fileButton(assistant, "notes").click();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workspace-file-lines.spec.ts:172:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"worktree"[39m
+    Received: [31m"primary"[39m
+
+      135 |       await addWorkspaceViaIpc(window, legacyWorktree);
+      136 |       const legacyWorkspace = await waitForWorkspaceByPath(window, canonicalLegacyWorktree);
+    > 137 |       expect(legacyWorkspace.kind).toBe("worktree");
+          |                                    ^
+      138 |
+      139 |       await window
+      140 |         .getByRole("button", { name: `Workspace actions for ${rootWorkspace.name}` })
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\worktrees.spec.ts:137:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+    apps\desktop\tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+  7 passed (3.1m)
+SS5_EXIT=1

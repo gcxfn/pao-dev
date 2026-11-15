@@ -1,0 +1,169 @@
+
+=== SS4 2026-10-06 09:41:00 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts apps/desktop/tests/core/transcript-annotations.spec.ts apps/desktop/tests/core/transcript-staleness.spec.ts apps/desktop/tests/core/tree-command.spec.ts apps/desktop/tests/core/turn-changes-card.spec.ts apps/desktop/tests/core/unread-state.spec.ts apps/desktop/tests/core/workbench-tabs.spec.ts
+
+Running 17 tests using 1 worker
+
+  x   1 apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message (1.5m)
+  ok  2 apps\desktop\tests\core\transcript-annotations.spec.ts:239:5 › a multi-line drag that runs past the text still adds its lines (53.8s)
+  ok  3 apps\desktop\tests\core\transcript-staleness.spec.ts:17:5 › shows messages appended to the pi session file by an external writer after relaunch (11.5s)
+  ok  4 apps\desktop\tests\core\tree-command.spec.ts:18:5 › opens /tree from the composer, navigates branches, and blocks it on the new-thread surface (23.7s)
+  x   5 apps\desktop\tests\core\tree-command.spec.ts:114:5 › restores focus to a remaining extension dialog after the tree modal closes (35.9s)
+  ok  6 apps\desktop\tests\core\tree-command.spec.ts:171:5 › renders tool results with compact previews in the tree modal (7.3s)
+  ok  7 apps\desktop\tests\core\tree-command.spec.ts:205:5 › opens /tree on a long branched session whose deepest path passes 500 entries (14.4s)
+  x   8 apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff (18.0s)
+  ok  9 apps\desktop\tests\core\unread-state.spec.ts:19:5 › selecting an unread thread persists read state through the latest known activity (17.4s)
+  ok 10 apps\desktop\tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser (49.3s)
+  ok 11 apps\desktop\tests\core\workbench-tabs.spec.ts:187:5 › restores each task's tabs and draft through Settings, switching, and restart (46.4s)
+  ok 12 apps\desktop\tests\core\workbench-tabs.spec.ts:250:5 › an invalid or orphaned task layout does not block other saved UI state (38.2s)
+  ok 13 apps\desktop\tests\core\workbench-tabs.spec.ts:315:5 › assistant file links keep the opened document with their originating task (21.3s)
+  ok 14 apps\desktop\tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell (25.4s)
+  ok 15 apps\desktop\tests\core\workbench-tabs.spec.ts:380:5 › two windows keep independent live tool selections for the same task (21.9s)
+  ok 16 apps\desktop\tests\core\workbench-tabs.spec.ts:408:5 › keeps one resizable width across tools, chooser, tasks, and restart (1.0m)
+  x  17 apps\desktop\tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog (16.4s)
+
+
+  1) apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+
+    [31mTest timeout of 90000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\tree-command.spec.ts:114:5 › restores focus to a remaining extension dialog after the tree modal closes 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('tree-modal').getByRole('button', { name: 'Close tree modal' })[22m
+    [2m    - locator resolved to <button type="button" class="tree-modal__close" aria-label="Close tree modal">×</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="extension-dialog-backdrop">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="extension-dialog-backdrop">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    11 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="extension-dialog-backdrop">…</div> intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      160 |     await expect(window.getByTestId("tree-modal-search")).toBeFocused();
+      161 |
+    > 162 |     await treeModal.getByRole("button", { name: "Close tree modal" }).click();
+          |                                                                       ^
+      163 |     await expect(treeModal).toHaveCount(0);
+      164 |     await expect(extensionDialog).toBeVisible();
+      165 |     await expect(extensionCancel).toBeFocused();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\tree-command.spec.ts:162:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-tree-command-restores-7207d-after-the-tree-modal-closes\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-tree-command-restores-7207d-after-the-tree-modal-closes\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-tree-command-restores-7207d-after-the-tree-modal-closes\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"line two"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      139 |       panel.locator('.diff-panel__file--selected[data-file-path="src/nested/f.txt"]'),
+      140 |     ).toBeVisible();
+    > 141 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      142 |       "line two",
+      143 |     );
+      144 |
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\turn-changes-card.spec.ts:141:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.composer').getByRole('button', { name: 'medium', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.composer').getByRole('button', { name: 'medium', exact: true })[22m
+
+
+      525 |     await expect(
+      526 |       window.locator(".composer").getByRole("button", { name: "medium", exact: true }),
+    > 527 |     ).toBeVisible();
+          |       ^
+      528 |     await window.screenshot({ path: testInfo.outputPath("gpt-6-sol-selected.png") });
+      529 |   } finally {
+      530 |     await harness.close();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workbench-tabs.spec.ts:527:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-shows--67d47-e-upgraded-Pi-model-catalog\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-shows--67d47-e-upgraded-Pi-model-catalog\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workbench-tabs-shows--67d47-e-upgraded-Pi-model-catalog\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+    apps\desktop\tests\core\tree-command.spec.ts:114:5 › restores focus to a remaining extension dialog after the tree modal closes 
+    apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+    apps\desktop\tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog 
+  13 passed (9.3m)
+SS4_EXIT=1

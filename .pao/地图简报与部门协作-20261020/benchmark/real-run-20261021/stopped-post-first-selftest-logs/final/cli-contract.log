@@ -1,0 +1,23 @@
+== no arguments ==
+exit=2
+stdout=
+stderr=usage: python3 filter.py <html-file> | --check <html-file>
+traceback_lines=0
+
+== bad path (does not exist) ==
+exit=1
+stdout=
+stderr=error: cannot read /tmp/pf/final/no-such-file.html: No such file or directory
+traceback_lines=0
+
+== path is a directory ==
+exit=1
+stderr=error: cannot read /tmp/pf/final/sh/adir: Is a directory
+traceback_lines=0
+
+== optional --check mode is read-only ==
+check: /tmp/pf/final/sh/checkme.html: unsafe: dangerous URL in 'href'
+check_dirty_exit=1
+check_readonly_cmp_exit=0
+check: /tmp/pf/final/sh/checkclean.html: clean
+check_clean_exit=0

@@ -1,0 +1,1340 @@
+diff --git a/packages/coding-agent/src/pao/worker/dispatch-core.ts b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+index 9e3ce0ada..c454a3377 100644
+--- a/packages/coding-agent/src/pao/worker/dispatch-core.ts
++++ b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+@@ -86,7 +86,7 @@ import type { WorkerSupervisionRoute } from "./supervision.ts";
+ // ── 提示词与分型(自 fanout/plan 迁入;fanout/plan 转发导出,公共面不变) ──────────
+ 
+ /** worker 提示词：冻结简报携带本次任务，卡文件用于追溯。
+- *  末段 JSON 协议即 schema 正本(伴生形态,2026-10-07 S5 包1起含任务态四态+verification+changes)。 */
++ *  结果协议优先经托管工具交给父进程，旧 JSON 文本作为同一 schema 的兼容入口。 */
+ export function buildWorkerPrompt(
+ 	card: ParsedCard,
+ 	attemptNo: number,
+@@ -119,8 +119,12 @@ export function buildWorkerPrompt(
+ 				]
+ 			: []),
+ 		"核对目标、限制与验收；可读取依赖文件、必要定义及直接调用点，限任务影响范围。简报、地图或契约与源码冲突时停止并报告。延续会话中的旧现场仅作背景，以本次任务、权限和认领基线为准。",
+-		'最后一条助手消息只输出 JSON 回执：{"result":"success","artifact_path":[],"summary":"不超过 3 行","任务态":"completed","verification":[],"changes":[]}。失败/未知加 failure_type（transient/missing_input/insufficient_capability/unknown_outcome），不得用退出码或普通说明代替回执。',
+-		'任务态：completed=验收全达标；completed_with_deviations=有未达项但可交付；blocked=缺用户输入；checkpoint=到决策点须指引。verification 逐项记录 {"条件":"…","结论":"pass|fail|not_run","证据":"…"}，没跑写 not_run。changes 记录 {"路径":"…","类型":"created|modified|deleted|moved","说明":"…"}，含源码等本次所有写操作。artifact_path 仅列本次新增或改写且真实存在的文件产物，相对项目根；没有则 []。认领前及前次成果、只读复验只能作证据，不列为本次 changes 或 artifact_path。交回前与认领基线核对；自报不代替程序验收。',
++		'任务完成或确定失败后，优先调用 pao_submit_receipt：{"result":"success","artifact_path":[],"summary":"不超过 3 行","任务态":"completed","verification":[],"changes":[]}。该调用成功后的最后一条助手消息可写普通说明，不必重复 JSON。失败/未知必须给 failure_type（transient/missing_input/insufficient_capability/unknown_outcome）。',
++		'若当前环境没有该工具，才在最后一条助手消息输出上面同一 schema 的 JSON 回执。工具已开始但未成功结束、调用失败或多次调用时不能改用文本回执；普通退出码不能代替回执。',
++		'任务态：completed=验收全达标；completed_with_deviations=有未达项但可交付；blocked=缺用户输入；checkpoint=到决策点须指引。verification 逐项记录 {"条件":"…","结论":"pass|fail|not_run","证据":"…"}，没跑写 not_run。changes 记录 {"路径":"…","类型":"created|modified|deleted|moved","说明":"…"}，含源码等本次所有写操作。artifact_path 仅列本次新增或改写且真实存在的文件产物，相对当前执行根；没有则 []。认领前及前次成果、只读复验只能作证据，不列为本次 changes 或 artifact_path。交回前与认领基线核对；自报不代替程序验收。',
++		"不得在结果参数中填写卡号、尝试号、run 标识、执行根、用量、证据路径或退出码；这些程序事实由宿主从事件流和当前 ExecutionBinding 采集。工具只提交当前尝试的自述结果，不改卡状态、不验收、不交卷、不再派发。",
++		"verification 记录本次由你负责的检查：必做却未做的检查必须写 not_run，失败必须写 fail。明确交给后续部长或独立审核员的复核职责，留在任务要求中并在 summary 注明待审，不混入你的自检结果，也不得冒称已通过。自检未达由主控逐项裁决；后续审核由系统另行发起。",
++		"verification 每项都须含非空条件和合法结论；补充说明放 summary，不在数组中插入说明对象，否则整份回执无效。",
+ 		...(process.platform === "win32"
+ 			? ["含中文的 .ps1 用 UTF-8 BOM 保存，并实际运行验证（兼容 PowerShell 5.1）。"]
+ 			: []),
+@@ -839,6 +843,11 @@ async function queueProjectWrite(root: string, signal?: AbortSignal): Promise<()
+ export interface ExecuteDispatchOptions {
+ 	运行器: WorkerRunner;
+ 	paoHome?: string;
++	/**
++	 * 在共享短锁内、正式认领前执行调用方的原子事务。
++	 * 工作流自动链用它同时完成实例额度预留与卡认领；普通派发不传时行为不变。
++	 */
++	claimTransaction?: (claim: () => Promise<DispatchClaimResult>) => Promise<DispatchClaimResult>;
+ 	/**
+ 	 * 宿主解析本次执行的权威工作树证明。正式派发必须提供；单根 CLI 显式安装
+ 	 * createSingleRootWorktreeHost，桌面通过 PaoWorktreeHost 的 RPC 代理注入。
+@@ -1264,10 +1273,12 @@ export async function executeDispatch<T>(
+ 					? ({ 可派: false as const, 原因: takeoverBlocked } as const)
+ 					: gateRefusal !== undefined
+ 						? ({ 可派: false as const, 原因: `总预算门禁拒绝派发：${gateRefusal}` } as const)
+-						: await claimCardForDispatch({ ...input, deferBaseline: true });
++						: await (options.claimTransaction ?? ((claim) => claim()))(() =>
++								claimCardForDispatch({ ...input, deferBaseline: true }),
++							);
+ 			if (!claimed.可派) {
+ 				// 门禁已放行但最终没认领成功（依赖未放行/状态不允许/并发变更）:没有开跑,
+-				// 预留由 finally 统一归还,这里只如实给出拒派原因。
++				// 执行名额由 finally 归还；调用方的认领事务自行结算其额度。这里只给出拒派原因。
+ 				outcome = claimed;
+ 			} else {
+ 				dispatchIdentity = claimed.card.path;
+@@ -1462,6 +1473,7 @@ export async function executeDispatch<T>(
+ 						snapshotDigest: snapshot.snapshotDigest,
+ 						worktreeBindingDigest: authoritative.bindingDigest,
+ 						executionBindingDigest: executionIdentity.bindingDigest,
++						executionBinding: executionIdentity,
+ 						...(claimed.claimBaseline?.available && claimed.claimBaseline.snapshotPath
+ 							? { claimBaselinePath: claimed.claimBaseline.snapshotPath }
+ 							: {}),
+diff --git a/packages/coding-agent/src/pao/worker/post-dispatch.ts b/packages/coding-agent/src/pao/worker/post-dispatch.ts
+index a8229cde0..feae0f7fe 100644
+--- a/packages/coding-agent/src/pao/worker/post-dispatch.ts
++++ b/packages/coding-agent/src/pao/worker/post-dispatch.ts
+@@ -1,9 +1,9 @@
+ /** 派发结束并释放执行锁后的共同完成链；直接任务与工作流共用核查、验收及交付。 */
+ import {
+ 	baselineSnapshotPath,
+-	captureContentTree,
+ 	checkBoundaryWrite,
+ 	diffAgainstBaseline,
++	verifyReviewEvidenceVersion,
+ } from "../cards/baseline.ts";
+ import { deliverCard } from "../cards/delivery.ts";
+ import { changeCardStatus, parseCardRef, projectRootForCards } from "../cards/index.ts";
+@@ -150,28 +150,46 @@ export async function completeDispatchedTask(options: PostDispatchOptions): Prom
+ 	options.signal?.throwIfAborted();
+ 	const boundaryChange = changedCardReason(options);
+ 	if (boundaryChange) return boundaryChange;
+-	if (reviewSourceTree !== undefined) {
+-		const current = await captureContentTree(projectRootForCards(cardsDir), options.signal);
+-		const reviewChange = changedCardReason(options);
+-		if (reviewChange) return reviewChange;
+-		if (current.tree !== reviewSourceTree || diff.worker改动.length > 0) {
+-			await failCard(
+-				cardsDir,
++	const declarations = receipt.changes?.map((change) => change.路径) ?? receipt.artifact_path ?? [];
++	let reviewBoundary: ReturnType<typeof checkBoundaryWrite> | undefined;
++	if (independentReview) {
++		if (reviewSourceTree === undefined) return `${label}独立审核缺少派发前原成果版本，拒绝把副本内容冒充原成果`;
++		try {
++			const reviewVersion = await verifyReviewEvidenceVersion({
++				diff,
++				declarations,
++				expectedCopyTree: diff.当前Tree ?? "",
++				expectedSourceTree: reviewSourceTree,
++				projectRoot: projectRootForCards(cardsDir),
++				signal: options.signal,
++			});
++			if (options.runner.isStopped()) return `${label}执行器已全停，保留审核证据和原项目现状，不再验收或交卷`;
++			options.signal?.throwIfAborted();
++			const reviewChange = changedCardReason(options);
++			if (reviewChange) return reviewChange;
++			reviewBoundary = reviewVersion.boundary;
++			steps.push({
+ 				cardRef,
+-				operator,
+-				"unknown_outcome",
+-				"验证期间业务内容发生变化；验证卡只能提交证据，不得修改业务成果",
+-			);
+-			steps.push({ cardRef, stage: "失败", note: "验证卡修改了业务内容或原项目版本已变化" });
+-			return `卡${cardRef} 审核验证成果版本不一致，拒绝放行；副本与证据保留供核查`;
++				stage: "越界",
++				note: `原成果 ${reviewVersion.sourceTree}；审核副本 ${reviewVersion.copyTree}；${reviewVersion.boundary.汇总}`,
++			});
++		} catch (error) {
++			if (options.runner.isStopped()) return `${label}执行器已全停，保留审核证据和原项目现状，不再验收或交卷`;
++			options.signal?.throwIfAborted();
++			const reviewChange = changedCardReason(options);
++			if (reviewChange) return reviewChange;
++			const reason = error instanceof Error ? error.message : String(error);
++			await failCard(cardsDir, cardRef, operator, "unknown_outcome", reason);
++			steps.push({ cardRef, stage: "失败", note: reason });
++			return `${label}审核验证成果版本不一致，拒绝放行；副本与证据保留供核查`;
+ 		}
+ 	}
+-	const check = checkBoundaryWrite(
+-		diff,
+-		receipt.changes?.map((change) => change.路径) ?? receipt.artifact_path ?? [],
+-		{ 项目根: diff.项目根 },
+-	);
+-	steps.push({ cardRef, stage: "越界", note: check.汇总 });
++	const check =
++		reviewBoundary ??
++		checkBoundaryWrite(diff, declarations, {
++			项目根: diff.项目根,
++		});
++	if (!reviewBoundary) steps.push({ cardRef, stage: "越界", note: check.汇总 });
+ 	if (check.结论 === "虚报" || check.结论 === "越界" || check.结论 === "虚报+越界") {
+ 		const basis = `越界核查 ${check.结论}：${check.汇总}（改动与声明对不上，结果不可信）`;
+ 		await failCard(cardsDir, cardRef, operator, "unknown_outcome", basis);
+@@ -220,6 +238,11 @@ export async function completeDispatchedTask(options: PostDispatchOptions): Prom
+ 		return `${label}验收未过，卡状态或尝试已变化，保留现状并停链`;
+ 	}
+ 	if (verification.结论 !== "全过自动交付") {
++		if ((verification.自报未达项?.length ?? 0) > 0) {
++			const reason = `${label}存在自报未达项，未创建部长审核请求，链停留 owner 逐项裁决；请用 pao_verify_card 核对当前 attempt 的索引与条件，再由主控经 pao_change_status、basis 与 accepted_deviations 逐项处理，不能猜 request_id 或由部长代放行`;
++			steps.push({ cardRef, stage: "停审", note: reason });
++			return reason;
++		}
+ 		if (verification.结论 === "全过停人工审" && options.onReviewRequired && !options.runner.isStopped()) {
+ 			const executionRoot = verification.执行上下文?.executionRoot ?? diff.项目根 ?? projectRootForCards(cardsDir);
+ 			const event: PostDispatchReviewEvent = {
+diff --git a/packages/coding-agent/src/pao/worker/receipt.ts b/packages/coding-agent/src/pao/worker/receipt.ts
+index a2cfe1bc2..406b5b7b8 100644
+--- a/packages/coding-agent/src/pao/worker/receipt.ts
++++ b/packages/coding-agent/src/pao/worker/receipt.ts
+@@ -3,8 +3,8 @@
+  * 用量只从子进程 stdout JSON 事件流(message_end)取,不采信模型正文自报。
+  */
+ 
+-import { existsSync } from "node:fs";
+-import { isAbsolute, resolve } from "node:path";
++import { existsSync, realpathSync } from "node:fs";
++import { isAbsolute, relative, resolve, sep } from "node:path";
+ import type { FailureType, ReceiptChange, ReceiptVerification, TaskState } from "../cards/types.ts";
+ import { extractTextContent } from "../shared/text-content.ts";
+ import type { WorkerUsage } from "../shared/usage.ts";
+@@ -29,6 +29,13 @@ export function isReceiptToolCall(line: string): boolean {
+ 
+ export type WorkerStatus = "success" | "failed" | "canceled" | "unknown";
+ 
++export interface WorkerReceiptToolEvent {
++	toolCallId: string;
++	args: unknown;
++	/** undefined=已开始但尚未收到结束事件；true=成功结束；false=失败结束。 */
++	succeeded?: boolean;
++}
++
+ export interface WorkerReceipt {
+ 	card_no: string;
+ 	attempt: number;
+@@ -73,16 +80,20 @@ export interface WorkerReceipt {
+ 	changes?: ReceiptChange[];
+ 	/** 派发链对外部声明的收窄告警（技能忽略/工具截严，S5 包2）；随回执送达 owner。 */
+ 	派发告警?: string[];
+-	/** 严格入口拒收后，仅凭唯一完整 json 围栏与严格 schema 恢复的审计标记；不表示放宽解析或直接成功。 */
++	/** 严格入口拒收后，仅凭唯一完整 json 围栏或唯一裸 JSON 对象与严格 schema 恢复的审计标记；不表示直接成功。 */
+ 	receipt_format_recovery?: {
+ 		/** 原始严格解析错误，原样留痕。 */
+ 		strict_error: string;
++		/** 实际命中的恢复外壳；缺省只为兼容旧调用方。 */
++		recognized_by?: "fenced" | "bare";
+ 		/**
+ 		 * 格式恢复审计文件；写方须在同一原始证据目录留档唯一候选规则、严格错误和原证据引用。
+ 		 * 缺省表示调用方尚未落审计文件，不能把它当成已验证恢复。
+ 		 */
+ 		evidence_path?: string;
+ 	};
++	/** 结构化结果实际取自工具、严格文本或受控文本恢复。 */
++	result_source?: WorkerResultSource;
+ }
+ 
+ /** 必填字段(缺任一判无效):card_no/attempt/status/artifact_path/summary/usage/evidence_path */
+@@ -158,6 +169,8 @@ export interface WorkerEventState {
+ 	缺用量轮次: number;
+ 	工具调用次数: number;
+ 	开始轮次: number;
++	/** 本子进程事件流收到的回执工具调用；结束事件按 toolCallId 回填。 */
++	receipt_tool_calls: WorkerReceiptToolEvent[];
+ }
+ 
+ export function createEventState(): WorkerEventState {
+@@ -167,6 +180,7 @@ export function createEventState(): WorkerEventState {
+ 		缺用量轮次: 0,
+ 		工具调用次数: 0,
+ 		开始轮次: 0,
++		receipt_tool_calls: [],
+ 	};
+ }
+ 
+@@ -177,6 +191,10 @@ export function absorbEvent(state: WorkerEventState, line: string): boolean {
+ 		type?: string;
+ 		id?: string;
+ 		field?: string;
++		toolCallId?: string;
++		toolName?: string;
++		args?: unknown;
++		isError?: boolean;
+ 		message?: {
+ 			role?: string;
+ 			model?: string;
+@@ -207,7 +225,23 @@ export function absorbEvent(state: WorkerEventState, line: string): boolean {
+ 	if (absorbAuxiliaryUsage(state, event).handled) return true;
+ 	if (event.type === "turn_start") state.开始轮次++;
+ 	if (event.type === "pao_worker_budget_exhausted") state.stopReason = `budget:${event.field ?? "未知"}`;
+-	if (event.type === "tool_execution_start") state.工具调用次数++;
++	if (event.type === "tool_execution_start") {
++		state.工具调用次数++;
++		if (event.toolName === RECEIPT_TOOL_NAME && typeof event.toolCallId === "string") {
++			state.receipt_tool_calls.push({
++				toolCallId: event.toolCallId,
++				args: event.args,
++			});
++		}
++	}
++	if (event.type === "tool_execution_end" && typeof event.toolCallId === "string") {
++		if (event.toolName !== RECEIPT_TOOL_NAME) return true;
++		const call = state.receipt_tool_calls.find((candidate) => candidate.toolCallId === event.toolCallId);
++		if (call) {
++			// 同一调用只能结束一次；重复结束即使内容互相矛盾也整份拒绝，不能由最后一条覆盖。
++			call.succeeded = call.succeeded === undefined ? event.isError === false : false;
++		}
++	}
+ 	if (event.type !== "message_end" || !event.message) return true;
+ 	const msg = event.message;
+ 	if (msg.role !== "assistant") return true;
+@@ -248,6 +282,16 @@ export interface WorkerFinalResult {
+ 	changes?: ReceiptChange[];
+ }
+ 
++export type WorkerResultSource = "tool" | "text" | "text_recovery";
++
++export interface WorkerResultEvaluation {
++	result: WorkerFinalResult;
++	source: WorkerResultSource;
++	receiptText?: string;
++	strictError?: string;
++	recognizedBy?: "fenced" | "bare";
++}
++
+ export type WorkerFinalReceiptDiagnostic =
+ 	| {
+ 			kind: "strict";
+@@ -256,7 +300,7 @@ export type WorkerFinalReceiptDiagnostic =
+ 			receiptText: string;
+ 	  }
+ 	| {
+-			kind: "fenced";
++			kind: "fenced" | "bare";
+ 			parsed: WorkerFinalResult;
+ 			rawText: string;
+ 			receiptText: string;
+@@ -264,25 +308,35 @@ export type WorkerFinalReceiptDiagnostic =
+ 	  };
+ 
+ /**
+- * runner 的受控格式恢复：先确认正式解析失败，再且仅再接受唯一完整 json 围栏。
+- * 无唯一围栏、重复围栏或错误 schema 都返回 undefined；原错误与原文由诊断对象原样带回。
++ * runner 的受控格式恢复：先确认正式解析失败，再且仅再接受唯一完整 json 围栏，
++ * 或普通说明文字中唯一完整裸 JSON 对象。错误 schema 仍返回 undefined；
++ * 原错误与原文由诊断对象原样带回。
+  */
+ export function recoverWorkerFinalReceiptFormat(
+ 	text: string,
+ 	cwd: string,
+-): Extract<WorkerFinalReceiptDiagnostic, { kind: "fenced" }> | undefined {
++): Extract<WorkerFinalReceiptDiagnostic, { kind: "fenced" | "bare" }> | undefined {
+ 	let diagnosis: WorkerFinalReceiptDiagnostic;
+ 	try {
+ 		diagnosis = diagnoseWorkerFinalReceipt(text, cwd);
+ 	} catch {
+ 		return undefined;
+ 	}
+-	return diagnosis.kind === "fenced" ? diagnosis : undefined;
++	return diagnosis.kind === "strict" ? undefined : diagnosis;
+ }
+ 
+ const TASK_STATE_SET = new Set<string>(["completed", "completed_with_deviations", "blocked", "checkpoint"]);
+ const VERIFY_RESULTS = new Set<string>(["pass", "fail", "not_run"]);
+ const CHANGE_TYPES = new Set<string>(["created", "modified", "deleted", "moved", "untouched"]);
++const WORKER_RESULT_FIELDS = new Set([
++	"result",
++	"artifact_path",
++	"summary",
++	"failure_type",
++	"任务态",
++	"verification",
++	"changes",
++]);
+ 
+ /** F-A7 自报三件套形状校验（S5 包1）：任务态四态、verification 结论三值、changes 类型五值。 */
+ function parseSelfReport(result: Record<string, unknown>): {
+@@ -297,6 +351,9 @@ function parseSelfReport(result: Record<string, unknown>): {
+ 	if (result.verification !== undefined) {
+ 		if (!Array.isArray(result.verification)) throw new Error("最终回执 verification 须为数组");
+ 		verification = result.verification.map((item) => {
++			if (item === null || typeof item !== "object" || Array.isArray(item)) {
++				throw new Error("verification 条目须为对象");
++			}
+ 			const v = item as Record<string, unknown>;
+ 			if (typeof v.条件 !== "string" || !v.条件.trim()) throw new Error("verification 条目须带非空 条件");
+ 			if (!VERIFY_RESULTS.has(String(v.结论))) throw new Error("verification 条目结论须为 pass/fail/not_run");
+@@ -311,6 +368,9 @@ function parseSelfReport(result: Record<string, unknown>): {
+ 	if (result.changes !== undefined) {
+ 		if (!Array.isArray(result.changes)) throw new Error("最终回执 changes 须为数组");
+ 		changes = result.changes.map((item) => {
++			if (item === null || typeof item !== "object" || Array.isArray(item)) {
++				throw new Error("changes 条目须为对象");
++			}
+ 			const c = item as Record<string, unknown>;
+ 			if (typeof c.路径 !== "string" || !c.路径.trim()) throw new Error("changes 条目须带非空 路径");
+ 			if (!CHANGE_TYPES.has(String(c.类型)))
+@@ -329,15 +389,81 @@ function parseSelfReport(result: Record<string, unknown>): {
+ 	};
+ }
+ 
+-function parseJsonReceiptBody(body: string, cwd: string): WorkerFinalResult {
+-	let parsed: unknown;
++function pathIsOutside(root: string, candidate: string): boolean {
++	const rel = relative(root, candidate);
++	return rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel);
++}
++
++function validateArtifactPaths(artifacts: string[], executionRoot: string): void {
++	if (artifacts.length === 0) return;
++	let canonicalRoot: string;
+ 	try {
+-		parsed = JSON.parse(body);
++		canonicalRoot = realpathSync.native(resolve(executionRoot));
+ 	} catch {
+-		throw new Error("最终输出缺少有效 JSON 回执（result、artifact_path、summary）");
++		throw new Error(`当前执行根不可用，拒绝解析产物：${resolve(executionRoot)}`);
++	}
++	const missing: string[] = [];
++	for (const artifact of artifacts) {
++		if (isAbsolute(artifact)) {
++			throw new Error(`回执声明的产物须使用相对当前执行根的路径：${artifact}`);
++		}
++		const candidate = resolve(canonicalRoot, artifact);
++		if (pathIsOutside(canonicalRoot, candidate)) {
++			throw new Error(`回执声明的产物越出当前执行根：${artifact}`);
++		}
++		if (!existsSync(candidate)) {
++			missing.push(artifact);
++			continue;
++		}
++		let realCandidate: string;
++		try {
++			realCandidate = realpathSync.native(candidate);
++		} catch {
++			missing.push(artifact);
++			continue;
++		}
++		if (pathIsOutside(canonicalRoot, realCandidate)) {
++			throw new Error(`回执声明的产物经链接越出当前执行根：${artifact}`);
++		}
++	}
++	if (missing.length) throw new Error(`回执声明的产物不存在：${missing.join("、")}`);
++}
++
++/**
++ * 旧文本回执只保留 worker 可声明的字段，并把执行根内绝对产物路径规范为相对路径。
++ * 这是入口兼容层；字段、内容与最终 realpath 边界仍由下方共用验证器统一核验。
++ */
++function normalizeLegacyWorkerResultInput(input: unknown, executionRoot: string): unknown {
++	if (!input || typeof input !== "object" || Array.isArray(input)) return input;
++	const source = input as Record<string, unknown>;
++	const normalized: Record<string, unknown> = {};
++	for (const field of WORKER_RESULT_FIELDS) {
++		if (Object.prototype.hasOwnProperty.call(source, field)) normalized[field] = source[field];
++	}
++	if (!Array.isArray(normalized.artifact_path)) return normalized;
++	const lexicalRoot = resolve(executionRoot);
++	normalized.artifact_path = normalized.artifact_path.map((artifact) => {
++		if (typeof artifact !== "string" || !isAbsolute(artifact)) return artifact;
++		const absoluteArtifact = resolve(artifact);
++		if (pathIsOutside(lexicalRoot, absoluteArtifact)) {
++			throw new Error(`旧文本回执声明的绝对产物越出当前执行根：${artifact}`);
++		}
++		return relative(lexicalRoot, absoluteArtifact);
++	});
++	return normalized;
++}
++
++/**
++ * 工具参数与规范化后的旧文本回执共用的唯一字段验证器。
++ * 工具参数直接验证，夹带程序事实即拒绝；旧文本入口先忽略这些字段，不把它们传入验证器。
++ */
++export function validateWorkerResultInput(input: unknown, executionRoot: string): WorkerFinalResult {
++	if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("最终回执必须为对象");
++	const result = input as Record<string, unknown>;
++	const unknownFields = Object.keys(result).filter((key) => !WORKER_RESULT_FIELDS.has(key));
++	if (unknownFields.length) {
++		throw new Error(`最终回执含不允许由 worker 提交的字段：${unknownFields.join("、")}`);
+ 	}
+-	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("最终回执必须为对象");
+-	const result = parsed as Record<string, unknown>;
+ 	if (typeof result.result !== "string" || !statusSet.has(result.result as WorkerStatus)) {
+ 		throw new Error("最终回执 result 须为 success/failed/canceled/unknown");
+ 	}
+@@ -354,9 +480,11 @@ function parseJsonReceiptBody(body: string, cwd: string): WorkerFinalResult {
+ 	) {
+ 		throw new Error("失败或未知回执须给出 failure_type");
+ 	}
++	if (result.failure_type !== undefined && !failureTypes.includes(String(result.failure_type))) {
++		throw new Error("最终回执 failure_type 须为 transient/missing_input/insufficient_capability/unknown_outcome");
++	}
+ 	const artifacts = result.artifact_path as string[];
+-	const missing = artifacts.filter((p) => !existsSync(isAbsolute(p) ? p : resolve(cwd, p)));
+-	if (missing.length) throw new Error(`回执声明的产物不存在：${missing.join("、")}`);
++	validateArtifactPaths(artifacts, executionRoot);
+ 	const selfReport = parseSelfReport(result);
+ 	return {
+ 		result: result.result as WorkerStatus,
+@@ -369,6 +497,16 @@ function parseJsonReceiptBody(body: string, cwd: string): WorkerFinalResult {
+ 	};
+ }
+ 
++function parseJsonReceiptBody(body: string, executionRoot: string): WorkerFinalResult {
++	let parsed: unknown;
++	try {
++		parsed = JSON.parse(body);
++	} catch {
++		throw new Error("最终输出缺少有效 JSON 回执（result、artifact_path、summary）");
++	}
++	return validateWorkerResultInput(normalizeLegacyWorkerResultInput(parsed, executionRoot), executionRoot);
++}
++
+ function legacyStrictReceiptBody(text: string): string {
+ 	return text
+ 		.trim()
+@@ -376,6 +514,185 @@ function legacyStrictReceiptBody(text: string): string {
+ 		.replace(/\n?```$/, "");
+ }
+ 
++interface ReceiptEnvelopeCandidate {
++	kind: "fenced" | "bare";
++	receiptText: string;
++}
++
++interface MarkdownFenceBlock {
++	language: string;
++	body: string;
++}
++
++interface OpenedMarkdownFence {
++	markerChar: "`" | "~";
++	markerLength: number;
++	language: string;
++	bodyStart: number;
++}
++
++/** 以 Markdown 行语义配对代码围栏；围栏内容不参与裸 JSON 候选扫描。 */
++function scanMarkdownFences(text: string): { blocks: MarkdownFenceBlock[]; outsideSegments: string[] } {
++	const blocks: MarkdownFenceBlock[] = [];
++	const outsideSegments: string[] = [];
++	let opened: OpenedMarkdownFence | undefined;
++	let lineStart = 0;
++	let outsideStart = 0;
++	while (lineStart < text.length) {
++		const newline = text.indexOf("\n", lineStart);
++		const contentEnd = newline < 0 ? text.length : newline;
++		const lineEnd = newline < 0 ? text.length : newline + 1;
++		const line = text.slice(lineStart, contentEnd).replace(/\r$/, "");
++		const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
++		if (opened) {
++			if (
++				marker &&
++				marker[1]![0] === opened.markerChar &&
++				marker[1]!.length >= opened.markerLength &&
++				/^[ \t]*$/.test(marker[2]!)
++			) {
++				const body = text.slice(opened.bodyStart, lineStart);
++				if (/^ {0,3}(?:`{3,}|~{3,})/m.test(body)) {
++					throw new Error("最终回执不接受嵌套代码围栏");
++				}
++				blocks.push({ language: opened.language, body });
++				opened = undefined;
++				outsideStart = lineEnd;
++			}
++		} else if (marker) {
++			const markerText = marker[1]!;
++			if (markerText[0] === "`" && marker[2]!.includes("`")) {
++				throw new Error("最终回执代码围栏信息串无效");
++			}
++			outsideSegments.push(text.slice(outsideStart, lineStart));
++			opened = {
++				markerChar: markerText[0] as "`" | "~",
++				markerLength: markerText.length,
++				language: marker[2]!.trim(),
++				bodyStart: lineEnd,
++			};
++		}
++		lineStart = lineEnd;
++	}
++	if (opened) throw new Error("最终回执代码围栏未闭合");
++	outsideSegments.push(text.slice(outsideStart));
++	if (outsideSegments.some((segment) => /```|~~~/.test(segment))) {
++		throw new Error("最终回执不接受伪代码围栏");
++	}
++	return { blocks, outsideSegments };
++}
++
++/**
++ * 判断一段文本是否像在尝试写 JSON 值。这里只决定“是否计入候选”，不解析 JSON；
++ * 围栏外默认不把空对象当候选，围栏内保留原语义，真正合法性仍由后置
++ * JSON.parse 与严格 schema 判断。
++ */
++function quotedStringEnd(text: string, start: number): number {
++	const quote = text[start];
++	let escaped = false;
++	for (let index = start + 1; index < text.length; index++) {
++		const char = text[index];
++		if (escaped) escaped = false;
++		else if (char === "\\") escaped = true;
++		else if (char === quote) return index;
++	}
++	return -1;
++}
++
++function followsArrayElement(text: string, start: number): boolean {
++	const next = text.slice(start).trimStart()[0];
++	return next === "," || next === "]";
++}
++
++function looksLikeJsonArrayElement(text: string): boolean {
++	const body = text.trimStart();
++	const first = body[0];
++	if (first === undefined || first === "]") return true;
++	if (first === "{" || first === "[") return true;
++	if (first === '"' || first === "'") {
++		const end = quotedStringEnd(body, 0);
++		return end < 0 || followsArrayElement(body, end + 1);
++	}
++	return first === "-" || first === "," || /[0-9tfn]/.test(first);
++}
++
++function looksLikeAttemptedJson(text: string, allowEmptyObject = false): boolean {
++	const trimmed = text.trimStart();
++	if (trimmed.startsWith("{")) {
++		const body = trimmed.slice(1).trimStart();
++		if (body.startsWith("}")) return allowEmptyObject;
++		if (!body.startsWith('"') && !body.startsWith("'")) return false;
++		const keyEnd = quotedStringEnd(body, 0);
++		return keyEnd < 0 || /^\s*:/.test(body.slice(keyEnd + 1));
++	}
++	if (trimmed.startsWith("[")) return looksLikeJsonArrayElement(trimmed.slice(1));
++	return false;
++}
++
++function balancedJsonEnd(text: string, start: number): { end?: number; error?: string } {
++	const expectedClosers: string[] = [];
++	let inString = false;
++	let escaped = false;
++	for (let index = start; index < text.length; index++) {
++		const char = text[index];
++		if (inString) {
++			if (escaped) escaped = false;
++			else if (char === "\\") escaped = true;
++			else if (char === '"') inString = false;
++			continue;
++		}
++		if (char === '"') {
++			inString = true;
++			continue;
++		}
++		if (char === "{") expectedClosers.push("}");
++		else if (char === "[") expectedClosers.push("]");
++		else if (char === "}" || char === "]") {
++			if (expectedClosers.at(-1) !== char) return { error: "JSON 候选结构符不配对" };
++			expectedClosers.pop();
++			if (expectedClosers.length === 0) return { end: index };
++		}
++	}
++	return { error: "JSON 候选结构未闭合" };
++}
++
++function bareReceiptCandidates(segment: string): ReceiptEnvelopeCandidate[] {
++	const candidates: ReceiptEnvelopeCandidate[] = [];
++	let index = 0;
++	while (index < segment.length) {
++		if (segment[index] !== "{" && segment[index] !== "[") {
++			index++;
++			continue;
++		}
++		if (!looksLikeAttemptedJson(segment.slice(index))) {
++			index++;
++			continue;
++		}
++		const balanced = balancedJsonEnd(segment, index);
++		if (balanced.end === undefined) {
++			throw new Error(`最终回执 ${balanced.error}，拒绝猜测回执边界`);
++		}
++		const receiptText = segment.slice(index, balanced.end + 1);
++		candidates.push({ kind: "bare", receiptText });
++		index = balanced.end + 1;
++	}
++	return candidates;
++}
++
++function receiptEnvelopeCandidates(text: string): ReceiptEnvelopeCandidate[] {
++	const { blocks, outsideSegments } = scanMarkdownFences(text);
++	const candidates: ReceiptEnvelopeCandidate[] = [];
++	for (const block of blocks) {
++		const language = block.language.split(/\s+/, 1)[0]?.toLowerCase() ?? "";
++		const body = block.body.trim();
++		if (language.startsWith("json") || (language === "" && looksLikeAttemptedJson(body, true))) {
++			candidates.push({ kind: "fenced", receiptText: body });
++		}
++	}
++	for (const segment of outsideSegments) candidates.push(...bareReceiptCandidates(segment));
++	return candidates;
++}
++
+ /**
+  * 正式派发只采信最后一条助手消息中的 JSON 回执；退出码 0 本身不代表完成。
+  * 为避免放宽正式契约，保留“说明包着 JSON”仍拒收；恢复走 diagnoseWorkerFinalReceipt。
+@@ -385,7 +702,8 @@ export function parseWorkerFinalResult(text: string, cwd: string): WorkerFinalRe
+ }
+ 
+ /**
+- * 回执格式诊断：正式解析失败时，仅接受“说明文字 + 唯一完整 ```json 围栏 + 说明文字”。
++ * 回执格式诊断：正式解析失败时，只接受普通说明中的唯一完整 JSON 回执候选。
++ * 非 JSON 代码块不参与候选计数；候选正文仍交现有严格 schema 与产物检查。
+  * runner 仅在同一 dispatch、首次落回执前使用该结果；它本身不改卡状态，也不代替机械验收。
+  */
+ export function diagnoseWorkerFinalReceipt(text: string, cwd: string): WorkerFinalReceiptDiagnostic {
+@@ -400,26 +718,68 @@ export function diagnoseWorkerFinalReceipt(text: string, cwd: string): WorkerFin
+ 	} catch (error) {
+ 		strictError = error instanceof Error ? error.message : String(error);
+ 	}
+-	const fenceStarts = [...text.matchAll(/```json[ \t]*(?:\r?\n|$)/gi)];
+-	const fenceEnds = [...text.matchAll(/(?:^|\r?\n)```[ \t]*(?=\r?\n|$)/g)];
+-	if (fenceStarts.length !== 1 || fenceEnds.length !== 1) {
+-		throw new Error(`最终回执格式不唯一：严格解析失败（${strictError}），且未找到唯一完整 json 围栏`);
+-	}
+-	const start = fenceStarts[0]!;
+-	const end = fenceEnds[0]!;
+-	const fenceStart = start.index! + start[0].length;
+-	const fenceEnd = end.index! + (end[0].startsWith("\r\n") ? 2 : end[0].startsWith("\n") ? 1 : 0);
+-	if (fenceEnd < fenceStart) throw new Error(`最终回执围栏顺序损坏（${strictError}）`);
+-	const receiptText = text.slice(fenceStart, fenceEnd).trim();
++	const candidates = receiptEnvelopeCandidates(text);
++	if (candidates.length !== 1) {
++		throw new Error(
++			`最终回执格式不唯一：严格解析失败（${strictError}），找到 ${candidates.length} 个完整 JSON 回执候选`,
++		);
++	}
++	const candidate = candidates[0]!;
+ 	let parsed: WorkerFinalResult;
+ 	try {
+-		parsed = parseJsonReceiptBody(receiptText, cwd);
++		parsed = parseJsonReceiptBody(candidate.receiptText, cwd);
+ 	} catch (error) {
+ 		throw new Error(
+-			`最终回执围栏内容未通过严格 schema（${error instanceof Error ? error.message : String(error)}；严格解析原错误：${strictError}）`,
++			`最终回执${candidate.kind === "fenced" ? "围栏内容" : "裸 JSON 对象"}未通过严格 schema（${error instanceof Error ? error.message : String(error)}；严格解析原错误：${strictError}）`,
+ 		);
+ 	}
+-	return { kind: "fenced", parsed, rawText: text, receiptText, strictError };
++	return { kind: candidate.kind, parsed, rawText: text, receiptText: candidate.receiptText, strictError };
++}
++
++/**
++ * 收取一次 worker 结果。有回执工具调用时只采信唯一次成功工具参数；工具开始、
++ * 失败或重复均拒绝，成功后最后消息可写普通文本。没有工具回执时才走旧文本兼容链。
++ */
++export function evaluateWorkerResult(input: {
++	toolReceipts?: readonly WorkerReceiptToolEvent[];
++	finalText: string;
++	executionRoot: string;
++}): WorkerResultEvaluation {
++	const toolReceipts = input.toolReceipts ?? [];
++	if (toolReceipts.length > 0) {
++		const unresolved = toolReceipts.filter((receipt) => receipt.succeeded === undefined);
++		if (unresolved.length > 0) {
++			throw new Error("回执工具已开始但未收到成功结束事件，拒绝改用文本回执");
++		}
++		const successful = toolReceipts.filter((receipt) => receipt.succeeded === true);
++		if (successful.length === 0) {
++			throw new Error("回执工具执行失败，拒绝采信参数或改用文本回执");
++		}
++		if (successful.length !== 1) {
++			throw new Error(`收到 ${successful.length} 次成功回执工具调用，结构化结果必须唯一`);
++		}
++		const toolReceipt = successful[0]!;
++		const result = validateWorkerResultInput(toolReceipt.args, input.executionRoot);
++		return {
++			result,
++			source: "tool",
++			receiptText: JSON.stringify(toolReceipt.args),
++		};
++	}
++	const diagnosis = diagnoseWorkerFinalReceipt(input.finalText, input.executionRoot);
++	return diagnosis.kind === "strict"
++		? {
++				result: diagnosis.parsed,
++				source: "text",
++				receiptText: diagnosis.receiptText,
++			}
++		: {
++				result: diagnosis.parsed,
++				source: "text_recovery",
++				receiptText: diagnosis.receiptText,
++				strictError: diagnosis.strictError,
++				recognizedBy: diagnosis.kind,
++			};
+ }
+ 
+ /** 回执摘要:最终输出前 ≤3 行;空则退回 stderr 前 3 行;再空则占位 */
+diff --git a/packages/coding-agent/src/pao/worker/runner.ts b/packages/coding-agent/src/pao/worker/runner.ts
+index eaa34ef19..eb25ec48d 100644
+--- a/packages/coding-agent/src/pao/worker/runner.ts
++++ b/packages/coding-agent/src/pao/worker/runner.ts
+@@ -7,6 +7,11 @@ import { getPackageDir, isBunBinary } from "../../config.ts";
+ import { spawnProcess } from "../../utils/child-process.ts";
+ import { killTree } from "../../utils/kill-tree.ts";
+ import { diffAgainstBaseline } from "../cards/baseline.ts";
++import {
++	type ExecutionBinding,
++	type ResolvedExecutionContext,
++	resolveExecutionContext,
++} from "../cards/execution-context.ts";
+ import type { CardBudget } from "../cards/types.ts";
+ import { SHELL_GUARD_ENV } from "../patrol/wire.ts";
+ import { PAO_ROLE_ENV } from "../role.ts";
+@@ -23,9 +28,9 @@ import {
+ 	absorbEvent,
+ 	buildSummary,
+ 	createEventState,
++	evaluateWorkerResult,
+ 	isReceiptToolCall,
+-	parseWorkerFinalResult,
+-	recoverWorkerFinalReceiptFormat,
++	RECEIPT_TOOL_NAME,
+ 	type WorkerEventState,
+ 	type WorkerReceipt,
+ 	type WorkerStatus,
+@@ -96,6 +101,8 @@ export interface WorkerRunOptions {
+ 	worktreeBindingDigest?: string;
+ 	/** cards/execution-context 对 attempt 关联记录计算的摘要；不是宿主工作树摘要。 */
+ 	executionBindingDigest?: string;
++	/** 正式派发冻结的完整 attempt 执行绑定；产物只能按它实时复核后的执行根解析。 */
++	executionBinding?: ExecutionBinding;
+ 	尝试号?: number;
+ 	预算?: CardBudget;
+ 	要求回执?: boolean;
+@@ -158,6 +165,8 @@ export interface WorkerRunnerOptions {
+ 	registry?: ProcessRegistry;
+ 	/** 可信宿主的子进程启动装配;仅 options.命令 未显式指定时使用。 */
+ 	processInvocation?: (args: string[]) => { command: string; args: string[] };
++	/** 可信宿主提供的子进程基础环境；覆盖 process.env，但低于本次派发环境与强制 worker 标记。 */
++	childEnvironment?: () => NodeJS.ProcessEnv;
+ 	/** 全局缺省证据目录;run() 未指定时用 */
+ 	证据目录?: string;
+ 	/** 用于离线验证树杀失败；正式运行使用 killTree。 */
+@@ -238,13 +247,92 @@ export function buildArgs(options: WorkerRunOptions): string[] {
+ 	if (options.会话目录) args.push("--session-dir", options.会话目录);
+ 	if (options.模型) args.push("--model", options.模型);
+ 	if (options.思考档) args.push("--thinking", options.思考档);
+-	if (options.工具白名单 && options.工具白名单.length > 0) args.push("--tools", options.工具白名单.join(","));
++	if (options.工具白名单 && options.工具白名单.length > 0) {
++		args.push("--tools", [...new Set([...options.工具白名单, RECEIPT_TOOL_NAME])].join(","));
++	}
+ 	for (const prompt of options.附加系统提示词 ?? []) args.push("--append-system-prompt", prompt);
+ 	for (const skill of options.skills ?? []) args.push("--skill", skill);
+ 	args.push(options.提示词);
+ 	return args;
+ }
+ 
++function assertExecutionBindingIdentity(
++	binding: ExecutionBinding,
++	options: WorkerRunOptions,
++	input: { cardNo: string; attempt: number; executionRoot: string; taskRoot: string; cardPath?: string },
++): void {
++	if (binding.schemaVersion !== 1) throw new PaoWorkerError("无效参数", "执行绑定 schemaVersion 不受支持");
++	if (!/^\d+$/.test(input.cardNo) || Number(input.cardNo) !== binding.key.cardNo) {
++		throw new PaoWorkerError(
++			"无效参数",
++			`执行绑定卡号 ${binding.key.cardNo} 与本次 run 卡号 ${input.cardNo} 不一致`,
++		);
++	}
++	if (binding.key.attempt !== input.attempt) {
++		throw new PaoWorkerError(
++			"无效参数",
++			`执行绑定 attempt ${binding.key.attempt} 与本次 run attempt ${input.attempt} 不一致`,
++		);
++	}
++	if (!input.cardPath) throw new PaoWorkerError("无效参数", "正式执行绑定必须同时提供完整卡路径");
++	if (pathKey(path.resolve(path.dirname(input.cardPath))) !== pathKey(path.resolve(binding.key.cardsDir))) {
++		throw new PaoWorkerError("无效参数", "执行绑定的 cardsDir 与本次 run 卡路径不一致");
++	}
++	if (pathKey(input.executionRoot) !== pathKey(binding.executionRoot)) {
++		throw new PaoWorkerError("无效参数", "执行绑定的 executionRoot 与本次 run 执行根不一致");
++	}
++	if (pathKey(input.taskRoot) !== pathKey(binding.projectRoot)) {
++		throw new PaoWorkerError("无效参数", "执行绑定的 projectRoot 与本次 run 任务根不一致");
++	}
++	if (
++		options.executionBindingDigest !== undefined &&
++		options.executionBindingDigest !== binding.bindingDigest
++	) {
++		throw new PaoWorkerError("无效参数", "执行绑定摘要参数与完整执行绑定不一致");
++	}
++	if (options.snapshotDigest !== undefined && options.snapshotDigest !== binding.snapshotDigest) {
++		throw new PaoWorkerError("无效参数", "输入快照摘要与执行绑定不一致");
++	}
++	if (
++		options.worktreeBindingDigest !== undefined &&
++		options.worktreeBindingDigest !== binding.worktree.bindingDigest
++	) {
++		throw new PaoWorkerError("无效参数", "宿主工作树摘要与执行绑定不一致");
++	}
++	if (
++		options.worktreeId !== undefined &&
++		(binding.worktree.kind !== "managed" || options.worktreeId !== binding.worktree.worktreeId)
++	) {
++		throw new PaoWorkerError("无效参数", "worktreeId 与执行绑定不一致");
++	}
++}
++
++function executionBindingLiveMismatch(
++	live: ResolvedExecutionContext,
++	expected: ExecutionBinding,
++	executionRoot: string,
++): string | undefined {
++	const sameResolvedPath = (left: string, right: string): boolean =>
++		pathKey(path.resolve(left)) === pathKey(path.resolve(right));
++	if (live.bindingDigest !== expected.bindingDigest) return "实时绑定摘要与原绑定不一致";
++	if (live.key.cardNo !== expected.key.cardNo || live.key.attempt !== expected.key.attempt) {
++		return "实时绑定卡号或 attempt 与原绑定不一致";
++	}
++	if (pathKey(live.key.cardsDir) !== pathKey(expected.key.cardsDir)) return "实时绑定 cardsDir 与原绑定不一致";
++	if (
++		!sameResolvedPath(live.executionRoot, expected.executionRoot) ||
++		!sameResolvedPath(live.canonicalExecutionRoot, executionRoot)
++	) {
++		return "实时执行根与原绑定或本次 run 不一致";
++	}
++	if (pathKey(live.projectRoot) !== pathKey(expected.projectRoot)) return "实时任务根与原绑定不一致";
++	if (live.snapshotDigest !== expected.snapshotDigest) return "实时输入快照摘要与原绑定不一致";
++	if (live.worktree.bindingDigest !== expected.worktree.bindingDigest) {
++		return "实时宿主工作树摘要与原绑定不一致";
++	}
++	return undefined;
++}
++
+ async function awaitClose(proc: ChildProcess, timeoutMs: number): Promise<void> {
+ 	if (proc.exitCode !== null || proc.signalCode !== null) return;
+ 	await new Promise<void>((resolve) => {
+@@ -289,6 +377,7 @@ export class WorkerRunner {
+ 	#slotWaiters = new Set<() => void>();
+ 	#dispatchStateRoot?: string;
+ 	#processInvocation?: (args: string[]) => { command: string; args: string[] };
++	#childEnvironment?: () => NodeJS.ProcessEnv;
+ 
+ 	constructor(options: WorkerRunnerOptions = {}) {
+ 		this.registry = options.registry ?? new ProcessRegistry();
+@@ -296,6 +385,7 @@ export class WorkerRunner {
+ 		this.#killTree = options.树杀 ?? killTree;
+ 		this.#dispatchStateRoot = options.dispatchStateRoot ? path.resolve(options.dispatchStateRoot) : undefined;
+ 		this.#processInvocation = options.processInvocation;
++		this.#childEnvironment = options.childEnvironment;
+ 	}
+ 
+ 	/** 同一调度轮次内某卡的已用尝试数(供调用方读) */
+@@ -635,6 +725,15 @@ export class WorkerRunner {
+ 			});
+ 		}
+ 		const taskRoot = path.resolve(options.taskRoot ?? process.cwd());
++		if (options.executionBinding) {
++			assertExecutionBindingIdentity(options.executionBinding, options, {
++				cardNo,
++				attempt,
++				executionRoot,
++				taskRoot,
++				...(cardPath ? { cardPath } : {}),
++			});
++		}
+ 
+ 		const bridge =
+ 			options.卡路径 && !options.命令 && !options.参数
+@@ -716,6 +815,7 @@ export class WorkerRunner {
+ 			// 强制 worker 角色:子进程的 pao 扩展据此跳过派发/全库管理类注册(G1-12 角色装载);
+ 			env: {
+ 				...process.env,
++				...(this.#childEnvironment?.() ?? {}),
+ 				...options.环境变量,
+ 				...(!options.命令 && process.versions.electron ? { ELECTRON_RUN_AS_NODE: "1" } : {}),
+ 				[PAO_ROLE_ENV]: "worker",
+@@ -1009,6 +1109,7 @@ export class WorkerRunner {
+ 		let selfVerification: WorkerReceipt["verification"];
+ 		let selfChanges: WorkerReceipt["changes"];
+ 		let receiptFormatRecovery: WorkerReceipt["receipt_format_recovery"];
++		let resultSource: WorkerReceipt["result_source"];
+ 		if (budgetReason) summary = `预算已耗尽：${budgetReason}；执行已停止`;
+ 		if (stopFailed !== undefined) summary = `停止确认失败：${stopFailed}；进程可能未退出`;
+ 		if (stopFailed !== undefined) processAudit("stop-failed", { pid, error: stopFailed });
+@@ -1019,29 +1120,50 @@ export class WorkerRunner {
+ 			);
+ 		}
+ 		if (options.要求回执 && status === "success") {
+-			try {
+-				const result = parseWorkerFinalResult(state.最终输出, options.cwd ?? process.cwd());
+-				status = result.result;
+-				summary = result.summary;
+-				artifactPath = result.artifact_path;
+-				failureType = result.failure_type;
+-				// F-A7 自报透传（S5 包1）：任务态/verification/changes 随回执落卡，供机械验收消费。
+-				taskState = result.任务态;
+-				selfVerification = result.verification;
+-				selfChanges = result.changes;
+-			} catch (error) {
+-				const recovery = recoverWorkerFinalReceiptFormat(state.最终输出, options.cwd ?? process.cwd());
+-				if (recovery) {
+-					const result = recovery.parsed;
++			let receiptExecutionRoot = path.resolve(options.executionRoot ?? options.cwd ?? process.cwd());
++			let bindingFailure: string | undefined;
++			if (options.executionBinding) {
++				try {
++					const live = await resolveExecutionContext(options.executionBinding.key, {
++						expectedCurrentAttempt: attempt,
++						requireLiveExecutionRoot: true,
++					});
++					bindingFailure = executionBindingLiveMismatch(live, options.executionBinding, executionRoot);
++					if (!bindingFailure) receiptExecutionRoot = live.canonicalExecutionRoot;
++				} catch (error) {
++					bindingFailure = error instanceof Error ? error.message : String(error);
++				}
++			}
++			if (bindingFailure) {
++				status = "failed";
++				failureType = "unknown_outcome";
++				artifactPath = [];
++				summary = `执行绑定复核失败，拒绝采信 worker 结果：${bindingFailure}`;
++				processAudit("execution-binding-rejected", { pid, error: bindingFailure });
++			} else {
++				try {
++					const evaluation = evaluateWorkerResult({
++						toolReceipts: state.receipt_tool_calls,
++						finalText: state.最终输出,
++						executionRoot: receiptExecutionRoot,
++					});
++					const result = evaluation.result;
+ 					status = result.result;
+ 					summary = result.summary;
+ 					artifactPath = result.artifact_path;
+ 					failureType = result.failure_type;
++					// F-A7 自报透传（S5 包1）：任务态/verification/changes 随回执落卡，供机械验收消费。
+ 					taskState = result.任务态;
+ 					selfVerification = result.verification;
+ 					selfChanges = result.changes;
+-					receiptFormatRecovery = { strict_error: recovery.strictError };
+-				} else {
++					resultSource = evaluation.source;
++					if (evaluation.source === "text_recovery") {
++						receiptFormatRecovery = {
++							strict_error: evaluation.strictError ?? "未知严格解析错误",
++							recognized_by: evaluation.recognizedBy ?? "bare",
++						};
++					}
++				} catch (error) {
+ 					status = "failed";
+ 					summary = `无有效回执：${error instanceof Error ? error.message : String(error)}`;
+ 					failureType = "unknown_outcome";
+@@ -1096,7 +1218,10 @@ export class WorkerRunner {
+ 							attempt,
+ 							run_id: runId,
+ 							strict_error: receiptFormatRecovery.strict_error,
+-							recognized_by: "严格解析失败后，唯一完整 JSON 围栏",
++							recognized_by:
++								receiptFormatRecovery.recognized_by === "bare"
++									? "严格解析失败后，说明文字中的唯一完整裸 JSON 对象"
++									: "严格解析失败后，唯一完整 JSON 围栏",
+ 							original_evidence_path: evidencePath,
+ 						},
+ 						null,
+@@ -1116,6 +1241,7 @@ export class WorkerRunner {
+ 				const reason = error instanceof Error ? error.message : String(error);
+ 				const strictError = receiptFormatRecovery.strict_error;
+ 				receiptFormatRecovery = undefined;
++				resultSource = undefined;
+ 				status = "failed";
+ 				failureType = "unknown_outcome";
+ 				summary = [
+@@ -1184,6 +1310,7 @@ export class WorkerRunner {
+ 			verification: selfVerification,
+ 			changes: selfChanges,
+ 			...(receiptFormatRecovery ? { receipt_format_recovery: receiptFormatRecovery } : {}),
++			result_source: resultSource,
+ 			派发告警: evidenceWarnings.length ? [...(options.派发告警 ?? []), ...evidenceWarnings] : options.派发告警,
+ 			card_path: cardPath ?? options.卡路径,
+ 			run_id: runId,
+diff --git a/packages/coding-agent/test/pao/worker-receipt.test.ts b/packages/coding-agent/test/pao/worker-receipt.test.ts
+index 2d59443be..e9d63708f 100644
+--- a/packages/coding-agent/test/pao/worker-receipt.test.ts
++++ b/packages/coding-agent/test/pao/worker-receipt.test.ts
+@@ -1,4 +1,7 @@
+-import { describe, expect, it } from "vitest";
++import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, describe, expect, it } from "vitest";
+ 
+ import {
+ 	absorbEvent,
+@@ -12,6 +15,18 @@ import {
+ 	type WorkerReceipt,
+ } from "../../src/pao/worker/receipt.ts";
+ 
++const tempDirs: string[] = [];
++
++afterEach(() => {
++	for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
++});
++
++function tempDir(): string {
++	const dir = mkdtempSync(join(tmpdir(), "pao-receipt-"));
++	tempDirs.push(dir);
++	return dir;
++}
++
+ function eventLine(overrides: Record<string, unknown> = {}): string {
+ 	return JSON.stringify({
+ 		type: "message_end",
+@@ -172,10 +187,235 @@ describe("最终回执格式诊断:严格入口不放宽", () => {
+ 		expect(diagnosis.parsed).toMatchObject({ result: "success", summary: "完成", 任务态: "completed" });
+ 	});
+ 
+-	it("两个围栏、围栏 schema 错误或缺少围栏都拒绝恢复", () => {
++	it("唯一 json 回执围栏可以与普通命令代码块并存", () => {
++		const raw = `检查命令：\n\`\`\`\ncd /app && npm test\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\`\n以上。`;
++		expect(() => parseWorkerFinalResult(raw, process.cwd())).toThrow("缺少有效 JSON");
++		const diagnosis = diagnoseWorkerFinalReceipt(raw, process.cwd());
++		expect(diagnosis).toMatchObject({
++			kind: "fenced",
++			rawText: raw,
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成", 任务态: "completed" },
++			strictError: expect.stringContaining("缺少有效 JSON"),
++		});
++	});
++
++	it("普通说明里的 CSS 花括号和命令示例 JSON 不算额外回执候选", () => {
++		const raw = `检查片段：<style>a{color:red} /* url(javascript:x) */ b{margin:0}</style>；属性 [onerror]。\n命令：\n\`\`\`sh\necho '{"ok":true}'\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++	});
++
++	it("普通说明和行内代码中的多个 CSS 空规则不计候选，唯一 json 围栏仍可恢复", () => {
++		const raw = `规则边界 \`{}\`，片段 <style>a{}</style>，另一处 \`b{}\`。\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++		expect(() => diagnoseWorkerFinalReceipt("```json\n{}\n```", process.cwd())).toThrow("严格 schema");
++		expect(() => diagnoseWorkerFinalReceipt("```\n{}\n```", process.cwd())).toThrow("严格 schema");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`空对象 {"result":success}\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`\n{"result":success}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++	});
++
++	it("普通说明、多个非回执代码块和唯一裸 JSON 可以并存", () => {
++		const raw = `先看命令：\n\`\`\`sh\nprintf '%s\\n' ok\n\`\`\`\n再看向量：\n~~~text\n[不是 JSON]\n~~~\n最终：\n${strict}\n以上。`;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++	});
++
++	it("普通说明文字包着唯一完整裸对象时，严格入口仍拒收，同次诊断按 bare 恢复全部自报字段", () => {
++		const rich = {
++			result: "success",
++			artifact_path: [],
++			summary: '完成 {花括号}、[方括号] 与 "转义引号" 检查',
++			任务态: "completed",
++			verification: [
++				{
++					条件: "核对嵌套对象 {verification}",
++					结论: "pass",
++					证据: '证据含 "{大括号}"、[]、\\反斜杠\\ 和 "引号"',
++				},
++			],
++			changes: [{ 路径: "src/[demo]/{demo}.ts", 类型: "modified", 说明: '改动说明含 [] 和 "引号"' }],
++		};
++		const receiptText = JSON.stringify(rich);
++		const raw = `执行结果如下：\n${receiptText}\n以上为回执。`;
++		expect(() => parseWorkerFinalResult(raw, process.cwd())).toThrow("缺少有效 JSON");
++		const diagnosis = diagnoseWorkerFinalReceipt(raw, process.cwd());
++		expect(diagnosis).toMatchObject({
++			kind: "bare",
++			rawText: raw,
++			receiptText,
++			strictError: expect.stringContaining("缺少有效 JSON"),
++		});
++		expect(diagnosis.parsed).toEqual(rich);
++		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			parsed: rich,
++			receiptText,
++		});
++	});
++
++	it("围栏外每个明确像 JSON 的尝试都计候选，坏候选不能因解析失败被跳过；内层字段数组不重复计数", () => {
++		const inlineRaw = `执行结果如下。${strict}以上为回执。`;
++		expect(diagnoseWorkerFinalReceipt(inlineRaw, process.cwd())).toMatchObject({
++			kind: "bare",
++			rawText: inlineRaw,
++			receiptText: strict,
++			parsed: { result: "success", artifact_path: [], summary: "完成" },
++		});
++		const malformed = [
++			'说明{"result":success}',
++			"说明{'result':success}",
++			"说明[{result:success}]",
++			'说明[,"result"]',
++			"说明[1e,2]",
++			"说明[truex]",
++		];
++		for (const beforeFence of malformed) {
++			expect(() =>
++				diagnoseWorkerFinalReceipt(`${beforeFence}\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++			).toThrow("找到 2 个");
++		}
++		const cwd = tempDir();
++		writeFileSync(join(cwd, "a.txt"), "a", "utf8");
++		writeFileSync(join(cwd, "b.txt"), "b", "utf8");
++		const rich = {
++			result: "success",
++			artifact_path: ["a.txt", "b.txt"],
++			summary: "嵌套结构",
++			verification: [{ 条件: "检查", 结论: "pass", 证据: "证据" }],
++			changes: [
++				{ 路径: "a.txt", 类型: "created" },
++				{ 路径: "b.txt", 类型: "modified" },
++			],
++		};
++		const receiptText = JSON.stringify(rich);
++		const raw = `执行结果：${receiptText}以上。`;
++		expect(diagnoseWorkerFinalReceipt(raw, cwd)).toMatchObject({
++			kind: "bare",
++			receiptText,
++			parsed: rich,
++		});
++	});
++
++	it("普通说明中的 CSS、HTML 花括号和未标语言 shell 判断不计候选，并测试围栏边界", () => {
++		const shellRaw = `检查命令：\n\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n最终回执：\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(shellRaw, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const raw = `<style>.a{color:red}.b{margin:0}</style><div data-x="{demo}">x</div> 普通数组 [demo] 和对象 {demo}。\n\`\`\`\n[ "$status" -eq 0 ] && { echo ok; }\n\`\`\`\n回执：${strict}`;
++		expect(diagnoseWorkerFinalReceipt(raw, process.cwd())).toMatchObject({
++			kind: "bare",
++			receiptText: strict,
++		});
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`json\nnot-json\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``,
++				process.cwd(),
++			),
++		).toMatchObject({ kind: "fenced", receiptText: strict });
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`\`\`\`\n{"result":success}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++	});
++
++	it("围栏外明确像 JSON 的数组尝试都计候选，普通括号说明不计，残缺值直接失败", () => {
++		expect(() => diagnoseWorkerFinalReceipt(`说明[[1,2]]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toThrow(
++			"找到 2 个",
++		);
++		expect(() =>
++			diagnoseWorkerFinalReceipt(`说明[{"nested":true}]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
++		).toThrow("找到 2 个");
++		expect(() => diagnoseWorkerFinalReceipt(`说明[1,2]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toThrow(
++			"找到 2 个",
++		);
++		expect(diagnoseWorkerFinalReceipt(`说明[方括号]\n\`\`\`json\n${strict}\n\`\`\``, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		expect(() => diagnoseWorkerFinalReceipt(`说明{"result":"success"`, process.cwd())).toThrow("结构未闭合");
++		expect(() => diagnoseWorkerFinalReceipt(`说明{"result":"success"]`, process.cwd())).toThrow("结构符不配对");
++	});
++
++	it("围栏边界只计数完整且明确的回执候选", () => {
++		const nested = `\`\`\`json\n\`\`\`json\n${strict}\n\`\`\`\n\`\`\``;
++		expect(() => diagnoseWorkerFinalReceipt(nested, process.cwd())).toThrow("嵌套代码围栏");
++		const unclosed = `完成：\n\`\`\`json\n${strict}`;
++		expect(() => diagnoseWorkerFinalReceipt(unclosed, process.cwd())).toThrow("围栏未闭合");
++		const malformedDollar = `\`\`\`\n$status\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(malformedDollar, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const unlabelledShell = `\`\`\`\n[ "$status" -eq 0 ]\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(unlabelledShell, process.cwd())).toMatchObject({
++			kind: "fenced",
++			receiptText: strict,
++		});
++		const pseudo = `完成：\`\`\`json ${strict} \`\`\``;
++		expect(() => diagnoseWorkerFinalReceipt(pseudo, process.cwd())).toThrow("伪代码围栏");
++	});
++
++	it.each([
++		["多个裸对象", `完成：\n${strict}\n另一个：\n${strict}`, "找到 2 个"],
++		["同一行两个裸对象", `${strict} ${strict}`, "找到 2 个"],
++		["数组包装", `完成：[${strict}]`, "最终回执必须为对象"],
++		["数组说明在前", `完成：["说明", ${strict}]`, "最终回执必须为对象"],
++		["数组说明在后", `完成：[${strict}, "说明"]`, "最终回执必须为对象"],
++		["嵌套数组", `完成：[["说明", ${strict}]]`, "最终回执必须为对象"],
++		["残缺对象", '完成：{"result":"success","artifact_path":[],"summary":"未闭合"', "结构未闭合"],
++		["未闭合围栏", `完成：\n\`\`\`json\n${strict}`, "围栏未闭合"],
++		["嵌套围栏", `\`\`\`json\n\`\`\`json\n${strict}\n\`\`\`\n\`\`\``, "嵌套代码围栏"],
++		["伪围栏", `完成：\`\`\`json ${strict} \`\`\`。`, "伪代码围栏"],
++		["坏 JSON", '完成：{"result":success,"artifact_path":[],"summary":"键未加引号"}', "缺少有效 JSON"],
++		["坏 schema", '完成：{"result":"success","artifact_path":[],"summary":"x","changes":"bad"}', "严格 schema"],
++		["缺字段", '完成：{"result":"success","artifact_path":[]}', "summary"],
++		["额外结构化包装", `完成：{"receipt":${strict}}`, "result"],
++		[
++			"声明产物不存在",
++			'完成：{"result":"success","artifact_path":["不存在-r32-裸对象.txt"],"summary":"虚报"}',
++			"产物不存在",
++		],
++		["failed 缺失败事实", '完成：{"result":"failed","artifact_path":[],"summary":"失败"}', "failure_type"],
++		["unknown 缺失败事实", '完成：{"result":"unknown","artifact_path":[],"summary":"未知"}', "failure_type"],
++	])("%s时拒绝裸对象恢复", (_name, raw, message) => {
++		expect(() => diagnoseWorkerFinalReceipt(raw, process.cwd())).toThrow(message);
++		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toBeUndefined();
++	});
++
++	it("多个 JSON 候选、围栏 schema 错误或缺少回执都拒绝恢复", () => {
+ 		expect(() =>
+ 			diagnoseWorkerFinalReceipt(`\`\`\`json\n${strict}\n\`\`\`\n\`\`\`json\n${strict}\n\`\`\``, process.cwd()),
+-		).toThrow("未找到唯一完整 json 围栏");
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`json\n${strict}\n\`\`\`\n\`\`\`json\n{"result":success}\n\`\`\``,
++				process.cwd(),
++			),
++		).toThrow("找到 2 个");
++		expect(() =>
++			diagnoseWorkerFinalReceipt(
++				`\`\`\`json\n${strict}\n\`\`\`\n伪回执：{"result":success,"artifact_path":[],"summary":"坏"}`,
++				process.cwd(),
++			),
++		).toThrow("找到 2 个");
+ 		expect(() =>
+ 			diagnoseWorkerFinalReceipt(
+ 				'```json\n{"result":"success","artifact_path":[],"summary":"x","changes":"bad"}\n```',
+@@ -185,7 +425,41 @@ describe("最终回执格式诊断:严格入口不放宽", () => {
+ 		expect(diagnoseWorkerFinalReceipt(strict, process.cwd())).toMatchObject({ kind: "strict", rawText: strict });
+ 	});
+ 
+-	it("runner 恢复 helper 只返回围栏候选及原错误，不把严格成功或坏 schema 当恢复", () => {
++	it("恢复时仍核验声明产物真实存在；字符串中的括号、转义引号和嵌套结构原样解析", () => {
++		const cwd = tempDir();
++		writeFileSync(join(cwd, "真实产物.txt"), "ok", "utf8");
++		const rich = {
++			result: "success",
++			artifact_path: ["真实产物.txt"],
++			summary: '完成 {花括号}、[方括号] 与 "转义引号"',
++			任务态: "completed",
++			verification: [
++				{
++					条件: "核对 {verification:[嵌套]}",
++					结论: "pass",
++					证据: '证据含 "引号"、[]、{花括号}、\\\\反斜杠\\\\',
++				},
++				{ 条件: "changes 嵌套", 结论: "pass", 证据: '{"路径":"demo"}' },
++			],
++			changes: [
++				{
++					路径: "src/[demo]/{demo}.ts",
++					类型: "modified",
++					说明: '改动含 []、{} 与 "引号"',
++				},
++			],
++		};
++		const raw = `命令：\n\`\`\`sh\nnpm test\n\`\`\`\n回执：\n\`\`\`json\n${JSON.stringify(rich)}\n\`\`\``;
++		expect(diagnoseWorkerFinalReceipt(raw, cwd)).toMatchObject({
++			kind: "fenced",
++			parsed: rich,
++		});
++		rmSync(join(cwd, "真实产物.txt"));
++		expect(() => diagnoseWorkerFinalReceipt(raw, cwd)).toThrow("产物不存在");
++		expect(recoverWorkerFinalReceiptFormat(raw, cwd)).toBeUndefined();
++	});
++
++	it("runner 恢复 helper 只返回唯一围栏或唯一裸对象候选及原错误，不把严格成功或坏 schema 当恢复", () => {
+ 		const raw = `执行结果如下：\n\`\`\`json\n${strict}\n\`\`\`\n以上为回执。`;
+ 		expect(recoverWorkerFinalReceiptFormat(raw, process.cwd())).toMatchObject({
+ 			kind: "fenced",

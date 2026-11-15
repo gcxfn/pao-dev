@@ -1,0 +1,49 @@
+
+Running 1 test using 1 worker
+
+  x  1 apps\desktop\tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 (37.1s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 ────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('recipe-canvas-editor')
+    Expected substring: [32m"[7m新建[27m验证 · 已保存"[39m
+    Received string:    [31m"[7m另存[27m验证 · 已保存[7m添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('recipe-canvas-editor')[22m
+    [2m    2 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 ● 未保存添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+    [2m    3 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 · 已保存添加部门任务保存放弃修改自动整理另存为开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+    [2m    4 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 · 已保存添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+
+
+      417 |       .getByRole("button", { name: /Confirm|确认/ })
+      418 |       .click();
+    > 419 |     await expect(page.getByTestId("recipe-canvas-editor")).toContainText("新建验证 · 已保存");
+          |                                                            ^
+      420 |     expect(await readFile(join(home, "工作流", "新建验证.md"), "utf8")).toContain("新建目标");
+      421 |     await page.screenshot({ path: test.info().outputPath("另存与新建校验.png") });
+      422 |   } finally {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:419:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:353:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────

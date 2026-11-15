@@ -1,0 +1,16 @@
+# Malformed / warning-path checks (FINAL)
+$ python3 /app/filter.py warn-quoted.html
+exit=0
+<html><body><div>t</div></body></html>
+$ python3 /app/filter.py warn-unclosed.html
+exit=0
+<html><body><img src=x
+## _self_check detection (final)
+'<script>alert(1)</script>'                                  -> ['script element']
+'<img onerror=x>'                                            -> ["event attribute 'onerror'"]
+'<a href="javascript:1">t</a>'                               -> ["dangerous URL in 'href'"]
+'<iframe srcdoc="<script>">'                                 -> ['srcdoc attribute']
+'<div style="behavior:url(#x)">'                             -> ['dangerous style attribute']
+'<meta http-equiv="refresh" content="0;url=javascript:1">'   -> ['dangerous meta refresh']
+'<base href="x">'                                            -> ['base href element']
+'<div style="color:red"><p>ok</p></div>'                     -> []

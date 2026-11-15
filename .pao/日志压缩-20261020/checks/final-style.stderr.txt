@@ -1,0 +1,63 @@
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:40:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │ 	},
+    39 │ };
+  > 40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+    42 │ 
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │   	},
+     39  39 │   };
+     40     │ - const·stdoutBody·=·`${JSON.stringify(update)}\n`.repeat(4000)·+·`${JSON.stringify(finalEvent)}\n`;
+         40 │ + const·stdoutBody·=·`${`${JSON.stringify(update)}\n`.repeat(4000)}${JSON.stringify(finalEvent)}\n`;
+     41  41 │   const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+     42  42 │   
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:41:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    39 │ };
+    40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+  > 41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    42 │ 
+    43 │ function fixture(exitCode = 0) {
+  
+  i Unsafe fix: Use a template literal.
+  
+     39  39 │   };
+     40  40 │   const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+     41     │ - const·stderrBody·=·"诊断🙂\r\n".repeat(30000)·+·"STDERR_DONE\n";
+         41 │ + const·stderrBody·=·`${"诊断🙂\r\n".repeat(30000)}STDERR_DONE\n`;
+     42  42 │   
+     43  43 │   function fixture(exitCode = 0) {
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:103:12 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    101 │ 				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 │ 				const lines = restored.toString("utf8").trimEnd().split("\n");
+  > 103 │ 				expect(lines.slice(1, -1).join("\n") + "\n").toBe(stdoutBody);
+        │ 				       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    104 │ 				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 │ 				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+  i Unsafe fix: Use a template literal.
+  
+    101 101 │   				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 102 │   				const lines = restored.toString("utf8").trimEnd().split("\n");
+    103     │ - → → → → expect(lines.slice(1,·-1).join("\n")·+·"\n").toBe(stdoutBody);
+        103 │ + → → → → expect(`${lines.slice(1,·-1).join("\n")}\n`).toBe(stdoutBody);
+    104 104 │   				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 105 │   				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+

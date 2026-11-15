@@ -1,0 +1,117 @@
+Already up to date
+Done in 525ms using pnpm v11.18.0
+packages\coding-agent\src\pao\cards\verifier.ts:293:4 lint/correctness/noVoidTypeReturn ━━━━━━━━━━━━
+
+  × The function should not return a value because its return type is void.
+  
+    291 │ 			entries = readdirSync(dir);
+    292 │ 		} catch (error) {
+  > 293 │ 			return incomplete(dir, error);
+        │ 			^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    294 │ 		}
+    295 │ 		for (const name of entries) {
+  
+  i The function is here:
+  
+    284 │ 		);
+    285 │ 	};
+  > 286 │ 	const walk = (dir: string, depth: number): void => {
+        │ 	             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 287 │ 		if (external.length >= 10) return;
+         ...
+  > 318 │ 		}
+  > 319 │ 	};
+        │ 	^
+    320 │ 	walk(projectRoot, 0);
+    321 │ 	return external;
+  
+  i 'void' signals the absence of value. The returned value is likely to be ignored by the caller.
+  
+
+packages\coding-agent\src\pao\cards\verifier.ts:304:5 lint/correctness/noVoidTypeReturn ━━━━━━━━━━━━
+
+  × The function should not return a value because its return type is void.
+  
+    302 │ 				st = lstatSync(full);
+    303 │ 			} catch (error) {
+  > 304 │ 				return incomplete(full, error);
+        │ 				^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    305 │ 			}
+    306 │ 			if (!st) return incomplete(full, "文件状态不可读");
+  
+  i The function is here:
+  
+    284 │ 		);
+    285 │ 	};
+  > 286 │ 	const walk = (dir: string, depth: number): void => {
+        │ 	             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 287 │ 		if (external.length >= 10) return;
+         ...
+  > 318 │ 		}
+  > 319 │ 	};
+        │ 	^
+    320 │ 	walk(projectRoot, 0);
+    321 │ 	return external;
+  
+  i 'void' signals the absence of value. The returned value is likely to be ignored by the caller.
+  
+
+packages\coding-agent\src\pao\cards\verifier.ts:306:13 lint/correctness/noVoidTypeReturn ━━━━━━━━━━━
+
+  × The function should not return a value because its return type is void.
+  
+    304 │ 				return incomplete(full, error);
+    305 │ 			}
+  > 306 │ 			if (!st) return incomplete(full, "文件状态不可读");
+        │ 			         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    307 │ 			if (st.isSymbolicLink()) {
+    308 │ 				try {
+  
+  i The function is here:
+  
+    284 │ 		);
+    285 │ 	};
+  > 286 │ 	const walk = (dir: string, depth: number): void => {
+        │ 	             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 287 │ 		if (external.length >= 10) return;
+         ...
+  > 318 │ 		}
+  > 319 │ 	};
+        │ 	^
+    320 │ 	walk(projectRoot, 0);
+    321 │ 	return external;
+  
+  i 'void' signals the absence of value. The returned value is likely to be ignored by the caller.
+  
+
+packages\coding-agent\src\pao\panorama\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    308 │ → → → → → → → open:·()·=>·renderDetailPage(pi,·backlogError!),
+        │             ++                                                
+
+packages\coding-agent\test\pao\knowledge-ingest.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    151 151 │   		const candidate = join(root, "待验证", "新.md");
+    152 152 │   		writeFileSync(candidate, "新条目 2026-10-11\n状态: 候选\n");
+    153     │ - → → const·result·=·await·ingestEntry({·libRoot:·root,·candidatePath:·candidate,·type:·"做法",·now:·new·Date("2026-10-11")·});
+        153 │ + → → const·result·=·await·ingestEntry({
+        154 │ + → → → libRoot:·root,
+        155 │ + → → → candidatePath:·candidate,
+        156 │ + → → → type:·"做法",
+        157 │ + → → → now:·new·Date("2026-10-11"),
+        158 │ + → → });
+    154 159 │   		expect(result.inspection.findings.map((finding) => finding.relPath)).toEqual(["做法/新.md"]);
+    155 160 │   		expect(readFileSync(join(root, "做法", "子索引.md"), "utf8")).toContain("- [既有](既有.md) — 既有条目\n");
+  
+
+Checked 41 files in 550ms. No fixes applied.
+Found 5 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

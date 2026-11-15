@@ -1,0 +1,19 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev
+
+stdout | .pao/七项问题修复-20261020/独立预算验收.test.ts > PAO 总预算实际调用路径 > 扇出完成后按实际费用结算，释放差额
+复现输出：{"case":"fanout-success-not-settled","成功数":1,"回执落卡":"已记录","尝试号":1,"worker运行次数":1,"预算账状态":"reserved","预留额":10,"实际费用":1.25}
+
+stdout | .pao/七项问题修复-20261020/独立预算验收.test.ts > PAO 总预算实际调用路径 > 首轮花6后重试仅预留4，两次共花10且正常受理
+复现输出：{"case":"retry-reserves-full-card-budget","总预算":10,"重试是否放行":false,"拒绝原因":"总预算门禁拒绝派发：总预算不足：本次需要 $4.00，剩余 $0.00（版本 1 总预算 $10.00）（下一步：等额度或让用户显式加额度；也可先查总预算账里被谁占着）","重试worker运行次数":0,"尝试2预算记录":"missing"}
+
+ × .pao/七项问题修复-20261020/独立预算验收.test.ts > PAO 总预算实际调用路径 > 扇出完成后按实际费用结算，释放差额 115ms
+   → expected 'reserved' to be 'settled' // Object.is equality
+ × .pao/七项问题修复-20261020/独立预算验收.test.ts > PAO 总预算实际调用路径 > 首轮花6后重试仅预留4，两次共花10且正常受理 98ms
+   → expected undefined to be 6 // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  16:01:44
+   Duration  1.39s (transform 716ms, setup 0ms, import 1.03s, tests 214ms, environment 0ms)
+

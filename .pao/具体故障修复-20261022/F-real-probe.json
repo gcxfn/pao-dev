@@ -1,0 +1,134 @@
+{
+  "status": "passed",
+  "image_id": "9779ef143cc8",
+  "container": "pao-f-monitor-15438cad8d__env-main-1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--detach",
+      "--name",
+      "pao-f-monitor-15438cad8d__env-main-1",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmp3u2te44n\\packages\\coding-agent\\dist\\bundle:/tmp/harbor-pao-source/packages/coding-agent/dist/bundle:ro",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmp3u2te44n:/tmp/f-monitor:ro",
+      "--env",
+      "NODE_OPTIONS=--require=/tmp/f-monitor/process-title.cjs",
+      "--env",
+      "PAO_ROLE=部长",
+      "--env",
+      "PAO_DEPT=实施",
+      "--env",
+      "PI_CODING_AGENT=true",
+      "--entrypoint",
+      "sh",
+      "9779ef143cc8",
+      "-lc",
+      "cp /tmp/f-monitor/benchmark-prerequisites.json /tmp/benchmark-prerequisites.json; mkdir -p /tmp/harbor-pao-source/packages/coding-agent/dist/bundle; PAO_ROLE=worker node /tmp/f-monitor/task.js & env -u PI_CODING_AGENT node /tmp/f-monitor/title-only.js & PAO_ROLE=worker PAO_DEPT=内核 node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js & exec node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/rpc-entry.js"
+    ]
+  ],
+  "assertions": {
+    "probe_collected": true,
+    "pao_runtime_count": true,
+    "rpc_identified": true,
+    "rpc_role": true,
+    "cli_identified": true,
+    "cli_role": true,
+    "task_node_count": true,
+    "ordinary_task_kept_argv0": true,
+    "ordinary_task_role_ignored": true,
+    "title_only_not_pao": true,
+    "title_only_no_agent_marker": true,
+    "phase_unknown": true,
+    "observer_not_task_program": true,
+    "no_probe_errors": true
+  },
+  "cleanup": {
+    "container_remove_returncode": 0,
+    "container_remove_stderr": "",
+    "container_left": [],
+    "temp_dir_removed_by_context": true
+  },
+  "probe": {
+    "ticks": 100,
+    "processes": [
+      {
+        "agent_env": true,
+        "kind": "pao-runtime",
+        "dept": "实施",
+        "runtime": "node",
+        "start_ticks": 224348,
+        "identity": "pao-rpc",
+        "title": "pao-rpc",
+        "role": "部长",
+        "pid": 1,
+        "rss": 41361408,
+        "inherited_role_ignored": false,
+        "cpu_ticks": 6,
+        "ppid": 0,
+        "role_status": "env"
+      },
+      {
+        "agent_env": true,
+        "kind": "task-node",
+        "dept": null,
+        "runtime": "node",
+        "start_ticks": 224363,
+        "identity": "runtime-exe",
+        "title": "node",
+        "role": null,
+        "pid": 12,
+        "rss": 40968192,
+        "inherited_role_ignored": true,
+        "cpu_ticks": 2,
+        "ppid": 1,
+        "role_status": "ignored_inherited_role"
+      },
+      {
+        "agent_env": false,
+        "kind": "task-node",
+        "dept": null,
+        "runtime": "node",
+        "start_ticks": 224363,
+        "identity": "runtime-exe",
+        "title": "pao",
+        "role": null,
+        "pid": 13,
+        "rss": 41787392,
+        "inherited_role_ignored": true,
+        "cpu_ticks": 1,
+        "ppid": 1,
+        "role_status": "ignored_inherited_role"
+      },
+      {
+        "agent_env": true,
+        "kind": "pao-runtime",
+        "dept": "内核",
+        "runtime": "node",
+        "start_ticks": 224363,
+        "identity": "pao-cli",
+        "title": "pao",
+        "role": "worker",
+        "pid": 14,
+        "rss": 41611264,
+        "inherited_role_ignored": false,
+        "cpu_ticks": 2,
+        "ppid": 1,
+        "role_status": "env"
+      }
+    ],
+    "scan_errors": [],
+    "prerequisites": {
+      "marker": "present",
+      "python3": "present"
+    },
+    "probe_status": "collected",
+    "phase": {
+      "phase": "unknown",
+      "marker": null,
+      "category": "unknown"
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,29 @@
+=== T11b 门4：中文标识符清零核验（2026-10-06） ===
+命令: node sweep-final.mjs（ts-morph AST 角色盘点，排除字符串字面量/注释/JSX 文案/枚举值字符串）
+范围: PAO packages/coding-agent src/pao + test/pao；desktop/apps/desktop src+electron
+
+终态（sweep-final-out2.txt）:
+## DECL:*（声明名/参数/解构绑定/类成员/接口方法签名）total=0
+  —— src/pao、test/pao、desktop 自有源码全部声明级中文标识符清零
+## KEY  total=8169（对象属性键 + PropertySignature 接口成员）
+## OTHER total=6725（上述键的属性访问点，如 card.卡号、frontmatter.验收）
+
+剩余项归类（全部 c2，无「以后再改」豁免）:
+1. 卡协议 14 字段与状态五值、回执 JSON 键（卡号/尝试号/时间/结果/摘要/产物路径/证据/用量/值得沉淀/失败类型/待审）
+2. 控制正本/实例清单/冻结配方持久化键（节点/轮次/暂停/裁定/通道/冻结配方/停因/回边等）
+3. 配置文件键:保温.json（空闲分钟/轮次提示/调用提示/循环K/部门并发上限/上游并发上限等）、记忆供应商.json、pao配置/档位.json、注册表.md 字段
+4. 锁/登记表/用量账.jsonl/协作审计.jsonl 持久化键（锁路径/持有者/获得时间/卡路径/登记时间/会话结束等——抽查全部原样保留）
+5. desktop 只读模型/IPC 形状与工具 details 中文键（desktop/read-model、canvas、owners 等——renderer 跨进程协议面）
+6. 枚举值字符串与用户可见文案（字符串字面量，未动）
+7. 接口成员按 CP30 既定「成员口径」保留（其中绝大多数即 1-5 的序列化/协议形状的 TypeScript 镜像）
+
+语言服务联动改名备案（原中文成员→ASCII，27 处键位+17 个成员，逐一核实为内存内形状、非持久化面）:
+  verifier: 前缀/外部链接/工作目录/机械条目（沙箱与解析内部形状）
+  fanout/execute: 计划/计数；fanout/index: 后台计数（扇出内存聚合）
+  memory-vendor: 供应商名/能力（适配器 TS 契约）
+  resident: 修剪行数；patrol/drop: 已存在；patrol/shell-guard: 失衡
+  status/results: 异常；worker/dispatch-core: 认领基线；worker/session-bridge: 记录/会话路径
+  workflow/distill: 卡数/边数/跳过
+持久化面抽查（迁移前后对照，全部原样）: usage/ledger 会话结束、worker/lock 持有者、desktop/owners 卡路径、
+  desktop/canvas 会话路径、fanout/plan 并发上限、workflow/templates 验收、卡 frontmatter 全字段、回执键。
+键面全量审计: compare-keys.mjs 对备份树逐键 diff——218 处差异=191 处简写转显式（键保留中文）+27 处内部形状联动改名。

@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-27T01:49:54.663602+00:00",
+  "instance": "c48af80d-f930-4b7b-9743-23595f58a807",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "c48af80d-f930-4b7b-9743-23595f58a807",
+      "owner": "01a17aec-4d5e-7585-95b7-2aea4d739df0",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "请求裁定：卡0001（实施，第1轮）尝试2 的实质状态已完成，但部长裁决无法绑定。\n\n一、事实（我已亲自读证据，非仅凭回执）\n1. 卡0001 尝试2 回执 result=success，任务态 completed；程序机械验收段「全过停人工审」：python3 -m py_compile filter.py 过、存在 filter.py 过、包含 filter.py::argv 过、包含 filter.py::def 过；尝试2 相对认领基线的程序候选改动=pass（基线 …卡0001-尝试2-基线.json，M filter.py）。\n2. 我已直接读 /app/filter.py 全文（733 行，仅 import html/re/sys），实现为「文本手术式」：只删除命中危险规则的源区间，其余原文原样拼回；覆盖 script 元素（含 module/大小写/未闭合、JS 字符串内 </script> 词法状态机）、on* 事件属性、javascript:/vbscript:/data:text/html URL（含 srcset/imagesrcset）、srcdoc、object/embed/applet、meta refresh、base href、style 内 expression()/url(javascript:)、SVG animate/set、IE 条件注释内脚本；bytes↔utf-8+surrogateescape 无损往返；main() 同路径 open(path,'rb')→open(path,'wb') 原地写回；缺参返回 2、读失败返回 1 且写 stderr。\n\n二、我的部长终审结论（覆盖卡面第13条人工审核项，该项工人自报 not_run、属部长责任）：pass\n- 仅标准库/已安装包、不联网、无新增依赖文件：达标（读码确认）。\n- 原地写回、无 .bak/改名/副产物：达标（读码确认）。\n- 除移除 JS 片段外逐字节一致：达标（benign.html 运行前后 sha256 相同 3645cfda…8203ac1、cmp 退出码 0；evil 输入→输出 diff 中正文/标题/链接文字/良性 class 与 src 逐行保留）。\n- argv 缺失/文件不可读明确报错并非零退出：达标（读码 + 工人实跑记录）。\n\n三、阻塞点（需主控处理，非业务缺陷）\n宿主已把本卡置于「部长审核 hold：1 条自报未达项，留 owner 逐项裁决，链停」，但我在本次投递中拿不到可绑定的审核请求 request_id：通知正文、卡0001 卡面、判定包、worker evidence jsonl 中均无该字段；我按 卡0001-尝试2 / 卡0001-尝试2-6b000419-be1b-46dc-8fbb-ceb9d11f9f67 / 6b000419-be1b-46dc-8fbb-ceb9d11f9f67 / 3268ecf9e6af-… / 卡0001 / 卡0001-2 / worker-review-卡0001-尝试2 等逐一试投，pao_minister_review_worker 全部回「没有匹配的工人审核请求，拒绝自造审核」（工具明确不许自造 request_id）。\n\n四、请求\n1) 请投递带真实 request_id 的工人审核请求（我将以 result=pass、卡#1/尝试2 提交上述依据），或按部长终审结论直接释放卡0001 的 hold；\n2) 随后放行已排队的 卡0002（对抗用例集复验 filter.py，交付 filter_fixtures/run_tests.py，当前 unclaimed/缺运行证据），以补齐「合法 HTML 全保留、危险载荷全移除」的独立复验；\n3) 未验证项如实保留：部长会话 bash 被只读门拦截，工人 46 项断言、37 载荷变体清扫、幂等/GBK/BOM/CRLF 边界我未独立复跑；filter.py 仍未纳入 git（工人未擅自 add，留待审核确认），请主控明确是否需要纳入版本跟踪。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T01:37:32.685Z",
+    "事件": "自动链停因",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "卡卡0002 派发异常：派发交接的地图覆盖内容已变化，自动链停"
+  },
+  "latest_business_event_at": "2026-10-27T01:37:32.685Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-27T01:37:32.685Z\", \"理由\": \"卡卡0002 派发异常：派发交接的地图覆盖内容已变化，自动链停\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-27T01:37:37.373615+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

@@ -1,0 +1,19 @@
+EXIT=0
+
+─── 注记（T08 实施，2026-10-06）───
+本日志为早期会话段所记，仅含退出码（EXIT=0），命令行未录。补跑全记录见
+《T08-类型2-20261006.log》：`pnpm --dir /d/AI/workspace/pao-dev/PAO exec tsc --noEmit`
+→ TSC_EXIT=0（2026-10-06 10:43，含本轮全部改动后的现树）。
+
+─── 订正（2026-10-06，R18 审查发现，F7 落档）───
+上文注记失实：其声称「补跑全记录见《T08-类型2-20261006.log》→ TSC_EXIT=0」，
+而类型2 实录结尾为 TSC_EXIT=1（esbuild 审批门 ERR_PNPM_IGNORED_BUILDS 拦截，
+tsc 未被执行）；上文「EXIT=0」段命令行未录，亦不能作为 PAO 根口径 tsc 绿证据。
+真实重跑见《T08-类型3-修复重跑-20261006.log》：F7 以原命令 pnpm --dir … exec tsc
+--noEmit 重跑，再次被同一审批门拦截（TSC_EXIT=1，tsc 未执行；与 lockfile 存否无关，
+系 pnpm run 前依赖检查→自动 install 的固有失败）；另以
+--config.verify-deps-before-run=false 关闭依赖检查后 tsc 实际执行，
+根 tsconfig 口径报 7 错，全部位于 T08 增量面之外（3 处开工存量、2 处本轮其他
+任务面，归因附录见类型3日志）；T08 增量文件 desktop-read-model.test.ts 零错误。
+即：「TSC_EXIT=0（类型2）」数字在本轮树态从未真实成立，本 log 原注记作废，
+真实绿记录口径待 R20 复审／主控裁定。

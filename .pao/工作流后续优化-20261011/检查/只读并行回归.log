@@ -1,0 +1,44 @@
+Already up to date
+Done in 643ms using pnpm v11.18.0
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+···········x····x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/workflow-host-bridge.test.ts > 宿主与流程桥（模拟回调） > 部长模型经档位.json 解析成 provider/model；死绑定节点在停因与挂起文案中明示
+AssertionError: expected '等待部长本轮拆解结束' to contain '部长会话已断开'
+
+Expected: "部长会话已断开"
+Received: "等待部长本轮拆解结束"
+
+ ❯ test/pao/workflow-host-bridge.test.ts:328:73
+    326|   // 模拟 spawn 是假进程：host.list() 无热会话 → 绑定未拆解节点判死并在停因带出
+    327|   expect(waiting.stopReason).toContain("1 个节点的绑定部长会话已无热进程(节点:规划)");
+    328|   expect(waiting.report.nodes.find((node) => node.name === "规划")?.hold…
+       |                                                                         ^
+    329|  });
+    330|  it("def.模型 显式给定时原样传 --model（不需档位配置）", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/workflow-host-bridge.test.ts > 宿主与流程桥（模拟回调） > 本次推进上限早退停因带死绑定句：打满轮次如实停且不隐状态
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/pao/workflow-host-bridge.test.ts:379:2
+    377|   }
+    378|  });
+    379|  it("本次推进上限早退停因带死绑定句：打满轮次如实停且不隐状态", async () => {
+       |  ^
+    380|   // 回边 ping-pong（甲 pass 放行 → 乙 change 打回甲 → 无上限循环）打满 50 轮驱动
+    381|   const s = fixture(`  - 名字: 甲
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 16 passed (18)
+   Start at  06:21:14
+   Duration  53.71s (transform 10.62s, setup 0ms, import 13.07s, tests 40.25s, environment 0ms)
+

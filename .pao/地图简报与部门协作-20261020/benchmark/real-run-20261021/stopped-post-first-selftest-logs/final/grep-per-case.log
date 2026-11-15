@@ -1,0 +1,54 @@
+01-script-inline-body        script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+02-script-external           script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+03-script-selfclose          script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+04-script-unclosed           script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+05-script-in-table-cell      script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+06-script-in-attr-value-only script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+07-script-literal-in-text    script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+08-script-mixed-case         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+09-script-in-attribute-string script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+10-events-basic              script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+11-events-spaced-assignment  script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+12-events-namespaced         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+13-url-tab-scheme            script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+14-url-entity-newline        script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+15-url-entity-decimal        script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+16-url-mixed-case            script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+17-url-leading-space         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+18-url-data-text-html        script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+19-url-vbscript              script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+20-url-all-url-attrs         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+21-srcdoc-nested             script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+22-meta-refresh-danger       script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+23-meta-refresh-benign       script_tag=0 event_attr=1* event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=1* base_tag=0 -> clean
+     event_attr hits=1 allowed=1 sample=['ontent=']
+       why: the card's raw regex on[a-z]+\s*= also matches inside c-on-tent= ; the attribute is content, not a handler (event_attr_strict=0 proves it)
+     meta_refresh hits=1 allowed=1 sample=['http-equiv="refresh']
+       why: benign refresh (content="5; url=/next") - this fixture is the declared benign counterpart of 22-meta-refresh-danger; deleting it would be a false positive
+24-base-href                 script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+25-object-embed              script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+26-style-attr-benign         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+27-style-attr-expression     script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+28-style-element-benign      script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+29-style-element-danger      script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+30-comment-danger            script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+31-comment-benign            script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+32-cdata-pseudo              script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+33-conditional-comment       script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+34-svg-events                script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+35-svg-animate               script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+36-mathml-events             script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+37-benign-complex            script_tag=0 event_attr=1* event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+     event_attr hits=1 allowed=1 sample=['ontent=']
+       why: raw regex on[a-z]+\s*= matches c-on-tent= of the viewport meta; no event attribute exists (event_attr_strict=0)
+38-benign-prose-literal      script_tag=0 event_attr=0 event_attr_strict=0 javascript=1* vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+     javascript hits=1 allowed=1 sample=['javascript:']
+       why: visible TEXT node, not an attribute/handler; rule 9 forbids silently deleting ordinary text
+39-url-quoted-value          script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+40-css-quoted-url            script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+41-event-namespaced-colon    script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+42-smil-retarget             script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+43-srcset                    script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+44-bogus-declaration         script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+45-textarea-rcdata           script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean
+46-on-prefixed-benign-name   script_tag=0 event_attr=0 event_attr_strict=0 javascript=0 vbscript=0 srcdoc=0 meta_refresh=0 base_tag=0 -> clean

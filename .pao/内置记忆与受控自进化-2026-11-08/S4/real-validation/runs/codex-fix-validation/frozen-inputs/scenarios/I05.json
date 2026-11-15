@@ -1,0 +1,124 @@
+{
+  "id": "I05",
+  "description": "条件改变再讨论被否方案",
+  "sessions": [
+    {
+      "sessionId": "sess-f",
+      "messages": [
+        {
+          "role": "user",
+          "content": "向量数据库用什么？",
+          "timestamp": "2026-11-08T15:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "方案：pgvector（PostgreSQL 扩展）或纯本地暴力余弦。",
+          "timestamp": "2026-11-08T15:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "不用 pgvector，太重了。",
+          "timestamp": "2026-11-08T15:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "向量检索使用本地暴力余弦",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        },
+        {
+          "kind": "decision",
+          "conclusion": "pgvector 方案被否决",
+          "confirmation": "rejected",
+          "evidenceKind": "user_statement",
+          "conditions": "太重"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "向量数据库",
+          "mustContain": ["mem-local-cosine"],
+          "mustNotContain": []
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-f2",
+      "messages": [
+        {
+          "role": "user",
+          "content": "数据量到十万级了，向量检索还够用吗？",
+          "timestamp": "2026-11-08T16:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "十万级暴力余弦可能慢，pgvector 有索引优势。",
+          "timestamp": "2026-11-08T16:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "那重新考虑 pgvector。",
+          "timestamp": "2026-11-08T16:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "向量检索考虑重新评估 pgvector",
+          "confirmation": "tentative",
+          "evidenceKind": "user_statement",
+          "needsReDiscussion": true,
+          "conditions": "数据量到十万级"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "向量数据库",
+          "mustContain": ["mem-local-cosine", "mem-pgvector-rejected"],
+          "mustNotContain": []
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-local-cosine",
+        "kind": "decision",
+        "conclusion": "向量检索使用本地暴力余弦",
+        "confirmation": "confirmed",
+        "usageState": "active"
+      },
+      {
+        "id": "mem-pgvector-rejected",
+        "kind": "decision",
+        "conclusion": "pgvector 方案被否决",
+        "confirmation": "rejected",
+        "usageState": "active",
+        "needsReDiscussion": true
+      },
+      {
+        "id": "mem-pgvector-reeval",
+        "kind": "decision",
+        "conclusion": "向量检索考虑重新评估 pgvector",
+        "confirmation": "tentative",
+        "usageState": "active",
+        "needsReDiscussion": true
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-f-001",
+        "sessionId": "sess-f",
+        "entryId": "entry-003"
+      },
+      {
+        "sourceId": "src-sess-f2-001",
+        "sessionId": "sess-f2",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

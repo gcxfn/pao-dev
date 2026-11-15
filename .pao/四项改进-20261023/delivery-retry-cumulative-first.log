@@ -1,0 +1,128 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+xxxxxx·x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 真实历史回执与相邻基线 tree 对应时，第二次只读复验仍提交第一次成果
+AssertionError: {"card_no":1,"交卷":false,"暂存文件":[],"原因":"验收证据不匹配","消息":"卡0001 拒绝交卷：最近验收的 attempt/输入/工作树关联与本次 execution-context 不一致。"}: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:173:45
+    171|   const fixture = await positiveFixture();
+    172|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    173|   expect(result.交卷, JSON.stringify(result)).toBe(true);
+       |                                             ^
+    174|   expect(git(fixture.root, ["show", `${result.提交哈希}:旧成果.txt`])).toCont…
+    175|   expect(git(fixture.root, ["diff-tree", "--no-commit-id", "--name-onl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 第一次尝试没有历史回执时明确拒绝，不把已存在文件猜成本卡成果
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:199:21
+    197|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    198|   expect(result.交卷).toBe(false);
+    199|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    200|   expect(result.消息).toContain("尝试 1 缺少历史回执");
+    201|   expect(result.消息).not.toContain("幂等");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 历史回执声明与真实 tree 差不符合时拒绝
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:223:21
+    221|   deliverCardReady(root, cardsDir, 2);
+    222|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    223|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    224|   expect(result.消息).toContain("相邻基线 tree 差不能逐项对应");
+    225|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 认领前同路径已脏时不猜混合编辑归属
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:248:21
+    246|   deliverCardReady(root, cardsDir, 2);
+    247|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    248|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    249|   expect(result.消息).toContain("认领前已脏");
+    250|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 其他卡已声明同一路径时拒绝混入
+PaoCardError: 回执尝试号必须是正整数：0
+ ❯ appendReceipt src/pao/cards/receipts.ts:93:9
+     91| export function appendReceipt(card: ParsedCard, input: AppendReceiptIn…
+     92|  if (!Number.isInteger(input.尝试号) || input.尝试号 <= 0) {
+     93|   throw new PaoCardError("INVALID_RECEIPT", `回执尝试号必须是正整数：${String(inpu…
+       |         ^
+     94|    card_no: card.card_no,
+     95|    尝试号: input.尝试号,
+ ❯ test/pao/delivery-retry-cumulative.test.ts:260:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 第一次尝试的删除与重命名按旧、新路径累计提交
+AssertionError: {"card_no":1,"交卷":false,"暂存文件":[],"原因":"验收证据不匹配","消息":"卡0001 拒绝交卷：最近验收的 attempt/输入/工作树关联与本次 execution-context 不一致。"}: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:301:45
+    299|   deliverCardReady(root, cardsDir, 2);
+    300|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    301|   expect(result.交卷, JSON.stringify(result)).toBe(true);
+       |                                             ^
+    302|   const paths = git(root, ["diff-tree", "--no-commit-id", "--name-stat…
+    303|   expect(paths).toContain("D\t将删除.txt");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 历史证据充足但当前回执漏报本次改动时仍拒绝
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:326:21
+    324|   writeFileSync(current.path, serializeCard(current.frontmatter, body)…
+    325|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    326|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    327|   expect(result.消息).toContain("尝试 2 的回执声明与相邻基线 tree 差不能逐项对应");
+    328|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  09:20:19
+   Duration  44.37s (transform 236ms, setup 0ms, import 425ms, tests 43.77s, environment 0ms)
+

@@ -1,0 +1,173 @@
+
+Running 20 tests using 1 worker
+
+
+
+[1A[2K(node:7788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K(node:7788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:32:5 › keeps an unsent draft across reload and session switches
+[1A[2K[2/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:76:5 › reports an unsent message as unsent and hands the text back
+[1A[2K[3/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:107:5 › 侧栏四个入口与右侧常驻状态，矮窗口中的会话列表可以用滚轮滚动
+[1A[2K[4/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:155:5 › keeps the open conversation as the default work surface in the sidebar
+[1A[2K[5/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:187:5 › 窄窗口里右侧状态栏默认收起，展开能看、收起能记住
+[1A[2K[6/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出
+[1A[2K[7/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:323:5 › 从画布打开概况文件变更时保持画布并显示工具
+[1A[2K  1) apps\desktop\tests\core\d4-sidebar-draft.spec.ts:323:5 › 从画布打开概况文件变更时保持画布并显示工具 ────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('canvas-view')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-view')[22m
+
+
+      333 |     await createNamedThread(window, "Canvas changes source");
+      334 |     await window.getByTestId("sidebar-canvas").click();
+    > 335 |     await expect(window.getByTestId("canvas-view")).toBeVisible();
+          |                                                     ^
+      336 |
+      337 |     const source = await getDesktopState(window);
+      338 |     await window.getByTestId("task-status-open-changes").click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d4-sidebar-draft.spec.ts:335:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-d4-sidebar-draft-从画布打开概况文件变更时保持画布并显示工具\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-d4-sidebar-draft-从画布打开概况文件变更时保持画布并显示工具\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-d4-sidebar-draft-从画布打开概况文件变更时保持画布并显示工具\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+[1A[2K(node:10148) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:10148) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K[8/20] apps\desktop\tests\core\d4-sidebar-draft.spec.ts:361:5 › keeps a draft typed inside the save debounce across a reload
+[1A[2K[9/20] apps\desktop\tests\core\department-workspace.spec.ts:62:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口
+[1A[2K  2) apps\desktop\tests\core\department-workspace.spec.ts:62:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口 ───
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m85[39m
+    Received:   [31m103.91668701171875[39m
+
+      153 |       await compactWorker.locator(".department-board__worker-goal").getAttribute("title"),
+      154 |     ).toContain("长任务末尾标记");
+    > 155 |     expect((await compactWorker.boundingBox())!.height).toBeLessThan(85);
+          |                                                         ^
+      156 |     const review = page
+      157 |       .locator('.department-board__column[data-state="blocked"]')
+      158 |       .getByTestId("department-card");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\department-workspace.spec.ts:155:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[1A[2K(node:3052) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K(node:3052) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[10/20] apps\desktop\tests\core\workbench-tabs.spec.ts:140:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser
+[1A[2K  3) apps\desktop\tests\core\workbench-tabs.spec.ts:140:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"WORKBENCH_READY"[39m
+    Received string:    [31m"[7mWindows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-rpoIMT\\workbench-tabs> echo WORKBEN^CH_READY & cd  所在位置 行:1 字符: 23+ echo [27mWORKBEN[7m^[27mCH_READY[7m & cd+                       ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来(\"&\")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-rpoIMT\\workbench-tabs>  [27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    5 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-rpoIMT\workbench-tabs>  "[22m
+    [2m    4 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-rpoIMT\workbench-tabs> echo WORKBEN^CH_READY & cd  所在位置 行:1 字符: 23+ echo WORKBEN^CH_READY & cd+                       ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来("&")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-rpoIMT\workbench-tabs>  "[22m
+
+
+      164 |     await window.keyboard.type(shellCommands([echoCommand("WORKBENCH_READY"), printCwdCommand()]));
+      165 |     await window.keyboard.press("Enter");
+    > 166 |     await expect(terminal.locator(".xterm-rows")).toContainText("WORKBENCH_READY");
+          |                                                   ^
+      167 |     await captureToolWidths(harness, window, testInfo, "Terminal");
+      168 |     await addTool(window, "Review");
+      169 |     await expect(window.locator(".diff-panel")).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:166:51
+
+    attachment #1: Files at 1280px (image/png) ─────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-workbench-tabs-adds-s-d5b79--and-keeps-an-empty-chooser\attachments\Files-at-1280px-ed9abf95d2da3f5d294e3192f61b2690bda3b18d.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: Files at 1040px (image/png) ─────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-workbench-tabs-adds-s-d5b79--and-keeps-an-empty-chooser\attachments\Files-at-1040px-fcf165fa9f5759d8a4e2224072c83f62fc454aa6.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-workbench-tabs-adds-s-d5b79--and-keeps-an-empty-chooser\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-workbench-tabs-adds-s-d5b79--and-keeps-an-empty-chooser\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-164117\core-output\core-workbench-tabs-adds-s-d5b79--and-keeps-an-empty-chooser\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[1A[2K(node:3560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[11/20] apps\desktop\tests\core\workbench-tabs.spec.ts:211:5 › restores each task's tabs and draft through Settings, switching, and restart
+[1A[2K[12/20] apps\desktop\tests\core\workbench-tabs.spec.ts:274:5 › an invalid or orphaned task layout does not block other saved UI state
+[1A[2K[13/20] apps\desktop\tests\core\workbench-tabs.spec.ts:339:5 › assistant file links keep the opened document with their originating task
+[1A[2K[14/20] apps\desktop\tests\core\workbench-tabs.spec.ts:371:5 › closing the Terminal view preserves its live shell
+[1A[2K[15/20] apps\desktop\tests\core\workbench-tabs.spec.ts:410:5 › hiding the workbench keeps the mounted terminal and its output until reopened
+[1A[2K[16/20] apps\desktop\tests\core\workbench-tabs.spec.ts:447:5 › two windows keep independent live tool selections for the same task
+[1A[2K[17/20] apps\desktop\tests\core\workbench-tabs.spec.ts:475:5 › wide workbench width controls announce and apply the CSS maximum
+[1A[2K[18/20] apps\desktop\tests\core\workbench-tabs.spec.ts:518:5 › compact status keeps the work surface full width beside open tools
+[1A[2K[19/20] apps\desktop\tests\core\workbench-tabs.spec.ts:572:5 › keeps one resizable width across tools, chooser, tasks, and restart
+[1A[2K[20/20] apps\desktop\tests\core\workbench-tabs.spec.ts:676:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog
+[1A[2K  3 failed
+    apps\desktop\tests\core\d4-sidebar-draft.spec.ts:323:5 › 从画布打开概况文件变更时保持画布并显示工具 ─────────────────
+    apps\desktop\tests\core\department-workspace.spec.ts:62:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口 ────
+    apps\desktop\tests\core\workbench-tabs.spec.ts:140:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser 
+  17 passed (7.4m)

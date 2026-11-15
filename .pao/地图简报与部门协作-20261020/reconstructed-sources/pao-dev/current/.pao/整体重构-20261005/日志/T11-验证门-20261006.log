@@ -1,0 +1,31 @@
+=== T11 验证门汇总 2026-10-06 ===
+--- 门1: PAO 构建级类型
+$ npx tsc -p tsconfig.build.json --noEmit
+TSC_BUILD_EXIT=0
+--- 残留声明清点（patrol+healthcheck+对应测试，应为全 0）
+src/pao/patrol/drop.ts:0
+src/pao/patrol/draft.ts:0
+test/pao/patrol-shell-guard-wire.test.ts:0
+src/pao/healthcheck/index.ts:0
+test/pao/patrol-shell-guard.test.ts:0
+src/pao/patrol/wire.ts:0
+src/pao/patrol/index.ts:0
+src/pao/patrol/hook.ts:0
+src/pao/healthcheck/cache-probe.ts:0
+src/pao/healthcheck/report.ts:0
+src/pao/healthcheck/probes.ts:0
+test/pao/healthcheck.test.ts:0
+src/pao/patrol/shell-guard.ts:0
+test/pao/healthcheck-cache-probe.test.ts:0
+--- 旧符号全仓外部引用检查（应为空）
+src\pao\healthcheck\report.ts:2: * 体检报告(M0-07):探针结果汇总成架构 §6.2「评测」条目格式的 markdown 并落盘。
+src\pao\healthcheck\report.ts:72:/** 从探针结果提炼首行钩子:全过/有失败/全崩三种口径 */
+src\pao\healthcheck\report.ts:116: * 落盘评测条目;返回写入路径。同名(同分钟重跑)自动加 -2 后缀,不覆盖。
+src\pao\healthcheck\probes.ts:4: * 探针只依赖注入的「体检调用器」;真实网络与鉴权由接线层组装,测试注入脚本化假件,
+src\pao\healthcheck\probes.ts:10:/** 体检调用选项:随一次补全下发的参数 */
+src\pao\healthcheck\probes.ts:21:/** 体检调用器:一次模型补全。接线层绑真实模型与鉴权;测试注入假件 */
+src\pao\healthcheck\index.ts:34:/** 工具执行结果 details:报告 + 落盘路径(+ 显式跑过时的缓存探针结果,纯文本不落盘) */
+src\pao\healthcheck\index.ts:49:	/** 测试注入:覆盖缓存探针时钟(免真实等待;调用器走 resolveCaller) */
+src\pao\healthcheck\index.ts:74:							"判定衰减的缓存命中率阈值(0-1,相对首个成功读缓存的采样;冷启动首采样只写不读,不作参照);缺省 0.5",
+src\pao\healthcheck\index.ts:148:			// 缓存探针参数先校验:不合法就在任何计费请求(包括冒烟探针)之前报错
+REF_SCAN_DONE

@@ -1,0 +1,45 @@
+// 用途：验证新版基准 SDK 宿主与真实 Git 隔离；全部使用本轮新建目录、离线模型，不访问正式现场。
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { createOrganized } from './benchmark-organized-entry.mjs';
+const root=new URL('../../',import.meta.url);
+const output=fileURLToPath(new URL(`基准宿主验证/${new Date().toISOString().replaceAll(':','-')}/`,import.meta.url));
+const source=fileURLToPath(new URL('PAO/',root));
+const cwd=join(output,'project');
+const agentDir=join(output,'agent');
+const home=join(output,'home');
+mkdirSync(cwd,{recursive:true});mkdirSync(home,{recursive:true});
+writeFileSync(join(cwd,'source.txt'),'离线固定输入\n');
+writeFileSync(join(cwd,'.gitignore'),'.pao/\n');
+const git=(...args)=>execFileSync('git',args,{cwd,encoding:'utf8'}).trim();
+git('init');git('config','core.autocrlf','false');git('add','source.txt','.gitignore');git('-c','user.name=offline-probe','-c','user.email=offline@local','commit','--no-gpg-sign','-qm','isolated input');
+process.env.PAO_HOME=home;process.env.PAO_ROLE='主控';process.env.PI_OFFLINE='1';process.env.PI_NO_LOCAL_LLM='1';
+globalThis.fetch=async()=>{throw Error('离线宿主验证禁止网络');};
+const load=file=>import(new URL(`PAO/packages/coding-agent/dist/${file}.js`,root));
+const {AuthStorage}=await load('core/auth-storage');
+const {ModelRuntime}=await load('core/model-runtime');
+const {InMemoryModelsStore,fauxProvider}=await import(new URL('PAO/packages/ai/dist/index.js',root));
+const modelRuntime=await ModelRuntime.create({credentials:AuthStorage.inMemory(),modelsStore:new InMemoryModelsStore(),modelsPath:null,allowModelNetwork:false});
+modelRuntime.registerNativeProvider(fauxProvider().provider);await modelRuntime.refresh({allowNetwork:false});
+const {runtime,host}=await createOrganized({source,cwd,agentDir,modelRuntime,probe:true});
+try{
+  await runtime.session.bindExtensions({onError:error=>{throw Error(JSON.stringify(error));}});
+  const tools=runtime.session.getAllTools().map(tool=>tool.name);
+  for(const name of ['pao_start_flow','pao_accept_task','pao_worktree_create'])assert(tools.includes(name),`未装配工具：${name}`);
+  const capability=await host.capability(cwd);assert.equal(capability.ok,true);assert.equal(capability.baseline,'recoverable-complete');
+  const before=git('rev-parse','HEAD');
+  const binding=await host.create({projectRoot:cwd,requestId:'offline-create',displayName:'isolated-review'});
+  assert.equal(binding.kind,'managed');assert.notEqual(binding.executionRoot,cwd);
+  assert.equal(readFileSync(join(binding.executionRoot,'source.txt'),'utf8'),'离线固定输入\n');
+  assert.deepEqual(await host.create({projectRoot:cwd,requestId:'offline-create',displayName:'isolated-review'}),binding);
+  const resolved=await host.resolveForDispatch({projectRoot:cwd,requestId:'offline-dispatch',target:{kind:'managed',worktreeId:binding.worktreeId}});
+  assert.equal(resolved.executionRoot,binding.executionRoot);
+  const cleanup=await host.requestCleanup({projectRoot:cwd,requestId:'offline-cleanup',worktreeId:binding.worktreeId,reason:'本轮离线验证结束',executionActive:false});
+  assert.equal(cleanup.ok,true,JSON.stringify(cleanup));assert.equal(cleanup.released,true);
+  assert.equal(git('rev-parse','HEAD'),before);assert.equal(git('status','--porcelain'),'');
+  const proof={at:new Date().toISOString(),scope:'真实SDK工具装配、桌面模块无Electron打包、真实Git快照/隔离/重复请求/派发解析/清理；模型调用0，无完整作答',capability,binding,cleanup,tools};
+  writeFileSync(join(output,'result.json'),JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify({ok:true,output,toolCount:tools.length,capability,cleanup}));
+}finally{await runtime.dispose();}

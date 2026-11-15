@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "id": "I06",
+    "path": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\fixtures\\memory\\scenarios\\I06.json",
+    "input": {
+      "id": "I06",
+      "description": "同名项目和worktree相近词语",
+      "sessions": [
+        {
+          "sessionId": "sess-g",
+          "messages": [
+            {
+              "role": "user",
+              "content": "pao 项目的记忆存储定了吗？",
+              "timestamp": "2026-11-08T17:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。",
+              "timestamp": "2026-11-08T17:00:05Z"
+            },
+            {
+              "role": "user",
+              "content": "确认，pao-dev 用 SQLite。",
+              "timestamp": "2026-11-08T17:01:00Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement",
+              "scope": {
+                "projectId": "pao-dev"
+              }
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "pao 记忆存储",
+              "mustContain": [
+                "mem-pao-dev-sqlite"
+              ],
+              "mustNotContain": [
+                "mem-pao-home-sqlite"
+              ]
+            }
+          ]
+        },
+        {
+          "sessionId": "sess-g-worktree",
+          "messages": [
+            {
+              "role": "user",
+              "content": "worktree 分支也要用 SQLite 吗？",
+              "timestamp": "2026-11-08T17:05:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。",
+              "timestamp": "2026-11-08T17:05:05Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement",
+              "scope": {
+                "projectId": "pao-dev",
+                "branch": "worktree-feature"
+              }
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "记忆存储",
+              "mustContain": [
+                "mem-pao-dev-sqlite"
+              ],
+              "mustNotContain": []
+            }
+          ]
+        }
+      ],
+      "expectedFinalState": {
+        "memories": [
+          {
+            "id": "mem-pao-dev-sqlite",
+            "kind": "decision",
+            "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+            "confirmation": "confirmed",
+            "usageState": "active",
+            "scope": {
+              "projectId": "pao-dev"
+            }
+          }
+        ],
+        "sources": [
+          {
+            "sourceId": "src-sess-g-001",
+            "sessionId": "sess-g",
+            "entryId": "entry-003"
+          }
+        ]
+      }
+    }
+  },
+  "mode": "real",
+  "status": "failed",
+  "acceptance": {
+    "realAcceptanceClaimed": false,
+    "eligibleForS4Review": true,
+    "reason": "本轮收集真实入口证据；是否通过由 S4-17 主对话判定"
+  },
+  "runRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261109",
+  "workRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261109\\I06-1794238586581-TcWI6R",
+  "inputs": {
+    "authPath": "C:\\Users\\ASUS\\.pi\\agent\\auth.json",
+    "modelsPath": "C:\\Users\\ASUS\\.pi\\agent\\models.json",
+    "tierConfigSource": "options.tierConfig",
+    "executeReal": true,
+    "processEnvIsolation": {
+      "embeddingEnv": "disabled_for_run",
+      "envFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261109\\I06-1794238586581-TcWI6R\\embedding-disabled.env",
+      "outboundConfig": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261109\\I06-1794238586581-TcWI6R\\outbound-disabled.json",
+      "restoredAfterRun": true
+    }
+  },
+  "network": {
+    "modelRequests": 0,
+    "cloudEmbeddingRequests": 0,
+    "localFailureEndpointRequests": 0,
+    "cloudEmbeddingBasis": "EMBED_* 与 .env 在 adapter 运行期间隔离"
+  },
+  "scenarioEvidence": "not_started",
+  "cleanup": {
+    "sessions": [
+      {
+        "actualSessionId": "01a1c0f4-246a-708f-a95a-f5f6e42ac707",
+        "status": "flushed"
+      },
+      {
+        "actualSessionId": "01a1c0f4-250e-708f-a95a-f5f9e62a84ab",
+        "status": "flushed"
+      }
+    ],
+    "service": "closed",
+    "store": "closed",
+    "modelRuntime": {
+      "status": "unavailable_public_surface",
+      "error": "unknown"
+    },
+    "ledger": "flushed"
+  },
+  "error": {
+    "name": "TypeError",
+    "message": "deps.modelRegistry.find is not a function",
+    "stack": "TypeError: deps.modelRegistry.find is not a function\n    at requestExtraction (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/dist/pao/memory/extract-model.js:302:65)\n    at extractAndCommit (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/memory-acceptance-boundaries.mjs:415:23)\n    at async runI06 (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/memory-acceptance-boundaries.mjs:594:25)\n    at async runScenario (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/memory-acceptance-boundaries.mjs:1343:49)\n    at async runBoundaryScenario (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/memory-acceptance-boundaries.mjs:1383:10)\n    at async runRealScenario (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/run-memory-acceptance.mjs:323:20)\n    at async main (file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/run-memory-acceptance.mjs:369:13)\n    at async file:///D:/AI/workspace/pao-dev/PAO/packages/coding-agent/scripts/run-memory-acceptance.mjs:438:20"
+  },
+  "evidencePath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261109\\I06-1794238586581-TcWI6R\\boundary-result.json"
+}

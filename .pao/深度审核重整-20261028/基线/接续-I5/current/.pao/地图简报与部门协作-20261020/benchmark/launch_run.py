@@ -1,0 +1,259 @@
+"""受控启动一轮冻结运行；本包只做接线，不执行真实启动。"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+from typing import Callable
+
+import bench_controller
+import runner_common
+
+
+DOCKER_EXE = "D:/Docker/resources/bin/docker.exe"
+CONTROLLER_IMAGE = "pao-benchmark-controller:20261021"
+HOST_WORKSPACE = Path("D:/AI/workspace")
+HOST_WORKSPACE_CONTAINER_ROOT = "/mnt/d/AI/workspace"
+LINUX_PYTHON = "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/.venv/bin/python"
+
+
+def docker_query(
+    docker: str,
+    *args: str,
+    timeout: int = 30,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [docker, *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=timeout,
+        env=env,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+
+
+def container_state(docker: str, name: str) -> dict:
+    result = docker_query(
+        docker,
+        "inspect",
+        "--format",
+        "{{json .State}}",
+        name,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("Docker 状态查询失败：" + (result.stderr or result.stdout))
+    state = json.loads(result.stdout)
+    if not isinstance(state, dict):
+        raise ValueError("Docker inspect 返回的状态不是对象")
+    return state
+
+
+def container_image_id(docker: str, name: str) -> str:
+    """查询容器实际使用的不可变镜像 ID；tag 只作为可重建的名称。"""
+    result = docker_query(
+        docker,
+        "inspect",
+        "--format",
+        "{{.Image}}",
+        name,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("Docker 镜像身份查询失败：" + (result.stderr or result.stdout))
+    image_id = result.stdout.strip()
+    if not image_id:
+        raise ValueError("Docker inspect 未返回实际 image ID")
+    return image_id
+
+
+def verify_previous(
+    previous: Path,
+    *,
+    docker: str = DOCKER_EXE,
+    query: Callable[[str, str], dict] = container_state,
+) -> dict:
+    receipt_path = previous / "terminal-receipt.json"
+    containers_path = previous / "runtime-containers.json"
+    if not receipt_path.is_file() or not containers_path.is_file():
+        raise ValueError("指定上一轮缺少 terminal-receipt.json 或 runtime-containers.json")
+    receipt = runner_common.read_json(receipt_path)
+    if receipt.get("writers_stopped_observed") is not True:
+        raise RuntimeError("上一轮未确认停写")
+    containers_record = runner_common.read_json(containers_path)
+    names = containers_record.get("containers")
+    if not isinstance(names, list) or not names or not all(
+        isinstance(name, str) and name for name in names
+    ):
+        raise ValueError("上一轮容器名单无效")
+    runner_common.validate_terminal_scope(receipt, names)
+    scope = containers_record.get("scope")
+    if not isinstance(scope, dict):
+        raise ValueError("上一轮容器记录缺少观察阶段和范围")
+    if scope != receipt.get("scope"):
+        raise ValueError("上一轮终局回执与容器观察范围不一致")
+    observed = []
+    for name in names:
+        state = query(docker, name)
+        # 一次性评分容器正常退出后仍保留 Pid 与 ExitCode；Running 才是存活事实。
+        if state.get("Running") or state.get("Paused") or state.get("Restarting"):
+            raise RuntimeError("上一轮容器仍可能写入：" + name)
+        observed.append({"name": name, "state": state})
+    return {"receipt": receipt, "containers": observed, "scope": scope}
+
+
+def interpreter_identity(linux_python: str, host_workspace: Path) -> dict:
+    """把容器解释器路径映射到宿主文件，记录内容摘要而非只记路径。"""
+    prefix = HOST_WORKSPACE_CONTAINER_ROOT.rstrip("/") + "/"
+    if not linux_python.startswith(prefix):
+        raise ValueError("Linux Python 路径不在宿主工作区挂载根下")
+    relative = linux_python[len(prefix):]
+    host_path = (host_workspace / relative).resolve()
+    if not host_path.is_relative_to(host_workspace.resolve()):
+        raise ValueError("Linux Python 路径越过宿主工作区")
+    if not host_path.is_file():
+        raise FileNotFoundError("Linux Python 文件不存在：" + str(host_path))
+    return {
+        "container_path": linux_python,
+        "host_source_path": str(host_path),
+        "host_source_sha256": hashlib.sha256(host_path.read_bytes()).hexdigest(),
+        "host_source_bytes": host_path.stat().st_size,
+    }
+
+
+def launch(
+    run: Path,
+    *,
+    previous: Path | None = None,
+    docker: str = DOCKER_EXE,
+    runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+    query: Callable[[str, str], dict] = container_state,
+    image_query: Callable[[str, str], str] = container_image_id,
+    environ: dict[str, str] | None = None,
+) -> dict:
+    run = run.resolve()
+    run_sources = runner_common.read_json(run / "run-sources.json")
+    if (run / "control-started.json").exists():
+        raise FileExistsError("本轮已有 control-started.json，拒绝启动重放")
+    if (run / "control-request.json").exists():
+        raise ValueError("本轮已有控制请求，拒绝自动恢复")
+    mounts = run_sources["container_mounts"]
+    config = bench_controller.validate(
+        run,
+        final_run=run,
+        container_mounts=mounts,
+    )
+    agent = runner_common.validate_run_config(config)
+    approval = runner_common.read_json(run / "approved-launch.json")
+    if approval.get("controller") not in (None, config["job_name"]):
+        raise ValueError("授权控制器名与本轮配置不一致")
+    if approval.get("tasks") != [config["tasks"][0]["name"]]:
+        raise ValueError("授权题目范围与本轮配置不一致")
+    if (
+        approval.get("model") != runner_common.model_id(agent["model_name"])
+        or approval.get("thinking") != agent["kwargs"]["thinking"]
+        or approval.get("attempts") != 1
+        or approval.get("automatic_retries") != 0
+    ):
+        raise ValueError("授权模型、思考强度、次数或重试范围不一致")
+    if previous is not None:
+        verify_previous(previous, docker=docker, query=query)
+    env = dict(os.environ if environ is None else environ)
+    if not env.get("PAO_BENCH_API_KEY"):
+        raise ValueError("缺少现有环境变量 PAO_BENCH_API_KEY")
+    local_root = mounts["local_root"]
+    container_root = mounts["container_root"]
+    container_run = runner_common.container_path(run, mounts)
+    name = config["job_name"]
+    python_identity = interpreter_identity(LINUX_PYTHON, HOST_WORKSPACE)
+    command = [
+        docker,
+        "run",
+        "-d",
+        "--name",
+        name,
+        "--restart=no",
+        "-e",
+        "PAO_BENCH_API_KEY",
+        "-e",
+        "HARBOR_TELEMETRY=0",
+        "-e",
+        "PYTHONIOENCODING=utf-8",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-v",
+        f"{HOST_WORKSPACE}:{HOST_WORKSPACE_CONTAINER_ROOT}",
+        "-v",
+        f"{local_root}:{container_root}",
+        "-v",
+        str(runner_common.absolute_path(
+            runner_common.read_json(run / "run-sources.json")["harbor_cache"],
+            "harbor_cache",
+        ))
+        + ":/root/.cache/harbor",
+        CONTROLLER_IMAGE,
+        LINUX_PYTHON,
+        container_run + "/bench_controller.py",
+        "run",
+        "--run",
+        container_run,
+    ]
+    execute = runner or docker_query
+    # 单次标记必须由控制器创建；入口只在 Docker 成功后保存启动回执。
+    # 凭证只通过子进程环境传递；argv 中只保留变量名。
+    result = execute(docker, *command[1:], timeout=60, env=env)
+    if result.returncode != 0:
+        raise RuntimeError("Docker 控制器启动失败：" + (result.stderr or result.stdout))
+    container_id = result.stdout.strip()
+    if not container_id:
+        raise RuntimeError("Docker 启动未返回容器 ID")
+    image_id = image_query(docker, name)
+    runtime_receipt = {
+        "at": runner_common.now(),
+        "container_name": name,
+        "container_id": container_id,
+        "image_name": CONTROLLER_IMAGE,
+        "image_id": image_id,
+        "interpreter": python_identity,
+    }
+    runner_common.write_json(run / "runtime-launch.json", runtime_receipt)
+    runner_common.write_json(
+        run / "runtime-containers.json",
+        {
+            "at": runner_common.now(),
+            "containers": [name],
+            "launch": runtime_receipt,
+        },
+    )
+    (run / "approved-controller-id.txt").write_text(
+        container_id + "\n", encoding="utf-8"
+    )
+    return {
+        "started": name,
+        "container_id": container_id,
+        "image_id": image_id,
+        "interpreter": python_identity,
+        "auto_restart": False,
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run", type=Path, required=True)
+    parser.add_argument("--previous", type=Path)
+    args = parser.parse_args()
+    print(
+        json.dumps(
+            launch(args.run, previous=args.previous),
+            ensure_ascii=False,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,15 @@
+import { pathToFileURL } from "node:url";
+const { openMemoryStore } = await import(pathToFileURL("D:/AI/workspace/pao-dev/PAO/packages/coding-agent/src/pao/memory/store.ts").href);
+const home = process.argv[2];
+const store = openMemoryStore(home, "readwrite");
+const sql = store.db.prepare("SELECT sql FROM sqlite_master WHERE name='extraction_jobs'").get();
+console.log("CHECK含evolve:", sql.sql.includes("'evolve'"));
+const jobs = store.db.prepare("SELECT job_id, job_kind, scope_key, status, cursor FROM extraction_jobs ORDER BY job_id").all();
+console.log("存量行:", JSON.stringify(jobs));
+const pcols = store.db.prepare("PRAGMA table_info(evolution_problems)").all().map(c=>c.name);
+console.log("paid_attempts:", pcols.includes("paid_attempts"));
+store.db.prepare("INSERT INTO extraction_jobs (job_id, job_kind, source_scope, scope_key, status, created_at, updated_at) VALUES ('j-evolve','evolve','{}','evolve:p1','pending','n','n')").run();
+console.log("evolve insert ok");
+console.log("consecutive_failures列:", store.db.prepare("PRAGMA table_info(extraction_jobs)").all().some(c=>c.name==='consecutive_failures'));
+console.log("maintenance_pending_rerun表:", store.db.prepare("SELECT name FROM sqlite_master WHERE name='maintenance_pending_rerun'").get()?.name);
+store.close();

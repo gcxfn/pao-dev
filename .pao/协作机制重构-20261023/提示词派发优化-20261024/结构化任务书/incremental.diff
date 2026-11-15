@@ -1,0 +1,1331 @@
+diff --git a/packages/coding-agent/src/pao/worker/index.ts b/packages/coding-agent/src/pao/worker/index.ts
+@@ -48,6 +48,11 @@ import {
+ 	type IntakeRequest,
+ 	type IntakeTemplateBody,
+ 	isIntakeOutcomeStale,
++	legacyTaskFields,
++	normalizeTaskBook,
++	type TaskBook,
++	TaskBookSchema,
++	taskBookFields,
+ } from "../intake/index.ts";
+ import { resolvePaoRole } from "../role.ts";
+ import { logWarn } from "../shared/log.ts";
+@@ -90,7 +95,6 @@ export * from "./usage.ts";
+ export * from "./usage-display.ts";
+ 
+ import { PaoWorkerError } from "./errors.ts";
+-import { completeDispatchedTask } from "./post-dispatch.ts";
+ import { InventoryPathError, type InventoryReport, inventory } from "./inventory.ts";
+ import { defaultWorkerRunner, installExitHooks } from "./lifecycle.ts";
+ import {
+@@ -99,6 +103,7 @@ import {
+ 	type DispatchNotifySurface,
+ 	sendDispatchNotifyWakeup,
+ } from "./notify.ts";
++import { completeDispatchedTask } from "./post-dispatch.ts";
+ import type { WorkerReceipt, WorkerUsage } from "./receipt.ts";
+ import type { ProcessEntry } from "./registry.ts";
+ import type { StopProof, WorkerRunner, WorkerRunOptions } from "./runner.ts";
+@@ -1227,9 +1232,10 @@ export function buildAutoIntakeKey(parts: {
+ }
+ 
+ const AcceptTaskParams = Type.Object({
+-	target: Type.String({ description: "目标(必填):这次要办成什么。写清结果,不写过程" }),
++	task: Type.Optional(TaskBookSchema),
++	target: Type.Optional(Type.String({ description: "旧调用目标(必填):新调用优先用 task.goal" })),
+ 	dept: Type.String({ description: "部门(必填):须为已登记部门;不自动建部,部门不存在会如实拒绝" }),
+-	acceptance: Type.String({ description: "验收标准(必填):凭什么算做完了" }),
++	acceptance: Type.Optional(Type.String({ description: "旧调用验收标准(必填):新调用优先用 task.acceptance" })),
+ 	inputs: Type.Optional(Type.Array(Type.String(), { description: "输入指针列表(可空):文件路径、链接、上游产物" })),
+ 	constraints: Type.Optional(Type.String({ description: "约束正文(可空):边界、不许做的事" })),
+ 	depends_on: Type.Optional(
+@@ -1349,8 +1355,13 @@ ${options.requestKey}（${options.autoKey ? "工具按『目标＋部门＋验
+ 			if (options.stale === true) {
+ 				// 受理后到渲染这段文本之间，卡已被停/被重开——不能再说「在等你查」
+ 				lines.push("注意：这张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以 pao_inventory 的现场为准）。");
++			} else if (outcome.dispatched === true) {
++				lines.push("已提交后台派发：等待结果通知；无立即事项时本回合可以结束。");
++			} else if (outcome.dispatched === false) {
++				lines.push("只建了卡，尚未提交后台派发：准备好后调用 pao_dispatch_card 派出。");
++			} else {
++				lines.push("受理账未记录是否已提交后台派发；必要时用 pao_inventory 核对现场，不能据此认定仅建卡。");
+ 			}
+-			lines.push("后续：用 pao_inventory 查它现在什么状态；要停就调 pao_terminate_card。");
+ 			break;
+ 		}
+ 		case "duplicate": {
+@@ -1370,14 +1381,22 @@ ${options.requestKey}（${options.autoKey ? "工具按『目标＋部门＋验
+ 				lines.push(
+ 					"注意：首次那张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以 pao_inventory 的现场为准）。",
+ 				);
++			} else if (outcome.dispatched === true) {
++				lines.push("首次已提交后台派发；本次没有重复派发，等待首次结果通知。");
++			} else if (outcome.dispatched === false) {
++				lines.push("首次只建了卡，没有提交后台派发；本次也没有重复派发。");
++			} else {
++				lines.push(
++					"首次派发状态未记录（旧账或受理账补写失败）；本次没有重复派发，必要时查现场，不能据此认定只建了卡。",
++				);
+ 			}
+-			lines.push("没有新建卡、没有重复派发；如果你要的是新任务，请换一条判据（request_key）。");
++			lines.push("本次没有新建卡；如果你要的是新任务，请换一条判据（request_key）。");
+ 			break;
+ 		}
+ 		case "deferred": {
+ 			lines.push(`已受理并建卡，但没有派发：${identityLine(outcome)}`);
+ 			lines.push(`推迟原因：${outcome.reason ?? "原因未记（宿主没给）"}`);
+-			lines.push("卡是真的建好了（可以用 pao_inventory 查到）；等条件满足后可用 pao_dispatch_card 派出。");
++			lines.push("卡已建好但没有派发；按上面的原因解除阻塞后，再用 pao_dispatch_card 派出。");
+ 			break;
+ 		}
+ 		case "rejected": {
+@@ -1401,13 +1420,10 @@ function buildAcceptTaskTool(deps: AcceptTaskToolDeps): ToolDefinition<typeof Ac
+ 		name: "pao_accept_task",
+ 		label: "受理任务",
+ 		description:
+-			"完整任务受理：一次调用做完「集中预检→建卡→可选派发」，直接返回受理身份（卡号/尝试号）或**真实拒绝原因**。" +
+-			"与旧入口的关系（旧入口名字与行为都不变，继续可用）：本工具的第 2 步就是 pao_create_card 的建卡、" +
+-			"第 3 步就是 pao_dispatch_card 的派发；查询仍用 pao_inventory，停止仍用 pao_terminate_card。" +
+-			"dispatch 缺省 false——受理默认不替你花钱，要立刻跑必须显式 dispatch=true 且给 reason。" +
+-			"尝试号由后台派发产生，工具返回时刻可能尚未产生（文本会写「尝试号未产生」，不是失败）；要权威的当前身份与尝试号，用 pao_inventory 复查。" +
+-			"幂等：request_key 是请求判据，同一判据重复提交返回第一次的身份、不重复建卡；不给则按『目标+部门+验收+依赖』自动生成并在返回里写明。" +
+-			"停止/重派后旧受理结果即失效（计划 §5.4），别拿旧 outcome 当成功。",
++			"推荐用 task 提交目标、输入、边界、验收、交付物和实施提示；旧 target/acceptance 写法继续兼容，新旧字段冲突时拒绝。" +
++			"一次完成预检、建卡和可选派发。dispatch 缺省 false；dispatch=true 须给 reason。" +
++			"已提交后台派发只表示任务已交给派发链，不表示 worker 已启动；等待结果通知。" +
++			"同一 request_key 幂等，重复提交不重复建卡。",
+ 		parameters: AcceptTaskParams,
+ 		execute: async (_toolCallId, params: AcceptTaskParamsShape, signal, _onUpdate, ctx) => {
+ 			const cardsDir = params.cards_dir ?? deps.resolveCardsDir();
+@@ -1417,14 +1433,41 @@ function buildAcceptTaskTool(deps: AcceptTaskToolDeps): ToolDefinition<typeof Ac
+ 					"受理未执行：缺 PAO_HOME（集中预检要读部门注册表/档位/预算配置，空 home 不跑；请在装配时给 resolvePaoHome 或设 PAO_HOME 环境变量）",
+ 				);
+ 			}
++			let task: TaskBook | undefined;
++			let fields: { goal: string; acceptance: string; inputs?: string[]; boundaries?: string };
++			try {
++				if (!params.task && (params.target === undefined || params.target.trim() === "")) {
++					// 保持旧入口的受理拒绝口径：形状问题交给 acceptIntake 返回真实 outcome。
++					fields = { goal: params.target ?? "", acceptance: params.acceptance ?? "" };
++				} else if (!params.task && params.acceptance === undefined) {
++					fields = { goal: params.target!, acceptance: "" };
++				} else if (params.task) {
++					task = normalizeTaskBook(params.task, {
++						...(params.target !== undefined ? { goal: params.target } : {}),
++						...(params.acceptance !== undefined ? { acceptance: params.acceptance } : {}),
++						...(params.inputs !== undefined ? { inputs: params.inputs } : {}),
++						...(params.constraints !== undefined ? { boundaries: params.constraints } : {}),
++					});
++					fields = taskBookFields(task);
++				} else {
++					fields = legacyTaskFields({
++						...(params.target !== undefined ? { goal: params.target } : {}),
++						...(params.acceptance !== undefined ? { acceptance: params.acceptance } : {}),
++						...(params.inputs !== undefined ? { inputs: params.inputs } : {}),
++						...(params.constraints !== undefined ? { boundaries: params.constraints } : {}),
++					});
++				}
++			} catch (error) {
++				return toolError(`受理未执行：${(error as Error).message}`);
++			}
+ 			const explicitKey = params.request_key?.trim() ?? "";
+ 			const requestKey =
+ 				explicitKey.length > 0
+ 					? explicitKey
+ 					: buildAutoIntakeKey({
+-							goal: params.target,
++							goal: fields.goal,
+ 							dept: params.dept,
+-							acceptance: params.acceptance,
++							acceptance: fields.acceptance,
+ 							dependsOn: params.depends_on,
+ 						});
+ 			const autoKey = explicitKey.length === 0;
+@@ -1432,11 +1475,12 @@ function buildAcceptTaskTool(deps: AcceptTaskToolDeps): ToolDefinition<typeof Ac
+ 			const request: IntakeRequest = {
+ 				// IntakeRequest 的字段是 ASCII 英文契约名；卡片协议的中文 frontmatter 键在 intake 内映射，本层不碰
+ 				idempotencyKey: requestKey,
+-				goal: params.target,
++				goal: fields.goal,
+ 				dept: params.dept,
+-				acceptance: params.acceptance,
+-				...(params.inputs !== undefined ? { inputs: params.inputs } : {}),
+-				...(params.constraints !== undefined ? { constraints: params.constraints } : {}),
++				acceptance: fields.acceptance,
++				...(fields.inputs !== undefined ? { inputs: fields.inputs } : {}),
++				...(fields.boundaries !== undefined ? { constraints: fields.boundaries } : {}),
++				...(task ? { task } : {}),
+ 				...(params.depends_on !== undefined ? { depends_on: params.depends_on } : {}),
+ 				...(params.tier !== undefined ? { tier: params.tier as CardTier } : {}),
+ 				...(params.budget !== undefined ? { budget: params.budget as CardBudget } : {}),
+diff --git a/packages/coding-agent/src/pao/intake/accept.ts b/packages/coding-agent/src/pao/intake/accept.ts
+@@ -41,6 +41,7 @@ import { checkPreflight, type PreflightItem, type PreflightLevel, type Preflight
+ import { nowString, utcNow } from "../shared/time.ts";
+ import { checkDispatchPermission, claimRefusalDetail, locateDispatchCard } from "../worker/dispatch-core.ts";
+ import { commitIntakeEntry, dropIntakeKey, intakeLedgerPath, reserveIntakeKey, updateIntakeEntry } from "./ledger.ts";
++import { legacyTaskFields, mergeConstraints, normalizeTaskBook, type TaskBook, taskBookFields } from "./task-book.ts";
+ import type {
+ 	IntakeDispatchHook,
+ 	IntakeLedgerEntry,
+@@ -70,21 +71,64 @@ function outcomeFor(
+ 	acceptedAt: string,
+ 	extra: Partial<IntakeOutcome> = {},
+ ): IntakeOutcome {
+-	return { idempotencyKey: request.idempotencyKey, status, acceptedAt, problems: [], ...extra };
++	return {
++		idempotencyKey: request.idempotencyKey,
++		status,
++		acceptedAt,
++		problems: [],
++		dispatchRequested: request.dispatch,
++		...extra,
++	};
+ }
+ 
+ function problem(level: PreflightLevel, subject: string, reason: string, suggestion: string): PreflightItem {
+ 	return { level, subject, reason, suggestion };
+ }
+ 
++async function recordDispatchState(
++	ledger: string,
++	idempotencyKey: string,
++	dispatched: boolean,
++	attempt?: number,
++): Promise<PreflightItem | undefined> {
++	try {
++		const updated = await updateIntakeEntry(ledger, idempotencyKey, {
++			dispatched,
++			...(attempt !== undefined ? { attempt } : {}),
++		});
++		if (updated) return undefined;
++	} catch {
++		// 当前 outcome 仍按刚观察到的真实结果返回；下面只警告账未跟上，避免下次 duplicate 被误读。
++	}
++	return problem(
++		"警告",
++		"受理账",
++		`卡已建好且本次派发状态为 ${dispatched ? "已提交后台派发" : "未提交后台派发"}，但受理账补写失败；下次重复提交时该状态可能未记录`,
++		"以当前结果为准；必要时查卡面和派发现场，不要仅凭旧受理账判断是否已派发",
++	);
++}
++
++function requestLegacyFields(request: IntakeRequest) {
++	return {
++		...(request.goal !== undefined ? { goal: request.goal } : {}),
++		...(request.acceptance !== undefined ? { acceptance: request.acceptance } : {}),
++		...(request.inputs !== undefined ? { inputs: request.inputs } : {}),
++		...(request.constraints !== undefined ? { boundaries: request.constraints } : {}),
++	};
++}
++
++function normalizeRequestTask(request: IntakeRequest): TaskBook | undefined {
++	return request.task ? normalizeTaskBook(request.task, requestLegacyFields(request)) : undefined;
++}
++
+ /** 请求自身的静态校验（不依赖现场）：判据/目标/部门/验收非空，派发要给理由。 */
+-function requestShapeProblems(request: IntakeRequest): string[] {
++function requestShapeProblems(request: IntakeRequest, task: TaskBook | undefined): string[] {
+ 	const problems: string[] = [];
+ 	if (typeof request.idempotencyKey !== "string" || request.idempotencyKey.trim().length === 0)
+ 		problems.push("缺少请求判据 idempotencyKey（没有判据无法区分重试与新任务，不猜）");
+-	if (typeof request.goal !== "string" || request.goal.trim().length === 0) problems.push("缺少目标 goal");
++	if (!task && (typeof request.goal !== "string" || request.goal.trim().length === 0)) problems.push("缺少目标 goal");
+ 	if (typeof request.dept !== "string" || request.dept.trim().length === 0) problems.push("缺少部门 dept");
+-	if (typeof request.acceptance !== "string" || request.acceptance.trim().length === 0)
++	if (!task && (typeof request.acceptance !== "string" || request.acceptance.trim().length === 0))
+ 		problems.push("缺少验收 acceptance");
+ 	if (request.dispatch && (typeof request.reason !== "string" || request.reason.trim().length === 0))
+ 		problems.push("dispatch=true 时须给派单理由 reason（trim 后不得为空；理由留痕供上级审查）");
+@@ -137,16 +181,19 @@ function projectRootForIntake(cardsDir: string): string {
+ async function createCardForRequest(
+ 	cardsDir: string,
+ 	request: IntakeRequest,
++	task: TaskBook | undefined,
+ 	options: IntakeOptions,
+ 	created: string,
+ ): Promise<ParsedCard> {
+ 	const templateBody = options.resolveTemplate ? await options.resolveTemplate(request) : undefined;
++	const fields = task ? taskBookFields(task) : legacyTaskFields(requestLegacyFields(request));
++	const constraints = mergeConstraints(fields.boundaries, task);
+ 	const input: CardCreateInput = {
+-		目标: request.goal,
++		目标: fields.goal,
+ 		部门: request.dept,
+-		验收: request.acceptance,
+-		...(request.inputs !== undefined ? { 输入: request.inputs } : {}),
+-		...(request.constraints !== undefined ? { 约束: request.constraints } : {}),
++		验收: fields.acceptance,
++		...(fields.inputs !== undefined ? { 输入: fields.inputs } : {}),
++		...(constraints !== undefined ? { 约束: constraints } : {}),
+ 		...(request.depends_on !== undefined ? { depends_on: request.depends_on } : {}),
+ 		...(request.parent !== undefined ? { parent: request.parent } : {}),
+ 		...(request.tier !== undefined ? { 档位: request.tier } : {}),
+@@ -245,20 +292,28 @@ function duplicateOutcome(request: IntakeRequest, entry: IntakeLedgerEntry): Int
+ 	const duplicate = outcomeFor(request, "duplicate", entry.acceptedAt, {
+ 		cardNo: entry.cardNo,
+ 		cardPath: entry.cardPath,
++		...(entry.dispatchRequested !== undefined ? { dispatchRequested: entry.dispatchRequested } : {}),
++		...(entry.dispatched !== undefined ? { dispatched: entry.dispatched } : {}),
+ 		...(entry.attempt !== undefined ? { attempt: entry.attempt } : {}),
+ 		...(entry.instance !== undefined ? { instance: entry.instance } : {}),
+ 		...(entry.node !== undefined ? { node: entry.node } : {}),
+ 		...(entry.round !== undefined ? { round: entry.round } : {}),
+ 	});
++	// outcomeFor 默认带的是「本次调用」的派发请求。旧账没有首次字段时不能拿本次值冒充历史，
++	// 否则同一旧账先以 dispatch=false、后以 dispatch=true 重提，就会凭空改变首次事实。
++	if (entry.dispatchRequested === undefined) delete duplicate.dispatchRequested;
+ 	// 首次受理快照：下游工具面要如实显示「这就是第一次那条」，不必再查一遍账。
+ 	duplicate.duplicateOf = outcomeFor(request, "accepted", entry.acceptedAt, {
+ 		cardNo: entry.cardNo,
+ 		cardPath: entry.cardPath,
++		...(entry.dispatchRequested !== undefined ? { dispatchRequested: entry.dispatchRequested } : {}),
++		...(entry.dispatched !== undefined ? { dispatched: entry.dispatched } : {}),
+ 		...(entry.attempt !== undefined ? { attempt: entry.attempt } : {}),
+ 		...(entry.instance !== undefined ? { instance: entry.instance } : {}),
+ 		...(entry.node !== undefined ? { node: entry.node } : {}),
+ 		...(entry.round !== undefined ? { round: entry.round } : {}),
+ 	});
++	if (entry.dispatchRequested === undefined) delete duplicate.duplicateOf.dispatchRequested;
+ 	return duplicate;
+ }
+ 
+@@ -285,7 +340,17 @@ async function acceptOne(
+ 	const ledger = intakeLedgerPath(cardsDir);
+ 
+ 	// ① 请求形状
+-	const shape = requestShapeProblems(request);
++	let task: TaskBook | undefined;
++	try {
++		task = normalizeRequestTask(request);
++	} catch (error) {
++		const reason = `结构化任务 task 无效：${(error as Error).message}`;
++		return outcomeFor(request, "rejected", time, {
++			reason,
++			problems: [problem(BLOCKING_LEVEL, "请求形状", reason, "补齐任务书后重新提交；不猜、不填默认值")],
++		});
++	}
++	const shape = requestShapeProblems(request, task);
+ 	if (shape.length > 0) {
+ 		return outcomeFor(request, "rejected", time, {
+ 			reason: shape.join("；"),
+@@ -353,7 +418,7 @@ async function acceptOne(
+ 		// ④ 建卡（复用 createCard：同一发号器、同一原子写、同一状态机缺省）
+ 		let card: ParsedCard;
+ 		try {
+-			card = await createCardForRequest(cardsDir, request, options, time);
++			card = await createCardForRequest(cardsDir, request, task, options, time);
+ 		} catch (error) {
+ 			await releasePlaceholder();
+ 			return outcomeFor(request, "rejected", time, {
+@@ -369,6 +434,9 @@ async function acceptOne(
+ 				cardNo,
+ 				cardPath: card.path,
+ 				acceptedAt: time,
++				dispatchRequested: request.dispatch,
++				// dispatch=true 时后台 hook 尚未调用，结果未知；只有确定未派或提交成功后才写布尔值。
++				...(request.dispatch ? {} : { dispatched: false }),
+ 			});
+ 			if (!committed)
+ 				return outcomeFor(request, "rejected", time, {
+@@ -389,30 +457,36 @@ async function acceptOne(
+ 
+ 		// ⑥ 派发（可选，经注入通道）
+ 		if (!request.dispatch) {
+-			return outcomeFor(request, "accepted", time, { cardNo, cardPath: card.path, problems });
++			return outcomeFor(request, "accepted", time, {
++				cardNo,
++				cardPath: card.path,
++				dispatched: false,
++				problems,
++			});
+ 		}
+ 		const dispatched = await dispatchAcceptedCard(cardsDir, request, options, cardNo, time);
+ 		if (!dispatched.ok) {
++			const ledgerProblem = await recordDispatchState(ledger, idempotencyKey, false);
+ 			return outcomeFor(request, dispatched.status, time, {
+ 				cardNo,
+ 				cardPath: card.path,
++				dispatched: false,
+ 				reason: dispatched.reason,
+-				problems,
++				problems: ledgerProblem ? [...problems, ledgerProblem] : problems,
+ 			});
+ 		}
+ 		// 尝试号：派发是后台链，认领在后台发生——此刻卡面 attempt 仍为 0（未真实启动）。
+ 		// 如实留 undefined，不让调用方以为已经跑起来；真值以卡面/派卡通知为准。
+ 		const running = safeReadCard(card.path);
+ 		const attempt = running && running.frontmatter.attempt > 0 ? running.frontmatter.attempt : undefined;
+-		if (attempt !== undefined) {
+-			// 认领恰好已完成（快路径）：把尝试号补进账，duplicate 回填时能给出真实身份
+-			await updateIntakeEntry(ledger, idempotencyKey, { attempt }).catch(() => false);
+-		}
++		// 认领可能已完成（快路径）：把尝试号补进账，duplicate 回填时能给出真实身份。
++		const ledgerProblem = await recordDispatchState(ledger, idempotencyKey, true, attempt);
+ 		return outcomeFor(request, "accepted", time, {
+ 			cardNo,
+ 			cardPath: card.path,
++			dispatched: true,
+ 			...(attempt !== undefined ? { attempt } : {}),
+-			problems,
++			problems: ledgerProblem ? [...problems, ledgerProblem] : problems,
+ 		});
+ 	} catch (error) {
+ 		await releasePlaceholder();
+diff --git a/packages/coding-agent/src/pao/intake/types.ts b/packages/coding-agent/src/pao/intake/types.ts
+@@ -8,6 +8,7 @@
+  */
+ import type { CardBudget, CardPriority, CardTier, ParsedCard } from "../cards/index.ts";
+ import type { PreflightItem } from "../preflight/index.ts";
++import type { TaskBook } from "./task-book.ts";
+ 
+ /**
+  * 受理请求：一条待受理的任务。
+@@ -21,16 +22,18 @@ export interface IntakeRequest {
+ 	 * 必填且 trim 后非空——没有判据就无法区分「重试」与「新任务」，宁可拒绝也不猜。
+ 	 */
+ 	idempotencyKey: string;
+-	/** 目标（卡 frontmatter 的 goal）。必填，trim 后非空。 */
+-	goal: string;
++	/** 目标（卡 frontmatter 的 goal）。旧 flat 调用必填；task 调用由 task.goal 提供。 */
++	goal?: string;
+ 	/** 部门（卡 frontmatter 的 dept）。须为已登记部门，由集中预检把关，不自动建部。 */
+ 	dept: string;
+-	/** 验收标准（卡 frontmatter 的 acceptance）。必填，trim 后非空。 */
+-	acceptance: string;
++	/** 验收标准（卡 frontmatter 的 acceptance）。旧 flat 调用必填；task 调用由 task.acceptance 提供。 */
++	acceptance?: string;
+ 	/** 输入指针列表（可空；缺省落空数组）。 */
+ 	inputs?: string[];
+ 	/** 约束正文（可空）。 */
+ 	constraints?: string;
++	/** 结构化任务书（可空）；存在时目标/验收/交付物须在受理预检前通过同一套校验。 */
++	task?: TaskBook;
+ 	/** 依赖卡号列表（可空；缺省落空数组）。未放行时拒绝受理。 */
+ 	depends_on?: string[];
+ 	/** 父卡引用（可空）。 */
+@@ -105,6 +108,10 @@ export interface IntakeOutcome {
+ 	round?: number;
+ 	/** 真实启动的尝试号（认领后卡面 attempt）；未派发时 undefined（未启动就没有尝试）。 */
+ 	attempt?: number;
++	/** 本次调用是否请求立即派发；duplicate 回填首次请求的真实值，缺失表示旧账未记录。 */
++	dispatchRequested?: boolean;
++	/** accepted 时表示本次已交给后台派发链；值为 true 才可提示等待完成通知。 */
++	dispatched?: boolean;
+ 	/** 真实原因：rejected 时是拒绝原因；deferred 时是推迟原因；accepted/duplicate 时为 undefined。 */
+ 	reason?: string;
+ 	/**
+@@ -204,6 +211,10 @@ export interface IntakeLedgerEntry {
+ 	acceptedAt: string;
+ 	/** 当时的尝试号（已派发才有）。 */
+ 	attempt?: number;
++	/** 首次请求是否要求派发；旧账没有此字段时保持 undefined。 */
++	dispatchRequested?: boolean;
++	/** 首次受理是否已经把任务交给后台派发链。 */
++	dispatched?: boolean;
+ 	/** 实例/节点/轮次（工作流真实给出时才写）。 */
+ 	instance?: string;
+ 	node?: string;
+diff --git a/packages/coding-agent/src/pao/intake/index.ts b/packages/coding-agent/src/pao/intake/index.ts
+@@ -28,6 +28,16 @@ export {
+ 	updateIntakeEntry,
+ 	writeIntakeLedger,
+ } from "./ledger.ts";
++export type { LegacyTaskFields, TaskBook, TaskFields } from "./task-book.ts";
++export {
++	legacyTaskFields,
++	mergeConstraints,
++	normalizeTaskBook,
++	renderTaskBook,
++	TaskBookSchema,
++	taskBookConstraints,
++	taskBookFields,
++} from "./task-book.ts";
+ export type {
+ 	IntakeCounts,
+ 	IntakeDispatchHook,
+diff --git a/packages/coding-agent/src/pao/host/tools.ts b/packages/coding-agent/src/pao/host/tools.ts
+@@ -10,6 +10,7 @@
+ import { Type } from "typebox";
+ 
+ import type { ExtensionAPI, ToolDefinition } from "../../core/extensions/types.ts";
++import { normalizeTaskBook, renderTaskBook, TaskBookSchema } from "../intake/index.ts";
+ import { isSupervisionAckReceipt } from "../supervision/index.ts";
+ import { SESSION_BUDGET_ENV } from "../worker/budget.ts";
+ import type { DispatchNotifyCategory, DispatchNotifySurface } from "../worker/notify.ts";
+@@ -181,6 +182,7 @@ const RaiseSchema = Type.Object({
+ 	first_message: Type.Optional(
+ 		Type.String({ description: "拉起后立即注入的第一条输入(新卡通知/任务指令);已有热会话时也照注入" }),
+ 	),
++	task: Type.Optional(TaskBookSchema),
+ 	/** 注入投递模式:部长忙时普通 prompt 会被子会话拒收,必须显式选投递语义(审查第 7 项) */
+ 	inject_mode: Type.Optional(
+ 		Type.Union([Type.Literal("steer"), Type.Literal("followUp")], {
+@@ -216,13 +218,22 @@ function buildRaiseTool(
+ 		name: "pao_spawn_minister",
+ 		label: "拉起部长会话",
+ 		description:
+-			"拉起(或命中)一个部门×项目的热部长会话(RPC 常驻子进程,env 强制 PAO_ROLE=部长+PAO_DEPT)。同 部门+项目根 同时最多一个热会话,已有则直接返回既有句柄。保温.json 缺失时不保温(无空闲熔断/提示线/监督,仅手动散场与主会话关闭全停)。拉起后用 pao_inventory 看部长会话行;派卡到同部门+项目时交接页指针自动附进信封。",
++			"拉起或复用部门×项目的热部长会话。推荐用 task 给目标、输入、边界、验收、交付物和实施提示；first_message 旧调用继续兼容，两者不能同时给。同部门+项目已有热会话时直接复用。派卡到同部门+项目时交接页指针自动附进信封。",
+ 		parameters: RaiseSchema,
+ 		async execute(_id, params) {
+ 			const dept = params.dept?.trim() ?? "";
+ 			const rationale = params.reason?.trim() ?? "";
+ 			if (!dept) return errorReply("拉起未执行:dept 必填");
+ 			if (!rationale) return errorReply("拉起未执行:reason 必填(空洞理由是干涉信号——先自省:真的需要热部长会话吗)");
++			let message = params.first_message?.trim() ?? "";
++			if (params.task) {
++				if (message) return errorReply("拉起未执行:task 与 first_message 不能同时提供;请二选一");
++				try {
++					message = renderTaskBook(normalizeTaskBook(params.task));
++				} catch (error) {
++					return errorReply(`拉起未执行:结构化任务 task 无效:${(error as Error).message}`);
++				}
++			}
+ 			const projectRoot = params.project_root?.trim() || process.cwd();
+ 			const started = await host.spawn({
+ 				部门: dept,
+@@ -245,13 +256,13 @@ function buildRaiseTool(
+ 					: params.budget
+ 						? ["预算未注入:已有热会话沿用其原预算(预算只在拉起时生效)"]
+ 						: []),
+-				"监督面:pao_inventory 列部长会话行;保温.json 缺失时无空闲熔断,不用时建议 pao_dismiss_minister。",
++				"散场：需要主动结束热会话时用 pao_dismiss_minister。",
+ 			];
+-			if (params.first_message?.trim()) {
++			if (message) {
+ 				// 缺省排队:first_message 通常是「新卡通知/任务指令」这类普通新增任务。
+ 				// 部长正忙时若按普通 prompt 发,子会话会直接拒收——旧实现发完就报「已注入」。
+ 				const mode = params.inject_mode ?? "followUp";
+-				const inject = await host.inject(dept, h.项目根, params.first_message.trim(), resolveContext?.(), mode);
++				const inject = await host.inject(dept, h.项目根, message, resolveContext?.(), mode);
+ 				const 模式说明 = mode === "steer" ? "即时干预" : "排队续办";
+ 				lines.push(
+ 					inject.ok
+diff --git a/packages/coding-agent/src/pao/workflow/minister.ts b/packages/coding-agent/src/pao/workflow/minister.ts
+@@ -15,6 +15,14 @@ import {
+ 	saveDispatchMapArtifact,
+ } from "../dispatch-brief/index.ts";
+ import { assertDispatchMapHandoff } from "../dispatch-brief/workspace.ts";
++import {
++	legacyTaskFields,
++	mergeConstraints,
++	normalizeTaskBook,
++	type TaskBook,
++	TaskBookSchema,
++	taskBookFields,
++} from "../intake/index.ts";
+ import { writeFileAtomic } from "../shared/atomic.ts";
+ import { withFileLock } from "../shared/lock.ts";
+ import { locateDispatchCard } from "../worker/dispatch-core.ts";
+@@ -488,19 +496,51 @@ export function registerWorkflowMinisterTools(pi: ExtensionAPI, assigned: Workfl
+ 		parameters: Type.Object({
+ 			cards: Type.Array(
+ 				Type.Object({
+-					goal: Type.String(),
+-					acceptance: Type.String(),
++					task: Type.Optional(TaskBookSchema),
++					goal: Type.Optional(Type.String()),
++					acceptance: Type.Optional(Type.String()),
+ 					inputs: Type.Optional(Type.Array(Type.String())),
+ 					constraints: Type.Optional(Type.String()),
+ 				}),
+ 			),
+ 		}),
+-		execute: async (_call, params: { cards: NodeCardInput[] }, signal, _update, ctx) => {
++		execute: async (
++			_call,
++			params: {
++				cards: Array<
++					Pick<NodeCardInput, "goal" | "acceptance"> & {
++						task?: TaskBook;
++						inputs?: string[];
++						constraints?: string;
++					}
++				>;
++			},
++			signal,
++			_update,
++			ctx,
++		) => {
+ 			const { recipe, id } = identity(ctx);
+ 			// 入队前仍核对交接产物完整性；引用只从控制正本读取，不复制到卡面。
+ 			currentDependencyMaps(readControl(recipe, options), id.节点, options.cardsDir);
+ 			// 工作流依赖地图在派发时由控制正本注入，不在卡上复制第二份可过期指针。
+-			const refs = await addNodeCards(recipe, { ...options, signal }, id, params.cards);
++			const cards = params.cards.map((card) => {
++				const legacy = {
++					...(card.goal !== undefined ? { goal: card.goal } : {}),
++					...(card.acceptance !== undefined ? { acceptance: card.acceptance } : {}),
++					...(card.inputs !== undefined ? { inputs: card.inputs } : {}),
++					...(card.constraints !== undefined ? { boundaries: card.constraints } : {}),
++				};
++				const task: TaskBook | undefined = card.task ? normalizeTaskBook(card.task, legacy) : undefined;
++				const fields = task ? taskBookFields(task) : legacyTaskFields(legacy);
++				const constraints = mergeConstraints(fields.boundaries, task);
++				return {
++					goal: fields.goal,
++					acceptance: fields.acceptance,
++					...(fields.inputs !== undefined ? { inputs: fields.inputs } : {}),
++					...(constraints !== undefined ? { constraints } : {}),
++				};
++			});
++			const refs = await addNodeCards(recipe, { ...options, signal }, id, cards);
+ 			return { content: [{ type: "text", text: `已排队:${refs.join("、")}` }], details: undefined };
+ 		},
+ 	});
+diff --git a/packages/coding-agent/test/pao/intake-tool.test.ts b/packages/coding-agent/test/pao/intake-tool.test.ts
+@@ -2,12 +2,14 @@ import { execFileSync } from "node:child_process";
+ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { afterEach, beforeEach, describe, expect, it } from "vitest";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ 
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+ import { changeCardStatus, readCard } from "../../src/pao/cards/index.ts";
+ import { createDept } from "../../src/pao/dept/scaffold.ts";
++import { prepareDispatchBrief } from "../../src/pao/dispatch-brief/index.ts";
+ import { acceptIntake } from "../../src/pao/intake/index.ts";
++import * as atomic from "../../src/pao/shared/atomic.ts";
+ import { buildAutoIntakeKey, formatIntakeOutcome, registerWorkerTools } from "../../src/pao/worker/index.ts";
+ import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
+ import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+@@ -204,15 +206,16 @@ describe("pao_accept_task:注册面", () => {
+ 		registerWorkerTools(captured.pi, { runner: new FakeRunner(), signals: false });
+ 		const tool = acceptTool(captured);
+ 		expect(tool.label).toBe("受理任务");
+-		// 模型可见面上必须点明旧入口仍可用，以及它自己只走唯一入口
+-		expect(tool.description).toContain("pao_create_card");
+-		expect(tool.description).toContain("pao_dispatch_card");
+-		expect(tool.description).toContain("pao_inventory");
+-		expect(tool.description).toContain("pao_terminate_card");
+-		// 幂等纪律要写进描述：同一判据不重复建卡
++		expect(tool.description).toContain("task");
++		expect(tool.description).toContain("target/acceptance");
++		expect(tool.description).toContain("冲突");
++		expect(tool.description).toContain("dispatch 缺省 false");
++		expect(tool.description).toContain("dispatch=true 须给 reason");
++		expect(tool.description).toContain("不表示 worker 已启动");
++		expect(tool.description).toContain("等待结果通知");
++		expect(tool.description).not.toContain("每次");
++		expect(tool.description).not.toContain("pao_terminate_card");
+ 		expect(tool.description).toContain("重复提交");
+-		// §5.4 停止后旧结果失效
+-		expect(tool.description).toContain("§5.4");
+ 	});
+ 
+ 	it("旧入口一个都没被改名或撤掉(兼容契约)", () => {
+@@ -228,7 +231,7 @@ describe("pao_accept_task:注册面", () => {
+ // ── 受理成功 ─────────────────────────────────────────────────────────────
+ 
+ describe("pao_accept_task:受理成功返回真实身份", () => {
+-	it("只建卡(dispatch 缺省 false):返回卡号、说明尝试号未产生,并告诉后续用 pao_inventory/pao_terminate_card", async () => {
++	it("只建卡(dispatch 缺省 false):返回卡号并明确尚未派发", async () => {
+ 		const site = await makeIntakeSite();
+ 		const { tool, runner } = setup(site);
+ 
+@@ -247,9 +250,9 @@ describe("pao_accept_task:受理成功返回真实身份", () => {
+ 		expect(text).toContain("卡0001");
+ 		// 尝试号：没派发就没有尝试，如实说「未产生」而不是编一个 0
+ 		expect(text).toContain("尝试号未产生");
+-		// 后续动作指引
+-		expect(text).toContain("pao_inventory");
+-		expect(text).toContain("pao_terminate_card");
++		expect(text).toContain("尚未提交后台派发");
++		expect(text).toContain("pao_dispatch_card");
++		expect(text).not.toContain("pao_terminate_card");
+ 
+ 		// 卡真的落在卡目录，且真的没启动
+ 		const files = cardFiles(site.cardsDir);
+@@ -261,16 +264,124 @@ describe("pao_accept_task:受理成功返回真实身份", () => {
+ 		expect(runner.runs).toHaveLength(0);
+ 	});
+ 
+-	it("dispatch=true:建卡并真派出,返回卡号与尝试号", async () => {
++	it("结构化 task 的真卡 constraints 包含交付物和实施提示,diff 内不再重复手填正文", async () => {
++		const site = await makeIntakeSite();
++		const { tool } = setup(site);
++		const result = await tool.execute(
++			"task-book",
++			{
++				dept: "后端",
++				task: {
++					goal: "统一报错入口",
++					inputs: ["src"],
++					boundaries: "只改错误映射",
++					acceptance: "存在: src/errors.ts",
++					deliverables: ["错误映射与回归测试"],
++					implementation_hints: "复用现有错误码",
++				},
++			},
++			undefined,
++			undefined,
++			{} as never,
++		);
++		expect(result.isError).toBeUndefined();
++		const card = readCard(join(site.cardsDir, cardFiles(site.cardsDir)[0] as string));
++		expect(card.frontmatter.goal).toBe("统一报错入口");
++		expect(card.frontmatter.inputs).toEqual(["src"]);
++		expect(card.frontmatter.constraints).toContain("只改错误映射");
++		expect(card.frontmatter.constraints).toContain("错误映射与回归测试");
++		expect(card.frontmatter.constraints).toContain("复用现有错误码");
++		expect(card.frontmatter.constraints?.match(/只改错误映射/g)).toHaveLength(1);
++		const brief = await prepareDispatchBrief({
++			cardsDir: site.cardsDir,
++			cardPath: card.path,
++			projectRoot: site.repo,
++			executionRoot: site.repo,
++		});
++		expect(brief.briefMarkdown).toContain("错误映射与回归测试");
++		expect(brief.briefMarkdown).toContain("复用现有错误码");
++	});
++
++	it("task 与旧字段冲突时明确拒绝且不建卡", async () => {
++		const site = await makeIntakeSite();
++		const { tool, runner } = setup(site);
++		const result = await tool.execute(
++			"conflict",
++			{
++				target: "旧目标",
++				acceptance: "同一验收",
++				dept: "后端",
++				task: {
++					goal: "新目标",
++					acceptance: "同一验收",
++					deliverables: ["产物"],
++				},
++			},
++			undefined,
++			undefined,
++			{} as never,
++		);
++		expect(result.isError).toBe(true);
++		expect(textOf(result)).toContain("冲突");
++		expect(cardFiles(site.cardsDir)).toHaveLength(0);
++		expect(runner.runs).toHaveLength(0);
++	});
++
++	it("task 的空 inputs/空白可选段归一省略,但缺交付物仍拒绝", async () => {
++		const site = await makeIntakeSite();
++		const { tool } = setup(site);
++		const optionalEmpty = await tool.execute(
++			"empty-optionals",
++			{
++				dept: "后端",
++				task: {
++					goal: "可选段归一",
++					inputs: [],
++					boundaries: " ",
++					acceptance: "做完",
++					deliverables: ["产物"],
++					implementation_hints: " ",
++				},
++			},
++			undefined,
++			undefined,
++			{} as never,
++		);
++		expect(optionalEmpty.isError).toBeUndefined();
++		const card = readCard(join(site.cardsDir, cardFiles(site.cardsDir)[0] as string));
++		expect(card.frontmatter.inputs).toEqual([]);
++		expect(card.frontmatter.constraints).not.toContain("## 边界\n");
++		expect(card.frontmatter.constraints).not.toContain("## 实施提示");
++
++		const missing = await tool.execute(
++			"missing-deliverables",
++			{
++				dept: "后端",
++				task: { goal: "缺交付物", acceptance: "做完", deliverables: [] },
++			},
++			undefined,
++			undefined,
++			{} as never,
++		);
++		expect(missing.isError).toBe(true);
++		expect(textOf(missing)).toContain("交付物");
++		expect(cardFiles(site.cardsDir)).toHaveLength(1);
++	});
++
++	it("dispatch=true:建卡并提交后台派发,执行输入保留交付物和实施提示", async () => {
+ 		const site = await makeIntakeSite();
+ 		const { tool, face, captured, runner } = setup(site);
+ 
+ 		const result = await tool.execute(
+ 			"t",
+ 			{
+-				target: "补一个导出接口",
+ 				dept: "后端",
+-				acceptance: "接口可调用且有测试",
++				task: {
++					goal: "补一个导出接口",
++					acceptance: "接口可调用且有测试",
++					deliverables: ["导出接口与测试"],
++					implementation_hints: "沿用现有模块边界",
++				},
+ 				dispatch: true,
+ 				reason: "上游在等这个接口",
+ 			},
+@@ -285,6 +396,9 @@ describe("pao_accept_task:受理成功返回真实身份", () => {
+ 		expect(result.isError).toBeUndefined();
+ 		const text = textOf(result);
+ 		expect(text).toContain("卡0001");
++		expect(text).toContain("已提交后台派发");
++		expect(text).toContain("等待结果通知");
++		expect(text).not.toContain("正在运行");
+ 		// 派发链是后台的：认领在后台发生，工具当场可能还拿不到尝试号。
+ 		// 两种情况都是真实结果，但**必须**是其中一种真话，不许含糊。
+ 		const saysNotYet = text.includes("尝试号未产生");
+@@ -294,10 +408,69 @@ describe("pao_accept_task:受理成功返回真实身份", () => {
+ 		// 「真派出」的可观察证据：卡从待认领真的走成了进行中，且 FakeRunner 被调用了
+ 		// （FakeRunner 覆写 run 只登记不 spawn，所以这里数的是派发链真的走到执行层）
+ 		expect(runner.runs.length).toBeGreaterThan(0);
++		expect(runner.runs[0]?.提示词).toContain("导出接口与测试");
++		expect(runner.runs[0]?.提示词).toContain("沿用现有模块边界");
+ 		const dispatched = readCard(join(site.cardsDir, cardFiles(site.cardsDir)[0] as string));
+ 		expect(dispatched.frontmatter.status).toBe("in_progress");
+ 		expect(dispatched.frontmatter.attempt).toBe(1);
+-	});
++	}, 30_000);
++
++	it("派发后受理账补写失败:当前结果明确警告,下次 duplicate 保持未知而不误报未派发", async () => {
++		const site = await makeIntakeSite();
++		const { tool, face } = setup(site);
++		const realWrite = atomic.writeFileAtomic;
++		let failDispatchedUpdate = false;
++		const writes = vi.spyOn(atomic, "writeFileAtomic").mockImplementation((path, text) => {
++			if (
++				failDispatchedUpdate &&
++				path === join(site.repo, ".pao", "intake", "受理账.json") &&
++				text.includes('"dispatched": true')
++			)
++				throw new Error("模拟受理账补写失败");
++			realWrite(path, text);
++		});
++		try {
++			failDispatchedUpdate = true;
++			const first = await tool.execute(
++				"first",
++				{
++					request_key: "dispatch-ledger-write-fail",
++					target: "派发后账写失败",
++					dept: "后端",
++					acceptance: "有结果",
++					dispatch: true,
++					reason: "验证账写失败",
++				},
++				undefined,
++				undefined,
++				{} as never,
++			);
++			await face.waitForBackground();
++			expect(textOf(first)).toContain("已提交后台派发");
++			expect(textOf(first)).toContain("受理账补写失败");
++
++			failDispatchedUpdate = false;
++			const second = await tool.execute(
++				"second",
++				{
++					request_key: "dispatch-ledger-write-fail",
++					target: "派发后账写失败",
++					dept: "后端",
++					acceptance: "有结果",
++					dispatch: true,
++					reason: "验证账写失败",
++				},
++				undefined,
++				undefined,
++				{} as never,
++			);
++			expect(textOf(second)).toContain("首次派发状态未记录");
++			expect(textOf(second)).not.toContain("首次只建了卡");
++			expect(textOf(second)).not.toContain("正在运行");
++		} finally {
++			writes.mockRestore();
++		}
++	}, 30_000);
+ });
+ 
+ // ── 真拒绝 ───────────────────────────────────────────────────────────────
+@@ -544,11 +717,69 @@ describe("pao_accept_task:停止后旧受理结果不能当成功", () => {
+ 		expect(text).toContain("同一请求的重复提交");
+ 		// §5.4：不能只说「已返回第一次身份」就完事，必须点出旧结果已失效
+ 		expect(text).toContain("已被停止");
++		expect(text).not.toContain("等待结果通知");
+ 		// 卡文件数仍然没变（重复提交不建卡）
+ 		expect(cardFiles(site.cardsDir)).toHaveLength(1);
+ 	});
+ });
+ 
++describe("formatIntakeOutcome:受理结果文案按事实分支", () => {
++	const baseOutcome = {
++		idempotencyKey: "result-shape",
++		acceptedAt: "2026-10-24 20:00",
++		cardNo: "0001",
++		cardPath: "D:\\现场\\卡0001.md",
++		problems: [],
++	};
++	const options = { cardsDir: "D:\\现场", autoKey: false, requestKey: "result-shape" };
++
++	it("accepted 只在 dispatched=true 时等待通知；false 与 unknown 分别说明", () => {
++		const dispatched = formatIntakeOutcome(
++			{ ...baseOutcome, status: "accepted", dispatchRequested: true, dispatched: true },
++			options,
++		);
++		expect(dispatched).toContain("已提交后台派发");
++		expect(dispatched).toContain("等待结果通知");
++		expect(dispatched).not.toContain("正在运行");
++
++		const notDispatched = formatIntakeOutcome(
++			{ ...baseOutcome, status: "accepted", dispatchRequested: false, dispatched: false },
++			options,
++		);
++		expect(notDispatched).toContain("只建了卡");
++		expect(notDispatched).not.toContain("等待结果通知");
++
++		const unknown = formatIntakeOutcome({ ...baseOutcome, status: "accepted", dispatchRequested: true }, options);
++		expect(unknown).toContain("未记录是否已提交后台派发");
++		expect(unknown).toContain("不能据此认定仅建卡");
++		expect(unknown).not.toContain("等待结果通知");
++	});
++
++	it("stale 优先于派发状态；deferred 说明未派原因和下一步", () => {
++		const stale = formatIntakeOutcome(
++			{ ...baseOutcome, status: "accepted", dispatchRequested: true, dispatched: true },
++			{ ...options, stale: true },
++		);
++		expect(stale).toContain("旧受理结果不再有效");
++		expect(stale).not.toContain("等待结果通知");
++
++		const deferred = formatIntakeOutcome(
++			{
++				...baseOutcome,
++				status: "deferred",
++				dispatchRequested: true,
++				dispatched: false,
++				reason: "依赖未放行",
++			},
++			options,
++		);
++		expect(deferred).toContain("没有派发");
++		expect(deferred).toContain("依赖未放行");
++		expect(deferred).toContain("pao_dispatch_card");
++		expect(deferred).not.toContain("等待结果通知");
++	});
++});
++
+ // ── 查回闭环：终态卡分区（E5 补「各模式可查回」） ─────────────────────────
+ 
+ describe("pao_inventory:终态卡分区", () => {
+diff --git a/packages/coding-agent/test/pao/host-tools.test.ts b/packages/coding-agent/test/pao/host-tools.test.ts
+@@ -185,6 +185,74 @@ describe("宿主接线:pao_spawn_minister/pao_dismiss_minister", () => {
+ 		expect(noDept.isError).toBe(true);
+ 	});
+ 
++	it("task 渲染成中文任务书并经 stdin 交给部长；与 first_message 冲突时不 spawn、不注入", async () => {
++		const dir = tempDir("task");
++		const dump = join(dir, "dump.json");
++		const host = new MinisterHost({ paoHome: dir });
++		hosts.push(host);
++		const raised = await host.spawn({
++			部门: "后端",
++			项目根: dir,
++			命令: process.execPath,
++			参数: ["-e", FAKE_MINISTER, dump],
++		});
++		expect(raised.ok).toBe(true);
++
++		const mock = mockPi();
++		registerHostTools(mock.pi as never, { host });
++		const spawn = findTool(mock, "pao_spawn_minister");
++		expect(spawn.description).toContain("task");
++		expect(spawn.description).not.toContain("pao_inventory");
++
++		const result = (await spawn.execute("task-ok", {
++			dept: "后端",
++			reason: "结构化任务交接",
++			project_root: dir,
++			task: {
++				goal: "完成接口迁移",
++				inputs: ["src/api"],
++				boundaries: "只改 API 层",
++				acceptance: "旧调用保持兼容",
++				deliverables: ["迁移代码", "兼容测试"],
++				implementation_hints: "复用现有适配器",
++			},
++		})) as ToolReply;
++		expect(result.isError).toBeUndefined();
++		expect(result.content[0]!.text).toContain("首条消息已注入");
++		expect(
++			await waitUntil(
++				() =>
++					readFileSync(dump, "utf8").includes("## 交付物") &&
++					readFileSync(dump, "utf8").includes("迁移代码") &&
++					readFileSync(dump, "utf8").includes("复用现有适配器"),
++			),
++		).toBe(true);
++		const taskLine = readFileSync(dump, "utf8")
++			.split("\n")
++			.find((line) => line.startsWith("STDIN\t") && line.includes('"type":"prompt"'))!;
++		const command = JSON.parse(taskLine.slice("STDIN\t".length)) as { type: string; message?: string };
++		expect(command.type).toBe("prompt");
++		expect(command.message).toContain("# 任务书");
++		expect(command.message).toContain("## 目标\n完成接口迁移");
++		expect(command.message).toContain("## 验收条件\n旧调用保持兼容");
++
++		const before = readFileSync(dump, "utf8");
++		const conflict = (await spawn.execute("task-conflict", {
++			dept: "后端",
++			reason: "验证冲突拒绝",
++			project_root: dir,
++			first_message: "旧消息",
++			task: {
++				goal: "新任务",
++				acceptance: "不得执行",
++				deliverables: ["无"],
++			},
++		})) as ToolReply;
++		expect(conflict.isError).toBe(true);
++		expect(conflict.content[0]!.text).toContain("不能同时提供");
++		expect(readFileSync(dump, "utf8")).toBe(before);
++	}, 30_000);
++
+ 	it("pao_ack_supervision 只重计时已登记对象,坏 key 明确失败", async () => {
+ 		const host = new MinisterHost({ 监督分钟: () => ({ 工人: 15, 部门: 30 }) });
+ 		hosts.push(host);
+diff --git a/packages/coding-agent/test/pao/intake-accept.test.ts b/packages/coding-agent/test/pao/intake-accept.test.ts
+@@ -18,8 +18,9 @@ import { execFileSync } from "node:child_process";
+ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { afterEach, beforeEach, describe, expect, it } from "vitest";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ import { changeCardStatus, readCard } from "../../src/pao/cards/index.ts";
++import { prepareDispatchBrief } from "../../src/pao/dispatch-brief/index.ts";
+ import {
+ 	acceptIntake,
+ 	acceptIntakeBatch,
+@@ -30,6 +31,7 @@ import {
+ 	intakeLedgerPath,
+ 	isIntakeOutcomeStale,
+ } from "../../src/pao/intake/index.ts";
++import * as atomic from "../../src/pao/shared/atomic.ts";
+ 
+ const tempDirs: string[] = [];
+ const envKeys = ["PAO_ROLE", "PAO_DEPT", "PAO_HOME"] as const;
+@@ -179,7 +181,12 @@ describe("acceptIntake:单条成功返回真实卡号（不是回显入参）",
+ 		const ledger = JSON.parse(readFileSync(intakeLedgerPath(cardsDir), "utf8"));
+ 		expect(ledger.version).toBe(1);
+ 		expect(ledger.entries).toHaveLength(1);
+-		expect(ledger.entries[0]).toMatchObject({ idempotencyKey: "k-1", cardNo: "0001" });
++		expect(ledger.entries[0]).toMatchObject({
++			idempotencyKey: "k-1",
++			cardNo: "0001",
++			dispatchRequested: false,
++			dispatched: false,
++		});
+ 		expect(ledger.entries[0].pending).toBeUndefined();
+ 		expect(counterValue(repo)).toBe("1");
+ 	});
+@@ -448,6 +455,30 @@ describe("acceptIntake:重复提交不重复建卡（幂等，回填第一次身
+ 		expect(dispatch.calls).toHaveLength(1);
+ 		expect(second.outcomes[0].cardNo).toBe(first.outcomes[0].cardNo);
+ 	});
++
++	it("旧账没有首次派发字段：duplicate 不把本次请求当成历史事实", async () => {
++		const { cardsDir } = makeRepo("intake-old-ledger");
++		const paoHome = makePaoHome();
++		process.env.PAO_HOME = paoHome;
++		const first = await acceptIntake(cardsDir, [request({ idempotencyKey: "old-ledger" })], { paoHome });
++		const ledgerPath = intakeLedgerPath(cardsDir);
++		const ledger = JSON.parse(readFileSync(ledgerPath, "utf8"));
++		delete ledger.entries[0].dispatchRequested;
++		delete ledger.entries[0].dispatched;
++		writeFileSync(ledgerPath, JSON.stringify(ledger), "utf8");
++
++		const duplicate = await acceptIntake(
++			cardsDir,
++			[request({ idempotencyKey: "old-ledger", dispatch: true, reason: "本次请求不等于首次事实" })],
++			{ paoHome, dispatchInBackground: fakeDispatch().hook },
++		);
++		expect(duplicate.outcomes[0].status).toBe("duplicate");
++		expect(duplicate.outcomes[0].cardNo).toBe(first.outcomes[0].cardNo);
++		expect(duplicate.outcomes[0].dispatchRequested).toBeUndefined();
++		expect(duplicate.outcomes[0].dispatched).toBeUndefined();
++		expect(duplicate.outcomes[0].duplicateOf?.dispatchRequested).toBeUndefined();
++		expect(duplicate.outcomes[0].duplicateOf?.dispatched).toBeUndefined();
++	});
+ });
+ 
+ describe("acceptIntake:派发与推迟（经注入通道，不自己 spawn）", () => {
+@@ -481,6 +512,8 @@ describe("acceptIntake:派发与推迟（经注入通道，不自己 spawn）",
+ 			[
+ 				request({
+ 					idempotencyKey: "inherit-inputs",
++					goal: undefined,
++					acceptance: undefined,
+ 					inputs: ["旧输入.md"],
+ 					task: { goal: "继承输入", acceptance: "继承成功", deliverables: ["产物"] },
+ 				}),
+@@ -495,6 +528,8 @@ describe("acceptIntake:派发与推迟（经注入通道，不自己 spawn）",
+ 			[
+ 				request({
+ 					idempotencyKey: "same-inputs",
++					goal: undefined,
++					acceptance: undefined,
+ 					inputs: ["相同.md"],
+ 					task: { goal: "相同输入", acceptance: "受理成功", deliverables: ["产物"], inputs: ["相同.md"] },
+ 				}),
+@@ -509,6 +544,8 @@ describe("acceptIntake:派发与推迟（经注入通道，不自己 spawn）",
+ 			[
+ 				request({
+ 					idempotencyKey: "conflict-inputs",
++					goal: undefined,
++					acceptance: undefined,
+ 					inputs: ["旧输入.md"],
+ 					task: { goal: "冲突输入", acceptance: "必须拒绝", deliverables: ["产物"], inputs: ["新输入.md"] },
+ 				}),
+diff --git a/packages/coding-agent/test/pao/workflow-control.test.ts b/packages/coding-agent/test/pao/workflow-control.test.ts
+@@ -495,6 +495,86 @@ describe("v2 控制清单（模拟卡结果）", () => {
+ 			unlinkSync(reservation);
+ 		}
+ 	});
++	it("部长提交结构化任务卡：原卡字段同源映射，交付物和提示进正文与冻结简报，边界不重复", async () => {
++		const s = setup();
++		await startControl(s.recipe, {}, s.options);
++		const id = await minister(s, "开发");
++		const tools = new Map<string, ToolDefinition>();
++		const pi = { registerTool: (tool: ToolDefinition) => tools.set(tool.name, tool) } as unknown as ExtensionAPI;
++		registerWorkflowMinisterTools(pi, {
++			名字: s.recipe.名字,
++			...id,
++			owner: "owner",
++			cardsDir: s.options.cardsDir,
++		});
++		const ctx = { sessionManager: { getSessionId: () => id.部长会话 } } as unknown as ExtensionToolContext;
++		const submit = tools.get("pao_minister_submit_cards")!;
++		const submitted = await submit.execute(
++			"structured",
++			{
++				cards: [
++					{
++						task: {
++							goal: "补齐结构化映射",
++							inputs: ["src/pao/intake"],
++							boundaries: "只改现有入口",
++							acceptance: "存在: source.txt",
++							deliverables: ["映射代码", "定向测试"],
++							implementation_hints: "复用共享映射",
++						},
++					},
++				],
++			},
++			undefined,
++			undefined,
++			ctx,
++		);
++		const cardRef = submitted.content[0].type === "text" ? submitted.content[0].text.split(":")[1] : "";
++		const card = loadCard(s.options.cardsDir, parseCardRef(cardRef));
++		expect(card.frontmatter).toMatchObject({
++			goal: "补齐结构化映射",
++			acceptance: "存在: source.txt",
++			inputs: ["src/pao/intake"],
++		});
++		expect(card.frontmatter.constraints).toContain("只改现有入口");
++		expect(card.frontmatter.constraints).toContain("映射代码");
++		expect(card.frontmatter.constraints).toContain("定向测试");
++		expect(card.frontmatter.constraints).toContain("复用共享映射");
++		expect(card.frontmatter.constraints?.match(/只改现有入口/g)).toHaveLength(1);
++		const brief = await prepareDispatchBrief({
++			cardsDir: s.options.cardsDir,
++			cardPath: card.path,
++			projectRoot: s.root,
++			executionRoot: s.root,
++		});
++		expect(brief.briefMarkdown).toContain("映射代码");
++		expect(brief.briefMarkdown).toContain("定向测试");
++		expect(brief.briefMarkdown).toContain("复用共享映射");
++
++		const before = listCards(s.options.cardsDir).length;
++		await expect(
++			submit.execute(
++				"conflict",
++				{
++					cards: [
++						{
++							goal: "旧目标",
++							acceptance: "存在: source.txt",
++							task: {
++								goal: "新目标",
++								acceptance: "存在: source.txt",
++								deliverables: ["产物"],
++							},
++						},
++					],
++				},
++				undefined,
++				undefined,
++				ctx,
++			),
++		).rejects.toThrow("冲突");
++		expect(listCards(s.options.cardsDir)).toHaveLength(before);
++	});
+ 	it("节点地图贯穿部长身份、轮次、摘要、替代版本和下游 worker 简报", async () => {
+ 		const root = mkdtempSync(join(tmpdir(), "pao-node-map-"));
+ 		const project = join(root, "项目");
+diff --git a/packages/coding-agent/src/pao/intake/task-book.ts b/packages/coding-agent/src/pao/intake/task-book.ts
+@@ -0,0 +1,154 @@
++/** 结构化任务书的唯一契约、归一与文本映射；调用入口只做参数搬运。 */
++import { Type } from "typebox";
++
++export const TaskBookSchema = Type.Object({
++	goal: Type.String({ description: "目标(必填):要办成什么" }),
++	inputs: Type.Optional(Type.Array(Type.String(), { description: "输入指针(可空):文件、链接、上游产物" })),
++	boundaries: Type.Optional(Type.String({ description: "边界(可空):范围、不许做的事" })),
++	acceptance: Type.String({ description: "验收条件(必填):凭什么算完成" }),
++	deliverables: Type.Array(Type.String(), { description: "交付物(必填):至少一项可核对结果" }),
++	implementation_hints: Type.Optional(Type.String({ description: "实施提示(可空):建议做法或注意点" })),
++});
++
++export interface TaskBook {
++	goal: string;
++	inputs?: string[];
++	boundaries?: string;
++	acceptance: string;
++	deliverables: string[];
++	implementation_hints?: string;
++}
++
++/** 旧入口字段与 task 的公共部分；没有的字段保持 undefined。 */
++export interface LegacyTaskFields {
++	goal?: string;
++	inputs?: string[];
++	boundaries?: string;
++	acceptance?: string;
++}
++
++export type TaskFields = Required<Pick<TaskBook, "goal" | "acceptance">> & Pick<TaskBook, "inputs" | "boundaries">;
++
++function nonEmpty(value: string, label: string): string {
++	const trimmed = value.trim();
++	if (!trimmed) throw new Error(`${label}不能为空`);
++	return trimmed;
++}
++
++function requiredItems(values: readonly string[], label: string): string[] {
++	if (values.length === 0) throw new Error(`${label}至少一项`);
++	return values.map((value) => nonEmpty(value, label));
++}
++
++function optionalText(value: string | undefined): string | undefined {
++	if (value === undefined) return undefined;
++	const trimmed = value.trim();
++	return trimmed ? trimmed : undefined;
++}
++
++function optionalItems(values: readonly string[] | undefined, label: string): string[] | undefined {
++	if (values === undefined || values.length === 0) return undefined;
++	return values.map((value) => nonEmpty(value, label));
++}
++
++function sameItems(left: readonly string[], right: readonly string[]): boolean {
++	return left.length === right.length && left.every((value, index) => value === right[index]);
++}
++
++/**
++ * 校验 task 并把新旧字段归一成同一任务。
++ *
++ * 新旧字段同时给出时逐字段核对：相同值可共存，冲突明确拒绝。字段缺失只表示调用方用了
++ * 旧写法，不能因此跳过 task 的必填目标、验收和交付物。
++ */
++export function normalizeTaskBook(task: TaskBook | undefined, legacy: LegacyTaskFields = {}): TaskBook {
++	if (!task) {
++		throw new Error("缺结构化任务 task（目标、验收和交付物都须明确）");
++	}
++	const normalized: TaskBook = {
++		goal: nonEmpty(task.goal, "目标 goal"),
++		acceptance: nonEmpty(task.acceptance, "验收条件 acceptance"),
++		deliverables: requiredItems(task.deliverables, "交付物 deliverables"),
++	};
++	const taskInputs = optionalItems(task.inputs, "输入 inputs");
++	const legacyInputs = optionalItems(legacy.inputs, "旧输入");
++	if (task.inputs !== undefined && legacy.inputs !== undefined && !sameItems(taskInputs ?? [], legacyInputs ?? []))
++		throw new Error("task.inputs 与旧输入字段冲突：两处内容必须一致；请只保留一处或改成同一内容");
++	const inputs = task.inputs !== undefined ? taskInputs : legacyInputs;
++	if (inputs !== undefined) normalized.inputs = inputs;
++	const taskBoundaries = optionalText(task.boundaries);
++	const legacyBoundaries = optionalText(legacy.boundaries);
++	if (task.boundaries !== undefined && legacy.boundaries !== undefined && taskBoundaries !== legacyBoundaries)
++		throw new Error("task.boundaries 与旧边界字段冲突：两处内容必须一致；请只保留一处或改成同一内容");
++	const boundaries = task.boundaries !== undefined ? taskBoundaries : legacyBoundaries;
++	if (boundaries !== undefined) normalized.boundaries = boundaries;
++	const hints = optionalText(task.implementation_hints);
++	if (hints !== undefined) normalized.implementation_hints = hints;
++
++	if (legacy.goal !== undefined && nonEmpty(legacy.goal, "旧目标") !== normalized.goal)
++		throw new Error("task.goal 与旧目标字段冲突：两处内容必须一致；请只保留一处或改成同一内容");
++	if (legacy.acceptance !== undefined && nonEmpty(legacy.acceptance, "旧验收条件") !== normalized.acceptance)
++		throw new Error("task.acceptance 与旧验收字段冲突：两处内容必须一致；请只保留一处或改成同一内容");
++	return normalized;
++}
++
++export function taskBookConstraints(task: TaskBook): string {
++	return [
++		"## 交付物",
++		...task.deliverables.map((item) => `- ${item}`),
++		...(task.implementation_hints ? ["", "## 实施提示", task.implementation_hints] : []),
++	].join("\n");
++}
++
++export function mergeConstraints(base: string | undefined, task: TaskBook | undefined): string | undefined {
++	const taskText = task ? taskBookConstraints(task) : "";
++	return [base?.trim(), taskText].filter(Boolean).join("\n\n") || undefined;
++}
++
++/** 已归一任务 → 卡字段。入口先调用 normalizeTaskBook，避免在这里重复合并新旧字段。 */
++export function taskBookFields(task: TaskBook): TaskFields {
++	return {
++		goal: task.goal,
++		acceptance: task.acceptance,
++		...(task.inputs !== undefined ? { inputs: task.inputs } : {}),
++		...(task.boundaries !== undefined ? { boundaries: task.boundaries } : {}),
++	};
++}
++
++/** 旧 flat 调用 → 卡字段；目标与验收仍必填，可选空段归一省略。 */
++export function legacyTaskFields(legacy: LegacyTaskFields): TaskFields {
++	if (legacy.goal === undefined || legacy.acceptance === undefined) throw new Error("旧调用须给目标和验收");
++	return {
++		goal: nonEmpty(legacy.goal, "目标"),
++		acceptance: nonEmpty(legacy.acceptance, "验收条件"),
++		...(legacy.inputs !== undefined && legacy.inputs.length > 0
++			? { inputs: optionalItems(legacy.inputs, "输入") }
++			: {}),
++		...(optionalText(legacy.boundaries) ? { boundaries: optionalText(legacy.boundaries) } : {}),
++	};
++}
++
++/** 部长首条消息的清晰中文任务说明；编号、状态和身份由程序入口另行绑定。 */
++export function renderTaskBook(task: TaskBook): string {
++	return [
++		"# 任务书",
++		"",
++		"## 目标",
++		task.goal,
++		"",
++		"## 输入",
++		...(task.inputs?.length ? task.inputs.map((item) => `- ${item}`) : ["- 未另列"]),
++		"",
++		"## 边界",
++		task.boundaries ?? "未另列",
++		"",
++		"## 验收条件",
++		task.acceptance,
++		"",
++		"## 交付物",
++		...task.deliverables.map((item) => `- ${item}`),
++		"",
++		"## 实施提示",
++		task.implementation_hints ?? "未另列",
++	].join("\n");
++}

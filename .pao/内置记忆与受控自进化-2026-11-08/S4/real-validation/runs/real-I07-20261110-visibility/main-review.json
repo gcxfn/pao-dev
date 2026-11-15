@@ -1,0 +1,48 @@
+{
+  "scenarioId": "I07",
+  "status": "partial",
+  "reviewedAt": "2026-11-10T01:56:46.297Z",
+  "evidence": "basic-scenario.json",
+  "findings": {
+    "memoryId": "mem-4a7a23f6-d101-45d9-bc15-43cebd9d59f8",
+    "revision": 1,
+    "compaction": "completed",
+    "sameSession": true,
+    "sameFile": true,
+    "duplicateInjection": false,
+    "candidates": [
+      {
+        "kind": "decision",
+        "conclusion": "记忆当前不设定保留期限、不制定自动淘汰策略；性质是暂缓决定，并非承诺永久保留。",
+        "conditions": "在用户另行确定具体保留期限或自动淘汰规则之前适用；本次确认不改变已有记忆内容，也不触发删除。",
+        "evidenceKind": "user_statement",
+        "confirmation": "confirmed",
+        "sourceIds": [
+          "src-01a1c327-0ab4-7064-843a-374cb8719139-bd010f2b-user",
+          "src-01a1c327-0ab4-7064-843a-374cb8719139-64147289-assistant",
+          "src-01a1c327-0ab4-7064-843a-374cb8719139-a213a111-user"
+        ],
+        "quotedSpans": [
+          {
+            "sourceId": "src-01a1c327-0ab4-7064-843a-374cb8719139-bd010f2b-user",
+            "text": "嗯，先这样。"
+          },
+          {
+            "sourceId": "src-01a1c327-0ab4-7064-843a-374cb8719139-64147289-assistant",
+            "text": "当前不制定自动淘汰策略"
+          },
+          {
+            "sourceId": "src-01a1c327-0ab4-7064-843a-374cb8719139-64147289-assistant",
+            "text": "性质是「暂缓决定」，不是「永久保留」"
+          },
+          {
+            "sourceId": "src-01a1c327-0ab4-7064-843a-374cb8719139-a213a111-user",
+            "text": "请继续并保留刚才关于淘汰策略的结论。"
+          }
+        ]
+      }
+    ]
+  },
+  "assessment": "实际压缩、同会话重开、当前修订注入与同修订去重成立；实际回答保留暂缓语义，未将不可见来源否定为不存在或摘要虚构。但后台候选将尚未定案的淘汰规则标为confirmed，与冻结tentative要求不符。",
+  "cost": "unknown"
+}

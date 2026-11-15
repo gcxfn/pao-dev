@@ -1,0 +1,144 @@
+
+Running 17 tests using 1 worker
+
+  ok  1 apps\desktop\tests\unit\recipe-library.spec.ts:101:7 › 配方库 › 全部页签：配方＋实例＋异常行，保留旧 data-testid 与搜索框 (11ms)
+  ok  2 apps\desktop\tests\unit\recipe-library.spec.ts:116:7 › 配方库 › 我的页签：只列配方，不含实例 (1ms)
+  ok  3 apps\desktop\tests\unit\recipe-library.spec.ts:123:7 › 配方库 › 模板页签：列出目录真实模板，可安装 (2ms)
+  ok  4 apps\desktop\tests\unit\recipe-library.spec.ts:132:7 › 配方库 › 模板页签：身份未建立时提示并禁用安装 (2ms)
+  ok  5 apps\desktop\tests\unit\recipe-library.spec.ts:139:7 › 配方库 › 模板页签：目录缺失时提示不可用 (1ms)
+  ok  6 apps\desktop\tests\unit\recipe-library.spec.ts:145:7 › 配方库 › 最近页签：只列当前项目仍存在的已打开标签，当前标签优先 (2ms)
+  ok  7 apps\desktop\tests\unit\recipe-library.spec.ts:162:7 › 配方库行右键菜单（S3-3 删除链接线） › 「删除工作流」菜单项可用并携带删除回调 (1ms)
+  x   8 apps\desktop\tests\unit\recipe-library.spec.ts:177:7 › 配方库行右键菜单（S3-3 删除链接线） › 「在新标签中打开」菜单项随回调提供（S4-1⑤），未提供时不显示 (2ms)
+  ok  9 apps\desktop\tests\unit\workflow-tabs.spec.ts:46:5 › 页签成员校验：未知 workspace、跨 workspace、确认后失联或归档 controller 都拒绝 (5ms)
+  ok 10 apps\desktop\tests\unit\workflow-tabs.spec.ts:80:5 › 页签成员校验：会话列表暂未确认时保留 controller，不挡整表保存 (0ms)
+  ok 11 apps\desktop\tests\unit\workflow-tabs.spec.ts:92:5 › 恢复对账：只丢真的移除 workspace 的页签、解绑确认失效的 controller、回落激活项 (5ms)
+  ok 12 apps\desktop\tests\unit\workflow-tabs.spec.ts:129:5 › 恢复对账：workspace 仍登记但会话列表暂未确认时页签与 controller 原样保留 (1ms)
+  ok 13 apps\desktop\tests\unit\workflow-tabs.spec.ts:149:5 › 恢复对账：确认过会话列表后，明确不存在或已归档才解绑 controller (1ms)
+  x  14 apps\desktop\tests\unit\workflow-tabs.spec.ts:167:5 › 主控唯一性（S4-1）：同一会话被两个标签绑定（同 workspace）整表拒绝，跨 workspace 同 id 不算冲突 (1ms)
+  x  15 apps\desktop\tests\unit\workflow-tabs.spec.ts:183:5 › 恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建 (4ms)
+  x  16 apps\desktop\tests\unit\workflow-tabs.spec.ts:195:5 › 反查索引（S4-1②）：会话→标签从标签表派生，workspace 或 sessionId 不匹配都不命中 (1ms)
+  x  17 apps\desktop\tests\unit\workflow-tabs.spec.ts:213:5 › bind 前查重（S4-1①）：其他标签已绑定同一 controller 报冲突；重绑自身与不同会话不算 (2ms)
+
+
+  1) apps\desktop\tests\unit\recipe-library.spec.ts:177:7 › 配方库行右键菜单（S3-3 删除链接线） › 「在新标签中打开」菜单项随回调提供（S4-1⑤），未提供时不显示 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"在新标签中打开"[39m
+    Received string:    [31m"<div class=\"canvas-context-menu\" data-testid=\"recipe-row-context-menu\" role=\"menu\" aria-label=\"安装流程 操作\"><button type=\"button\" role=\"menuitem\">删除工作流</button></div>"[39m
+
+      184 |       }),
+      185 |     );
+    > 186 |     expect(withEntry).toContain("在新标签中打开");
+          |                       ^
+      187 |     const withoutEntry = renderToString(
+      188 |       createElement(RecipeRowContextMenu, {
+      189 |         name: "安装流程",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\recipe-library.spec.ts:186:23
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-recipe-library-配方库行右键-a700e-中打开」菜单项随回调提供（S4-1⑤），未提供时不显示\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-recipe-library-配方库行右键-a700e-中打开」菜单项随回调提供（S4-1⑤），未提供时不显示\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\unit\workflow-tabs.spec.ts:167:5 › 主控唯一性（S4-1）：同一会话被两个标签绑定（同 workspace）整表拒绝，跨 workspace 同 id 不算冲突 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    [1mMatcher error[22m: [31mreceived[39m value must not be null nor undefined
+
+    Received has value: [31mundefined[39m
+
+      178 |   // 跨项目同 sessionId 指向不同 workspace 的不同会话，不是重复绑定。
+      179 |   expect(workflowTabsProblem([tabA, tabB], index)).toBeUndefined();
+    > 180 |   expect(workflowTabsProblem([tabA, tabADup], index)).toContain("already bound");
+          |                                                       ^
+      181 | });
+      182 |
+      183 | test("恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建", () => {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\workflow-tabs.spec.ts:180:55
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-workflow-tabs-主控唯一性（S-c5c0e-）整表拒绝，跨-workspace-同-id-不算冲突\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-workflow-tabs-主控唯一性（S-c5c0e-）整表拒绝，跨-workspace-同-id-不算冲突\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\unit\workflow-tabs.spec.ts:183:5 › 恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建 ────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeUndefined[2m()[22m
+
+    Received: [31m{"sessionId": "s-1", "workspaceId": "ws-a"}[39m
+
+      189 |   const kept = reconcileWorkflowTabs([first, second], "tab-second", index);
+      190 |   expect(kept.workflowTabs[0]!.controller).toEqual({ workspaceId: "ws-a", sessionId: "s-1" });
+    > 191 |   expect(kept.workflowTabs[1]!.controller).toBeUndefined();
+          |                                            ^
+      192 |   expect(kept.activeWorkflowTabId).toBe("tab-second");
+      193 | });
+      194 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\workflow-tabs.spec.ts:191:44
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-workflow-tabs-恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-workflow-tabs-恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\unit\workflow-tabs.spec.ts:195:5 › 反查索引（S4-1②）：会话→标签从标签表派生，workspace 或 sessionId 不匹配都不命中 
+
+    TypeError: (0 , _desktopState.workflowTabForSession) is not a function
+
+      198 |
+      199 |   expect(
+    > 200 |     workflowTabForSession([bound, edit], { workspaceId: "ws-a", sessionId: "s-1" })?.id,
+          |                          ^
+      201 |   ).toBe("tab-a");
+      202 |   expect(
+      203 |     workflowTabForSession([bound, edit], { workspaceId: "ws-b", sessionId: "s-1" }),
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\workflow-tabs.spec.ts:200:26
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-workflow-tabs-反查索引（S4-6d977-rkspace-或-sessionId-不匹配都不命中\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-workflow-tabs-反查索引（S4-6d977-rkspace-或-sessionId-不匹配都不命中\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\unit\workflow-tabs.spec.ts:213:5 › bind 前查重（S4-1①）：其他标签已绑定同一 controller 报冲突；重绑自身与不同会话不算 
+
+    TypeError: (0 , _workflowTabs.controllerConflictProblem) is not a function
+
+      215 |
+      216 |   expect(
+    > 217 |     controllerConflictProblem([bound], "tab-b", { workspaceId: "ws-a", sessionId: "s-1" }),
+          |                              ^
+      218 |   ).toContain("tab-a");
+      219 |   expect(
+      220 |     controllerConflictProblem([bound], "tab-a", { workspaceId: "ws-a", sessionId: "s-1" }),
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\workflow-tabs.spec.ts:217:30
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-workflow-tabs-bind-前查-5830b--controller-报冲突；重绑自身与不同会话不算\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-workflow-tabs-bind-前查-5830b--controller-报冲突；重绑自身与不同会话不算\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    apps\desktop\tests\unit\recipe-library.spec.ts:177:7 › 配方库行右键菜单（S3-3 删除链接线） › 「在新标签中打开」菜单项随回调提供（S4-1⑤），未提供时不显示 
+    apps\desktop\tests\unit\workflow-tabs.spec.ts:167:5 › 主控唯一性（S4-1）：同一会话被两个标签绑定（同 workspace）整表拒绝，跨 workspace 同 id 不算冲突 
+    apps\desktop\tests\unit\workflow-tabs.spec.ts:183:5 › 恢复对账（S4-1）：遗留的重复绑定只保留首个，后来者解绑可重建 ─────────
+    apps\desktop\tests\unit\workflow-tabs.spec.ts:195:5 › 反查索引（S4-1②）：会话→标签从标签表派生，workspace 或 sessionId 不匹配都不命中 
+    apps\desktop\tests\unit\workflow-tabs.spec.ts:213:5 › bind 前查重（S4-1①）：其他标签已绑定同一 controller 报冲突；重绑自身与不同会话不算 
+  12 passed (4.2s)
+EXIT=1

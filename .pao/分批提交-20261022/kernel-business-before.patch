@@ -1,0 +1,455 @@
+diff --git a/packages/coding-agent/src/pao/dept/catalog.ts b/packages/coding-agent/src/pao/dept/catalog.ts
+index 39cea3411..cf66f823f 100644
+--- a/packages/coding-agent/src/pao/dept/catalog.ts
++++ b/packages/coding-agent/src/pao/dept/catalog.ts
+@@ -310,7 +310,6 @@ function tierModelOf(config: unknown, tierName: string): { 模型?: string; 思
+ 
+ /** 按派发核心的次序解析默认档位（卡面缺省时:配方→档位.json 部门默认→主力） */
+ function resolveDefaultTier(
+-	paoHome: string,
+ 	deptName: string,
+ 	recipeTier: string | undefined,
+ 	deptDefaults: Record<string, string> | undefined,
+@@ -405,7 +404,7 @@ function readDeptEntry(
+ 	}
+ 
+ 	const tierRaw = recipeField(recipe, "默认档位")?.split(/[（(]/)[0].trim();
+-	entry.默认档位 = resolveDefaultTier(paoHome, row.名字, tierRaw, deptDefaults, config);
++	entry.默认档位 = resolveDefaultTier(row.名字, tierRaw, deptDefaults, config);
+ 
+ 	const standards = recipeField(recipe, "部门标准");
+ 	if (standards) entry.标准 = splitStandardNames(standards).map((raw) => resolveStandard(paoHome, raw));
+diff --git a/packages/coding-agent/src/pao/status/context-recovery.ts b/packages/coding-agent/src/pao/status/context-recovery.ts
+index f72656c18..536d2795c 100644
+--- a/packages/coding-agent/src/pao/status/context-recovery.ts
++++ b/packages/coding-agent/src/pao/status/context-recovery.ts
+@@ -24,18 +24,10 @@ import { join } from "node:path";
+ 
+ import { projectRootForCards, scanCards } from "../cards/cardfile.ts";
+ import { formatCardNumber, parseCardRef } from "../cards/counter.ts";
+-import type { ParsedCard, Receipt } from "../cards/types.ts";
++import type { Receipt } from "../cards/types.ts";
+ import { listProjects } from "../dept/projects.ts";
+-import { STALE_REMINDER_THRESHOLD, TODO_REMINDER_MARKER } from "../todo/core.ts";
+ import type { TodoItem } from "../todo/core.ts";
+-import { controlView, readControl } from "../workflow/control.ts";
+-import {
+-	type PlanFeedbackEntry,
+-	type PlanFeedbackStatus,
+-	type PlanFeedbackTarget,
+-	listPlanFeedback,
+-	planFeedbackPath,
+-} from "../workflow/plan-feedback.ts";
++import { STALE_REMINDER_THRESHOLD, TODO_REMINDER_MARKER } from "../todo/core.ts";
+ import {
+ 	listPlanHistory,
+ 	listTemporaryPlans,
+@@ -43,13 +35,20 @@ import {
+ 	type PlanStartRecord,
+ 	planFilePath,
+ 	planStartRecordPath,
+-	type TemporaryPlanDefinition,
+-	type TemporaryPlanStep,
+ 	queryTemporaryPlan,
+ 	readPlanStart,
+ 	readPlanStartIntent,
+ 	readTemporaryPlan,
++	type TemporaryPlanDefinition,
++	type TemporaryPlanStep,
+ } from "../workflow/plan.ts";
++import {
++	listPlanFeedback,
++	type PlanFeedbackEntry,
++	type PlanFeedbackStatus,
++	type PlanFeedbackTarget,
++	planFeedbackPath,
++} from "../workflow/plan-feedback.ts";
+ import { type InstanceSignalRow, scanInstanceSignals } from "./workflow-instances.ts";
+ 
+ /** 待办五类（与桌面 `TodoKind` 同序列：恢复→确认→缺输入→失败→未送达）。 */
+@@ -239,7 +238,8 @@ export function isRecallTodoStale(
+ ): boolean {
+ 	const bound = todo.绑定;
+ 	if (bound.实例 !== undefined && current.实例 !== undefined && bound.实例 !== current.实例) return true;
+-	if (bound.定义版本 !== undefined && current.定义版本 !== undefined && bound.定义版本 !== current.定义版本) return true;
++	if (bound.定义版本 !== undefined && current.定义版本 !== undefined && bound.定义版本 !== current.定义版本)
++		return true;
+ 	if (bound.轮次 !== undefined && current.轮次 !== undefined && bound.轮次 !== current.轮次) return true;
+ 	return false;
+ }
+@@ -357,7 +357,10 @@ export function recallPlan(input: {
+ 	const open = feedback.filter((entry) => entry.状态 !== "已应用");
+ 	const 历史 = listPlanHistory(input.项目根, input.计划ID);
+ 	for (const entry of 历史) if (entry.问题) 问题.push(`历史版本 ${entry.定义版本} 读不出：${entry.问题}`);
+-	const 步骤 = input.focusStep === undefined ? definition.步骤 : definition.步骤.filter((step) => step.步骤ID === input.focusStep);
++	const 步骤 =
++		input.focusStep === undefined
++			? definition.步骤
++			: definition.步骤.filter((step) => step.步骤ID === input.focusStep);
+ 	if (input.focusStep !== undefined && 步骤.length === 0) 问题.push(`计划里没有步骤 ${input.focusStep}`);
+ 	return {
+ 		计划ID: definition.计划ID,
+@@ -391,11 +394,12 @@ export function recallPlan(input: {
+  * 查回「确认版本」事实：盘上当前定义版本 vs 某次启动锁定的版本。
+  * 两边不一致＝旧确认已失效（同 `resolvePlanExecution` 的 PLAN_VERSION_CONFLICT 判据），如实返回。
+  */
+-export function readConfirmedVersion(input: {
+-	项目根: string;
+-	计划ID: string;
+-	启动请求ID: string;
+-}): { 确认版本?: number; 当前版本: number; 一致: boolean; 关联路径: string } {
++export function readConfirmedVersion(input: { 项目根: string; 计划ID: string; 启动请求ID: string }): {
++	确认版本?: number;
++	当前版本: number;
++	一致: boolean;
++	关联路径: string;
++} {
+ 	const definition = readTemporaryPlan(input.项目根, input.计划ID);
+ 	const 关联路径 = planStartRecordPath(input.项目根, input.计划ID, input.启动请求ID);
+ 	const record = readPlanStart(关联路径);
+@@ -448,7 +452,7 @@ function readStarts(项目根: string, 计划ID: string): PlanStartRecord[] {
+ 	// 复用 queryTemporaryPlan 的启动面（同一个读法，不另写一遍扫描）
+ 	try {
+ 		return queryTemporaryPlan(项目根, 计划ID).启动;
+-	} catch (error) {
++	} catch {
+ 		// 定义坏时不阻断调用方拿问题清单
+ 		return [];
+ 	}
+@@ -540,7 +544,14 @@ function collectSignals(paoHome: string, 问题: string[]): RecallSignal[] {
+ 	const rows = new Map<string, InstanceSignalRow>();
+ 	for (const row of scan.实例) if (row.实例) rows.set(row.实例, row);
+ 	const signals: RecallSignal[] = [];
+-	for (const row of scan.异常) signals.push({ 类型: "实例异常", 主体: row.文件, 为什么停: row.原因, 要决定什么: "核对现场后决定修复或作废", 证据: [row.路径] });
++	for (const row of scan.异常)
++		signals.push({
++			类型: "实例异常",
++			主体: row.文件,
++			为什么停: row.原因,
++			要决定什么: "核对现场后决定修复或作废",
++			证据: [row.路径],
++		});
+ 	for (const row of scan.实例) {
+ 		if (row.人工门.length === 0 && !row.待恢复) continue;
+ 		const 实例 = row.实例;
+diff --git a/packages/coding-agent/test/pao/loadout-role.test.ts b/packages/coding-agent/test/pao/loadout-role.test.ts
+index cd2f5745d..c0ba7b562 100644
+--- a/packages/coding-agent/test/pao/loadout-role.test.ts
++++ b/packages/coding-agent/test/pao/loadout-role.test.ts
+@@ -103,12 +103,13 @@ describe("PAO 角色解析", () => {
+ describe("worker 会话装载面(扩展注册层跳过,非藏提示词)", () => {
+ 	it("PAO_ROLE=worker 且注入宿主:仍无 worktree/整合/普通 append 管理面，只留侦察保存与执行步骤工具", async () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "worker");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		const { createSingleRootWorktreeHost } = await import("../../src/pao/worktrees/index.ts");
+ 		paoExtension(mock.pi as never, {
+-			resolvePaoHome: () => process.env.PAO_HOME,
++			resolvePaoHome: () => home,
+ 			worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 		});
+ 		// S8 会话 todo 是执行步骤工具(非 pao_ 派发/管理面),worker 也注册——回执对账(S8.4)
+@@ -131,7 +132,8 @@ describe("worker 会话装载面(扩展注册层跳过,非藏提示词)", () =>
+ 		expect(listPaoSubcommands(mock.pi as never)).toHaveLength(0);
+ 		expect(mock.models).toEqual(["快"]);
+ 		// 间接入口随模块消失:worker 模块的 session_shutdown 停后台钩子不再注册;
+-		// session_shutdown 四项：任务快照清理、预压缩取消与费用收齐、用量结账、todo 状态清理，
++		// session_shutdown 七项：任务快照清理、预压缩取消与费用收齐、用量结账、todo 状态清理、
++		// 停止活动观察、后台生命周期清理、释放后台宿主，
+ 		// 均不是派发后台管理。
+ 		// session_start(品牌指示器＋页脚记账重置;档位失注册守卫只读警告)
+ 		expect(mock.events.filter((event) => event === "session_shutdown")).toEqual([
+@@ -139,101 +141,106 @@ describe("worker 会话装载面(扩展注册层跳过,非藏提示词)", () =>
+ 			"session_shutdown",
+ 			"session_shutdown",
+ 			"session_shutdown",
++			"session_shutdown",
++			"session_shutdown",
++			"session_shutdown",
+ 		]);
+ 		expect(mock.events).toContain("session_start");
+ 	});
+ 
+ 	it("PAO_ROLE=部长:去扇出/协作中转/宿主/常驻记忆门面,其余 owner 面全保留(含记忆三工具与 queue 子命令)", () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "部长");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		return import("../../src/pao/worktrees/index.ts").then(({ createSingleRootWorktreeHost }) => {
+ 			paoExtension(mock.pi as never, {
+-				resolvePaoHome: () => process.env.PAO_HOME,
++				resolvePaoHome: () => home,
+ 				worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 			});
+-		// 去的三个:fanout 的 pao_fanout、collab 的 pao_collab_relay 与 派 命令、host 的拉起/散场部长
+-		expect(mock.tools).not.toContain("pao_fanout");
+-		expect(mock.tools).not.toContain("pao_collab_relay");
+-		expect(mock.tools).not.toContain("pao_spawn_minister");
+-		expect(mock.tools).not.toContain("pao_dismiss_minister");
+-		expect(listPaoSubcommands(mock.pi as never).map((sub) => sub.name)).not.toContain("collab"); // collab 子命令随模块消失
+-		// 保留的 owner 面:卡终态、全库、记忆插拔、worker 派遣登记面、部门
+-		for (const name of [
+-			"pao_create_card",
+-			"pao_change_status",
+-			"pao_query_kb",
+-			"pao_ingest_kb",
+-			"pao_memory_write",
+-			"pao_memory_recall",
+-			"pao_memory_forget",
+-			"pao_inventory",
+-			"pao_stop_background",
+-			"pao_create_dept",
+-			"pao_integrate_delivery",
+-		]) {
+-			expect(mock.tools).toContain(name);
+-		}
+-		expect(mock.commands).toContain("pao");
+-		expect(listPaoSubcommands(mock.pi as never).map((sub) => sub.name)).toContain("queue");
+-		expect(mock.models).toEqual(["快"]);
++			// 去的三个:fanout 的 pao_fanout、collab 的 pao_collab_relay 与 派 命令、host 的拉起/散场部长
++			expect(mock.tools).not.toContain("pao_fanout");
++			expect(mock.tools).not.toContain("pao_collab_relay");
++			expect(mock.tools).not.toContain("pao_spawn_minister");
++			expect(mock.tools).not.toContain("pao_dismiss_minister");
++			expect(listPaoSubcommands(mock.pi as never).map((sub) => sub.name)).not.toContain("collab"); // collab 子命令随模块消失
++			// 保留的 owner 面:卡终态、全库、记忆插拔、worker 派遣登记面、部门
++			for (const name of [
++				"pao_create_card",
++				"pao_change_status",
++				"pao_query_kb",
++				"pao_ingest_kb",
++				"pao_memory_write",
++				"pao_memory_recall",
++				"pao_memory_forget",
++				"pao_inventory",
++				"pao_stop_background",
++				"pao_create_dept",
++				"pao_integrate_delivery",
++			]) {
++				expect(mock.tools).toContain(name);
++			}
++			expect(mock.commands).toContain("pao");
++			expect(listPaoSubcommands(mock.pi as never).map((sub) => sub.name)).toContain("queue");
++			expect(mock.models).toEqual(["快"]);
+ 		});
+ 	});
+ 
+ 	it("主控(默认):全部工具与命令注册齐全(与接线冒烟同口径)", () => {
+ 		vi.stubEnv(PAO_ROLE_ENV, "");
+-		vi.stubEnv("PAO_HOME", tempPaoHome());
++		const home = tempPaoHome();
++		vi.stubEnv("PAO_HOME", home);
+ 		resetPaoSubcommandsForTest();
+ 		const mock = mockPi();
+ 		return import("../../src/pao/worktrees/index.ts").then(({ createSingleRootWorktreeHost }) => {
+ 			paoExtension(mock.pi as never, {
+-				resolvePaoHome: () => process.env.PAO_HOME,
++				resolvePaoHome: () => home,
+ 				worktreeHost: createSingleRootWorktreeHost(tempDir()),
+ 			});
+-		for (const name of [
+-			"pao_create_card",
+-			"pao_submit_receipt",
+-			"pao_change_status",
+-			"pao_query_queue",
+-			"pao_collab_relay",
+-			"pao_inventory",
+-			"pao_stop_background",
+-			"pao_query_kb",
+-			"pao_restricted_query",
+-			"pao_ingest_kb",
+-			"pao_inspect_kb",
+-			"pao_create_dept",
+-			"pao_fanout",
+-			"pao_integrate_delivery",
+-		]) {
+-			expect(mock.tools).toContain(name);
+-		}
+-		expect(mock.commands).toContain("pao");
+-		// 唯一 pao 命令＋S8-TUI1 /todo(待办常驻摘要的展开/收起切换,计划 §S8 条 6 授权;worker 侧
+-		// 随 todo-summary 模块跳过,零命令纪律不变)。
+-		expect(mock.commands.filter((name) => name !== "pao" && name !== "todo")).toEqual([]);
+-		expect(
+-			listPaoSubcommands(mock.pi as never)
+-				.map((sub) => sub.name)
+-				.sort(),
+-		).toEqual([
+-			// H0-B 总预算人工巡检：只挂命令面，worker 侧整模块跳过（见 WORKER_SKIPPED_MODULES）
+-			"budget",
+-			"collab",
+-			"context",
+-			"flow",
+-			"memory",
+-			"model",
+-			"pano",
+-			"pending",
+-			"preflight",
+-			"queue",
+-			"recipe-del",
+-			"runtime",
+-			"status",
+-		]);
+-		expect(mock.models).toEqual(["快"]);
++			for (const name of [
++				"pao_create_card",
++				"pao_submit_receipt",
++				"pao_change_status",
++				"pao_query_queue",
++				"pao_collab_relay",
++				"pao_inventory",
++				"pao_stop_background",
++				"pao_query_kb",
++				"pao_restricted_query",
++				"pao_ingest_kb",
++				"pao_inspect_kb",
++				"pao_create_dept",
++				"pao_fanout",
++				"pao_integrate_delivery",
++			]) {
++				expect(mock.tools).toContain(name);
++			}
++			expect(mock.commands).toContain("pao");
++			// 唯一 pao 命令＋S8-TUI1 /todo(待办常驻摘要的展开/收起切换,计划 §S8 条 6 授权;worker 侧
++			// 随 todo-summary 模块跳过,零命令纪律不变)。
++			expect(mock.commands.filter((name) => name !== "pao" && name !== "todo")).toEqual([]);
++			expect(
++				listPaoSubcommands(mock.pi as never)
++					.map((sub) => sub.name)
++					.sort(),
++			).toEqual([
++				// H0-B 总预算人工巡检：只挂命令面，worker 侧整模块跳过（见 WORKER_SKIPPED_MODULES）
++				"budget",
++				"collab",
++				"context",
++				"flow",
++				"memory",
++				"model",
++				"pano",
++				"pending",
++				"preflight",
++				"queue",
++				"recipe-del",
++				"runtime",
++				"status",
++			]);
++			expect(mock.models).toEqual(["快"]);
+ 		});
+ 	});
+ });
+diff --git a/packages/coding-agent/test/pao/memory-resident.test.ts b/packages/coding-agent/test/pao/memory-resident.test.ts
+index 4da2de475..3c13806e0 100644
+--- a/packages/coding-agent/test/pao/memory-resident.test.ts
++++ b/packages/coding-agent/test/pao/memory-resident.test.ts
+@@ -142,7 +142,11 @@ interface TestContext {
+ 	sessionManager: {
+ 		getSessionId(): string;
+ 		getBranch(): unknown[];
+-		buildSessionProjection(): { messages: unknown[]; thinkingLevel: string; model: { provider: string; modelId: string } | null };
++		buildSessionProjection(): {
++			messages: unknown[];
++			thinkingLevel: string;
++			model: { provider: string; modelId: string } | null;
++		};
+ 	};
+ }
+ 
+diff --git a/packages/coding-agent/test/pao/status-agent-recall.test.ts b/packages/coding-agent/test/pao/status-agent-recall.test.ts
+index 896cbb8cc..9acde429b 100644
+--- a/packages/coding-agent/test/pao/status-agent-recall.test.ts
++++ b/packages/coding-agent/test/pao/status-agent-recall.test.ts
+@@ -12,33 +12,38 @@
+  * 数据都走真实正本通道（createTemporaryPlan / recordPlanFeedback / startControl 等），
+  * 不手写假装的正本格式。
+  */
+-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
++import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { stringify } from "yaml";
+ import { afterEach, describe, expect, it } from "vitest";
+-
++import { stringify } from "yaml";
++import type { SessionEntry } from "../../src/core/session-manager.ts";
+ import { loadCard, parseCardRef, serializeCard } from "../../src/pao/cards/index.ts";
+ import {
+-	RECALL_TODO_KINDS,
+ 	buildRecallReminder,
+ 	cardRecallTodos,
+ 	dedupeTodos,
+ 	isRecallTodoStale,
+ 	mergeRecallTodos,
++	RECALL_TODO_KINDS,
++	type RecallTodo,
+ 	readConfirmedVersion,
+ 	readRecallSnapshot,
+ 	recallPlan,
+ 	recallTodoKey,
+ 	sessionTodosToRecall,
+ 	staleRecallTodoText,
+-	type RecallTodo,
+ } from "../../src/pao/status/context-recovery.ts";
+-import { scanTodoState, SNAPSHOT_CUSTOM_TYPE, type TodoItem } from "../../src/pao/todo/core.ts";
+-import type { SessionEntry } from "../../src/core/session-manager.ts";
+-import { addNodeCards, bindMinister, endDecomposition, readControl, startControl } from "../../src/pao/workflow/control.ts";
++import { SNAPSHOT_CUSTOM_TYPE, scanTodoState, type TodoItem } from "../../src/pao/todo/core.ts";
++import {
++	addNodeCards,
++	bindMinister,
++	endDecomposition,
++	readControl,
++	startControl,
++} from "../../src/pao/workflow/control.ts";
+ import { createTemporaryPlan } from "../../src/pao/workflow/plan.ts";
+-import { recordPlanFeedback, recordPlanFeedbackDelivery } from "../../src/pao/workflow/plan-feedback.ts";
++import { recordPlanFeedback } from "../../src/pao/workflow/plan-feedback.ts";
+ import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
+ 
+ const dirs: string[] = [];
+@@ -126,8 +131,14 @@ describe("G1 ① 压缩前后查回同一份事实", () => {
+ 		const home = tempDir("pao-g1-home-");
+ 		const 项目根 = tempDir("pao-g1-proj-");
+ 		落项目(home, 项目根);
+-		const 前快照 = readRecallSnapshot({ paoHome: home }, { 清单: 前.todos, 陈旧计数: 前.staleCount, 已提醒: 前.reminded, 有压缩快照: 前.snapshot !== undefined });
+-		const 后快照 = readRecallSnapshot({ paoHome: home }, { 清单: 后.todos, 陈旧计数: 后.staleCount, 已提醒: 后.reminded, 有压缩快照: 后.snapshot !== undefined });
++		const 前快照 = readRecallSnapshot(
++			{ paoHome: home },
++			{ 清单: 前.todos, 陈旧计数: 前.staleCount, 已提醒: 前.reminded, 有压缩快照: 前.snapshot !== undefined },
++		);
++		const 后快照 = readRecallSnapshot(
++			{ paoHome: home },
++			{ 清单: 后.todos, 陈旧计数: 后.staleCount, 已提醒: 后.reminded, 有压缩快照: 后.snapshot !== undefined },
++		);
+ 		expect(后快照.会话待办?.清单).toEqual(前快照.会话待办?.清单);
+ 		expect(后快照.会话待办?.有压缩快照).toBe(true);
+ 		expect(前快照.会话待办?.有压缩快照).toBe(false);
+@@ -249,7 +260,11 @@ describe("G1 ③ 同一待办在两条视图路径下只生效一次", () => {
+ 			绑定: {},
+ 			证据: [],
+ 		});
+-		const merged = mergeRecallTodos([[mk("undelivered", "u")], [mk("recovery", "r"), mk("failed", "f")], [mk("confirm", "c")]]);
++		const merged = mergeRecallTodos([
++			[mk("undelivered", "u")],
++			[mk("recovery", "r"), mk("failed", "f")],
++			[mk("confirm", "c")],
++		]);
+ 		expect(merged.map((todo) => todo.种类)).toEqual(["recovery", "confirm", "failed", "undelivered"]);
+ 		expect(RECALL_TODO_KINDS).toEqual(["recovery", "confirm", "missing_input", "failed", "undelivered"]);
+ 	});
+@@ -310,7 +325,11 @@ describe("G1 ④ 提醒通道失败但事实仍可查", () => {
+ 		const created = await 建计划(项目根);
+ 		// 坏意见文件：不是合法 YAML 结构 → 如实进问题
+ 		mkdirSync(join(项目根, ".pao", "临时工作流", created.计划ID), { recursive: true });
+-		writeFileSync(join(项目根, ".pao", "临时工作流", created.计划ID, "意见.md"), "---\n记录: 不是列表\n---\n", "utf8");
++		writeFileSync(
++			join(项目根, ".pao", "临时工作流", created.计划ID, "意见.md"),
++			"---\n记录: 不是列表\n---\n",
++			"utf8",
++		);
+ 		const snapshot = readRecallSnapshot({ paoHome: home, 计划ID: created.计划ID });
+ 		expect(snapshot.问题.some((line) => line.includes("意见读不出"))).toBe(true);
+ 		expect(snapshot.计划).toHaveLength(1); // 计划本身照样查得回

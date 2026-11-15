@@ -1,0 +1,75 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 采集的未提炼事件 history 命中 sourceHits；current 不返 94ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 封存段后 history 仍命中同一 sourceId 159ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > 删除来源关联记忆后该来源不再命中（source_exclusions 生效） 114ms
+ ✓ test/pao/memory-o05.test.ts > Q3 来源原文词法索引 > rebuildSourceFts 后 history 命中与重建前一致 67ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 只传 memory_id 返回当前修订详情与来源列表 65ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > source_id 分页：hasMore/nextOffset 连续翻页 91ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > memory_id+source_id 不归属返回 invalid_input 55ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 缺失来源如实 source_missing 41ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > memory_id+source_id 归属核对通过 → 展开且 expand 记账落 memory_usage 77ms
+ ✓ test/pao/memory-o05.test.ts > Q4 pao_memory_read 只读工具 > 只 source_id 展开不写 expand 记账（与桌面口径一致） 51ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 长 conditions+多来源条目渲染超限时整项省略（不截条件） 85ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 候选 8 条预算够时注入超过 3 条 122ms
+ ✓ test/pao/memory-o05.test.ts > Q6 渲染预算 > 上下文余量收紧（投影接近 contextWindow）时注入减少 75ms
+ ✓ test/pao/memory-o05.test.ts > F10 agent_settled 封存 > agent_settled 后本会话 unsealed 段被封存，原文仍可读 396ms
+ ✓ test/pao/memory-organize.test.ts > collectChangedMemories 复合游标（F02） > 首批返回、无变化原样返回 cursor、新增/修订只回增量 90ms
+ ✓ test/pao/memory-organize.test.ts > collectChangedMemories 复合游标（F02） > 同时间戳超过 200 条不漏：复合游标按 (updated_at,id) 推进 386ms
+ ✓ test/pao/memory-organize.test.ts > runOrganizeMaintenance（F01） > 词法重复候选经 mergeMemories 合并：merged_into 指向 keep、keep 修订推进 55ms
+ ✓ test/pao/memory-organize.test.ts > runOrganizeMaintenance（F01） > 双 confirmed 同结论可并；不同结论的服务层拒并保护仍在 45ms
+ ✓ test/pao/memory-organize.test.ts > runOrganizeMaintenance（F01） > 等待期停用的成员不进规整收集；快照复核 staleOrganizeMembers 直接判 stale 39ms
+ ✓ test/pao/memory-organize.test.ts > runOrganizeMaintenance（F01） > 无变化零请求：done、merged=0、游标原样 40ms
+ ✓ test/pao/memory-organize.test.ts > O06/R1：自动整理不改判正式决定 > 条件互斥（单机 vs 多机）的同结论 confirmed 决定不自动合并 52ms
+ ✓ test/pao/memory-organize.test.ts > O06/R1：自动整理不改判正式决定 > confirmed 与 tentative 同结论不自动合并：正本保持 confirmed 45ms
+ ✓ test/pao/memory-organize.test.ts > O06/R1：自动整理不改判正式决定 > 条件归一等价的同状态决定可合并（条件空白合一/大小写差异不挡） 49ms
+ ✓ test/pao/memory-organize.test.ts > organize 经维护调度器领取执行（F01） > enqueue organize → agent_settled → handler 跑完合并 60ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > createJob > 同 scopeKey 幂等：重复创建返回已有 job，不重复入库 49ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > claimJob > pending→running：记 owner_process 与 attempt_count 36ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > claimJob > 并发领取：两个进程同时 claim 同一 pending job，恰一个成功 37ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > claimJob > done/failed 终态不可领取 50ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > advanceCursor > 游标推进后重跑只处理未提交范围 41ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > recoverJobs > running 持有者已死 → 重取为 pending，可再被 claimJob 领取 44ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > recoverJobs > running 持有者存活 → 不恢复 37ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > recoverJobs > consecutive_failures 达上限不恢复；attempt_count 只作历史总次数 40ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > recoverJobs > attempt_count 高但 consecutive_failures 未超限仍可恢复（历史累计不耗额度） 45ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > failJob > 失败保留原因、已知用量与未提交范围 53ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > failJob > 重试上限：attempt_count 达 MAX_ATTEMPTS 后 failJob 转终态 52ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > isSourceExcluded / listExcludedSourceIds > 按 sourceId 命中/未命中 45ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > isSourceExcluded / listExcludedSourceIds > 按 sessionId+entryId 命中/未命中 50ms
+ ✓ test/pao/memory-extraction-jobs.test.ts > isSourceExcluded / listExcludedSourceIds > listExcludedSourceIds：按会话过滤与全量 48ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > agent_settled 触发 drain：embed job 被领取并分派 handler 54ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > agent_start 取消进行中处理：handler 收到 abort signal 73ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > session_shutdown 后不再受理 enqueue，也不再领取 42ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > 重开空闲续作：enqueue 落库 + 调度器关闭重建后 settled 捡起 pending job 43ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > 未注册 kind 领到时记 failed 并写原因（不静默丢） 46ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > 认领写 owner_process + owner_token（S7-03） 46ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > O03/F03：drain 中途 agent_start 置 busy → 后续 pending job 本轮不领取 49ms
+ ✓ test/pao/memory-maintenance.test.ts > registerMaintenanceScheduler > O03/I02：同 home 同进程两调度器共享前台忙——A 忙时 B 的 settled 不领维护 job 87ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 备份生成 manifest+快照+段副本；目录非空拒绝覆盖 157ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 恢复到新目录：段回位、来源可回读、exclusion 生效清派生索引 152ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 传 liveHome：备份后新 exclusion 重放进恢复库并清派生索引 213ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 独立旧备份不传 liveHome：只留备份自带 exclusion，limitation 如实声明 158ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 目标 memory/ 非空拒绝覆盖；manifest/快照缺失如实失败 155ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > parseArchiveJobScope 只认合法 backupDir 2ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > rebuild：命令入口触发 rebuildMemoryIndex，FTS 行重建可检索 57ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > rebuild --project：范围过滤只清本范围 FTS，范围外不动（F06 链验证） 55ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > backup：登记 archive 作业（不直接跑备份），enqueue 收到归档参数 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > backup：无维护 enqueue 时如实告警，不假装登记 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > restore：备份目录恢复到独立目标 home，当前现场不动 49ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > restore 参数缺目标目录：用法告警，不调用恢复 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > projectId 筛选：只清范围内 FTS 行，范围外保留 41ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > kind 筛选：只清该 kind 范围内 FTS，其他 kind 不动 38ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > 无筛选 + dropExisting：全清后重建（既有行为保持） 46ms
+ ✓ test/pao/memory-o06-verify.test.ts > O06 独立反面场景 > F01: 等待期删除一条候选记忆后，整理不复活不提交 54ms
+ ✓ test/pao/memory-o06-verify.test.ts > O06 独立反面场景 > F06: 重建A项目后B项目FTS完整保留，A范围内仍可检索 48ms
+ ✓ test/pao/desktop-maintenance.test.ts > 机械巡检复用规则但零写入，不创建子索引和巡库卡 7ms
+ ✓ test/pao/desktop-maintenance.test.ts > 保温只读且明确不宣称嵌入或语义索引刷新；登记路径越界拒绝 4ms
+
+ Test Files  8 passed (8)
+      Tests  65 passed (65)
+   Start at  21:42:43
+   Duration  20.20s (transform 9.30s, setup 0ms, import 14.17s, tests 4.67s, environment 1ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o06-recheck-existing-vitest.json

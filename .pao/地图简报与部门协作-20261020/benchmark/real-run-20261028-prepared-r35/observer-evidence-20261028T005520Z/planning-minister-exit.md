@@ -1,0 +1,6 @@
+- 部门:规划
+- pid:1655
+- 会话标识:df34e40a-b4b9-4f31-a8f4-66ad961d3c0a
+- 启动时间:2026-10-28T00:51:46.133Z
+- 留证原因:工作流异常停止，释放本实例部长并保留会话历史
+- stderr尾部:Warning: No project session found with id 'df34e40a-b4b9-4f31-a8f4-66ad961d3c0a'; creating a new session with that id.

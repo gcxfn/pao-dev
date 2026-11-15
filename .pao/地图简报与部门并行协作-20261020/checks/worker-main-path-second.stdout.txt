@@ -1,0 +1,60 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+stderr | test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 旧 SDK 工具入口直接调用：非 Git primary 卡仍可派发并显式记录 Git 基线不可用
+[pao] 后台通知主动唤醒失败,通知已保留待下一轮补投:pi.sendMessage is not a function
+
+ × test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 旧 SDK 工具入口直接调用：非 Git primary 卡仍可派发并显式记录 Git 基线不可用 1335ms
+   → expected [ Array(1) ] to deeply equal []
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 派单和扇出都在认领前挡依赖，卡引用三种正式写法走同一解析器
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 目标项目已有写锁时拒绝认领；同项目写任务串行且自然退出后放锁
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 单卡与扇出共用名额，不同部门和项目也不会绕过共享上限
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 同父卡有限预算的只读子卡也排队，后者重新查已用预算后拒派
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 费用缺账只拒绝费用预算，已知轮次和工具次数仍有效
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 两入口回执都相对项目根落卡；进行中的协作母卡尚无最终回执也允许首个子卡
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > pao_dispatch_card 落卡失败明确报错，同母卡其他子卡不借缺账继续执行
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > pao_fanout 落卡失败明确报错，同母卡其他子卡不借缺账继续执行
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 真实配方的档位括号解释可解析，卡指定档位优先，prose 不猜成工具权限
+ ↓ test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 旧执行的回执保留原尝试，不能冒充新尝试
+ ↓ test/pao/worker-dispatch-guards.test.ts > 真实本地子进程的停止与身份（不调用模型） > 树杀失败不会签发成功凭据或删除活进程登记
+ ↓ test/pao/worker-dispatch-guards.test.ts > 真实本地子进程的停止与身份（不调用模型） > 不同项目同卡号可共存，裸号取消拒歧义，证据不会互相覆盖
+ ↓ test/pao/worker-dispatch-guards.test.ts > 派发默认超时(护栏:worker 挂死不无限期占写锁与名额) > readDispatchTimeoutMs:缺省 24 小时(B 档:静默提醒是主判决,机械超时只兜无人应答);「派发超时分钟」合法值生效,缺失/非法/坏 JSON 回落缺省
+ ↓ test/pao/worker-dispatch-guards.test.ts > 派发默认超时(护栏:worker 挂死不无限期占写锁与名额) > executeDispatch 注入缺省超时:无配置=86400000;保温配置生效;显式 超时毫秒 优先
+ ↓ test/pao/worker-dispatch-guards.test.ts > 停止确认失败:fail-closed 落回执,不遮蔽原始错误 > run 正常返回但确认停止失败:回执已落卡(卡不再无回执悬挂),锁不放,错误如实上抛
+ ↓ test/pao/worker-dispatch-guards.test.ts > 停止确认失败:fail-closed 落回执,不遮蔽原始错误 > 原始错误优先:停止确认失败只记录,不遮蔽原始错误
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/worker-dispatch-guards.test.ts > 正式派发入口的约束（离线假 worker） > 旧 SDK 工具入口直接调用：非 Git primary 卡仍可派发并显式记录 Git 基线不可用
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "[pao 后台通知] 以下为后台派卡/自动链的完成/被拒/失败/静默提醒(运行态,重启归零;卡文件状态与回执是真相,R25):
++ [派卡完成] 卡0001(success)
++ 派单完成:卡0001〔success〕尝试 1(部门 测试)
++ 派单理由:V17 单根兼容
++ owner:主控(认领走状态机:无主卡由派单者认领,有主卡须 owner 本人)
++ 摘要:离线假回执
++ 认领基线:不可用——fatal: not a git repository (or any of the parent directories): .git(越界比对无基线,边界如实标注)",
++ ]
+
+ ❯ test/pao/worker-dispatch-guards.test.ts:183:27
+    181|
+    182|   expect(runner.runs).toHaveLength(1);
+    183|   expect(readInjection()).toEqual([]);
+       |                           ^
+    184|   expect(runner.runs[0]).toMatchObject({
+    185|    taskRoot: root,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  20:51:30
+   Duration  5.36s (transform 2.93s, setup 0ms, import 3.65s, tests 1.35s, environment 0ms)
+

@@ -1,0 +1,24 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\auto-route.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\auto-route.ts"
+index 055a5ed..3d9a2dd 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\auto-route.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\auto-route.ts"
+@@ -15,6 +15,7 @@
+  */
+ import { existsSync } from "node:fs";
+ import { join } from "node:path";
++import { raceWithAbortSignal } from "../../utils/abort.ts";
+ import type { DeptRegistryRow } from "../dept/registry.ts";
+ import type { MemoryHit } from "../memory/memory-vendor.ts";
+ import { type EmbedClient, type FetchLike, throwIfAborted } from "./embed.ts";
+@@ -144,7 +145,10 @@ export async function autoPatrol(options: AutoPatrolOptions): Promise<AutoRouteR
+ 		if (!options.vendorRecall) return { 语义状态: "未接", 语义命中: [] };
+ 		try {
+ 			throwIfAborted(options.signal);
+-			const hits = await options.vendorRecall(options.查询, AUTO_SEMANTIC_LIMIT, options.signal);
++			const hits = await raceWithAbortSignal(
++				options.vendorRecall(options.查询, AUTO_SEMANTIC_LIMIT, options.signal),
++				options.signal,
++			);
+ 			throwIfAborted(options.signal);
+ 			return { 语义状态: "已接", 语义命中: hits ?? [] };
+ 		} catch (error) {

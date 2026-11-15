@@ -1,0 +1,344 @@
+*** Begin Patch
+*** Update File: D:/AI/workspace/pao-dev/桌面端/apps/desktop/src/app/App.tsx
+@@
+ 
+   const shellClassName = `shell${snapshot.sidebarCollapsed ? " shell--sidebar-collapsed" : ""}`;
+ 
++  const sessionConversation =
++    selectedWorkspace && selectedSession ? (
++      <>
++        <section className="canvas canvas--thread">
++          <div className="conversation conversation--thread">
++            {showSchemaSkewNotice ? (
++              <div
++                className="schema-skew-notice"
++                role="status"
++                data-testid="schema-skew-notice"
++              >
++                <span className="schema-skew-notice__text">
++                  {t(
++                    "This session was written by a newer version of pi — some content may not display. Update pi-gui (or open it with the pi CLI) to see everything.",
++                  )}
++                </span>
++                <button
++                  type="button"
++                  className="schema-skew-notice__dismiss"
++                  aria-label={t("Dismiss notice")}
++                  onClick={() => dismissSchemaSkewNotice(selectedSessionKey)}
++                >
++                  {t("Dismiss")}
++                </button>
++              </div>
++            ) : null}
++
++            <ConversationTimeline
++              key={selectedSessionKey}
++              transcript={pins.timeline}
++              isTranscriptLoading={isTranscriptLoading}
++              transcriptFailed={transcriptFailed}
++              onRetryTranscript={desktop.retry}
++              viewport={viewport}
++              threadSearch={threadSearch}
++              onViewFileInDiff={handleViewFileInDiff}
++              onOpenTurnChange={turnChanges.openTurnChange}
++              onOpenWorkspaceFileLine={handleOpenWorkspaceFileLine}
++              onExtensionAction={runExtensionCardAction}
++              extensionToolLabels={extensionToolLabels}
++              workspacePath={selectedWorkspace.path}
++              onForkFromMessage={
++                selectedSession.status === "running" ? undefined : openForkModal
++              }
++              scheduledOrigins={scheduledOrigins}
++              annotations={transcriptAnnotations}
++              platform={api?.platform ?? "linux"}
++            />
++          </div>
++        </section>
++        {scheduledBinding ? (
++          <ScheduledTaskChip
++            task={scheduledBinding}
++            onOpen={() => setScheduledEditor({ mode: "edit", taskId: scheduledBinding.id })}
++          />
++        ) : null}
++        <ComposerPanel
++          key={selectedSessionKey}
++          preparingTaskDraft={extensionHostActions.preparingTaskDraft}
++          activeSlashCommand={slashMenu.activeSlashFlow?.command}
++          activeSlashCommandMeta={slashMenu.activeSlashFlow?.command?.description}
++          attachments={composerAttachments}
++          queuedMessages={queuedComposerMessages}
++          editingQueuedMessageId={editingQueuedMessageId}
++          composerDraft={composerDraft}
++          composerRef={composerRef}
++          runtime={selectedModelRuntime}
++          usage={
++            selectedSessionKey
++              ? snapshot?.sessionUsageBySession[selectedSessionKey]
++              : undefined
++          }
++          extensionFlags={snapshot.extensionFlagsBySession[selectedSessionKey]}
++          provider={resolvedSessionProvider}
++          modelId={resolvedSessionModelId}
++          thinkingLevel={resolvedSessionThinkingLevel}
++          onClearSlashCommand={slashMenu.resetSlashUi}
++          onComposerKeyDown={handleComposerKeyDown}
++          onComposerPaste={handleComposerPaste}
++          onComposerDrop={handleComposerDrop}
++          onPickAttachments={handlePickAttachments}
++          onRemoveAttachment={handleRemoveAttachment}
++          onEditQueuedMessage={handleEditQueuedMessage}
++          onCancelQueuedEdit={handleCancelQueuedEdit}
++          onRemoveQueuedMessage={handleRemoveQueuedMessage}
++          onSteerQueuedMessage={handleSteerQueuedMessage}
++          onSelectSlashCommand={(command) => {
++            slashMenu.applySlashCommandSelection(command, "click");
++          }}
++          onSelectSlashOption={(option) => {
++            slashMenu.applySlashOptionSelection(option);
++          }}
++          onSetModel={handleSetSessionModel}
++          onSetThinking={handleSetSessionThinking}
++          modelOnboarding={selectedSessionModelOnboarding}
++          onOpenModelSettings={(section) =>
++            openSettings(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id, section)
++          }
++          onSubmit={submitComposerDraft}
++          onStop={stopCurrentRun}
++          selectedSession={selectedSession}
++          lastError={snapshot.lastError}
++          selectedSlashCommand={
++            slashMenu.activeSlashOptionCommand ?? slashMenu.selectedSlashCommand
++          }
++          selectedSlashOption={slashMenu.selectedSlashOption}
++          slashOptionEmptyState={slashMenu.slashOptionEmptyState}
++          setComposerDraft={setComposerDraft}
++          showSlashOptionMenu={slashMenu.showSlashOptionMenu}
++          showSlashMenu={slashMenu.showSlashMenu}
++          slashOptions={slashMenu.slashOptions}
++          slashSections={slashMenu.slashSections}
++          showMentionMenu={mentionMenu.showMentionMenu}
++          mentionOptions={mentionMenu.mentionOptions}
++          selectedMentionIndex={mentionMenu.selectedIndex}
++          onSelectMention={mentionMenu.insertMention}
++          onEnableMentionExtension={mentionMenu.enableMentionExtension}
++          pinnedCards={
++            <PinnedCards
++              pins={pins.visiblePins}
++              collapsedPinIds={pins.collapsedPinIds}
++              onToggle={pins.togglePin}
++              onDismiss={pins.dismissPin}
++              onAction={runExtensionCardAction}
++            />
++          }
++          extensionDock={shownExtensionDock.dock}
++          extensionDockExpanded={isSelectedExtensionDockExpanded}
++          onToggleExtensionDock={handleToggleExtensionDock}
++          onDismissExtensionDock={shownExtensionDock.dismiss}
++          extensionNotices={selectedExtensionUi?.notices}
++          annotations={transcriptAnnotations}
++        />
++      </>
++    ) : null;
++
+   return (
+     <div className={shellClassName}>
+       {primarySidebarToggleVisible ? (
+@@
+               snapshot={snapshot}
+               onSnapshot={setSnapshot}
+               onSelectSession={handleSelectSession}
++              embeddedChat={sessionConversation}
++              chatTarget={workbenchTarget}
+             />
+           ) : snapshot.activeView === "new-thread" ? (
+             rootWorkspaceOptions.length > 0 ? (
+@@
+             ) : (
+               <WorkspaceEmptyPanel body="Add a project folder before creating a new thread." />
+             )
+-          ) : selectedWorkspace && selectedSession ? (
+-            <>
+-              <section className="canvas canvas--thread">
+-                <div className="conversation conversation--thread">
+-                  {showSchemaSkewNotice ? (
+-                    <div
+-                      className="schema-skew-notice"
+-                      role="status"
+-                      data-testid="schema-skew-notice"
+-                    >
+-                      <span className="schema-skew-notice__text">
+-                        {t(
+-                          "This session was written by a newer version of pi — some content may not display. Update pi-gui (or open it with the pi CLI) to see everything.",
+-                        )}
+-                      </span>
+-                      <button
+-                        type="button"
+-                        className="schema-skew-notice__dismiss"
+-                        aria-label={t("Dismiss notice")}
+-                        onClick={() => dismissSchemaSkewNotice(selectedSessionKey)}
+-                      >
+-                        {t("Dismiss")}
+-                      </button>
+-                    </div>
+-                  ) : null}
+-
+-                  <ConversationTimeline
+-                    key={selectedSessionKey}
+-                    transcript={pins.timeline}
+-                    isTranscriptLoading={isTranscriptLoading}
+-                    transcriptFailed={transcriptFailed}
+-                    onRetryTranscript={desktop.retry}
+-                    viewport={viewport}
+-                    threadSearch={threadSearch}
+-                    onViewFileInDiff={handleViewFileInDiff}
+-                    onOpenTurnChange={turnChanges.openTurnChange}
+-                    onOpenWorkspaceFileLine={handleOpenWorkspaceFileLine}
+-                    onExtensionAction={runExtensionCardAction}
+-                    extensionToolLabels={extensionToolLabels}
+-                    workspacePath={selectedWorkspace.path}
+-                    onForkFromMessage={
+-                      selectedSession.status === "running" ? undefined : openForkModal
+-                    }
+-                    scheduledOrigins={scheduledOrigins}
+-                    annotations={transcriptAnnotations}
+-                    platform={api?.platform ?? "linux"}
+-                  />
+-                </div>
+-              </section>
+-              {scheduledBinding ? (
+-                <ScheduledTaskChip
+-                  task={scheduledBinding}
+-                  onOpen={() => setScheduledEditor({ mode: "edit", taskId: scheduledBinding.id })}
+-                />
+-              ) : null}
+-              <ComposerPanel
+-                key={selectedSessionKey}
+-                preparingTaskDraft={extensionHostActions.preparingTaskDraft}
+-                activeSlashCommand={slashMenu.activeSlashFlow?.command}
+-                activeSlashCommandMeta={slashMenu.activeSlashFlow?.command?.description}
+-                attachments={composerAttachments}
+-                queuedMessages={queuedComposerMessages}
+-                editingQueuedMessageId={editingQueuedMessageId}
+-                composerDraft={composerDraft}
+-                composerRef={composerRef}
+-                runtime={selectedModelRuntime}
+-                usage={
+-                  selectedSessionKey
+-                    ? snapshot?.sessionUsageBySession[selectedSessionKey]
+-                    : undefined
+-                }
+-                extensionFlags={snapshot.extensionFlagsBySession[selectedSessionKey]}
+-                provider={resolvedSessionProvider}
+-                modelId={resolvedSessionModelId}
+-                thinkingLevel={resolvedSessionThinkingLevel}
+-                onClearSlashCommand={slashMenu.resetSlashUi}
+-                onComposerKeyDown={handleComposerKeyDown}
+-                onComposerPaste={handleComposerPaste}
+-                onComposerDrop={handleComposerDrop}
+-                onPickAttachments={handlePickAttachments}
+-                onRemoveAttachment={handleRemoveAttachment}
+-                onEditQueuedMessage={handleEditQueuedMessage}
+-                onCancelQueuedEdit={handleCancelQueuedEdit}
+-                onRemoveQueuedMessage={handleRemoveQueuedMessage}
+-                onSteerQueuedMessage={handleSteerQueuedMessage}
+-                onSelectSlashCommand={(command) => {
+-                  slashMenu.applySlashCommandSelection(command, "click");
+-                }}
+-                onSelectSlashOption={(option) => {
+-                  slashMenu.applySlashOptionSelection(option);
+-                }}
+-                onSetModel={handleSetSessionModel}
+-                onSetThinking={handleSetSessionThinking}
+-                modelOnboarding={selectedSessionModelOnboarding}
+-                onOpenModelSettings={(section) =>
+-                  openSettings(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id, section)
+-                }
+-                onSubmit={submitComposerDraft}
+-                onStop={stopCurrentRun}
+-                selectedSession={selectedSession}
+-                lastError={snapshot.lastError}
+-                selectedSlashCommand={
+-                  slashMenu.activeSlashOptionCommand ?? slashMenu.selectedSlashCommand
+-                }
+-                selectedSlashOption={slashMenu.selectedSlashOption}
+-                slashOptionEmptyState={slashMenu.slashOptionEmptyState}
+-                setComposerDraft={setComposerDraft}
+-                showSlashOptionMenu={slashMenu.showSlashOptionMenu}
+-                showSlashMenu={slashMenu.showSlashMenu}
+-                slashOptions={slashMenu.slashOptions}
+-                slashSections={slashMenu.slashSections}
+-                showMentionMenu={mentionMenu.showMentionMenu}
+-                mentionOptions={mentionMenu.mentionOptions}
+-                selectedMentionIndex={mentionMenu.selectedIndex}
+-                onSelectMention={mentionMenu.insertMention}
+-                onEnableMentionExtension={mentionMenu.enableMentionExtension}
+-                pinnedCards={
+-                  <PinnedCards
+-                    pins={pins.visiblePins}
+-                    collapsedPinIds={pins.collapsedPinIds}
+-                    onToggle={pins.togglePin}
+-                    onDismiss={pins.dismissPin}
+-                    onAction={runExtensionCardAction}
+-                  />
+-                }
+-                extensionDock={shownExtensionDock.dock}
+-                extensionDockExpanded={isSelectedExtensionDockExpanded}
+-                onToggleExtensionDock={handleToggleExtensionDock}
+-                onDismissExtensionDock={shownExtensionDock.dismiss}
+-                extensionNotices={selectedExtensionUi?.notices}
+-                annotations={transcriptAnnotations}
+-              />
+-              {treeModalState.open ? (
+-                <TreeModal
+-                  error={treeModalState.error}
+-                  loading={treeModalState.loading}
+-                  submitting={treeModalState.submitting}
+-                  tree={treeModalState.tree}
+-                  onClose={closeTreeModal}
+-                  onNavigate={navigateTreeSelection}
+-                />
+-              ) : null}
+-              {forkModalState.open ? (
+-                <ForkModal
+-                  error={forkModalState.error}
+-                  submitting={forkModalState.submitting}
+-                  messagePreview={forkModalState.messagePreview}
+-                  canUseWorktree={canUseWorktree}
+-                  onClose={closeForkModal}
+-                  onSubmit={handleForkSubmit}
+-                />
+-              ) : null}
+-            </>
++          ) : selectedWorkspace && selectedSession ? (
++            sessionConversation
+           ) : selectedWorkspace ? (
+             <WorkspaceEmptyPanel
+               workspaceName={selectedWorkspace.name}
+@@
+             onRespond={handleRespondToExtensionDialog}
+           />
+         ) : null}
++        {treeModalState.open ? (
++          <TreeModal
++            error={treeModalState.error}
++            loading={treeModalState.loading}
++            submitting={treeModalState.submitting}
++            tree={treeModalState.tree}
++            onClose={closeTreeModal}
++            onNavigate={navigateTreeSelection}
++          />
++        ) : null}
++        {forkModalState.open ? (
++          <ForkModal
++            error={forkModalState.error}
++            submitting={forkModalState.submitting}
++            messagePreview={forkModalState.messagePreview}
++            canUseWorktree={canUseWorktree}
++            onClose={closeForkModal}
++            onSubmit={handleForkSubmit}
++          />
++        ) : null}
+         {sidePanelVisible && selectedWorkspace && selectedSession ? (
+           <Workbench
+             view={workbench.view}
+*** End Patch

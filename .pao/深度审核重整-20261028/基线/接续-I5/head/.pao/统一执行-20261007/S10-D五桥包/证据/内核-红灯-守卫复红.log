@@ -1,0 +1,50 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/knowledge-gate.test.ts[2m > [22m验收7：受限补查门[2m > [22m回执文件里形状不对的合法 JSON 行跳过：不误吞额度，好行照常核对
+[31m[1mAssertionError[22m: promise rejected "Error: 受限补查已用过：卡号 卡0020 授权轮次 1 只允许一次补查，重试…" instead of resolving[39m
+[36m [2m❯[22m test/pao/knowledge-gate.test.ts:[2m156:40[22m[39m
+    [90m154|[39m     receiptPath[33m,[39m
+    [90m155|[39m    })[33m;[39m
+    [90m156|[39m    [35mawait[39m [34mexpect[39m(okGate[33m.[39m[34mquery[39m([32m"坏行不吞额度"[39m))[33m.[39mresolves[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                                        [31m^[39m
+    [90m157|[39m    [35mconst[39m usedGate [33m=[39m [34mcreateRestrictedGate[39m({
+    [90m158|[39m     libRoot[33m,[39m
+
+[31m[1mCaused by: Error[22m: 受限补查已用过：卡号 卡0020 授权轮次 1 只允许一次补查，重试不恢复额度；仍不够请报部长补指针或明确追加授权轮次。[39m
+[36m [2m❯[22m Object.query src/pao/knowledge/gate.ts:[2m119:11[22m[39m
+[90m [2m❯[22m test/pao/knowledge-gate.test.ts:[2m156:24[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/knowledge-patrol-chain.test.ts[2m > [22mM2-05：初判记录文件约定[2m > [22m合法 JSON 但形状不对的行同样按坏行跳过（行守卫，不裸断言）
+[31m[1mAssertionError[22m: expected [ { …(5) }, 42, { …(4) }, { …(4) } ] to have a length of 1 but got 4[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 4[39m
+
+[36m [2m❯[22m test/pao/knowledge-patrol-chain.test.ts:[2m232:15[22m[39m
+    [90m230|[39m   )[33m;[39m
+    [90m231|[39m   [35mconst[39m all [33m=[39m [34mloadPatrolJudgments[39m(libRoot)[33m;[39m
+    [90m232|[39m   [34mexpect[39m(all)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   |[39m               [31m^[39m
+    [90m233|[39m   [34mexpect[39m(all[[34m0[39m][33m?.[39m卡号)[33m.[39m[34mtoBe[39m([34m8[39m)[33m;[39m
+    [90m234|[39m   [34mexpect[39m(all[[34m0[39m][33m?.[39m初判)[33m.[39m[34mtoBe[39m([32m"打回待验证"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 19:19:30
+[2m   Duration [22m 2.52s[2m (transform 1.48s, setup 0ms, import 2.19s, tests 395ms, environment 0ms)[22m
+
+RED_RUN_EXIT=1
+STASH_RESTORED

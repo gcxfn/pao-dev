@@ -1,0 +1,115 @@
+{
+  "status": "failed",
+  "image_id": "9779ef143cc8",
+  "container": "pao-f-monitor-ec975722cc__env-main-1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--detach",
+      "--name",
+      "pao-f-monitor-ec975722cc__env-main-1",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmpaosuvpys\\packages\\coding-agent\\dist\\bundle:/tmp/harbor-pao-source/packages/coding-agent/dist/bundle:ro",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmpaosuvpys:/tmp/f-monitor:ro",
+      "--env",
+      "NODE_OPTIONS=--require=/tmp/f-monitor/process-title.cjs",
+      "--env",
+      "PAO_ROLE=部长",
+      "--env",
+      "PAO_DEPT=实施",
+      "--env",
+      "PI_CODING_AGENT=true",
+      "--entrypoint",
+      "sh",
+      "9779ef143cc8",
+      "-lc",
+      "cp /tmp/f-monitor/benchmark-prerequisites.json /tmp/benchmark-prerequisites.json; mkdir -p /tmp/harbor-pao-source/packages/coding-agent/dist/bundle; PAO_ROLE=worker node /tmp/f-monitor/task.js & exec node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/rpc-entry.js"
+    ]
+  ],
+  "assertions": {
+    "probe_collected": true,
+    "pao_rpc_found": false,
+    "pao_identity": false,
+    "pao_role": false,
+    "pao_dept": false,
+    "task_node_found": false,
+    "task_title": false,
+    "task_role_ignored": true,
+    "phase_preparation": true,
+    "no_probe_errors": true
+  },
+  "cleanup": {
+    "container_remove_returncode": 0,
+    "container_remove_stderr": "",
+    "container_left": [],
+    "temp_dir_removed_by_context": true
+  },
+  "probe": {
+    "ticks": 100,
+    "processes": [
+      {
+        "rss": 42237952,
+        "role": null,
+        "cpu_ticks": 3,
+        "title": "pao-rpc",
+        "ppid": 0,
+        "dept": null,
+        "runtime": "node",
+        "pid": 1,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "inherited_role_ignored": true,
+        "kind": "task-node",
+        "start_ticks": 108249,
+        "role_status": "ignored_inherited_role"
+      },
+      {
+        "rss": 42168320,
+        "role": null,
+        "cpu_ticks": 0,
+        "title": "pao",
+        "ppid": 1,
+        "dept": null,
+        "runtime": "node",
+        "pid": 12,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "inherited_role_ignored": true,
+        "kind": "task-node",
+        "start_ticks": 108262,
+        "role_status": "ignored_inherited_role"
+      },
+      {
+        "rss": 11587584,
+        "role": null,
+        "cpu_ticks": 3,
+        "title": "python3",
+        "ppid": 0,
+        "dept": null,
+        "runtime": "python",
+        "pid": 31,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "inherited_role_ignored": true,
+        "kind": "task-python",
+        "start_ticks": 108305,
+        "role_status": "ignored_inherited_role"
+      }
+    ],
+    "scan_errors": [],
+    "prerequisites": {
+      "marker": "present",
+      "python3": "present"
+    },
+    "probe_status": "collected",
+    "phase": {
+      "phase": "unknown",
+      "marker": null,
+      "category": "preparation"
+    }
+  },
+  "errors": [],
+  "failure": "AssertionError: 真实探针断言失败：{'probe_collected': True, 'pao_rpc_found': False, 'pao_identity': False, 'pao_role': False, 'pao_dept': False, 'task_node_found': False, 'task_title': False, 'task_role_ignored': True, 'phase_preparation': True, 'no_probe_errors': True}"
+}

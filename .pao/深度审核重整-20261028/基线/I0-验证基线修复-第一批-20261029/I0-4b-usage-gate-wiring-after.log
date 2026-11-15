@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/usage-gate-wiring.test.ts > 未授权总预算时零行为变化（不凭空设默认限额） > 没授权记录 → 派发照常成功，且盘上根本不产生总预算账 699ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 未授权总预算时零行为变化（不凭空设默认限额） > 授权后行为立刻不同（对照上面：同一场景注入门禁，账上留下预留并结算） 722ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 一次成功派发：预留额＝每卡预算，结算额＝回执真实费用 768ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 单卡重试只预留上次消耗后的剩余额度 1406ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执缺 usage → 记「结果不明」，钱继续占着，且回执文本如实说明（不填 0 冒充没花钱） 705ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执只缺部分 usage → 整笔费用记「结果不明」，不能拿部分金额当全额结算 740ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执完全缺 usage 字段 → 仍记「结果不明」，不因结算代码取值而抛错 761ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 个人取消带实际费用 → 结算 1.75，且 canceled 完成通知只发一次 777ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 显式全停后的取消回执不产生完成通知 843ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 监督宿主已接收取消结果 → 不再重复写派卡完成通知 601ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 真并发争同一份总额（出批条件） > 两张卡各要 6、总额 10 → 只过一个，另一个拿到真实拒绝原因且卡未被派发 819ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁拒绝不留已派发的任何痕迹 > 总额不足被拒 → 卡仍 unclaimed、在途表归零、通知面只出现「被拒」不出现「完成」 206ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁拒绝不留已派发的任何痕迹 > 上次结果不明的同判据请求 → 拒派并叫人先查，不重复授额 819ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 没开跑时预留归还（不给没派出去的请求占额度） > 门禁放行但认领因依赖未放行而失败 → 预留归还为 released，额度回到可用 185ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 没开跑时预留归还（不给没派出去的请求占额度） > runner 拉起就抛错（无回执）→ 账上如实记「结果不明」，钱继续占着、不归还 672ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 重启可核（不新造状态,全部复用 G2 持久账） > 派发完成后重建对象（模拟重启）仍能按判据判出 settled 与真实费用 583ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 重启可核（不新造状态,全部复用 G2 持久账） > 登记表里不残留活条目（派发结束后可观察事实是干净的） 569ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  02:19:10
+   Duration  14.56s (transform 1.81s, setup 0ms, import 2.42s, tests 11.88s, environment 0ms)
+

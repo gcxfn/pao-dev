@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "kind": "offline_validation",
+  "realBatchExecuted": false,
+  "networkRequests": 0,
+  "databaseWrites": 0,
+  "scenarioCount": 10,
+  "synonymQueryCount": 20,
+  "scenarioStatuses": {
+    "I01": "planned",
+    "I02": "planned",
+    "I03": "planned",
+    "I04": "incomplete",
+    "I05": "planned",
+    "I06": "planned",
+    "I07": "planned",
+    "I08": "incomplete",
+    "I09": "planned",
+    "I10": "planned"
+  },
+  "semanticQuality": {
+    "status": "not_run_offline",
+    "queryCount": 20,
+    "separateFromMechanicalPerformance": true
+  },
+  "mechanicalPerformance": {
+    "status": "not_run_in_validate_only",
+    "command": "--benchmark-local"
+  },
+  "errors": [],
+  "i01RationalePolicy": {
+    "originalFixture": "absent",
+    "maintenanceCostAdded": false
+  },
+  "i08DeletionContract": {
+    "status": "incomplete",
+    "implemented": false,
+    "request": {
+      "scenarioId": "I08"
+    },
+    "reason": "readDeletionOperation/resumeDeletion 公开服务入口已存在，但宿主 DeletionSessionCoordinator 的真实会话 prepare/close/reload 编排尚未接完",
+    "requiredFollowUp": "接入宿主协调器后，以 I08 真实 stop/search/restore/delete 动作验证正文清零、来源身份映射和删除后重放"
+  },
+  "i08DeletionSemantics": {
+    "field": "expectedFinalState.sources",
+    "plannedMeaning": "保留 sourceId/sessionId/entryId 等定位与排除记录",
+    "rawBodyRetained": false,
+    "activeSourcesRowRequired": false
+  },
+  "expectedDataWrittenToDatabase": false,
+  "piOfflineTreatedAsPass": false
+}

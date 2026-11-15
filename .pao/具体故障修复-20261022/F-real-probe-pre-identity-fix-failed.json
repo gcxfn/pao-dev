@@ -1,0 +1,150 @@
+{
+  "status": "failed",
+  "image_id": "9779ef143cc8",
+  "container": "pao-f-monitor-42844f286c__env-main-1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--detach",
+      "--name",
+      "pao-f-monitor-42844f286c__env-main-1",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmpjeag3wwi\\packages\\coding-agent\\dist\\bundle:/tmp/harbor-pao-source/packages/coding-agent/dist/bundle:ro",
+      "--volume",
+      "D:\\AI\\workspace\\临时文件夹\\PAO三题复测-20261022\\tmpjeag3wwi:/tmp/f-monitor:ro",
+      "--env",
+      "NODE_OPTIONS=--require=/tmp/f-monitor/process-title.cjs",
+      "--env",
+      "PAO_ROLE=部长",
+      "--env",
+      "PAO_DEPT=实施",
+      "--env",
+      "PI_CODING_AGENT=true",
+      "--entrypoint",
+      "sh",
+      "9779ef143cc8",
+      "-lc",
+      "cp /tmp/f-monitor/benchmark-prerequisites.json /tmp/benchmark-prerequisites.json; mkdir -p /tmp/harbor-pao-source/packages/coding-agent/dist/bundle; PAO_ROLE=worker node /tmp/f-monitor/task.js & env -u PI_CODING_AGENT node /tmp/f-monitor/title-only.js & PAO_ROLE=worker PAO_DEPT=内核 node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/cli.js & exec node /tmp/harbor-pao-source/packages/coding-agent/dist/bundle/rpc-entry.js"
+    ]
+  ],
+  "assertions": {
+    "probe_collected": true,
+    "pao_runtime_count": false,
+    "rpc_identified": false,
+    "rpc_role": false,
+    "cli_identified": false,
+    "cli_role": false,
+    "task_node_count": false,
+    "ordinary_task_kept_argv0": true,
+    "ordinary_task_role_ignored": true,
+    "title_only_not_pao": false,
+    "title_only_no_agent_marker": true,
+    "phase_preparation": true,
+    "no_probe_errors": true
+  },
+  "cleanup": {
+    "container_remove_returncode": 0,
+    "container_remove_stderr": "",
+    "container_left": [],
+    "temp_dir_removed_by_context": true
+  },
+  "probe": {
+    "ticks": 100,
+    "processes": [
+      {
+        "pid": 1,
+        "role_status": "ignored_inherited_role",
+        "inherited_role_ignored": true,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "dept": null,
+        "kind": "task-node",
+        "ppid": 0,
+        "role": null,
+        "title": "pao-rpc",
+        "start_ticks": 138184,
+        "runtime": "node",
+        "cpu_ticks": 7,
+        "rss": 42364928
+      },
+      {
+        "pid": 12,
+        "role_status": "ignored_inherited_role",
+        "inherited_role_ignored": true,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "dept": null,
+        "kind": "task-node",
+        "ppid": 1,
+        "role": null,
+        "title": "node",
+        "start_ticks": 138200,
+        "runtime": "node",
+        "cpu_ticks": 4,
+        "rss": 42430464
+      },
+      {
+        "pid": 13,
+        "role_status": "ignored_inherited_role",
+        "inherited_role_ignored": true,
+        "agent_env": false,
+        "identity": "runtime-exe",
+        "dept": null,
+        "kind": "task-node",
+        "ppid": 1,
+        "role": null,
+        "title": "pao",
+        "start_ticks": 138200,
+        "runtime": "node",
+        "cpu_ticks": 4,
+        "rss": 42205184
+      },
+      {
+        "pid": 14,
+        "role_status": "ignored_inherited_role",
+        "inherited_role_ignored": true,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "dept": null,
+        "kind": "task-node",
+        "ppid": 1,
+        "role": null,
+        "title": "pao",
+        "start_ticks": 138200,
+        "runtime": "node",
+        "cpu_ticks": 4,
+        "rss": 42041344
+      },
+      {
+        "pid": 45,
+        "role_status": "ignored_inherited_role",
+        "inherited_role_ignored": true,
+        "agent_env": true,
+        "identity": "runtime-exe",
+        "dept": null,
+        "kind": "task-python",
+        "ppid": 0,
+        "role": null,
+        "title": "python3",
+        "start_ticks": 138245,
+        "runtime": "python",
+        "cpu_ticks": 4,
+        "rss": 11513856
+      }
+    ],
+    "scan_errors": [],
+    "prerequisites": {
+      "marker": "present",
+      "python3": "present"
+    },
+    "probe_status": "collected",
+    "phase": {
+      "phase": "unknown",
+      "marker": null,
+      "category": "preparation"
+    }
+  },
+  "errors": [],
+  "failure": "AssertionError: 真实探针断言失败：{'probe_collected': True, 'pao_runtime_count': False, 'rpc_identified': False, 'rpc_role': False, 'cli_identified': False, 'cli_role': False, 'task_node_count': False, 'ordinary_task_kept_argv0': True, 'ordinary_task_role_ignored': True, 'title_only_not_pao': False, 'title_only_no_agent_marker': True, 'phase_preparation': True, 'no_probe_errors': True}"
+}

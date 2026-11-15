@@ -1,0 +1,71 @@
+
+> @pi-gui/desktop@1.0.1 package:win:dir D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm run vendor:kernel && pnpm run build && node scripts/package-windows.mjs --win --dir --publish never --config.npmRebuild=false "--config.directories.output=D:/AI/workspace/临时文件夹/harness续办-20261018/release"
+
+
+> @pi-gui/desktop@1.0.1 vendor:kernel D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/vendor-pao-kernel.mjs
+
+[vendor-pao-kernel] 已物化：kernel dist＋6 个兄弟运行时（@earendil-works/chord、@earendil-works/pi-agent-core、@earendil-works/pi-ai、@earendil-works/pi-codemode、@earendil-works/pi-mcp、@earendil-works/pi-tui）＋缺失补扫 5 包（grok-mermaid、quickjs-wasi、@earendil-works/pi-telemetry、get-east-asian-width、marked），合计约 105.3 MB。
+
+> @pi-gui/desktop@1.0.1 build D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm run build:deps && pnpm run build:notification-helper && electron-vite build
+
+
+> @pi-gui/desktop@1.0.1 build:deps D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm --dir ../.. --filter @pi-gui/session-driver --filter @pi-gui/pi-sdk-driver --filter @pi-gui/extension-ui --filter @pi-gui/catalogs run build
+
+Scope: 4 of 13 workspace projects
+packages/session-driver build$ tsc -p tsconfig.json
+packages/extension-ui build$ tsc -p tsconfig.json && node scripts/build-browser.mjs
+packages/session-driver build: Done
+packages/extension-ui build: Done
+packages/catalogs build$ tsc -p tsconfig.json
+packages/catalogs build: Done
+packages/pi-sdk-driver build$ tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+packages/pi-sdk-driver build: Done
+
+> @pi-gui/desktop@1.0.1 build:notification-helper D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/build-notification-status-helper.mjs
+
+Skipping notification status helper build outside macOS.
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 118 modules transformed.
+rendering chunks...
+out/main/main.js  1,188.79 kB
+✓ built in 928ms
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 3 modules transformed.
+rendering chunks...
+out/preload/preload.js  29.64 kB
+✓ built in 28ms
+vite v6.4.1 building for production...
+transforming...
+✓ 512 modules transformed.
+rendering chunks...
+out/renderer/index.html                     0.48 kB
+out/renderer/assets/index-sc6o5uwU.css    244.57 kB
+out/renderer/assets/wasm-DDgzZJey.js      622.45 kB
+out/renderer/assets/index-Bks2568y.js   3,777.73 kB
+✓ built in 2.21s
+  • electron-builder  version=26.8.1 os=10.0.26200
+  • loaded configuration  file=D:\AI\workspace\pao-dev\desktop\apps\desktop\electron-builder.yml
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=win32 arch=x64 electron=37.10.3 appOutDir=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked
+  • detected workspace root for project using packageManager field  pm=pnpm config=pnpm@10.25.0 resolved=D:\AI\workspace\pao-dev\desktop projectDir=D:\AI\workspace\pao-dev\desktop\apps\desktop
+  • searching for node modules  pm=pnpm searchDir=D:\AI\workspace\pao-dev\desktop\apps\desktop
+  • dependency not found on disk  dependencies=["parse5@6.0.1","retry@0.12.0","lru-cache@7.18.3","@aws-sdk/token-providers@3.1129.0","ws@8.20.0","ansi-regex@5.0.1","ansi-regex@5.0.1","data-uri-to-buffer@6.0.2","ansi-regex@5.0.1","@types/unist@2.0.11","escape-string-regexp@5.0.0"]
+(node:17484) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  • updating asar integrity executable resource  executablePath=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\PAO.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\PAO.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-x64\OpenConsole.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-arm64\OpenConsole.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-x64\winpty-agent.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-x64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-arm64\winpty-agent.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-arm64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\build\Release\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=D:\AI\workspace\临时文件夹\harness续办-20261018\release\win-unpacked\resources\app.asar.unpacked\node_modules\@esbuild\win32-x64\esbuild.exe

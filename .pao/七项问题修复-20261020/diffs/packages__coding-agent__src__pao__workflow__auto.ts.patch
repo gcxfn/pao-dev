@@ -1,0 +1,26 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\auto.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\auto.ts"
+index 2a0ef0b..d407a4b 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\auto.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\auto.ts"
+@@ -223,7 +223,8 @@ export async function runAutoChain(
+ 	const steps: ChainStep[] = [];
+ 	const processed = new Set<string>();
+ 	// S6-K2 实例级累计：累计读实例清单「已派卡」，本次上限与实例余量取较严者（mergeCardLimit）；
+-	// 每张卡进链即记账（bumpManifestDispatched）——审查第 10 项：cap 改成逐卡核对，批内不再越限。
++	// 每张卡进链即记账——审查第 10 项：cap 改成逐卡核对，批内不再越限。
++	// 第 6 项：保存失败必须在此中止，不能带着旧计数继续派卡。
+ 	const limit = mergeCardLimit(options.maxCards, readAutoChainDispatched(recipe, options));
+ 	let stopReason: string | undefined;
+ 	let report = firstReport ?? (await tickWorkflow(recipe, options));
+@@ -248,7 +249,10 @@ export async function runAutoChain(
+ 				break;
+ 			}
+ 			processed.add(node.card_no!);
+-			await bumpManifestDispatched(recipe, options);
++			if (!(await bumpManifestDispatched(recipe, options))) {
++				stopReason = `卡${node.card_no}（节点 ${node.name}）派发前实例计数未保存：实例清单缺失，本卡未派发`;
++				break;
++			}
+ 			// 审查第 11 项：确定未获受理时归还这笔预留（同样只在「确定没派出去」时归还）。
+ 			const outcome = await runChainForCard(recipe, node.name, node.card_no!, options, steps, undefined, () =>
+ 				refundManifestDispatched(recipe, options),

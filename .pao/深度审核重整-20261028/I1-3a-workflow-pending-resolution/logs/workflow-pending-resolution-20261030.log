@@ -1,0 +1,55 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ ❯ packages/coding-agent/test/pao/workflow-pending-resolution.test.ts (8 tests | 2 failed) 68375ms
+     × 旧 attempt、旧轮次、卡面条件变化和到期均拒绝，既有待决不覆盖 5170ms
+     × 未知任务态、执行占位 active/unknown、错误 owner 与有人值守都不能借理由放行 11882ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending-resolution.test.ts > I1-3a 单次裁决程序办理 > 旧 attempt、旧轮次、卡面条件变化和到期均拒绝，既有待决不覆盖
+AssertionError: expected [Function] to throw error matching /轮次过期/ but got '[FLOW_CONTROL] 待决 node/round 不属于当前控制节点'
+
+- Expected:
+/轮次过期/
+
++ Received:
+"[FLOW_CONTROL] 待决 node/round 不属于当前控制节点"
+
+ ❯ expectNoBusinessEffect packages/coding-agent/test/pao/workflow-pending-resolution.test.ts:221:59
+    219|  expectedAttempt = f.attempt,
+    220| ): Promise<void> {
+    221|  await expect(resolvePendingOnce(f.recipe, options, input)).rejects.to…
+       |                                                           ^
+    222|  const flow = readControl(f.recipe, f.options);
+    223|  expect(flow.待决?.key).toBe(f.pending.key);
+ ❯ packages/coding-agent/test/pao/workflow-pending-resolution.test.ts:370:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  packages/coding-agent/test/pao/workflow-pending-resolution.test.ts > I1-3a 单次裁决程序办理 > 未知任务态、执行占位 active/unknown、错误 owner 与有人值守都不能借理由放行
+AssertionError: expected [Function] to throw error matching /owner 已变更|未持有控制权/ but got '[FLOW_CONTROL] owner 会话不匹配；恢复须显式核对现场并…'
+
+- Expected:
+/owner 已变更|未持有控制权/
+
++ Received:
+"[FLOW_CONTROL] owner 会话不匹配；恢复须显式核对现场并接管"
+
+ ❯ expectNoBusinessEffect packages/coding-agent/test/pao/workflow-pending-resolution.test.ts:221:59
+    219|  expectedAttempt = f.attempt,
+    220| ): Promise<void> {
+    221|  await expect(resolvePendingOnce(f.recipe, options, input)).rejects.to…
+       |                                                           ^
+    222|  const flow = readControl(f.recipe, f.options);
+    223|  expect(flow.待决?.key).toBe(f.pending.key);
+ ❯ packages/coding-agent/test/pao/workflow-pending-resolution.test.ts:403:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  01:48:20
+   Duration  69.44s (transform 626ms, setup 0ms, import 898ms, tests 68.38s, environment 0ms)
+

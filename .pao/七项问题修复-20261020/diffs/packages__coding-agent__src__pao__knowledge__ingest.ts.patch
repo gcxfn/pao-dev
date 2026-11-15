@@ -1,0 +1,13 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\ingest.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\ingest.ts"
+index 1df3e9e..cc939b6 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\ingest.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\ingest.ts"
+@@ -312,7 +312,7 @@ function assertPlainEntryFileName(fileName: string, typeDir: string): void {
+ 	if (/[\u0000-\u001f]/.test(fileName)) reject("含控制字符");
+ 	if (fileName === "." || fileName === "..") reject("点路径");
+ 	if (!fileName.toLowerCase().endsWith(".md")) reject("不是 .md 文件");
+-	if (RESERVED_ENTRY_FILE_NAMES.has(fileName)) reject("是保留的索引/缓存文件名");
++	if (RESERVED_ENTRY_FILE_NAMES.has(fileName.toLowerCase())) reject("是保留的索引/缓存文件名");
+ 	const stem = fileName.slice(0, -3);
+ 	if (WINDOWS_RESERVED_STEMS.has(stem.toLowerCase())) reject("是 Windows 保留设备名");
+ 	if (/[. ]$/.test(stem)) reject("主体以点或空格结尾（Windows 会静默改名）");

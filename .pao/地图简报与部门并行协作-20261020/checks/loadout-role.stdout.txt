@@ -1,0 +1,55 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/loadout-role.test.ts > PAO 角色解析 > 未设置/主控值 → 主控;worker(大小写/空白)→ worker;部长(中文/英文)→ 部长 9ms
+ ✓ test/pao/loadout-role.test.ts > PAO 角色解析 > worker 跳过清单覆盖派发/全库管理/自动推进/后台管理/主控诊断类模块 6ms
+ ✓ test/pao/loadout-role.test.ts > PAO 角色解析 > 部长跳过清单只含扇出、协作中转、宿主与常驻记忆门面(中转是主控专属路由器;拉起/散场部长是主控唯一唤醒源;§18.1 注入面是主控门面) 2ms
+ ✓ test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > PAO_ROLE=worker 且注入宿主:仍无 worktree/整合/普通 append 管理面，只留侦察保存与执行步骤工具 36ms
+ × test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > PAO_ROLE=部长:去扇出/协作中转/宿主/常驻记忆门面,其余 owner 面全保留(含记忆三工具与 queue 子命令) 67ms
+stderr | test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > PAO_ROLE=部长:去扇出/协作中转/宿主/常驻记忆门面,其余 owner 面全保留(含记忆三工具与 queue 子命令)
+[pao] worker模块未启用:当前宿主没有安装工作目录服务，无法创建或使用独立工作目录。
+[pao] worktrees模块未启用:当前宿主没有安装工作目录服务，无法创建或使用独立工作目录。
+
+   → expected [ 'read', 'todo_write', …(35) ] to include 'pao_inventory'
+stderr | test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > 主控(默认):全部工具与命令注册齐全(与接线冒烟同口径)
+[pao] worker模块未启用:当前宿主没有安装工作目录服务，无法创建或使用独立工作目录。
+[pao] worktrees模块未启用:当前宿主没有安装工作目录服务，无法创建或使用独立工作目录。
+[pao] fanout模块未启用:当前宿主没有安装工作目录服务，无法创建或使用独立工作目录。
+
+ × test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > 主控(默认):全部工具与命令注册齐全(与接线冒烟同口径) 42ms
+   → expected [ 'read', 'todo_write', …(38) ] to include 'pao_inventory'
+ ✓ test/pao/loadout-role.test.ts > WorkerRunner 对子进程的角色强制注入 > 默认强制 PAO_ROLE=worker(主控忘了设也不是主控面) 295ms
+ ✓ test/pao/loadout-role.test.ts > WorkerRunner 对子进程的角色强制注入 > 显式环境不能覆盖 worker 角色，其他环境变量正常透传 260ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > PAO_ROLE=部长:去扇出/协作中转/宿主/常驻记忆门面,其余 owner 面全保留(含记忆三工具与 queue 子命令)
+AssertionError: expected [ 'read', 'todo_write', …(35) ] to include 'pao_inventory'
+ ❯ test/pao/loadout-role.test.ts:171:23
+    169|    "pao_create_dept",
+    170|   ]) {
+    171|    expect(mock.tools).toContain(name);
+       |                       ^
+    172|   }
+    173|   expect(mock.commands).toContain("pao");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/loadout-role.test.ts > worker 会话装载面(扩展注册层跳过,非藏提示词) > 主控(默认):全部工具与命令注册齐全(与接线冒烟同口径)
+AssertionError: expected [ 'read', 'todo_write', …(38) ] to include 'pao_inventory'
+ ❯ test/pao/loadout-role.test.ts:199:23
+    197|    "pao_fanout",
+    198|   ]) {
+    199|    expect(mock.tools).toContain(name);
+       |                       ^
+    200|   }
+    201|   expect(mock.commands).toContain("pao");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  21:02:45
+   Duration  24.76s (transform 18.17s, setup 0ms, import 23.41s, tests 724ms, environment 1ms)
+

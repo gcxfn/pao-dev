@@ -1,0 +1,65 @@
+Skipping image OS validation for hb__12b4b5ba8dbc7587bb7a587dfb70f06f: docker inspect returned 1
+Running command: apt-get update && apt-get install -y curl unzip xz-utils git
+Command outputs captured
+Running command: python3 -c 'import json,pathlib,subprocess; data={name:subprocess.check_output([name,'"'"'--version'"'"'],text=True).strip() for name in ('"'"'git'"'"','"'"'python3'"'"')}; pathlib.Path('"'"'/tmp/benchmark-prerequisites.json'"'"').write_text(json.dumps(data))'
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' 9342f1acaac905cdde2bbf183ec292958648f9b569134533aaf35e8450975471 /tmp/harbor-pao-source.tar.gz | sha256sum -c -; mkdir -p /tmp/harbor-pao-source; unzip -q /tmp/harbor-pao-source.tar.gz -d /tmp/harbor-pao-source
+Command outputs captured
+Running command: set -euo pipefail; printf '%s  %s\n' ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a /tmp/harbor-model-data.zip | sha256sum -c -; unzip -qo /tmp/harbor-model-data.zip -d /tmp/harbor-pao-source
+Command outputs captured
+Running command: set -euo pipefail; NODE_VERSION=v24.18.0; NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; NODE_DIR=$HOME/.local/pao-node; if [ ! -x "$NODE_DIR/bin/node" ]; then mkdir -p "$HOME/.local"; curl -fsSLo /tmp/pao-node.tar.xz https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; printf '%s  %s\n' "$NODE_SHA256" /tmp/pao-node.tar.xz | sha256sum -c -; mkdir -p "$NODE_DIR"; tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C "$NODE_DIR"; fi; export PATH="$NODE_DIR/bin:$PATH"; "$NODE_DIR/bin/node" --version; "$NODE_DIR/bin/npm" --version
+Command failed
+Classified failed command as NetworkConnectionError (pattern: 'SSL_ERROR_SYSCALL')
+Trial html-js-filter__FAXwMr5 failed: Command failed (exit 35): set -euo pipefail; NODE_VERSION=v24.18.0; NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; NODE_DIR=$HOME/.local/pao-node; if [ ! -x "$NODE_DIR/bin/node" ]; then mkdir -p "$HOME/.local"; curl -fsSLo /tmp/pao-node.tar.xz https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; printf '%s  %s\n' "$NODE_SHA256" /tmp/pao-node.tar.xz | sha256sum -c -; mkdir -p "$NODE_DIR"; tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C "$NODE_DIR"; fi; export PATH="$NODE_DIR/bin:$PATH"; "$NODE_DIR/bin/node" --version; "$NODE_DIR/bin/npm" --version
+stdout: curl: (35) OpenSSL SSL_connect: SSL_ERROR_SYSCALL in connection to nodejs.org:443 
+
+stderr: None
+Collecting main service artifacts
+compose cp failed; retrying download with engine cp: Docker compose command failed for environment html-js-filter. Command: docker compose --project-name html-js-filter__faxwmr5__env --project-directory /root/.cache/harbor/tasks/packages/terminal-bench/html-js-filter/f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3/environment -f /tmp/tmpg5xfcomh/html-js-filter__FAXwMr5__env-docker-compose-resources.json -f /mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker-compose-build.yaml -f /tmp/tmp2qqdwj0b/docker-compose-environment.json -f /tmp/tmp0cowyu4s/docker-compose-mounts.json cp main:/app/filter.py /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared-r2/jobs/pao-first-refactor-20261024-r2-task-1/html-js-filter__FAXwMr5/artifacts/app/filter.py. Return code: 1. Stdout:  html-js-filter__faxwmr5__env-main-1 Copying html-js-filter__faxwmr5__env-main-1:/app/filter.py to /run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared-r2/jobs/pao-first-refactor-20261024-r2-task-1/html-js-filter__FAXwMr5/artifacts/app/filter.py
+Error response from daemon: Could not find the file /app/filter.py in container ce26c5264ce5fcbd173c130a436e0d3b2bd8d79f9f4cb7a7c75ae45d470a829f
+. Stderr: None. 
+Failed to download artifact '/app/filter.py' from service 'main' (best-effort)
+Traceback (most recent call last):
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 499, in run
+    await self._prepare()
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 545, in _prepare
+    await self._setup_agent()
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/trial.py", line 1761, in _setup_agent
+    await asyncio.wait_for(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/python/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1136, in setup
+    await self.install(environment)
+  File "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared-r2/map_bench_pao_organized.py", line 23, in install
+    await super().install(environment)
+  File "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared-r2/map_bench_pao/pao_agent.py", line 160, in install
+    await self.exec_as_agent(environment, command=node_install)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1081, in exec_as_agent
+    return await self._exec(
+           ^^^^^^^^^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/agents/installed/base.py", line 1048, in _exec
+    raise self._classify_exec_error(command, result)
+harbor.agents.installed.base.NetworkConnectionError: Command failed (exit 35): set -euo pipefail; NODE_VERSION=v24.18.0; NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; NODE_DIR=$HOME/.local/pao-node; if [ ! -x "$NODE_DIR/bin/node" ]; then mkdir -p "$HOME/.local"; curl -fsSLo /tmp/pao-node.tar.xz https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; printf '%s  %s\n' "$NODE_SHA256" /tmp/pao-node.tar.xz | sha256sum -c -; mkdir -p "$NODE_DIR"; tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C "$NODE_DIR"; fi; export PATH="$NODE_DIR/bin:$PATH"; "$NODE_DIR/bin/node" --version; "$NODE_DIR/bin/npm" --version
+stdout: curl: (35) OpenSSL SSL_connect: SSL_ERROR_SYSCALL in connection to nodejs.org:443 
+
+stderr: None
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/trial/artifact_handler.py", line 313, in _download_artifact
+    await source_env.service_download_file(
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1322, in service_download_file
+    await self.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker.py", line 1307, in download_file
+    await self._platform.download_file(source_path, target_path)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 278, in download_file
+    await self._download_via_engine_cp(source_path, target_path, service)
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 253, in _download_via_engine_cp
+    await self._engine_cp(f"{container}:{container_path}", str(target_path))
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-import/harbor-source/src/harbor/environments/docker/docker_unix.py", line 244, in _engine_cp
+    raise RuntimeError(
+RuntimeError: Engine cp failed ('ce26c5264ce5:/app/filter.py' -> '/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared-r2/jobs/pao-first-refactor-20261024-r2-task-1/html-js-filter__FAXwMr5/artifacts/app/filter.py'): Error response from daemon: Could not find the file /app/filter.py in container ce26c5264ce5
+
+Not retrying trial because the maximum number of retries has been reached

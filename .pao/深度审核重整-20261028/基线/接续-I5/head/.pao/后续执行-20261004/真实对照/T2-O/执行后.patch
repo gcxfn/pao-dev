@@ -1,0 +1,974 @@
+diff --git a/packages/coding-agent/src/pao/cards/handoff.ts b/packages/coding-agent/src/pao/cards/handoff.ts
+index 70298c73f..c247b0612 100644
+--- a/packages/coding-agent/src/pao/cards/handoff.ts
++++ b/packages/coding-agent/src/pao/cards/handoff.ts
+@@ -1,7 +1,7 @@
++import { nowString } from "../shared/time.ts";
+ import { baselineSnapshotPath, diffAgainstBaseline } from "./baseline.ts";
+ import { listCards } from "./cardfile.ts";
+ import { formatCardNumber } from "./counter.ts";
+-import { nowString } from "../shared/time.ts";
+ import { isPendingReview } from "./receipts.ts";
+ import { renderQueue } from "./render.ts";
+ import { isTerminal } from "./statemachine.ts";
+diff --git a/packages/coding-agent/src/pao/dept/registry.ts b/packages/coding-agent/src/pao/dept/registry.ts
+index 254238486..13b07bd0b 100644
+--- a/packages/coding-agent/src/pao/dept/registry.ts
++++ b/packages/coding-agent/src/pao/dept/registry.ts
+@@ -1,7 +1,7 @@
+ import { existsSync, mkdirSync, readFileSync } from "node:fs";
+ import { dirname } from "node:path";
+-import { writeFileAtomic } from "../cards/atomic.ts";
+ import lockfile from "proper-lockfile";
++import { writeFileAtomic } from "../cards/atomic.ts";
+ 
+ /** 部门总目录名(相对 PAO_HOME) */
+ export const DEPT_DIR_NAME = "部门";
+diff --git a/packages/coding-agent/src/pao/fanout/execute.ts b/packages/coding-agent/src/pao/fanout/execute.ts
+index 4de26a271..a7a1d1b5e 100644
+--- a/packages/coding-agent/src/pao/fanout/execute.ts
++++ b/packages/coding-agent/src/pao/fanout/execute.ts
+@@ -21,6 +21,7 @@ import {
+ 	routeFailure,
+ } from "../cards/index.ts";
+ import { recordFrictionDraft } from "../friction/drafts.ts";
++import { nowString } from "../shared/time.ts";
+ import {
+ 	appendDispatchReceipt,
+ 	classifyWorkerFailure,
+@@ -30,7 +31,6 @@ import {
+ 	locateDispatchCard,
+ } from "../worker/dispatch-core.ts";
+ import { PaoWorkerError } from "../worker/errors.ts";
+-import { nowString } from "../shared/time.ts";
+ import {
+ 	defaultWorkerRunner,
+ 	type WorkerReceipt,
+diff --git a/packages/coding-agent/src/pao/healthcheck/report.ts b/packages/coding-agent/src/pao/healthcheck/report.ts
+index f43266018..25d1b846f 100644
+--- a/packages/coding-agent/src/pao/healthcheck/report.ts
++++ b/packages/coding-agent/src/pao/healthcheck/report.ts
+@@ -5,10 +5,8 @@
+  */
+ import { existsSync, mkdirSync } from "node:fs";
+ import { join } from "node:path";
+-
+-import { writeFileAtomic } from "../cards/atomic.ts";
+-
+ import type { Usage } from "@earendil-works/pi-ai";
++import { writeFileAtomic } from "../cards/atomic.ts";
+ 
+ import type { 探针结果 } from "./probes.ts";
+ 
+diff --git a/packages/coding-agent/src/pao/host/host.ts b/packages/coding-agent/src/pao/host/host.ts
+index 4ede15191..589827bc1 100644
+--- a/packages/coding-agent/src/pao/host/host.ts
++++ b/packages/coding-agent/src/pao/host/host.ts
+@@ -19,7 +19,14 @@ import {
+ 	项目名,
+ } from "./handle.ts";
+ import { 富交接指针文本, 落交接页 } from "./handoff.ts";
+-import { buildMinisterLedgerLine, 落部长账, 落监督审计, 部长账路径, 监督审计路径, type 监督审计记录 } from "./ledger.ts";
++import {
++	buildMinisterLedgerLine,
++	type 监督审计记录,
++	监督审计路径,
++	落监督审计,
++	落部长账,
++	部长账路径,
++} from "./ledger.ts";
+ 
+ /**
+  * 部长会话在线宿主(M2-01 设计包 §2/§4,S2)。
+@@ -467,7 +474,11 @@ export class MinisterHost {
+ 		const 杀 = this.#options.树杀 ?? killTree;
+ 		记录.方式 = await 杀(handle.pid);
+ 		this.registry.markExited(handle.pid);
+-		this.#审计("散场", this.#会话目标(handle), `${原因};方式:${记录.方式}${记录.交接失败 ? `;交接失败:${记录.交接失败}` : ""}`);
++		this.#审计(
++			"散场",
++			this.#会话目标(handle),
++			`${原因};方式:${记录.方式}${记录.交接失败 ? `;交接失败:${记录.交接失败}` : ""}`,
++		);
+ 		return 记录;
+ 	}
+ 
+@@ -555,7 +566,11 @@ export class MinisterHost {
+ 		});
+ 		const 注入结果 = this.注入(input.部门, input.项目根, `${快照}\n(上级监督唤醒:看一眼,可不动或走干涉)`);
+ 		if (注入结果.ok) {
+-			this.#审计("worker监督唤醒", `worker ${input.身份}`, `累计轮次 ${input.累计轮次} 达间隔 ${间隔};已注入热部长会话`);
++			this.#审计(
++				"worker监督唤醒",
++				`worker ${input.身份}`,
++				`累计轮次 ${input.累计轮次} 达间隔 ${间隔};已注入热部长会话`,
++			);
+ 			return { 唤醒: 快照 };
+ 		}
+ 		const 待办 = `worker ${input.身份} 监督快照待投递(无热部长会话可注入):轮次 ${input.累计轮次}/调用 ${input.累计工具调用 ?? 0}`;
+@@ -563,7 +578,11 @@ export class MinisterHost {
+ 		const 标记列表 = this.#待办标记.get(key) ?? [];
+ 		标记列表.push(待办);
+ 		this.#待办标记.set(key, 标记列表);
+-		this.#审计("worker监督待办", `worker ${input.身份}`, `累计轮次 ${input.累计轮次} 达间隔 ${间隔};无热部长会话可注入,落待办标记`);
++		this.#审计(
++			"worker监督待办",
++			`worker ${input.身份}`,
++			`累计轮次 ${input.累计轮次} 达间隔 ${间隔};无热部长会话可注入,落待办标记`,
++		);
+ 		return { 待办 };
+ 	}
+ 
+diff --git a/packages/coding-agent/src/pao/memory/index.ts b/packages/coding-agent/src/pao/memory/index.ts
+index af631fa06..ee95d06cf 100644
+--- a/packages/coding-agent/src/pao/memory/index.ts
++++ b/packages/coding-agent/src/pao/memory/index.ts
+@@ -277,11 +277,13 @@ export function registerMemory(pi: ExtensionAPI, options: MemoryToolsOptions = {
+ 	// R05:供应商子进程随主会话全停——quit/reload/new/resume 都会触发 session_shutdown;
+ 	// 关闭后管理器状态复位,新会话(扩展实例存活的 reload/new 场景)可再拉起。
+ 	pi.on("session_shutdown", () => {
+-		manager.关闭().catch((error: unknown) =>
+-			onWarn(
+-				`[pao] memory模块关闭供应商子进程树失败(不阻断会话退出):${error instanceof Error ? error.message : String(error)}`,
+-			),
+-		);
++		manager
++			.关闭()
++			.catch((error: unknown) =>
++				onWarn(
++					`[pao] memory模块关闭供应商子进程树失败(不阻断会话退出):${error instanceof Error ? error.message : String(error)}`,
++				),
++			);
+ 	});
+ 	return manager;
+ }
+diff --git a/packages/coding-agent/src/pao/panel/settings.ts b/packages/coding-agent/src/pao/panel/settings.ts
+index 0c22d3267..617da36ab 100644
+--- a/packages/coding-agent/src/pao/panel/settings.ts
++++ b/packages/coding-agent/src/pao/panel/settings.ts
+@@ -26,9 +26,9 @@
+ import { existsSync } from "node:fs";
+ import { join } from "node:path";
+ import { writeFileAtomic } from "../cards/atomic.ts";
+-import { readJsonRaw } from "../shared/json.ts";
+ import { WARM_CONFIG_RELATIVE_PATH } from "../host/config.ts";
+ import { MEMORY_CONFIG_RELATIVE_PATH } from "../memory/memory-vendor.ts";
++import { readJsonRaw } from "../shared/json.ts";
+ 
+ /** 保温.json 全路径（相对路径与 host/config 同源） */
+ export function resolveWarmConfigPath(paoHome: string): string {
+diff --git a/packages/coding-agent/src/pao/patrol/shell-guard.ts b/packages/coding-agent/src/pao/patrol/shell-guard.ts
+index f4d7e7266..ee0f7f4dc 100644
+--- a/packages/coding-agent/src/pao/patrol/shell-guard.ts
++++ b/packages/coding-agent/src/pao/patrol/shell-guard.ts
+@@ -314,7 +314,12 @@ function 程序名(词文本: string): string {
+ 
+ /** 引号词取引号内原文；裸词取行余部整段（cmd /c、env 的命令参数都是行余部语义；过近似，宁可多审）。 */
+ const 取命令串或行余部 = (词表: 细词段, 起点: number): string =>
+-	词表[起点]!.引号 !== null ? 词表[起点]!.文本 : 词表.slice(起点).map((w) => w.文本).join(" ");
++	词表[起点]!.引号 !== null
++		? 词表[起点]!.文本
++		: 词表
++				.slice(起点)
++				.map((w) => w.文本)
++				.join(" ");
+ 
+ /**
+  * 从一段子命令提取套壳内层命令串。
+@@ -410,13 +415,25 @@ function 提取段内层(词表: 细词段): string[] | null {
+ 			if (等号 <= 0 || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(词文本.slice(0, 等号))) break;
+ 			内层.push(词文本.slice(等号 + 1));
+ 		}
+-		if (i < 词表.length) 内层.push(词表.slice(i).map((w) => w.文本).join(" "));
++		if (i < 词表.length)
++			内层.push(
++				词表
++					.slice(i)
++					.map((w) => w.文本)
++					.join(" "),
++			);
+ 		return 内层;
+ 	}
+ 
+ 	if (程序 === "wsl") {
+ 		// wsl 之后的整段按内层命令再审：wsl 自己的选项词是裸词按常规漏过，路径词（--cd /etc 等）照判
+-		if (词表.length > 1) 内层.push(词表.slice(1).map((w) => w.文本).join(" "));
++		if (词表.length > 1)
++			内层.push(
++				词表
++					.slice(1)
++					.map((w) => w.文本)
++					.join(" "),
++			);
+ 		return 内层;
+ 	}
+ 
+diff --git a/packages/coding-agent/src/pao/routing/config.ts b/packages/coding-agent/src/pao/routing/config.ts
+index 039eceee0..14a78af61 100644
+--- a/packages/coding-agent/src/pao/routing/config.ts
++++ b/packages/coding-agent/src/pao/routing/config.ts
+@@ -80,7 +80,9 @@ export function validateTierConfig(parsed: unknown, source: string): TierConfig
+ 	const seen = new Set<string>();
+ 	for (const tier of 档位) {
+ 		if (seen.has(tier.名)) {
+-			throw new Error(`档位配置 ${source} 存在重复档名「${tier.名}」(档位名即虚拟模型 id,须唯一,否则注册时静默覆盖丢档)`);
++			throw new Error(
++				`档位配置 ${source} 存在重复档名「${tier.名}」(档位名即虚拟模型 id,须唯一,否则注册时静默覆盖丢档)`,
++			);
+ 		}
+ 		seen.add(tier.名);
+ 	}
+diff --git a/packages/coding-agent/src/pao/worker/dispatch-core.ts b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+index e3364d1e0..057ab1f37 100644
+--- a/packages/coding-agent/src/pao/worker/dispatch-core.ts
++++ b/packages/coding-agent/src/pao/worker/dispatch-core.ts
+@@ -31,13 +31,13 @@ import { readWarmConfig, WARM_CONFIG_RELATIVE_PATH } from "../host/config.ts";
+ import { isPatrolGoal } from "../patrol/draft.ts";
+ import { resolvePaoRole } from "../role.ts";
+ import { loadTierConfig, resolveTier, resolveTierConfigPath } from "../routing/config.ts";
++import { nowString } from "../shared/time.ts";
+ import { parseWorkflowMarker } from "../workflow/driver.ts";
+ import { loadRecipe } from "../workflow/recipe.ts";
+ import { PaoWorkerError } from "./errors.ts";
+ import { acquireProjectLock, type ProjectWriteLock, releaseProjectLock } from "./lock.ts";
+ import type { WorkerReceipt } from "./receipt.ts";
+ import type { WorkerRunner, WorkerRunOptions } from "./runner.ts";
+-import { nowString } from "../shared/time.ts";
+ 
+ // ── 提示词与分型(自 fanout/plan 迁入;fanout/plan 转发导出,公共面不变) ──────────
+ 
+diff --git a/packages/coding-agent/src/pao/worker/index.ts b/packages/coding-agent/src/pao/worker/index.ts
+index e62f166e8..1581a78b5 100644
+--- a/packages/coding-agent/src/pao/worker/index.ts
++++ b/packages/coding-agent/src/pao/worker/index.ts
+@@ -13,13 +13,10 @@ import { type Static, Type } from "typebox";
+ 
+ import type { ExtensionAPI, ToolDefinition } from "../../core/extensions/types.ts";
+ import { parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+-import {
+-	DEFAULT_WORKER_SILENCE_MINUTES,
+-	readWorkerSilenceMinutes,
+-	toastEnabled,
+-} from "../host/config.ts";
++import { DEFAULT_WORKER_SILENCE_MINUTES, readWorkerSilenceMinutes, toastEnabled } from "../host/config.ts";
+ import { defaultMinisterHost, type MinisterHost, render部长盘点行, 全局热会话观测上限 } from "../host/index.ts";
+ import { sendToast } from "../notify/toast.ts";
++import { nowString } from "../shared/time.ts";
+ import {
+ 	appendDispatchReceipt,
+ 	checkDispatchPermission,
+@@ -33,7 +30,6 @@ import {
+ 	locateDispatchCard,
+ 	projectRootForCards,
+ } from "./dispatch-core.ts";
+-import { nowString } from "../shared/time.ts";
+ 
+ export * from "./budget.ts";
+ export * from "./dispatch-core.ts";
+@@ -47,8 +43,8 @@ export * from "./runner.ts";
+ export * from "./usage.ts";
+ export * from "./usage-display.ts";
+ 
+-import { type InventoryReport, 盘点 } from "./inventory.ts";
+ import { PaoWorkerError } from "./errors.ts";
++import { type InventoryReport, 盘点 } from "./inventory.ts";
+ import type { WorkerReceipt } from "./receipt.ts";
+ import type { ProcessEntry } from "./registry.ts";
+ import type { StopProof, WorkerRunOptions } from "./runner.ts";
+@@ -258,7 +254,14 @@ export function 格式化静默提醒(事项: 静默提醒事项): string {
+ 	if (事项.输出路径) lines.push(`- live 输出(可直接读取):${事项.输出路径}`);
+ 	if (事项.stderr路径) lines.push(`- live stderr:${事项.stderr路径}`);
+ 	const tail = 事项.输出尾.trim();
+-	lines.push(tail ? `- 输出末几行:\n${tail.split("\n").map((line) => `  ${line}`).join("\n")}` : "- 输出末几行:(无)");
++	lines.push(
++		tail
++			? `- 输出末几行:\n${tail
++					.split("\n")
++					.map((line) => `  ${line}`)
++					.join("\n")}`
++			: "- 输出末几行:(无)",
++	);
+ 	lines.push(
+ 		"- 裁决:继续等＝不用做任何事(有输出后计时自动重置);确认卡死须终止＝调 pao_终止卡(只终止本会话派出的运行中 worker)。",
+ 	);
+@@ -412,9 +415,7 @@ function buildDispatchTool(
+ 
+ const TerminateParams = Type.Object({
+ 	卡号: Type.String({ description: "要终止的卡引用(卡0017/卡#17/17 均可)" }),
+-	卡目录: Type.Optional(
+-		Type.String({ description: "任务工作区卡目录(回执落卡定位用);已配置默认卡目录时可省略" }),
+-	),
++	卡目录: Type.Optional(Type.String({ description: "任务工作区卡目录(回执落卡定位用);已配置默认卡目录时可省略" })),
+ });
+ 
+ type TerminateParamsShape = Static<typeof TerminateParams>;
+@@ -498,7 +499,9 @@ function buildTerminateTool(
+ 						});
+ 						landed = true;
+ 					} catch (e) {
+-						附注.push(`终止回执落卡失败:${e instanceof Error ? e.message : String(e)}(进程已停,现场以登记表为准)。`);
++						附注.push(
++							`终止回执落卡失败:${e instanceof Error ? e.message : String(e)}(进程已停,现场以登记表为准)。`,
++						);
+ 					}
+ 				}
+ 				return {
+@@ -517,7 +520,8 @@ function buildTerminateTool(
+ 				};
+ 			} catch (e) {
+ 				// 停止确认失败兜底:与既有 stop_failed 处理同语义——锁不放(先停后放锁),如实上抛不遮蔽
+-				const 原因 = e instanceof PaoWorkerError ? `${e.code}:${e.message}` : e instanceof Error ? e.message : String(e);
++				const 原因 =
++					e instanceof PaoWorkerError ? `${e.code}:${e.message}` : e instanceof Error ? e.message : String(e);
+ 				return error(
+ 					`终止失败:${原因}(停止确认未过——写锁未放,先停后放锁;可重试或人工处理,登记表与 live 证据保留现场)`,
+ 				);
+@@ -668,7 +672,10 @@ export interface RegisterWorkerToolsOptions {
+  * 返回后台观测面(§21 fanout 后台区同款):后台计数()＝{在途,完成未读}(在途＝后台派卡链条数,
+  * 完成未读＝通知缓冲里还没被 before_agent_start 消费的条数);等后台()＝等全部在途链收敛(测试与收尾用)。
+  */
+-export function registerWorkerTools(pi: ExtensionAPI, options: RegisterWorkerToolsOptions = {}): { 后台计数: () => { 在途: number; 完成未读: number }; 等后台: () => Promise<void> } {
++export function registerWorkerTools(
++	pi: ExtensionAPI,
++	options: RegisterWorkerToolsOptions = {},
++): { 后台计数: () => { 在途: number; 完成未读: number }; 等后台: () => Promise<void> } {
+ 	const runner = options.runner ?? defaultWorkerRunner;
+ 	const host = options.host ?? defaultMinisterHost;
+ 	const resolveCardsDir = (): string =>
+diff --git a/packages/coding-agent/src/pao/worker/runner.ts b/packages/coding-agent/src/pao/worker/runner.ts
+index 17555c858..d5ec68b87 100644
+--- a/packages/coding-agent/src/pao/worker/runner.ts
++++ b/packages/coding-agent/src/pao/worker/runner.ts
+@@ -8,6 +8,7 @@ import { spawnProcess } from "../../utils/child-process.ts";
+ import type { CardBudget } from "../cards/types.ts";
+ import { SHELL_GUARD_ENV } from "../patrol/wire.ts";
+ import { PAO_ROLE_ENV } from "../role.ts";
++import { utcNow } from "../shared/time.ts";
+ import { PaoWorkerError } from "./errors.ts";
+ import { killTree } from "./kill.ts";
+ import {
+@@ -20,7 +21,6 @@ import {
+ 	type WorkerStatus,
+ } from "./receipt.ts";
+ import { ProcessRegistry } from "./registry.ts";
+-import { utcNow } from "../shared/time.ts";
+ 
+ /**
+  * headless worker 运行器:拉起一次性子进程、从 stdout JSON 事件流收结构化回执、
+@@ -634,7 +634,13 @@ function resolveEvidenceDir(dir?: string): string {
+ }
+ 
+ /** 证据文件公共前缀(正本与 live 同前缀):项目哈希取卡路径,重试按尝试号+执行标识区分 */
+-function evidenceBase(dir: string, 卡号: string, 尝试: number, 卡路径?: string, 执行标识: string = randomUUID()): string {
++function evidenceBase(
++	dir: string,
++	卡号: string,
++	尝试: number,
++	卡路径?: string,
++	执行标识: string = randomUUID(),
++): string {
+ 	const project = createHash("sha256")
+ 		.update(卡路径 ?? process.cwd())
+ 		.digest("hex")
+diff --git a/packages/coding-agent/src/pao/workflow/auto.ts b/packages/coding-agent/src/pao/workflow/auto.ts
+index a1cdd7a7a..597f22e09 100644
+--- a/packages/coding-agent/src/pao/workflow/auto.ts
++++ b/packages/coding-agent/src/pao/workflow/auto.ts
+@@ -19,6 +19,7 @@ import { baselineSnapshotPath, checkBoundaryWrite, diffAgainstBaseline } from ".
+ import { deliverCard } from "../cards/delivery.ts";
+ import { changeCardStatus, parseCardRef } from "../cards/index.ts";
+ import { verifyCard } from "../cards/verifier.ts";
++import { nowString } from "../shared/time.ts";
+ import { glyphFor } from "../ui/glyphs.ts";
+ import {
+ 	appendDispatchReceipt,
+@@ -29,7 +30,6 @@ import {
+ } from "../worker/dispatch-core.ts";
+ import type { WorkerReceipt } from "../worker/receipt.ts";
+ import type { WorkerRunner } from "../worker/runner.ts";
+-import { nowString } from "../shared/time.ts";
+ import { type DriveReport, type DriverOptions, renderReport, tickWorkflow } from "./driver.ts";
+ import type { WorkflowRecipe } from "./recipe.ts";
+ 
+diff --git a/packages/coding-agent/src/pao/workflow/review.ts b/packages/coding-agent/src/pao/workflow/review.ts
+index 26d4f44bc..3086f454f 100644
+--- a/packages/coding-agent/src/pao/workflow/review.ts
++++ b/packages/coding-agent/src/pao/workflow/review.ts
+@@ -34,6 +34,12 @@ export interface ReviewNodeRow {
+ 	实耗: { turns: number; toolCalls: number; cost: number; 未知: boolean };
+ }
+ 
++/** 只读状态统计:未落卡节点数 + 有卡节点按卡现读状态各计（只记实际出现的状态,零次不虚列）;孤儿卡不属节点行,不计入。 */
++export interface ReviewStatusStats {
++	未落卡: number;
++	卡状态: Partial<Record<CardStatus, number>>;
++}
++
+ export interface ReviewReport {
+ 	工作流: string;
+ 	/** 实例清单状态（清单缺时 undefined,如实呈现） */
+@@ -42,6 +48,8 @@ export interface ReviewReport {
+ 	节点: ReviewNodeRow[];
+ 	/** 标记指向配方已删节点的卡（孤儿,报告点名不丢弃） */
+ 	孤儿卡: { 卡号: number; 节点: string; 卡状态: CardStatus }[];
++	/** 从节点行汇总的状态统计（每节点恰计一次,未落卡+各状态之和=节点总数） */
++	状态统计: ReviewStatusStats;
+ }
+ 
+ /** 单卡回执用量聚合:跳过「汇总」行（母卡汇总=子卡之和,重复计）;缺项标未知不填零（R07）。 */
+@@ -61,6 +69,16 @@ function sumUsage(cards: ParsedCard[]): { turns: number; toolCalls: number; cost
+ 	return total;
+ }
+ 
++/** 从节点行数状态:无卡计未落卡,有卡按卡现读状态累计;每节点恰计一次,合计恒等于节点行数。 */
++function countNodeStatuses(rows: ReviewNodeRow[]): ReviewStatusStats {
++	const stats: ReviewStatusStats = { 未落卡: 0, 卡状态: {} };
++	for (const row of rows) {
++		if (row.卡状态 === undefined) stats.未落卡 += 1;
++		else stats.卡状态[row.卡状态] = (stats.卡状态[row.卡状态] ?? 0) + 1;
++	}
++	return stats;
++}
++
+ /**
+  * 从卡与实例清单现读构建复盘报告。节点行序＝配方拓扑序（没跑的节点也列出,尝试 0 如实）;
+  * 卡面标记不在配方节点表里的进孤儿卡（配方改版后的旧卡,点名不静默）。
+@@ -118,7 +136,14 @@ export function buildReviewReport(recipe: WorkflowRecipe, cardsDir: string, mani
+ 		};
+ 	});
+ 
+-	return { 工作流: recipe.名字, 实例状态: manifest?.状态, 启动: manifest?.启动, 节点, 孤儿卡 };
++	return {
++		工作流: recipe.名字,
++		实例状态: manifest?.状态,
++		启动: manifest?.启动,
++		节点,
++		孤儿卡,
++		状态统计: countNodeStatuses(节点),
++	};
+ }
+ 
+ function budgetLine(row: ReviewNodeRow): string {
+@@ -157,6 +182,12 @@ export function renderReviewReport(report: ReviewReport): string {
+ 	const 总派发 = report.节点.reduce((sum, row) => sum + row.派发次数, 0);
+ 	const 总打回 = report.节点.reduce((sum, row) => sum + row.打回, 0);
+ 	lines.push("", `总账:节点 ${report.节点.length}、尝试 ${总尝试}、派发 ${总派发}、打回 ${总打回}。`);
++	const 统计 = report.状态统计;
++	const 状态合计 = 统计.未落卡 + Object.values(统计.卡状态).reduce((sum, count) => sum + count, 0);
++	const 状态项 = [`未落卡 ${统计.未落卡}`, ...Object.entries(统计.卡状态).map(([状态, 数]) => `${状态} ${数}`)];
++	lines.push(
++		`状态:${状态项.join("、")}（合计 ${状态合计} = 节点数${report.孤儿卡.length > 0 ? ";孤儿卡另列不计入" : ""}）`,
++	);
+ 	if (report.孤儿卡.length > 0)
+ 		lines.push(
+ 			`孤儿卡（标记的节点不在配方里,配方改版遗留）:${report.孤儿卡.map((card) => `卡${card.卡号}→${card.节点}(${card.卡状态})`).join("、")}`,
+diff --git a/packages/coding-agent/src/pao/workflow/tools.ts b/packages/coding-agent/src/pao/workflow/tools.ts
+index f7aa56ec9..3a73fa73c 100644
+--- a/packages/coding-agent/src/pao/workflow/tools.ts
++++ b/packages/coding-agent/src/pao/workflow/tools.ts
+@@ -23,7 +23,6 @@ import {
+ 	confirmWorkflowNode,
+ 	type DriveReport,
+ 	type DriverOptions,
+-	已叫过人,
+ 	manifestPath,
+ 	parseManifest,
+ 	queryWorkflow,
+@@ -32,16 +31,11 @@ import {
+ 	tickWorkflow,
+ 	WorkflowDriverError,
+ 	人工门挂起原因,
++	已叫过人,
+ 	挂起叫人键,
+ 	记录已叫人,
+ } from "./driver.ts";
+-import {
+-	isWorkflowRecipeError,
+-	listRecipes,
+-	loadRecipe,
+-	type WorkflowRecipe,
+-	WorkflowRecipeError,
+-} from "./recipe.ts";
++import { isWorkflowRecipeError, listRecipes, loadRecipe, type WorkflowRecipe, WorkflowRecipeError } from "./recipe.ts";
+ import { buildReviewReport, renderReviewReport, WORKFLOW_REVIEW_SECTION } from "./review.ts";
+ 
+ /** 两面共用的注册态：终态复盘入队是注册闭包的会话内存态（命令面/工具面共用同一队列），toast 开关与 pao_启流 同源解析。 */
+@@ -263,7 +257,12 @@ export function registerWorkflowTools(pi: ExtensionAPI, options?: WorkflowToolsO
+ 		}),
+ 		execute: async (_toolCallId, params: ToolParams, signal) =>
+ 			toolResult(async () =>
+-				startWorkflowCore(loadRecipeFor(params, options), params.参数 ?? {}, buildAutoOptions(params, options, signal), common),
++				startWorkflowCore(
++					loadRecipeFor(params, options),
++					params.参数 ?? {},
++					buildAutoOptions(params, options, signal),
++					common,
++				),
+ 			),
+ 	});
+ 
+diff --git a/packages/coding-agent/test/pao/blackboard-upstream.test.ts b/packages/coding-agent/test/pao/blackboard-upstream.test.ts
+index f816da2a9..378a0fc94 100644
+--- a/packages/coding-agent/test/pao/blackboard-upstream.test.ts
++++ b/packages/coding-agent/test/pao/blackboard-upstream.test.ts
+@@ -170,9 +170,7 @@ function git(cwd: string, args: string[]): void {
+ }
+ 
+ /** git 仓库 fixture＋一张卡＋pao_派单 工具就绪（PAO_HOME 可选落保温.json）;face 供等后台收敛 */
+-async function setup(
+-	保温?: unknown,
+-): Promise<{
++async function setup(保温?: unknown): Promise<{
+ 	repo: string;
+ 	cardsDir: string;
+ 	runner: FakeRunner;
+@@ -198,7 +196,11 @@ async function setup(
+ 	process.env.PAO_ROLE = "主控";
+ 	const runner = new FakeRunner();
+ 	const captured = capturePi();
+-	const face = registerWorkerTools(captured.pi, { runner, resolveCardsDir: () => cardsDir, resolvePaoHome: () => paoHome });
++	const face = registerWorkerTools(captured.pi, {
++		runner,
++		resolveCardsDir: () => cardsDir,
++		resolvePaoHome: () => paoHome,
++	});
+ 	const dispatch = captured.tools.find((t) => t.name === "pao_派单");
+ 	if (!dispatch) throw new Error("未注册 pao_派单");
+ 	return { repo, cardsDir, runner, dispatch, face };
+diff --git a/packages/coding-agent/test/pao/host-events-wire.test.ts b/packages/coding-agent/test/pao/host-events-wire.test.ts
+index 77bf47e83..ed8959e61 100644
+--- a/packages/coding-agent/test/pao/host-events-wire.test.ts
++++ b/packages/coding-agent/test/pao/host-events-wire.test.ts
+@@ -17,7 +17,14 @@ function 真实一轮(overrides: {
+ 	usage?: Record<string, unknown>;
+ 	无usage?: boolean;
+ }): string[] {
+-	const 流式usage = { input: 10, output: 2, cacheRead: 0, cacheWrite: 0, totalTokens: 12, cost: { input: 0.001, output: 0.001, cacheRead: 0, cacheWrite: 0, total: 0.02 } };
++	const 流式usage = {
++		input: 10,
++		output: 2,
++		cacheRead: 0,
++		cacheWrite: 0,
++		totalTokens: 12,
++		cost: { input: 0.001, output: 0.001, cacheRead: 0, cacheWrite: 0, total: 0.02 },
++	};
+ 	const lines: string[] = [
+ 		JSON.stringify({
+ 			type: "message_update",
+@@ -85,8 +92,16 @@ describe("absorbMinisterEvent 真实 RPC 线型", () => {
+ 
+ 	it("非 assistant 的顶层 message_end(user/toolResult)不计轮不计数", () => {
+ 		const state = createMinisterEventState();
+-		expect(absorbMinisterEvent(state, JSON.stringify({ type: "message_end", message: { role: "user", content: [] } })).边界).toBe(false);
+-		expect(absorbMinisterEvent(state, JSON.stringify({ type: "message_end", message: { role: "toolResult", content: [] } })).边界).toBe(false);
++		expect(
++			absorbMinisterEvent(state, JSON.stringify({ type: "message_end", message: { role: "user", content: [] } }))
++				.边界,
++		).toBe(false);
++		expect(
++			absorbMinisterEvent(
++				state,
++				JSON.stringify({ type: "message_end", message: { role: "toolResult", content: [] } }),
++			).边界,
++		).toBe(false);
+ 		expect(absorbMinisterEvent(state, JSON.stringify({ type: "message_end" })).边界).toBe(false);
+ 		expect(state.轮次).toBe(0);
+ 		expect(state.工具调用次数).toBe(0);
+diff --git a/packages/coding-agent/test/pao/host-lifecycle.test.ts b/packages/coding-agent/test/pao/host-lifecycle.test.ts
+index a7d0cec58..82b814c5c 100644
+--- a/packages/coding-agent/test/pao/host-lifecycle.test.ts
++++ b/packages/coding-agent/test/pao/host-lifecycle.test.ts
+@@ -163,7 +163,16 @@ describe("拉起:RPC 子进程＋身份注入＋配方快照(定案1/2)", () =>
+ 
+ 	it("部门带路径成分(../、反斜杠、盘符、绝对路径):拒绝拉起,不产生任何子进程与越界路径", async () => {
+ 		const fixture = makeFixture("evildept");
+-		for (const 部门 of ["../../evil", "前端/../evil", "a\\b", "..\\evil", "C:\\evil", "C:evil", "/abs", "部门/../../x"]) {
++		for (const 部门 of [
++			"../../evil",
++			"前端/../evil",
++			"a\\b",
++			"..\\evil",
++			"C:\\evil",
++			"C:evil",
++			"/abs",
++			"部门/../../x",
++		]) {
+ 			const result = await fixture.host.拉起({ 部门, 项目根: fixture.项目根 });
+ 			expect(result.ok, 部门).toBe(false);
+ 			expect(fixture.host.list()).toHaveLength(0);
+diff --git a/packages/coding-agent/test/pao/knowledge-ingest.test.ts b/packages/coding-agent/test/pao/knowledge-ingest.test.ts
+index 3484c508d..a6e93dd6f 100644
+--- a/packages/coding-agent/test/pao/knowledge-ingest.test.ts
++++ b/packages/coding-agent/test/pao/knowledge-ingest.test.ts
+@@ -177,8 +177,8 @@ describe("入库路径越界校验", () => {
+ 		if (process.platform !== "win32") return;
+ 		const backslashed = `${join(libRoot, "待验证")}\\..\\..\\逃逸.md`;
+ 		await expect(ingestEntry({ libRoot, candidatePath: backslashed, type: "教训" })).rejects.toThrow("越界");
+-		await expect(
+-			ingestEntry({ libRoot, candidatePath: "C:\\pao-库外逃逸.md", type: "教训" }),
+-		).rejects.toThrow("越界");
++		await expect(ingestEntry({ libRoot, candidatePath: "C:\\pao-库外逃逸.md", type: "教训" })).rejects.toThrow(
++			"越界",
++		);
+ 	});
+ });
+diff --git a/packages/coding-agent/test/pao/memory-vendor.test.ts b/packages/coding-agent/test/pao/memory-vendor.test.ts
+index 7eb38171d..0ec9eee3f 100644
+--- a/packages/coding-agent/test/pao/memory-vendor.test.ts
++++ b/packages/coding-agent/test/pao/memory-vendor.test.ts
+@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+-
++import { registerMemory } from "../../src/pao/memory/index.ts";
+ import {
+ 	getMemoryVendorFactory,
+ 	listMemoryVendors,
+@@ -17,7 +17,6 @@ import {
+ 	registerMemoryVendor,
+ 	resolveMemoryConfigPath,
+ } from "../../src/pao/memory/memory-vendor.ts";
+-import { registerMemory } from "../../src/pao/memory/index.ts";
+ import "../../src/pao/memory/index.ts"; // 触发内置 mnemosyne 工厂登记
+ 
+ const tempDirs: string[] = [];
+@@ -208,7 +207,12 @@ describe("registerMemory:session_shutdown 关闭失败不悬挂 Promise", () =>
+ 		const warnings: string[] = [];
+ 		const handlers = new Map<string, () => unknown>();
+ 		const manager = registerMemory(
+-			{ registerTool() {}, on(event, handler) { handlers.set(event, handler); } } as never,
++			{
++				registerTool() {},
++				on(event, handler) {
++					handlers.set(event, handler);
++				},
++			} as never,
+ 			{ resolveConfigPath: () => configPath, onWarn: (m) => warnings.push(m) },
+ 		);
+ 		expect(manager).toBeDefined();
+diff --git a/packages/coding-agent/test/pao/shared-json.test.ts b/packages/coding-agent/test/pao/shared-json.test.ts
+index 31f2fe561..314fe4aef 100644
+--- a/packages/coding-agent/test/pao/shared-json.test.ts
++++ b/packages/coding-agent/test/pao/shared-json.test.ts
+@@ -49,7 +49,7 @@ function writeConfig(dir: string, name: string, body: string): string {
+ 
+ describe("stripUtf8Bom:只剥首字符 BOM,无 BOM 逐字节不变", () => {
+ 	it("有 BOM 剥掉,无 BOM 原样,正文中间的 U+FEFF 不动", () => {
+-		expect(stripUtf8Bom("\uFEFF{\"a\":1}")).toBe('{"a":1}');
++		expect(stripUtf8Bom('\uFEFF{"a":1}')).toBe('{"a":1}');
+ 		expect(stripUtf8Bom('{"a":1}')).toBe('{"a":1}');
+ 		expect(stripUtf8Bom('{"a":"\uFEFF"}')).toBe('{"a":"\uFEFF"}');
+ 	});
+diff --git a/packages/coding-agent/test/pao/tier-editor-config.test.ts b/packages/coding-agent/test/pao/tier-editor-config.test.ts
+index 6f1efbf45..8fd0031ff 100644
+--- a/packages/coding-agent/test/pao/tier-editor-config.test.ts
++++ b/packages/coding-agent/test/pao/tier-editor-config.test.ts
+@@ -98,7 +98,9 @@ describe("saveTierConfig（备份＋原子写回）", () => {
+ 		第二份内容.档位 = [{ 名: "新档", provider: "a", model: "m2", thinkingLevel: "low" }];
+ 		第二份内容.部门默认 = {}; // 换档集后原部门默认引用的「快」已不存在,不清会被写前自校验拒写
+ 		saveTierConfig(path, 第二份内容, fixedNow);
+-		const backups = readdirSync(dir).filter((f) => f.includes("bak")).sort();
++		const backups = readdirSync(dir)
++			.filter((f) => f.includes("bak"))
++			.sort();
+ 		expect(backups).toEqual(["档位.json.bak-20261003-140506-789", "档位.json.bak-20261003-140506-789-1"]);
+ 		expect(JSON.parse(readFileSync(join(dir, backups[0]!), "utf8")).档位[0].名).toBe("旧档");
+ 		expect(JSON.parse(readFileSync(join(dir, backups[1]!), "utf8")).档位[0].名).toBe("快");
+diff --git a/packages/coding-agent/test/pao/verifier-run.test.ts b/packages/coding-agent/test/pao/verifier-run.test.ts
+index bc9d50980..1166a4caf 100644
+--- a/packages/coding-agent/test/pao/verifier-run.test.ts
++++ b/packages/coding-agent/test/pao/verifier-run.test.ts
+@@ -282,7 +282,9 @@ describe("存在/包含读侧路径安检（与跑命令安检门同等级，R16
+ 		const repo = makeRepo();
+ 		const { 卡目录 } = await makeClaimedCard(
+ 			repo,
+-			["存在: ..\\源.txt", "存在: C:\\源.txt", "包含: src\\..\\..\\源.txt :: PAO", "存在: src/../../源.txt"].join("\n"),
++			["存在: ..\\源.txt", "存在: C:\\源.txt", "包含: src\\..\\..\\源.txt :: PAO", "存在: src/../../源.txt"].join(
++				"\n",
++			),
+ 		);
+ 		const { result } = await verifyCard(卡目录, 1, { 操作者: "部长A", 沙箱根: sandboxRoot() });
+ 
+@@ -307,7 +309,12 @@ describe("项目根推导口径（与 cardfile.projectRootForCards 一致）", (
+ 		writeFileSync(join(repo, "源.txt"), "PAO 影子沙箱测试项目\n");
+ 		const 卡目录 = join(repo, ".pao", "任务A", "卡");
+ 		mkdirSync(卡目录, { recursive: true });
+-		const card = await createCard(卡目录, { 目标: "非git根卡", 部门: "核心机制", 验收: "存在: 源.txt", 创建: "2026-10-02 10:00" });
++		const card = await createCard(卡目录, {
++			目标: "非git根卡",
++			部门: "核心机制",
++			验收: "存在: 源.txt",
++			创建: "2026-10-02 10:00",
++		});
+ 		changeCardStatus(card, { 操作者: "部长A", to: "进行中", 时间: "2026-10-02 10:01" });
+ 
+ 		const { result } = await verifyCard(卡目录, 1, { 操作者: "部长A", 沙箱根: sandboxRoot() });
+@@ -327,7 +334,7 @@ describe("跑命令超时树杀（复用 worker/kill.killTree）", () => {
+ 		);
+ 		const { 卡目录 } = await makeClaimedCard(
+ 			repo,
+-			'跑: node -e "require(\'child_process\').spawn(process.execPath,[\'孙进程.js\'],{stdio:\'ignore\'}),setInterval(function(){},60000)"',
++			"跑: node -e \"require('child_process').spawn(process.execPath,['孙进程.js'],{stdio:'ignore'}),setInterval(function(){},60000)\"",
+ 		);
+ 		const { result } = await verifyCard(卡目录, 1, {
+ 			操作者: "部长A",
+diff --git a/packages/coding-agent/test/pao/worker-dispatch-background.test.ts b/packages/coding-agent/test/pao/worker-dispatch-background.test.ts
+index dedd951fc..b32cc327a 100644
+--- a/packages/coding-agent/test/pao/worker-dispatch-background.test.ts
++++ b/packages/coding-agent/test/pao/worker-dispatch-background.test.ts
+@@ -15,14 +15,20 @@ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+-import { type CardCreateInput, changeCardStatus, createCard, type ParsedCard, readCard } from "../../src/pao/cards/index.ts";
++import {
++	type CardCreateInput,
++	changeCardStatus,
++	createCard,
++	type ParsedCard,
++	readCard,
++} from "../../src/pao/cards/index.ts";
+ import { DEFAULT_WORKER_SILENCE_MINUTES, readWorkerSilenceMinutes } from "../../src/pao/host/config.ts";
+ import {
+-	创建静默提醒器,
+ 	DISPATCH_NOTIFY_SECTION,
+-	格式化静默提醒,
+ 	registerWorkerTools,
++	创建静默提醒器,
+ 	扫描静默,
++	格式化静默提醒,
+ 	type 静默提醒事项,
+ } from "../../src/pao/worker/index.ts";
+ import type { ProcessEntry } from "../../src/pao/worker/registry.ts";
+@@ -161,7 +167,18 @@ function 假条目(overrides: Partial<ProcessEntry> & { 卡号: string }): Proce
+ 		...overrides,
+ 	};
+ }
+-function 假活性(条目: ProcessEntry, 尾行: string[]): { pid: number; 卡号: string; 命令: string; 执行标识: string; 中途输出路径?: string; 中途stderr路径?: string; stdoutTail: (行数?: number) => string } {
++function 假活性(
++	条目: ProcessEntry,
++	尾行: string[],
++): {
++	pid: number;
++	卡号: string;
++	命令: string;
++	执行标识: string;
++	中途输出路径?: string;
++	中途stderr路径?: string;
++	stdoutTail: (行数?: number) => string;
++} {
+ 	return {
+ 		pid: 条目.pid,
+ 		卡号: 条目.卡号,
+@@ -198,7 +215,9 @@ describe("扫描静默(阈值边界/去重/重臂/关/基线回退)", () => {
+ 	it("静默分钟≤0=整体关;缺最近输出时间以登记时间为基线;活性表与登记表对不上不提", () => {
+ 		const 条目 = 假条目({ 卡号: "0004", 最近输出时间: new Date(T0).toISOString() });
+ 		const 基线 = new Map<string, number>();
+-		expect(扫描静默({ entries: [条目], active: [假活性(条目, [])], now: T0 + 99 * 60_000, 静默分钟: 0, 提醒基线: 基线 })).toHaveLength(0);
++		expect(
++			扫描静默({ entries: [条目], active: [假活性(条目, [])], now: T0 + 99 * 60_000, 静默分钟: 0, 提醒基线: 基线 }),
++		).toHaveLength(0);
+ 		const 无输出条目 = 假条目({ 卡号: "0005" });
+ 		expect(
+ 			扫描静默({
+@@ -210,7 +229,9 @@ describe("扫描静默(阈值边界/去重/重臂/关/基线回退)", () => {
+ 			}),
+ 		).toHaveLength(1);
+ 		const 别人的活性 = { ...假活性(条目, []), 执行标识: "exec-别的" };
+-		expect(扫描静默({ entries: [条目], active: [别人的活性], now: T0 + 99 * 60_000, 静默分钟: 30, 提醒基线: new Map() })).toHaveLength(0);
++		expect(
++			扫描静默({ entries: [条目], active: [别人的活性], now: T0 + 99 * 60_000, 静默分钟: 30, 提醒基线: new Map() }),
++		).toHaveLength(0);
+ 	});
+ });
+ 
+diff --git a/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts b/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
+index e4634543b..05f6415af 100644
+--- a/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
++++ b/packages/coding-agent/test/pao/worker-dispatch-guards.test.ts
+@@ -104,7 +104,8 @@ function toolFor(runner: WorkerRunner, cardsDir: string, toolName = "pao_派单"
+ 		},
+ 	} as unknown as ExtensionAPI;
+ 	registerWorkerTools(pi, { runner, 信号: false, resolveCardsDir: () => cardsDir });
+-	if (toolName === "pao_扇出")		registerFanout(pi, { runner, resolveCardsDir: () => cardsDir, 公共参数: { 工具白名单: ["read"] } });
++	if (toolName === "pao_扇出")
++		registerFanout(pi, { runner, resolveCardsDir: () => cardsDir, 公共参数: { 工具白名单: ["read"] } });
+ 	if (!dispatch) throw new Error(`没有工具 ${toolName}`);
+ 	return dispatch;
+ }
+diff --git a/packages/coding-agent/test/pao/worker-dispatch.test.ts b/packages/coding-agent/test/pao/worker-dispatch.test.ts
+index 2a1d4b0be..0e359319c 100644
+--- a/packages/coding-agent/test/pao/worker-dispatch.test.ts
++++ b/packages/coding-agent/test/pao/worker-dispatch.test.ts
+@@ -189,9 +189,7 @@ describe("pao_派单:理由必填(派前自省,留痕供审查)", () => {
+ // ── 权限矩阵(fail-closed) ────────────────────────────────────────────────
+ 
+ describe("pao_派单:权限矩阵(部长只派本部门卡,缺 PAO_DEPT 拒)", () => {
+-	async function setup(
+-		卡部门: string,
+-	): Promise<{
++	async function setup(卡部门: string): Promise<{
+ 		tool: Captured["tools"][number];
+ 		face: ReturnType<typeof registerWorkerTools>;
+ 		captured: Captured;
+diff --git a/packages/coding-agent/test/pao/workflow-driver.test.ts b/packages/coding-agent/test/pao/workflow-driver.test.ts
+index 9918fde32..defac7fc5 100644
+--- a/packages/coding-agent/test/pao/workflow-driver.test.ts
++++ b/packages/coding-agent/test/pao/workflow-driver.test.ts
+@@ -15,7 +15,6 @@ import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+ import type { CardStatus } from "../../src/pao/cards/types.ts";
+ import {
+ 	confirmWorkflowNode,
+-	已叫过人,
+ 	manifestPath,
+ 	parseManifest,
+ 	queryWorkflow,
+@@ -24,6 +23,7 @@ import {
+ 	startWorkflow,
+ 	tickWorkflow,
+ 	workflowMarker,
++	已叫过人,
+ 	挂起叫人键,
+ 	记录已叫人,
+ } from "../../src/pao/workflow/driver.ts";
+diff --git a/packages/coding-agent/test/pao/workflow-review.test.ts b/packages/coding-agent/test/pao/workflow-review.test.ts
+index 5751d224b..d9c3b12f3 100644
+--- a/packages/coding-agent/test/pao/workflow-review.test.ts
++++ b/packages/coding-agent/test/pao/workflow-review.test.ts
+@@ -4,7 +4,7 @@
+  * 拓扑序含未落卡节点、孤儿卡点名不静默、汇总回执不重复计、缺用量标未知不填零。
+  * fixture 一律临时目录。
+  */
+-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from "vitest";
+ import { cardFileName, serializeCard, serializeReceipt } from "../../src/pao/cards/cardfile.ts";
+ import type { CardFrontmatter } from "../../src/pao/cards/types.ts";
+ import { type WorkflowManifest, workflowMarker } from "../../src/pao/workflow/driver.ts";
+-import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
++import { parseRecipe, type WorkflowRecipe } from "../../src/pao/workflow/recipe.ts";
+ import { buildReviewReport, renderReviewReport } from "../../src/pao/workflow/review.ts";
+ 
+ const tempDirs: string[] = [];
+@@ -83,6 +83,27 @@ function manifest(): WorkflowManifest {
+ 	};
+ }
+ 
++/** 配方结构直接构造（parseRecipe 拒绝空节点表;无节点用例绕开解析层单测复盘统计）。 */
++function emptyRecipe(): WorkflowRecipe {
++	return {
++		名字: "空流",
++		自动执行: false,
++		参数: [],
++		节点: [],
++		说明: "",
++		文件路径: join("工作流", "空流.md"),
++		占位符: [],
++		拓扑序: [],
++	};
++}
++
++/** 卡目录字节快照:复盘前后逐一比对,证只读。 */
++function snapshotCards(cardsDir: string): Map<string, Buffer> {
++	const snapshot = new Map<string, Buffer>();
++	for (const name of readdirSync(cardsDir)) snapshot.set(name, readFileSync(join(cardsDir, name)));
++	return snapshot;
++}
++
+ describe("buildReviewReport / renderReviewReport", () => {
+ 	it("每节点行:尝试重试/派发/打回失败类型/末次摘要/产物/人工门/预算vs实耗;未落卡如实列出", () => {
+ 		const cardsDir = makeDir();
+@@ -204,3 +225,89 @@ describe("buildReviewReport / renderReviewReport", () => {
+ 		expect(report.孤儿卡).toEqual([]);
+ 	});
+ });
++
++describe("状态统计（只读,基于节点行;孤儿卡不计入节点总数）", () => {
++	it("混合状态+未落卡+孤儿卡:未落卡与每个实际卡状态各有明确计数,合计=节点总数,孤儿卡状态不混入;报告前后卡文件字节不变", () => {
++		const cardsDir = makeDir();
++		writeCard(
++			cardsDir,
++			1,
++			"侦察",
++			{ 目标: "扫仓库", 部门: "侦察", 验收: "包含: 扫", 尝试: 1, 状态: "已交付" },
++			`${workflowMarker("复盘流", "侦察")}\n\n${serializeReceipt({
++				卡号: 1,
++				尝试号: 1,
++				时间: "2026-10-03 10:40",
++				结果: "成功",
++				摘要: "产出了地图",
++			})}`,
++		);
++		writeCard(
++			cardsDir,
++			2,
++			"文档",
++			{ 目标: "写文档", 部门: "文档", 验收: "包含: 文档", 尝试: 1, 状态: "失败" },
++			`${workflowMarker("复盘流", "文档")}\n\n${serializeReceipt({
++				卡号: 2,
++				尝试号: 1,
++				时间: "2026-10-03 11:00",
++				结果: "失败",
++				失败类型: "能力不足",
++				摘要: "写崩了",
++			})}`,
++		);
++		// 未跑节点不落卡（未落卡计数）;卡7 标记的节点不在配方里 → 孤儿卡,状态不得混入统计
++		writeCard(
++			cardsDir,
++			7,
++			"遗留",
++			{ 目标: "旧活", 部门: "前端", 验收: "包含: 旧", 尝试: 1, 状态: "取消" },
++			`${workflowMarker("复盘流", "已删节点")}\n\n正文`,
++		);
++		const recipe = parseRecipe(RECIPE_TEXT, join("工作流", "复盘流.md"));
++		const before = snapshotCards(cardsDir);
++		const report = buildReviewReport(recipe, cardsDir, manifest());
++		const text = renderReviewReport(report);
++		expect(snapshotCards(cardsDir)).toEqual(before); // 复盘只读,字节不变
++
++		expect(report.状态统计).toEqual({ 未落卡: 1, 卡状态: { 已交付: 1, 失败: 1 } });
++		// 每节点恰计一次:未落卡 + 各状态计数之和 = 节点总数
++		const 合计 =
++			report.状态统计.未落卡 + Object.values(report.状态统计.卡状态).reduce((sum, count) => sum + count, 0);
++		expect(合计).toBe(report.节点.length);
++		expect(合计).toBe(3);
++		expect(report.状态统计.卡状态).not.toHaveProperty("取消"); // 孤儿卡状态不进统计
++		expect(report.孤儿卡.map((card) => card.卡状态)).toEqual(["取消"]);
++		// 序列化往返:纯数据结构,JSON 往返不变形
++		expect(JSON.parse(JSON.stringify(report.状态统计))).toEqual(report.状态统计);
++
++		expect(text).toContain("未落卡 1");
++		expect(text).toContain("已交付 1");
++		expect(text).toContain("失败 1");
++		expect(text).toContain("孤儿卡另列不计入");
++		// 现有报告信息保留
++		expect(text).toContain("总账:节点 3、尝试 2、派发 2、打回 1");
++		expect(text).toContain("孤儿卡（标记的节点不在配方里,配方改版遗留）:卡7→已删节点(取消)");
++		expect(text).toContain("pao_落配方");
++	});
++
++	it("无节点配方:统计全零如实呈现,不虚列状态", () => {
++		const report = buildReviewReport(emptyRecipe(), makeDir(), undefined);
++		expect(report.节点).toEqual([]);
++		expect(report.状态统计).toEqual({ 未落卡: 0, 卡状态: {} });
++		const 合计 =
++			report.状态统计.未落卡 + Object.values(report.状态统计.卡状态).reduce((sum, count) => sum + count, 0);
++		expect(合计).toBe(report.节点.length);
++		const text = renderReviewReport(report);
++		expect(text).toContain("状态:未落卡 0（合计 0 = 节点数）");
++		expect(text).toContain("总账:节点 0、尝试 0、派发 0、打回 0。");
++	});
++
++	it("全部节点未落卡（卡目录为空）:未落卡=节点数,不虚列状态", () => {
++		const recipe = parseRecipe(RECIPE_TEXT, join("工作流", "复盘流.md"));
++		const report = buildReviewReport(recipe, makeDir(), undefined);
++		expect(report.状态统计).toEqual({ 未落卡: 3, 卡状态: {} });
++		const text = renderReviewReport(report);
++		expect(text).toContain("状态:未落卡 3（合计 3 = 节点数）");
++	});
++});

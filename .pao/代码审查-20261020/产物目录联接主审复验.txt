@@ -1,0 +1,44 @@
+(node:26960) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/AI/workspace/pao-dev/desktop/apps/desktop/electron/platform/files/workspace-paths.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\AI\workspace\pao-dev\desktop\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "内核产物判定": {
+    "路径": "link/secret.txt",
+    "相对路径": "link/secret.txt",
+    "轮次": 1,
+    "卡号": "卡0001",
+    "版本依据": "第 1 轮（卡0001）",
+    "当前轮": true,
+    "存在": true
+  },
+  "真实项目根": "D:\\AI\\workspace\\临时文件夹\\知识审查-20261020\\产物目录联接-isuwTR\\project",
+  "真实目标": "D:\\AI\\workspace\\临时文件夹\\知识审查-20261020\\产物目录联接-isuwTR\\outside\\secret.txt",
+  "真实目标在项目根内": false,
+  "桌面正文读取": {
+    "被拒绝": true,
+    "错误": "Path escapes workspace"
+  },
+  "UI消费": {
+    "列表状态展示": {
+      "行号": 1937,
+      "源码": "{artifact.exists ? t(\"On disk\") : t(\"Missing from disk\")} ·{\" \"}"
+    },
+    "正文路径选择": {
+      "行号": 2330,
+      "源码": "const artifactPath = artifact?.exists ? artifact.relativePath : undefined;"
+    },
+    "正文读取请求": {
+      "行号": 2354,
+      "源码": ".readWorkspaceFile(workspaceId, artifactPath)"
+    },
+    "读取失败提示": {
+      "行号": 2505,
+      "源码": "{t(\"Cannot read the file body: {message}\", { message: bodyError })}"
+    }
+  },
+  "判定说明": {
+    "展示缺陷": "内核返回 存在: true 后，UI 显示 On disk，并把该相对路径交给正文预览。",
+    "读取越界": "正文读取层对项目根和目标两侧取真实路径后拒绝越界，因此项目外文件没有被打开读取。"
+  }
+}

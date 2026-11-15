@@ -1,0 +1,120 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ ❯ packages/coding-agent/test/pao/host-inventory-dispatch.test.ts (5 tests | 2 failed) 68971ms
+     × 热会话＋交接文件在:指针进附加系统提示词(与配方提示拼接不覆盖),输出注明指针已附 10750ms
+     × 无热会话:不指针不提示,派单行为与原先一致 5422ms
+ ❯ packages/coding-agent/test/pao/worker-dispatch.test.ts (20 tests | 2 failed) 23209ms
+     × 真 git 仓库:认领改状态+owner,基线快照文件出现,回执落卡,登记表带部门+派单理由 5346ms
+     × 运行时覆盖调用方缓存变量，使用系统临时目录，并在正常完成后删除 5163ms
+ ❯ packages/coding-agent/test/pao/blackboard-upstream.test.ts (9 tests | 3 failed) 16281ms
+     × 派单后黑板已首建＋worker 附加系统提示词含黑板指针(相对项目根) 5135ms
+     × 已有黑板不覆盖:同伴写入保留,只补指针 5170ms
+     × 保温.json「上游并发上限」与派发意愿取小;键缺失＝缺省 2 不变 5920ms
+stderr | packages/coding-agent/test/pao/blackboard-upstream.test.ts > 派发链·黑板与上游上限 > 保温.json「上游并发上限」与派发意愿取小;键缺失＝缺省 2 不变
+[pao] 后台通知主动唤醒失败,通知已保留待下一轮补投:pi.sendMessage is not a function
+
+PAO 停止后台失败：worker 停止故障
+warning: in the working copy of '已跟踪.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '已跟踪.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '已跟踪.txt', LF will be replaced by CRLF the next time Git touches it
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/blackboard-upstream.test.ts > 派发链·黑板与上游上限 > 派单后黑板已首建＋worker 附加系统提示词含黑板指针(相对项目根)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/blackboard-upstream.test.ts:211:2
+    209|
+    210| describe("派发链·黑板与上游上限", () => {
+    211|  it("派单后黑板已首建＋worker 附加系统提示词含黑板指针(相对项目根)", async () => {
+       |  ^
+    212|   const { cardsDir, runner, dispatch, face } = await setup();
+    213|   const result = await dispatch.execute("t1", { card_ref: "卡0001", rea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/blackboard-upstream.test.ts > 派发链·黑板与上游上限 > 已有黑板不覆盖:同伴写入保留,只补指针
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/blackboard-upstream.test.ts:223:2
+    221|  });
+    222|
+    223|  it("已有黑板不覆盖:同伴写入保留,只补指针", async () => {
+       |  ^
+    224|   const { cardsDir, dispatch, face } = await setup();
+    225|   writeFileSync(blackboardPath(cardsDir), "# 同伴的中间结论\n- [发现A](产物/a.md)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/blackboard-upstream.test.ts > 派发链·黑板与上游上限 > 保温.json「上游并发上限」与派发意愿取小;键缺失＝缺省 2 不变
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/blackboard-upstream.test.ts:231:2
+    229|  });
+    230|
+    231|  it("保温.json「上游并发上限」与派发意愿取小;键缺失＝缺省 2 不变", async () => {
+       |  ^
+    232|   const a = await setup({ 上游并发上限: 1 });
+    233|   await a.dispatch.execute("t3", { card_ref: "卡0001", reason: "上限1" },…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/host-inventory-dispatch.test.ts > pao_dispatch_card:命中热部长会话时附交接页指针,指纹不一致仅提示 > 热会话＋交接文件在:指针进附加系统提示词(与配方提示拼接不覆盖),输出注明指针已附
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/host-inventory-dispatch.test.ts:241:2
+    239|
+    240| describe("pao_dispatch_card:命中热部长会话时附交接页指针,指纹不一致仅提示", () => {
+    241|  it("热会话＋交接文件在:指针进附加系统提示词(与配方提示拼接不覆盖),输出注明指针已附", async () => {
+       |  ^
+    242|   const home = makeHome("disp", "# 配方\n- 名字: 前端\n");
+    243|   const host = makeHost(home);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/host-inventory-dispatch.test.ts > pao_dispatch_card:命中热部长会话时附交接页指针,指纹不一致仅提示 > 无热会话:不指针不提示,派单行为与原先一致
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/host-inventory-dispatch.test.ts:314:2
+    312|  });
+    313|
+    314|  it("无热会话:不指针不提示,派单行为与原先一致", async () => {
+       |  ^
+    315|   const home = makeHome("disp3", "# 配方\n- 名字: 前端\n");
+    316|   const host = makeHost(home);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-dispatch.test.ts > pao_dispatch_card:认领(待认领→进行中)＋基线快照＋登记,与扇出同链路 > 真 git 仓库:认领改状态+owner,基线快照文件出现,回执落卡,登记表带部门+派单理由
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/worker-dispatch.test.ts:461:2
+    459|
+    460| describe("pao_dispatch_card:认领(待认领→进行中)＋基线快照＋登记,与扇出同链路", () => {
+    461|  it("真 git 仓库:认领改状态+owner,基线快照文件出现,回执落卡,登记表带部门+派单理由", async () => {
+       |  ^
+    462|   const { cardsDir } = makeRepo("dispatch-claim");
+    463|   const cardNo = await makeCard(cardsDir, "修登录", "前端");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-dispatch.test.ts > worker Python 缓存：受控临时目录与停止证据 > 运行时覆盖调用方缓存变量，使用系统临时目录，并在正常完成后删除
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/worker-dispatch.test.ts:669:2
+    667|  }
+    668|
+    669|  it("运行时覆盖调用方缓存变量，使用系统临时目录，并在正常完成后删除", async () => {
+       |  ^
+    670|   const { cardsDir } = makeRepo("dispatch-python-cache");
+    671|   await makeCard(cardsDir, "缓存正常清理", "测试");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  3 failed | 5 passed (8)
+      Tests  7 failed | 89 passed (96)
+   Start at  23:39:41
+   Duration  189.46s (transform 19.87s, setup 0ms, import 27.57s, tests 159.56s, environment 1ms)
+

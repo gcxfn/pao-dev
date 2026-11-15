@@ -1,0 +1,37 @@
+
+Running 1 test using 1 worker
+
+(node:22348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\unit\pao-worktree-host-parent-child.spec.ts:24:5 › 桌面父宿主创建的工作树可由真实 Node 子进程默认工厂解析 (17.2s)
+
+
+  1) apps\desktop\tests\unit\pao-worktree-host-parent-child.spec.ts:24:5 › 桌面父宿主创建的工作树可由真实 Node 子进程默认工厂解析 
+
+    SyntaxError: The requested module '@pi-gui/session-driver' does not provide an export named 'sessionKey'
+
+       at ..\electron\platform\worktrees\pao-worktree-host.ts:116
+
+      114 |   private async createHost(): Promise<PaoLocalWorktreeHost> {
+      115 |     const runtimeEntry = resolveWorktreeRuntime.resolve(worktreeRuntimePackage);
+    > 116 |     const { loadPaoWorktreeRuntime } = await import(pathToFileURL(runtimeEntry).href);
+          |                                        ^
+      117 |     const loaded = await loadPaoWorktreeRuntime();
+      118 |     const runtime = this.worktreeRuntime;
+      119 |     const runtimeAdapter: PaoLocalWorktreeRuntimeAdapter = {
+        at PaoDesktopWorktreeHost.createHost (D:\AI\workspace\pao-dev\desktop\apps\desktop\electron\platform\worktrees\pao-worktree-host.ts:116:40)
+        at PaoDesktopWorktreeHost.create (D:\AI\workspace\pao-dev\desktop\apps\desktop\electron\platform\worktrees\pao-worktree-host.ts:88:13)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\pao-worktree-host-parent-child.spec.ts:69:21
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-pao-worktree-host-par-37c90-宿主创建的工作树可由真实-Node-子进程默认工厂解析\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-pao-worktree-host-par-37c90-宿主创建的工作树可由真实-Node-子进程默认工厂解析\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\pao-worktree-host-parent-child.spec.ts:24:5 › 桌面父宿主创建的工作树可由真实 Node 子进程默认工厂解析 

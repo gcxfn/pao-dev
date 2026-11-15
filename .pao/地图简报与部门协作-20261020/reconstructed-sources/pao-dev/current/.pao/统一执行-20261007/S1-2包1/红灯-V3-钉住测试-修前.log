@@ -1,0 +1,127 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m[33m[39m[32m·[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m死中游＋活深层：二跳把首跳存活成员（pid＋创建时刻成对）列为附加根续杀（空选不假报树已灭）
+[31m[1mAssertionError[22m: expected '\n$ErrorActionPreference=\'Stop\'\n$r…' to contain '@(4244,1339778498123)'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- @(4244,1339778498123)[39m
+[31m+[39m
+[31m+ $ErrorActionPreference='Stop'[39m
+[31m+ $rows=@(Get-CimInstance Win32_Process | Where-Object ProcessId -ne $PID)[39m
+[31m+ $root=$rows | Where-Object ProcessId -eq 4242 | Select-Object -First 1[39m
+[31m+ if ($root -and ([DateTimeOffset]$root.CreationDate).ToUnixTimeMilliseconds() -gt 1791328145189) { throw 'Root PID identity changed' }[39m
+[31m+ $selected=New-Object 'System.Collections.Generic.List[object]'[39m
+[31m+ $ids=New-Object 'System.Collections.Generic.HashSet[int]'[39m
+[31m+ [void]$ids.Add(4242)[39m
+[31m+ if ($root) { $selected.Add($root) }[39m
+[31m+ foreach ($p in @(4244)) {[39m
+[31m+   [void]$ids.Add([int]$p)[39m
+[31m+   $row=$rows | Where-Object { [int]$_.ProcessId -eq $p } | Select-Object -First 1[39m
+[31m+   if ($row) { $selected.Add($row) }[39m
+[31m+ }[39m
+[31m+ do {[39m
+[31m+   $added=$false[39m
+[31m+   foreach ($row in $rows) {[39m
+[31m+     if ($ids.Contains([int]$row.ParentProcessId) -and -not $ids.Contains([int]$row.ProcessId)) {[39m
+[31m+       [void]$ids.Add([int]$row.ProcessId); $selected.Add($row); $added=$true[39m
+[31m+     }[39m
+[31m+   }[39m
+[31m+ } while ($added)[39m
+[31m+ for ($i=$selected.Count-1; $i -ge 0; $i--) {[39m
+[31m+   $old=$selected[$i][39m
+[31m+   $current=Get-CimInstance Win32_Process -Filter ('ProcessId='+$old.ProcessId)[39m
+[31m+   if (-not $current) { continue }[39m
+[31m+   if ($current.CreationDate -ne $old.CreationDate) { throw 'Tree member PID identity changed' }[39m
+[31m+   & "$env:SystemRoot\System32\taskkill.exe" /PID $old.ProcessId /T /F | Out-Null[39m
+[31m+ }[39m
+[31m+ $remaining=@(Get-CimInstance Win32_Process)[39m
+[31m+ $survivors=@(foreach ($old in $selected) { if ($remaining | Where-Object { $_.ProcessId -eq $old.ProcessId -and $_.CreationDate -eq $old.CreationDate }) { $old.ProcessId } })[39m
+[31m+ if ($survivors.Count -gt 0) { Write-Output ($survivors -join ','); throw ('Tree member still alive: '+($survivors -join ',')) }[39m
+[31m+[39m
+
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m90:24[22m[39m
+    [90m 88|[39m    const retryScript = String((execFileMock.mock.calls[1]?.[1] as stri…
+    [90m 89|[39m    [34mexpect[39m(retryScript)[33m.[39m[34mtoMatch[39m([36m/\b4244\b/[39m)[33m;[39m
+    [90m 90|[39m    [34mexpect[39m(retryScript)[33m.[39m[34mtoContain[39m([32m"@(4244,1339778498123)"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m 91|[39m   }[33m,[39m
+    [90m 92|[39m  )[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m首跳存活 pid 被复用时二跳按创建时刻双配对丢弃该种子（不杀复用者并记录）
+[31m[1mAssertionError[22m: expected '\n$ErrorActionPreference=\'Stop\'\n$r…' to contain '@(4244,1339778498123)'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- @(4244,1339778498123)[39m
+[31m+[39m
+[31m+ $ErrorActionPreference='Stop'[39m
+[31m+ $rows=@(Get-CimInstance Win32_Process | Where-Object ProcessId -ne $PID)[39m
+[31m+ $root=$rows | Where-Object ProcessId -eq 4242 | Select-Object -First 1[39m
+[31m+ if ($root -and ([DateTimeOffset]$root.CreationDate).ToUnixTimeMilliseconds() -gt 1791328145708) { throw 'Root PID identity changed' }[39m
+[31m+ $selected=New-Object 'System.Collections.Generic.List[object]'[39m
+[31m+ $ids=New-Object 'System.Collections.Generic.HashSet[int]'[39m
+[31m+ [void]$ids.Add(4242)[39m
+[31m+ if ($root) { $selected.Add($root) }[39m
+[31m+ foreach ($p in @(4244)) {[39m
+[31m+   [void]$ids.Add([int]$p)[39m
+[31m+   $row=$rows | Where-Object { [int]$_.ProcessId -eq $p } | Select-Object -First 1[39m
+[31m+   if ($row) { $selected.Add($row) }[39m
+[31m+ }[39m
+[31m+ do {[39m
+[31m+   $added=$false[39m
+[31m+   foreach ($row in $rows) {[39m
+[31m+     if ($ids.Contains([int]$row.ParentProcessId) -and -not $ids.Contains([int]$row.ProcessId)) {[39m
+[31m+       [void]$ids.Add([int]$row.ProcessId); $selected.Add($row); $added=$true[39m
+[31m+     }[39m
+[31m+   }[39m
+[31m+ } while ($added)[39m
+[31m+ for ($i=$selected.Count-1; $i -ge 0; $i--) {[39m
+[31m+   $old=$selected[$i][39m
+[31m+   $current=Get-CimInstance Win32_Process -Filter ('ProcessId='+$old.ProcessId)[39m
+[31m+   if (-not $current) { continue }[39m
+[31m+   if ($current.CreationDate -ne $old.CreationDate) { throw 'Tree member PID identity changed' }[39m
+[31m+   & "$env:SystemRoot\System32\taskkill.exe" /PID $old.ProcessId /T /F | Out-Null[39m
+[31m+ }[39m
+[31m+ $remaining=@(Get-CimInstance Win32_Process)[39m
+[31m+ $survivors=@(foreach ($old in $selected) { if ($remaining | Where-Object { $_.ProcessId -eq $old.ProcessId -and $_.CreationDate -eq $old.CreationDate }) { $old.ProcessId } })[39m
+[31m+ if ($survivors.Count -gt 0) { Write-Output ($survivors -join ','); throw ('Tree member still alive: '+($survivors -join ',')) }[39m
+[31m+[39m
+
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m108:24[22m[39m
+    [90m106|[39m    [35mawait[39m [34mexpect[39m([34mkillTree[39m([34m4242[39m))[33m.[39mresolves[33m.[39m[34mtoContain[39m([32m"taskkill"[39m)[33m;[39m
+    [90m107|[39m    const retryScript = String((execFileMock.mock.calls[1]?.[1] as stri…
+    [90m108|[39m    [34mexpect[39m(retryScript)[33m.[39m[34mtoContain[39m([32m"@(4244,1339778498123)"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m109|[39m    [34mexpect[39m(retryScript)[33m.[39m[34mtoContain[39m([32m"PID reused"[39m)[33m;[39m
+    [90m110|[39m   }[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/kill-tree-retry.test.ts[2m > [22mkillTree Windows 树杀：单次失败重试一次，两次才报错[2m > [22m收尾检查前被超时杀：已尝试成员清单先于收尾写出，二跳仍拿到续杀种子
+[31m[1mAssertionError[22m: expected -1 to be greater than or equal to 0[39m
+[36m [2m❯[22m test/pao/kill-tree-retry.test.ts:[2m130:20[22m[39m
+    [90m128|[39m    [35mconst[39m emitIdx [33m=[39m firstScript[33m.[39m[34mindexOf[39m([32m"'{0}:{1}' -f $_.ProcessId"[39m)[33m;[39m
+    [90m129|[39m    const finalCheckIdx = firstScript.indexOf("$remaining=@(Get-CimInst…
+    [90m130|[39m    [34mexpect[39m(emitIdx)[33m.[39m[34mtoBeGreaterThanOrEqual[39m([34m0[39m)[33m;[39m
+    [90m   |[39m                    [31m^[39m
+    [90m131|[39m    [34mexpect[39m(emitIdx)[33m.[39m[34mtoBeLessThan[39m(finalCheckIdx)[33m;[39m
+    [90m132|[39m    const retryScript = String((execFileMock.mock.calls[1]?.[1] as stri…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 07:09:03
+[2m   Duration [22m 5.08s[2m (transform 143ms, setup 0ms, import 319ms, tests 4.50s, environment 0ms)[22m
+

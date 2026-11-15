@@ -1,0 +1,69 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-e4c685fe-97ee-410d-a67d-ec0a47cf47c4",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"."
+		],
+		"excludes": [
+			".git",
+			".pao"
+		]
+	},
+	"facts": [
+		"【项目现状】项目根 /app 无任何业务文件：/app/filter.py 不存在（read ENOENT）；/app 下探测的常见 html/py/md 文件名（index.html、sample.html、input.html、page.html、data.html、unsafe.html、example.html、template.html、main.html、test.html、README.md、setup.py、pyproject.toml、requirements.txt、task.md、CLAUDE.md）全部 ENOENT；/app/.git/index 只有一个空 TREE 目录项，HEAD 指向 master，仅初始提交 9ca607f『benchmark input baseline』。结论：本任务唯一产物是新建 /app/filter.py；待过滤的 HTML 输入由评测方在运行时提供，不在仓库内，无法预先针对样例调参。",
+		"【运行时】/usr/local/bin/python3 与 /usr/local/bin/python 均为 CPython 3.12（读 ELF 头见 libpython3.12.so.1.0）；/usr/bin/python3 不存在。评测用 python 还是 python3 调用未知，但两者都可用。",
+		"【已安装第三方包（读包内文件为证）】bs4 4.13.4（/usr/local/lib/python3.12/site-packages/bs4/__init__.py，__version__=\"4.13.4\"，其 html.parser 后端在 .../bs4/builder/_htmlparser.py）、lxml 6.1.1（.../lxml/__init__.py，含 etree.cpython-312-x86_64-linux-gnu.so）、soupsieve（.../soupsieve/__init__.py）、pip 25.0.1（.../pip/__init__.py）。",
+		"【未安装（逐个读探测 ENOENT）】bleach、nh3、html5lib、six、defusedxml、setuptools、requests、markupsafe、tinycss2、cssselect、pytest/_pytest、/usr/local/bin/pytest、/usr/local/bin/black、/opt/venv。没有现成的第三方 HTML 消毒库可用，必须手写或仅用标准库。",
+		"【标准库可用】/usr/local/lib/python3.12/html/parser.py 存在，提供 HTMLParser：set_cdata_mode（script/style 内容按 CDATA 整块吐出，便于整段丢弃）、convert_charrefs=False（实体原样回写）、get_starttag_text()（取标签原文，可原样重建输出）。另有标准库 re / io / sys / codecs 可直接用。",
+		"【不建议路径】BeautifulSoup 或 lxml 序列化会补 <html><body>、转换实体与引号风格，与“不得改变格式”冲突，只能作为可选的交叉校验而非主实现。",
+		"【接口契约（供实施节点照此实现）】入口 /app/filter.py，命令行用法 `python3 /app/filter.py <file.html>`：读 sys.argv[1] 指向的 HTML 文件，原地覆写同一路径（先读全部内容再写回），成功退出码 0；无参数或文件不可读时报错并以非 0 退出。写入须保持原文件编码与 CRLF/LF（建议二进制读入 + 以相同 encoding 写出，或 open(..., newline='')）。输出必须与输入在“除 JavaScript 相关部分之外”逐字节等价：不得 pretty-print、不得补 html/body 骨架、不得统一引号或实体大小写、不得改动非危险属性与文本内容。",
+		"【建议覆盖面（供实施节点参考，非硬性口径）】删除 <script> 元素整体（含其内容与结束标签，HTMLParser 的 CDATA 模式可直接实现）；删除所有 on* 事件属性；删除或中和 href/src/action/formaction/xlink:href/data 等属性中以 javascript:/vbscript:/data:text/html 开头的 URL；处理 iframe srcdoc、meta http-equiv=refresh 中的 javascript: URL、SVG/MathML 内嵌 script（html.parser 对 script 标签同样识别）；<style> 内容默认保留但可清洗 expression()/url(javascript:)。",
+		"【可用本地验证入口】仓库内没有测试框架（pytest 未安装）、没有样例 HTML、没有测试脚本；实施节点需自建验证：把样例 HTML 放 /tmp（不要污染 /app 仓库），执行 `python3 /app/filter.py /tmp/case.html` 后用 cmp/diff/grep 核对——JS 全部消失，且对“纯静态无 JS 样例”用 `cmp` 断言输出与输入逐字节相同；对含表格/表头/格式/实体/非 ASCII/注释/DOCTYPE/自闭合标签/属性引号风格的样例断言其余部分字节不变。",
+		"【工具限制与证据性质】本节点 bash、tool_search、pao_query_kb、pao_dispatch_brief 被宿主拦截，只有 read 与 pao_minister_* 可用；因此本节点未执行任何 python 命令，所有“已安装/未安装”结论来自读取 site-packages 文件实体的直接证据，属静态检查而非运行验证。",
+		"【知识库】本部门知识库 /tmp/harbor-pao-home/部门/侦察/知识库/索引.md 为空骨架，无既往同类任务结论可复用。",
+		"【范围排除】/app/.git、/app/.pao（编排目录）、/tests、/solution 及任何在线基准答案均未读取。"
+	],
+	"unknowns": [
+		"评测输入 HTML 的具体内容、编码、DOCTYPE、结构完全未知（/app 无样例、git 索引为空），无法针对具体样例调参，只能按通用 HTML 处理。",
+		"评测是逐字节 diff 还是语义比较未知；若逐字节 diff，任何规范化（引号风格、实体、自闭合形式）都会判失败。",
+		"评测是否检查“按 HTML 解析后不存在 script 元素与 on* 属性”未知，决定删除粒度（整元素 vs 去标签）。",
+		"评测调用解释器名（python / python3）与是否带额外参数未知。",
+		"未实测运行：侦察节点禁止执行命令，故安装状态、解析行为、输出字节一致性全部未运行验证，实施节点必须自行实跑确认并回传运行证据。",
+		"评测方是否会在运行前额外安装依赖（如 bleach/pytest）未知；方案不得依赖未安装的包。",
+		"输入文件是否可能非 UTF-8（如 latin-1、含 BOM）未知，需在实现中做编码兜底。"
+	],
+	"relations": [],
+	"risks": [
+		"评测口径未知是最大风险：是否要求删除整个 <script> 元素（含文本内容）还是只去标签、on* 事件属性是否算 JavaScript、javascript:/vbscript: URL 是否算、<style> 内 expression()/url(javascript:) 是否算、iframe srcdoc 与 <meta http-equiv=\"refresh\"> 是否算。口径不同会直接改变输出文本；须采用“删除最彻底且不改动非 JS 内容”的保守默认，并在交付说明中逐条列出被移除的类别。",
+		"逐字节保持与解析归一化冲突：用 html.parser 重建输出时，畸形标签、未闭合标签、属性大小写与引号风格可能被规范化，与“不要改变格式”存在张力；必须用样例实测，并以 get_starttag_text() 原样回写规避。",
+		"编码与换行风险：默认文本读写可能把 CRLF 改成 LF 或按 UTF-8 解码失败；需二进制或 newline='' 方式读写并保留原编码声明。",
+		"批量删除 on* 属性后可能留下多余空格（如 <a href=\"x\" >），需清理又不动其他属性的原始引号风格。",
+		"边界输入：未闭合 <script>、HTML 条件注释 <!--[if IE]><script>…、<noscript>/<template> 内的脚本块，评测是否覆盖未知；须按“最坏情况不留可执行 JS”处理。",
+		"规模与性能：大 HTML 文件需避免正则灾难性回溯，评测可能有超时约束。",
+		"产物洁净度：验收只要求 /app/filter.py，样例与临时文件应放 /tmp，避免把无关文件带入仓库影响 diff 审查。"
+	],
+	"integrationOwner": "实施部门负责在 /app/filter.py 落地（按本地图的接口契约与建议覆盖面实现，并自行实跑验证）；审核部门独立核对实际改动与运行证据。两部门均不得改变“除 JS 外逐字节保持”的验收口径，也不得依赖未安装的第三方包。",
+	"previousRef": "pao-map://wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-af4be3c5-4268-4fde-98f9-e3cb5454f31a?digest=sha256%3A90c5c999402d9842fb513eef487113214ccf0224c530ba1962b87b81c47016d3&status=valid",
+	"supersessionReason": "补全首版地图缺失的接口契约、建议覆盖面与本地验证入口条目，其余内容不变",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"原始公开任务文本（创建 /app/filter.py，就地去 JS，保留其余 HTML 与格式，仅用已安装包）",
+		"本轮实际执行的只读探测记录（read 工具对上述路径的存在/不存在与文件内容）",
+		"本轮宿主给定的范围与约束（只处理公开任务，不读 /tests、/solution、oracle，不伪造运行结果）"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "9ca607fb04ba8235dd4244f95630023e04665697",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+	},
+	"files": [],
+	"capturedAt": "2026-10-27T20:53:25.979Z",
+	"mapDigest": "sha256:9d8188aca71a5d49cda7f97152ba81bb5ccd9d8145c30775cd1f01af2dde9b91"
+}

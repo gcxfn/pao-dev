@@ -1,0 +1,81 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ × test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > stale 候选保留 failed 与 cursor，其他候选正常提交且 recovery 不自动重放 1785ms
+   → 等待 scheduler 收尾超时
+ × test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F06：A 会话退出后，B 会话的调度器捞起库内 pending job 并按 A 的身份续作 102ms
+   → expected 'd:\ai\workspace\pao-dev\pao' to be 'proj-a' // Object.is equality
+ ✓ test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F07：连续失败按未提交批次计——成功批次清零 consecutive_failures，临时失败可恢复 91ms
+ ✓ test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F13：批内中间来源读取失败 → 游标停在失败批前，恢复后不重跑已提交候选 142ms
+ × test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F05：同来源候选不复活已停用记忆；全新来源同结论可正常新建 1724ms
+   → 等待 scheduler 收尾超时
+ ✓ test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F03：本进程前台忙（agent_start 未 settled）时 drain 不新领后台 job 134ms
+ × test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/I01 反例：needs-reevaluation 后无新来源，settled 不反复重跑 1690ms
+   → 等待 scheduler 收尾超时
+ ✓ test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/I02：同 home 同进程两调度器共享前台忙——A 忙时 B 的 settled 不领 183ms
+ ✓ test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/I03：本侧 abort 释放为 pending 不耗重试额度，settled 后续跑成功；真失败仍计数 181ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > stale 候选保留 failed 与 cursor，其他候选正常提交且 recovery 不自动重放
+Error: 等待 scheduler 收尾超时
+ ❯ waitFor test/pao/memory-extraction-scheduler.test.ts:64:8
+     62|   await new Promise((resolve) => setTimeout(resolve, 10));
+     63|  }
+     64|  throw new Error("等待 scheduler 收尾超时");
+       |        ^
+     65| }
+     66|
+ ❯ test/pao/memory-extraction-scheduler.test.ts:203:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F06：A 会话退出后，B 会话的调度器捞起库内 pending job 并按 A 的身份续作
+AssertionError: expected 'd:\ai\workspace\pao-dev\pao' to be 'proj-a' // Object.is equality
+
+Expected: "proj-a"
+Received: "d:\ai\workspace\pao-dev\pao"
+
+ ❯ test/pao/memory-extraction-scheduler.test.ts:392:28
+    390|    expect(memory).toBeDefined();
+    391|    const scope = JSON.parse(memory!.scope_json) as { projectId: string…
+    392|    expect(scope.projectId).toBe("proj-a");
+       |                            ^
+    393|    expect(scope.sessionId).toBe("sess-a");
+    394|   } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/F05：同来源候选不复活已停用记忆；全新来源同结论可正常新建
+Error: 等待 scheduler 收尾超时
+ ❯ waitFor test/pao/memory-extraction-scheduler.test.ts:64:8
+     62|   await new Promise((resolve) => setTimeout(resolve, 10));
+     63|  }
+     64|  throw new Error("等待 scheduler 收尾超时");
+       |        ^
+     65| }
+     66|
+ ❯ test/pao/memory-extraction-scheduler.test.ts:564:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/pao/memory-extraction-scheduler.test.ts > extraction scheduler > O03/I01 反例：needs-reevaluation 后无新来源，settled 不反复重跑
+Error: 等待 scheduler 收尾超时
+ ❯ waitFor test/pao/memory-extraction-scheduler.test.ts:64:8
+     62|   await new Promise((resolve) => setTimeout(resolve, 10));
+     63|  }
+     64|  throw new Error("等待 scheduler 收尾超时");
+       |        ^
+     65| }
+     66|
+ ❯ test/pao/memory-extraction-scheduler.test.ts:718:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  21:42:43
+   Duration  10.89s (transform 3.65s, setup 0ms, import 4.65s, tests 6.03s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o06-recheck-scheduler-vitest.json

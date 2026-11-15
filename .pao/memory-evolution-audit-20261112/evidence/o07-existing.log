@@ -1,0 +1,45 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 保留身份/父链/工具配对，清理源、动态注入、memory 结果、compaction 与 branch summary 85ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 按真实父链清理来源回复及 archive，保留同一会话的无关用户消息 125ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 从可信会话登记清理跨会话召回与旧修订派生正文，检索未注入不扩展范围 202ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 已登记会话 JSONL 删除后仍从受管归档清理无 usage 的跨会话召回 97ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 共享来源 retain 后另一记忆可检索，目标记忆被排除且同来源重提炼被拒绝 59ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 回复作为 keeper 唯一来源时 retain 保留正文，显式递归时纳入并清理 236ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 无目标用户来源的 recall 回复按同一策略保留或递归纳入 323ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 协调器安全关闭真实活动 owner 后从 pending 续作完成，且只重载一次 83ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 活动 owner 时真实会话保持 pending，关库重开 read/resume 后完成 110ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 数据库清理前会话重扫失败时保持 pending 且不清库 83ms
+ ✓ test/pao/memory-deletion.test.ts > 真实会话与归档彻底删除 > 修订快照不符时持久化为 failed 且不清理数据库 75ms
+ ✓ test/pao/memory-deletion.test.ts > 归档专属来源与升级兼容 > page_operation 与回执仅重写归档，不虚构聊天会话 74ms
+ ✓ test/pao/memory-deletion.test.ts > 归档专属来源与升级兼容 > 归档专属来源缺少段定位时保持 pending，且不产生虚构会话 83ms
+ ✓ test/pao/memory-deletion.test.ts > 归档专属来源与升级兼容 > 目标附件的路径未登记在受管目录时保留现场并保持 pending 66ms
+ ✓ test/pao/memory-deletion.test.ts > 归档专属来源与升级兼容 > 旧库缺新映射/作业表时 readonly 预览正常给 unknown，不偷偷建表 51ms
+ ✓ test/pao/memory-deletion.test.ts > CLI 工具入口 > 注册工具写→关重开读原文→删除定位真实 assistant entry 与 JSONL 117ms
+ ✓ test/pao/memory-deletion.test.ts > 共享来源显式递归 > include-referencing-memories 精确纳入引用记忆并按实际范围重写 103ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 备份生成 manifest+快照+段副本；目录非空拒绝覆盖 130ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 恢复到新目录：段回位、来源可回读、exclusion 生效清派生索引 85ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 传 liveHome：备份后新 exclusion 重放进恢复库并清派生索引 117ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 独立旧备份不传 liveHome：只留备份自带 exclusion，limitation 如实声明 103ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 目标 memory/ 非空拒绝覆盖；manifest/快照缺失如实失败 68ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > parseArchiveJobScope 只认合法 backupDir 1ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 异地恢复（旧 home 不可读）后 readSourceEvents 从新 home 回读段 93ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 受管成果恢复后 resolveArtifactVersion 从新 home 读回确切字节 113ms
+ ✓ test/pao/memory-backup.test.ts > S7-09 一致性备份/恢复 > 带 liveHome 删除后恢复：getMemory(includeHistory) 不再返回已删正文 121ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > rebuild：命令入口触发 rebuildMemoryIndex，FTS 行重建可检索 52ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > rebuild --project：范围过滤只清本范围 FTS，范围外不动（F06 链验证） 47ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > backup：登记 archive 作业（不直接跑备份），enqueue 收到归档参数 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > backup：无维护 enqueue 时如实告警，不假装登记 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > restore：备份目录恢复到独立目标 home，当前现场不动 58ms
+ ✓ test/pao/memory-maintenance-command.test.ts > /pao memory 管理子命令（F05） > restore 参数缺目标目录：用法告警，不调用恢复 1ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > projectId 筛选：只清范围内 FTS 行，范围外保留 39ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > kind 筛选：只清该 kind 范围内 FTS，其他 kind 不动 40ms
+ ✓ test/pao/memory-maintenance-command.test.ts > rebuildMemoryIndex 范围清除（F06） > 无筛选 + dropExisting：全清后重建（既有行为保持） 38ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  23:49:48
+   Duration  12.73s (transform 5.61s, setup 0ms, import 9.18s, tests 3.09s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o07-existing-vitest.json

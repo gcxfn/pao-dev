@@ -1,0 +1,1840 @@
+{
+  "schemaVersion": 1,
+  "mode": "offline_validation",
+  "networkRequests": 0,
+  "expectedDataPolicy": "expected 仅用于运行后语义比对和逻辑别名映射；禁止写入记忆数据库或替代模型输出",
+  "actualPath": [
+    "createAgentSession + DefaultResourceLoader + paoExtension",
+    "runtime capture hooks",
+    "extraction scheduler",
+    "modelRegistry.find/streamSimple",
+    "commitExtractionCandidates",
+    "MemoryService.searchMemory",
+    "resident injection/use accounting",
+    "readMemorySource"
+  ],
+  "evidencePolicy": {
+    "requiredFields": [
+      "frozenInput",
+      "actualSessionId",
+      "requestId",
+      "rawModelOutput",
+      "sourceRefs",
+      "actualSearchHits",
+      "actualInjection",
+      "actualCitation",
+      "latencyMs",
+      "providerUsageOrUnknown",
+      "vendorCostOrUnknown"
+    ],
+    "failureAndCancellationRetained": true,
+    "unknownRule": "接口未暴露或运行器未采集时记 unknown；不得把已丢弃字段记成供应商未提供",
+    "credentialRule": "只记录配置项名称；不输出或抄录 auth.json、API key、token 值",
+    "piOfflineIsPass": false
+  },
+  "realGate": {
+    "explicitEnable": [
+      "--mode real",
+      "--allow-real"
+    ],
+    "requiresS417Manifest": true,
+    "piOfflineIsPass": false,
+    "currentRunnerStatus": "incomplete",
+    "blockedBy": [
+      "I04 runtime ordering hook",
+      "I08 host deletion coordinator"
+    ]
+  },
+  "configurationNames": [
+    "PAO_HOME",
+    "PAO_CODING_AGENT_DIR",
+    "PAO_CODING_AGENT_SESSION_DIR",
+    "PAO_WORKTREE_STATE_ROOT",
+    "auth.json",
+    "models.json",
+    "models-store.json",
+    "S4_EXTRACTION_TIER",
+    "EMBED_BASE_URL",
+    "EMBED_API_KEY",
+    "EMBED_MODEL",
+    "PAO_OUTBOUND_CONFIG",
+    "S4_17_MANIFEST",
+    "S4_RUN_ROOT"
+  ],
+  "scenarios": [
+    {
+      "id": "I01",
+      "description": "会话A否决常驻服务，会话B换措辞提同方案",
+      "logicalMemoryAliases": [
+        "mem-sqlite",
+        "mem-postgres-rejected"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-a-001",
+        "src-sess-b-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-a",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "内置记忆存储用什么方案？",
+              "timestamp": "2026-11-08T10:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "候选方案：SQLite（本地文件、零依赖）或 PostgreSQL（功能全但需外部服务）。",
+              "timestamp": "2026-11-08T10:00:05Z"
+            }
+          ],
+          "prompt": "不要常驻服务，就用 SQLite。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-b",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "记忆存储选什么？要轻量的。",
+              "timestamp": "2026-11-08T11:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "建议用 SQLite，本地文件、零外部依赖，符合不要常驻服务的约束。",
+              "timestamp": "2026-11-08T11:00:05Z"
+            }
+          ],
+          "prompt": "好，就这个。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-a",
+          "query": "存储方案",
+          "mustContain": [
+            "mem-sqlite"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-b",
+          "query": "存储方案",
+          "mustContain": [
+            "mem-sqlite"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-b",
+          "query": "PostgreSQL",
+          "mustContain": [],
+          "mustNotContain": [
+            "mem-postgres-active"
+          ],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-01",
+              "scenarioId": "I01",
+              "query": "轻量内嵌数据库存储",
+              "expectedAlias": "mem-sqlite",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-02",
+              "scenarioId": "I01",
+              "query": "需要后台服务的关系数据库",
+              "expectedAlias": "mem-postgres-rejected",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        },
+        {
+          "type": "rationale_policy",
+          "originalFixtureRationale": "absent",
+          "policy": "source_supported_only",
+          "forbiddenAddition": "单机维护成本"
+        }
+      ]
+    },
+    {
+      "id": "I02",
+      "description": "「也许先用方案A」未定案",
+      "logicalMemoryAliases": [
+        "mem-embed-openai"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-c-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-c",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "嵌入端点选哪个？OpenAI 兼容的还是自建？",
+              "timestamp": "2026-11-08T12:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "OpenAI 兼容端点复用现有 EMBED_* 配置；自建需要额外部署。",
+              "timestamp": "2026-11-08T12:00:05Z"
+            }
+          ],
+          "prompt": "也许先用 OpenAI 兼容的吧，后面再说。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-c",
+          "query": "嵌入端点",
+          "mustContain": [
+            "mem-embed-openai"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-03",
+              "scenarioId": "I02",
+              "query": "兼容 OpenAI 的文本向量服务",
+              "expectedAlias": "mem-embed-openai",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-04",
+              "scenarioId": "I02",
+              "query": "尚未拍板的嵌入方案",
+              "expectedAlias": "mem-embed-openai",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    },
+    {
+      "id": "I03",
+      "description": "理由未说，模型推测",
+      "logicalMemoryAliases": [
+        "mem-no-eviction"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-d-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-d",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "记忆保留期限定多久？",
+              "timestamp": "2026-11-08T13:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "常见做法：永久保留、按时间衰减、或按空间淘汰。",
+              "timestamp": "2026-11-08T13:00:05Z"
+            }
+          ],
+          "prompt": "先不定淘汰策略。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-d",
+          "query": "淘汰策略",
+          "mustContain": [
+            "mem-no-eviction"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-05",
+              "scenarioId": "I03",
+              "query": "旧记忆不会被自动清理",
+              "expectedAlias": "mem-no-eviction",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-06",
+              "scenarioId": "I03",
+              "query": "淘汰机制以后再说",
+              "expectedAlias": "mem-no-eviction",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    },
+    {
+      "id": "I04",
+      "description": "页面纠正后旧提炼任务返回",
+      "logicalMemoryAliases": [
+        "mem-recall-top3"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-e-001",
+        "src-sess-e-page-001"
+      ],
+      "realStatus": "incomplete",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-e",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "自动召回每轮取几条？",
+              "timestamp": "2026-11-08T14:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "目前缺省 top3。",
+              "timestamp": "2026-11-08T14:00:05Z"
+            }
+          ],
+          "prompt": "改成 top5。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-e-page",
+          "seedMessages": [],
+          "prompt": "[页面操作] 用户在记忆页把「自动召回每轮 top5」纠正为「自动召回每轮 top3」",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-e-extraction",
+          "seedMessages": [
+            {
+              "role": "assistant",
+              "content": "[后台提炼] 旧提炼任务返回：「自动召回每轮 top5」（基于 sess-e entry-003）",
+              "timestamp": "2026-11-08T14:10:00Z"
+            }
+          ],
+          "status": "incomplete",
+          "reason": "冻结会话没有可发起的用户输入；需专用 runtime 动作适配后才能真实执行",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-e",
+          "query": "召回条数",
+          "mustContain": [
+            "mem-recall-top5"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-e-page",
+          "query": "召回条数",
+          "mustContain": [
+            "mem-recall-top3"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-e-extraction",
+          "query": "召回条数",
+          "mustContain": [
+            "mem-recall-top3"
+          ],
+          "mustNotContain": [
+            "mem-recall-top5"
+          ],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-07",
+              "scenarioId": "I04",
+              "query": "最终每轮自动召回的条数",
+              "expectedAlias": "mem-recall-top3",
+              "mustNotAlias": [
+                "mem-recall-top5"
+              ],
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-08",
+              "scenarioId": "I04",
+              "query": "最初设定每轮取出五条",
+              "expectedAlias": "mem-recall-top5",
+              "mustNotAlias": [
+                "mem-recall-top3"
+              ],
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        },
+        {
+          "type": "runtime_ordering",
+          "status": "incomplete",
+          "requiredHook": "stale_extraction_after_page_correction",
+          "observedEvents": [
+            "agent_start",
+            "before_agent_start",
+            "session_before_compact",
+            "session_compact",
+            "session_compact_failed",
+            "turn_end",
+            "agent_settled",
+            "session_shutdown"
+          ],
+          "reason": "公开 SDK 可观察实际事件，但没有确定的公开闸口来控制旧提炼结果在页面纠正后返回"
+        }
+      ]
+    },
+    {
+      "id": "I05",
+      "description": "条件改变再讨论被否方案",
+      "logicalMemoryAliases": [
+        "mem-local-cosine",
+        "mem-pgvector-rejected",
+        "mem-pgvector-reeval"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-f-001",
+        "src-sess-f2-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-f",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "向量数据库用什么？",
+              "timestamp": "2026-11-08T15:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "方案：pgvector（PostgreSQL 扩展）或纯本地暴力余弦。",
+              "timestamp": "2026-11-08T15:00:05Z"
+            }
+          ],
+          "prompt": "不用 pgvector，太重了。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-f2",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "数据量到十万级了，向量检索还够用吗？",
+              "timestamp": "2026-11-08T16:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "十万级暴力余弦可能慢，pgvector 有索引优势。",
+              "timestamp": "2026-11-08T16:00:05Z"
+            }
+          ],
+          "prompt": "那重新考虑 pgvector。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-f",
+          "query": "向量数据库",
+          "mustContain": [
+            "mem-local-cosine"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-f2",
+          "query": "向量数据库",
+          "mustContain": [
+            "mem-local-cosine",
+            "mem-pgvector-rejected"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-09",
+              "scenarioId": "I05",
+              "query": "所有向量都在本地直接比较",
+              "expectedAlias": "mem-local-cosine",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-10",
+              "scenarioId": "I05",
+              "query": "十万条数据以后再讨论 pgvector",
+              "expectedAlias": "mem-pgvector-reeval",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-11",
+              "scenarioId": "I05",
+              "query": "PostgreSQL 向量扩展此前因太重被否",
+              "expectedAlias": "mem-pgvector-rejected",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    },
+    {
+      "id": "I06",
+      "description": "同名项目和worktree相近词语",
+      "logicalMemoryAliases": [
+        "mem-pao-dev-sqlite"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-g-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-g",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "pao 项目的记忆存储定了吗？",
+              "timestamp": "2026-11-08T17:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。",
+              "timestamp": "2026-11-08T17:00:05Z"
+            }
+          ],
+          "prompt": "确认，pao-dev 用 SQLite。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-g-worktree",
+          "seedMessages": [],
+          "prompt": "worktree 分支也要用 SQLite 吗？",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-g",
+          "query": "pao 记忆存储",
+          "mustContain": [
+            "mem-pao-dev-sqlite"
+          ],
+          "mustNotContain": [
+            "mem-pao-home-sqlite"
+          ],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-g-worktree",
+          "query": "记忆存储",
+          "mustContain": [
+            "mem-pao-dev-sqlite"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-12",
+              "scenarioId": "I06",
+              "query": "pao-dev 项目最终选择的数据库",
+              "expectedAlias": "mem-pao-dev-sqlite",
+              "mustNotAlias": [
+                "mem-pao-home-sqlite"
+              ],
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-13",
+              "scenarioId": "I06",
+              "query": "当前工作树沿用的 SQLite 决定",
+              "expectedAlias": "mem-pao-dev-sqlite",
+              "mustNotAlias": [
+                "mem-pao-home-sqlite"
+              ],
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    },
+    {
+      "id": "I07",
+      "description": "同一记忆压缩后恢复",
+      "logicalMemoryAliases": [
+        "mem-no-eviction"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-h-001"
+      ],
+      "realStatus": "incomplete",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-h",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "记忆保留期限定多久？",
+              "timestamp": "2026-11-08T18:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "先不定淘汰策略。",
+              "timestamp": "2026-11-08T18:00:05Z"
+            },
+            {
+              "role": "user",
+              "content": "嗯，先这样。",
+              "timestamp": "2026-11-08T18:01:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "[压缩交接] 已压缩：「记忆不自动淘汰（未定）」等 3 条决定",
+              "timestamp": "2026-11-08T18:30:00Z"
+            }
+          ],
+          "prompt": "刚才说的淘汰策略，确认一下。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-h",
+          "query": "淘汰策略",
+          "mustContain": [
+            "mem-no-eviction"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-14",
+              "scenarioId": "I07",
+              "query": "稍后仍不自动删除旧内容",
+              "expectedAlias": "mem-no-eviction",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-15",
+              "scenarioId": "I07",
+              "query": "压缩之后被再次取回的淘汰决定",
+              "expectedAlias": "mem-no-eviction",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        },
+        {
+          "type": "runtime_ordering",
+          "status": "incomplete",
+          "requiredHook": "compaction_reinjection_sequence",
+          "observedEvents": [
+            "agent_start",
+            "before_agent_start",
+            "session_before_compact",
+            "session_compact",
+            "session_compact_failed",
+            "turn_end",
+            "agent_settled",
+            "session_shutdown"
+          ],
+          "actionSequence": [
+            "actual_session_prompt",
+            "actual_session_compact",
+            "actual_session_prompt_after_compaction",
+            "assert_single_visible_injection_and_revision_restore"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I08",
+      "description": "停用→搜索→恢复→彻底删除",
+      "logicalMemoryAliases": [],
+      "logicalSourceAliases": [
+        "src-sess-i-001"
+      ],
+      "realStatus": "incomplete",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-i",
+          "seedMessages": [],
+          "promptSequence": [
+            {
+              "messageIndex": 0,
+              "content": "嵌入模型用 text-embedding-3-small。"
+            },
+            {
+              "messageIndex": 2,
+              "content": "先不用这个决定了。"
+            }
+          ],
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-i2",
+          "seedMessages": [],
+          "promptSequence": [
+            {
+              "messageIndex": 0,
+              "content": "恢复刚才的嵌入模型决定。"
+            },
+            {
+              "messageIndex": 2,
+              "content": "不对，彻底删掉这条。"
+            }
+          ],
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-i",
+          "query": "嵌入模型",
+          "mustContain": [],
+          "mustNotContain": [
+            "mem-embed-model"
+          ],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-i2",
+          "query": "嵌入模型",
+          "mustContain": [],
+          "mustNotContain": [
+            "mem-embed-model"
+          ],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "verify_deleted_source_handles",
+          "allowedMappingEvidence": [
+            "source_exclusions",
+            "deletion_operation"
+          ],
+          "activeSourcesRowRequired": false,
+          "rawContentRequired": false,
+          "record": [
+            "logicalSourceAlias",
+            "actualSourceId",
+            "sessionId",
+            "entryId",
+            "operationId"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        },
+        {
+          "type": "permanent_deletion_contract",
+          "status": "incomplete",
+          "adapter": {
+            "name": "DeletionContractAdapter",
+            "implemented": false,
+            "serviceEntrypoints": [
+              "MemoryService.readDeletionOperation({ operationId })",
+              "MemoryService.resumeDeletion({ operationId })"
+            ],
+            "hostCoordinatorEntrypoints": [
+              "OpenMemoryServiceOptions.deletionCoordinator.prepare(session)",
+              "OpenMemoryServiceOptions.deletionCoordinator.close(session)",
+              "OpenMemoryServiceOptions.deletionCoordinator.reload(session)"
+            ]
+          },
+          "requiredActions": [
+            "actual_session_stop",
+            "actual_search_after_stop",
+            "actual_session_restore",
+            "actual_session_permanent_delete",
+            "readDeletionOperation",
+            "resumeDeletion_if_pending"
+          ],
+          "sourceInterpretation": {
+            "field": "expectedFinalState.sources",
+            "plannedMeaning": "保留 sourceId/sessionId/entryId 等定位与排除记录",
+            "rawBodyRetained": false,
+            "activeSourcesRowRequired": false
+          },
+          "requiredAssertions": [
+            "operation.status=complete 且 pendingObjects 为空",
+            "当前与历史记忆、FTS/vector/usage/source-link 不残留目标正文",
+            "受管会话文件、归档段和派生索引中目标正文均不存在",
+            "source 逻辑别名可由 source_exclusions 或 deletion_operation 身份映射，不要求活跃 sources 行",
+            "删除后的来源重放不重新产生记忆，提交结果必须为 source_excluded"
+          ],
+          "explicitlyNotAsserted": [
+            "不要求 sources 表保留活跃行",
+            "不要求保留被彻底删除的正文",
+            "不修改原 I08 冻结 JSON"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I09",
+      "description": "关闭重启后回读原文",
+      "logicalMemoryAliases": [
+        "mem-wal"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-j-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-j",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "记忆库的并发策略？",
+              "timestamp": "2026-11-08T20:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "WAL 模式：单写多读，写不阻塞读。",
+              "timestamp": "2026-11-08T20:00:05Z"
+            }
+          ],
+          "prompt": "就用 WAL。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-j-restart",
+          "seedMessages": [],
+          "prompt": "刚才定的并发策略是什么？",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-j",
+          "query": "并发策略",
+          "mustContain": [
+            "mem-wal"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-j-restart",
+          "query": "并发策略",
+          "mustContain": [
+            "mem-wal"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-j-restart",
+          "query": "readMemorySource src-sess-j-001",
+          "mustContain": [
+            "就用 WAL"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-16",
+              "scenarioId": "I09",
+              "query": "数据库并发写入采用预写日志",
+              "expectedAlias": "mem-wal",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-17",
+              "scenarioId": "I09",
+              "query": "重启后仍可查到的 WAL 配置",
+              "expectedAlias": "mem-wal",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "description": "嵌入端点不可用时关键词查",
+      "logicalMemoryAliases": [
+        "mem-builtin-sqlite"
+      ],
+      "logicalSourceAliases": [
+        "src-sess-k-001"
+      ],
+      "realStatus": "planned",
+      "actions": [
+        {
+          "type": "replay_frozen_session",
+          "logicalSessionId": "sess-k",
+          "seedMessages": [
+            {
+              "role": "user",
+              "content": "记忆供应商选哪个？",
+              "timestamp": "2026-11-08T21:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。",
+              "timestamp": "2026-11-08T21:00:05Z"
+            }
+          ],
+          "prompt": "用内置 SQLite，不依赖外部服务。",
+          "status": "planned",
+          "waitForExtraction": {
+            "type": "poll_persistent_extraction_jobs",
+            "terminalStates": [
+              "done"
+            ],
+            "failureStates": [
+              "failed",
+              "cancelled"
+            ],
+            "skipIsPass": false
+          },
+          "record": {
+            "input": [
+              "logicalSessionId",
+              "actualSessionId",
+              "seedEntries",
+              "prompt"
+            ],
+            "model": [
+              "requestId",
+              "responseId",
+              "rawOutput",
+              "usage",
+              "cost",
+              "latencyMs"
+            ],
+            "sourceRefs": [
+              "sourceId",
+              "sessionId",
+              "entryId",
+              "eventType"
+            ],
+            "failureOrCancellation": true
+          }
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-k",
+          "query": "记忆供应商",
+          "mustContain": [
+            "mem-builtin-sqlite"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "actual_resident_recall_probe",
+          "logicalSessionId": "sess-k",
+          "query": "sqlite 记忆",
+          "mustContain": [
+            "mem-builtin-sqlite"
+          ],
+          "mustNotContain": [],
+          "record": [
+            "search",
+            "inject",
+            "used",
+            "requestId",
+            "latency"
+          ]
+        },
+        {
+          "type": "read_all_observed_sources",
+          "record": [
+            "sourceId",
+            "sessionId",
+            "entryId",
+            "eventType",
+            "content"
+          ]
+        },
+        {
+          "type": "establish_logical_alias_map",
+          "memoryRule": "按实际 memory rows 与 expected 语义比对建立；不通过固定 ID、不直接 createMemory",
+          "sourceRule": "按实际来源身份和冻结会话顺序建立；删除场景只接受 source_exclusions/deletion_operation 身份"
+        },
+        {
+          "type": "semantic_synonym_quality",
+          "queries": [
+            {
+              "id": "syn-18",
+              "scenarioId": "I10",
+              "query": "完全内置的记忆后端",
+              "expectedAlias": "mem-builtin-sqlite",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-19",
+              "scenarioId": "I10",
+              "query": "没有外部依赖时关键词仍能命中的存储",
+              "expectedAlias": "mem-builtin-sqlite",
+              "status": "not_run_offline"
+            },
+            {
+              "id": "syn-20",
+              "scenarioId": "I10",
+              "query": "向量服务不可用时改走本地文本检索",
+              "expectedAlias": "mem-builtin-sqlite",
+              "status": "not_run_offline"
+            }
+          ],
+          "offlineStatus": "not_run_offline",
+          "separateFromMechanicalPerformance": true
+        }
+      ]
+    }
+  ]
+}

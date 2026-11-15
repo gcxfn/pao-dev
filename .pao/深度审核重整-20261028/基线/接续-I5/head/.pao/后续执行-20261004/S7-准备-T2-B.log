@@ -1,0 +1,11 @@
+Preparing worktree (detached HEAD 608261f91)
+HEAD is now at 608261f91 B档监督落地+派卡非阻塞+worker回执化流式落盘:①pao_派单受理即返回(非阻塞)——认领/基线/名额/写锁/回执全在后台fail-closed链,完成/被拒/失败以「pao派卡通知」段消费式注入+toast;护栏拒绝(PaoWorkerError无效参数:名额/双跑)与真失败分开口径[派卡被拒]/[派卡失败];②静默提醒——保温.json「worker静默分钟」缺省30/显式0关/坏值回落30,判据=now−最近输出时间(stdout/stderr逐chunk打点registry.markOutput),每静默期一弹、新输出重臂再静默才重提,提醒带live输出路径+尾5行+裁决指引(继续等或pao_终止卡);③pao_终止卡——复用runner.terminate(先标记被上级终止再走cancel同链:树杀→StopProof),等在途链收敛放锁(先停后放锁),回执核对用卡面Receipt.尝试号口径防双落污染用量,直连场景补owner侧取消回执;④流式落盘——live.jsonl/live.stderr.log逐chunk追加(半路被杀live里已有钱),正本结算flag wx不变,正本落盘失败回执改引live兜底+无live的成功降级失败记瞬时故障;⑤机械派发超时2h→24h缺省(静默叫人是主判决,超时只兜无人应答);⑥死代码countAliveByDept/reservedDispatchSlot取代)/runWorker/stopAll便捷绑定/isPaoWorkerError删;测试:worker-dispatch-background 9例(静默纯函数/提醒器伪时钟手驱/终止卡真子进程正路径+无运行miss/非阻塞通知契约)+worker-stream流式钉;dispatch/dispatch-guards/blackboard/host-inventory/worker-tools五套按非阻塞契约迁移(等后台+通知断言)|全套1133/1133绿+tsc净+build过(9.1MiB)|--no-verify:上游packages/ai两错非本批
+{
+  "id": "T2-B",
+  "baseline": "608261f9122d5e24bddda1d959ff5b59c334fe22",
+  "destination": "D:\\AI\\workspace\\临时文件夹\\PAO-对照验收-20261004\\T2-B",
+  "dependencies": "D:\\AI\\workspace\\pao-dev\\PAO\\node_modules",
+  "lock": "C64765CE70820091F74B50942D444500910841A1FFD99F724249B552F3BF6DE3",
+  "status": "准备通过，尚未执行真实任务",
+  "time": "2026-10-04T02:09:55.016Z"
+}

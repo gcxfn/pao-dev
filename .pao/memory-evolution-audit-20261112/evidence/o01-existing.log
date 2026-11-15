@@ -1,0 +1,63 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-05：confirmed 决定落库，字段/来源/修订号正确
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-05：「可以考虑」落 tentative 不变成 confirmed
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-07：同来源同结论重放 → duplicate 复用已有 ID 不新建
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-06：同结论异条件 → 旧记忆标 needsReDiscussion 不新建
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-07：相反结论各入库并记 related
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-11：commitment 候选落 commitmentStatus=open，不产生执行
+ ↓ test/pao/memory-extraction.test.ts > commitExtractionCandidates > S2-13：批内同 kind+同归一结论 → duplicate_in_batch
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > 合法候选经校验通过，附带 spanLocations
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > 提炼请求覆盖来源归属、互斥候选、重议与管理操作边界
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > 提炼请求要求同批承诺合并确认回声并保留实质新承诺
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > S2-04：quotedSpan 挂到错误来源时仍严格拒绝
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > 互斥二选一旦明确排除到唯一项，所选项与否决项经提炼提交各保留原状态
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > S2-04：虚构 sourceId 的候选进 rejected 不提交
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > S2-04：confirmed + model_inference 被拒
+ ↓ test/pao/memory-extraction.test.ts > requestExtraction > 解析失败返回 stage=parse 不二次请求
+ ✓ test/pao/memory-extraction.test.ts > requestExtraction > O01：缺预算配置 → 0 次请求，failure 含预算门原因 11ms
+ ✓ test/pao/memory-extraction.test.ts > requestExtraction > O01：外发未授权 → 0 次请求且不占预算 14ms
+ ✓ test/pao/memory-extraction.test.ts > requestExtraction > O01：授权+预算齐 → 请求 1 次、预留/结算判据含 attemptKey 21ms
+ ✓ test/pao/memory-extraction.test.ts > requestExtraction > O01：streamSimple 抛异常 → failure custom entry + settle unknown 19ms
+ ✓ test/pao/memory-extraction.test.ts > requestExtraction > O01：日累计 每日上限=0.06 两次 0.05 → 第二次额度不足 19ms
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > 写入→settled 嵌入→同义查询→纠正失效→许可现读→重启账本可读
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > agent_start 取消在途嵌入并持久记录失败与未知成本
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > 不同 S2 job 使用独立账本，重开后仍各归其位
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > 注册服务统一现读许可：未授权零网络、词法可用、撤销立即生效
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > 桌面列表从可信 projectId 路径映射外发许可项目名
+ ↓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > 待嵌入队列在发送前排除已撤回来源的正文
+ ✓ test/pao/memory-runtime-embedding.test.ts > builtin memory runtime embedding > O01：允许嵌入缺省/false → 预算门拒，0 网络请求；true → 正常嵌入 399ms
+ ↓ test/pao/memory-embeddings.test.ts > 编解码 > encodeVector/decodeVector 往返一致；维度不符返回 undefined
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > 同 model 同 revision 不重复请求（已有向量跳过）
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > 维度不同不混算：readMemoryVectors 只取同 dimension
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > 返回数量不符 → 抛错不写库
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > 断点恢复：第一批写入后第二批失败，重跑只嵌剩余
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > HTTP 等待期间删除/停用/纠正后不提交旧响应
+ ↓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > 记账：批次 attempt/result 落账，未知 usage 与 cost 明确标 unknown
+ ✓ test/pao/memory-embeddings.test.ts > embedMemories 增量嵌入 > O01：result/failure 各落一条 memory_embedding usage entry（零 token 标用量未返回） 47ms
+ ↓ test/pao/memory-embeddings.test.ts > readMemoryVector 单条 > 按 (memoryId,revision,model) 取向量
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > 已知用量按 input/output/cacheRead/cacheWrite 合计；requestId 去重
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > cacheRead>0 按真实字段计命中缓存；不以前缀相同推算
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > totalTokens=0 记 unknownCount，不折算 0
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > 失败/取消后已发生费用仍计入（totalTokens>0 即按已知）
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > cost 未返回记 unknown（token 有但价格项缺 → unknown 桶，不伪造已知）
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > memory_embedding 归一 kind=embed；零 token 条目进 unknown 桶
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > sourceSessionId / taskId 过滤
+ ↓ test/pao/memory-usage-aggregation.test.ts > readMemoryUsage > ledger 目录缺失返回空聚合；坏目录跳过不炸
+ ↓ test/pao/memory-context-usage.test.ts > estimateContextUsage > system 消息拆 system_prompt 与 tool_definitions，单段不重复计
+ ↓ test/pao/memory-context-usage.test.ts > estimateContextUsage > role=custom 且 customType=pao-* 归 memory；普通 custom 归 other
+ ↓ test/pao/memory-context-usage.test.ts > estimateContextUsage > toolResult 归 tool_results；附件路径元数据随 conversation 计
+ ↓ test/pao/memory-context-usage.test.ts > estimateContextUsage > 多模态块标 unestimated，不计入 estimatedTotal 假装完整
+ ↓ test/pao/memory-context-usage.test.ts > estimateContextUsage > taskId 仅 scope 可解析时记录；无卡任务缺省
+ ↓ test/pao/memory-context-usage.test.ts > registerContextUsage > context_with_system 记账 → before_provider_request 落 custom entry
+ ↓ test/pao/memory-context-usage.test.ts > registerContextUsage > signal 已 abort 时不落快照
+ ↓ test/pao/memory-context-usage.test.ts > registerContextUsage > agent_settled 清空待落快照，下一轮重新采样
+ ✓ test/pao/memory-context-usage.test.ts > registerContextUsage > O01：context-usage 快照与 usage.ts inject 共享 requestId；两轮不同 7ms
+
+ Test Files  4 passed | 1 skipped (5)
+      Tests  8 passed | 45 skipped (53)
+   Start at  20:51:13
+   Duration  5.22s (transform 4.61s, setup 0ms, import 8.30s, tests 544ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o01-existing-vitest.json

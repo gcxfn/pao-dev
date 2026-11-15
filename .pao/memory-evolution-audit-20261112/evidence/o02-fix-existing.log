@@ -1,0 +1,27 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ✓ o02-review.test.ts > O02-R1：tentative→confirmed 确认升级 > 同结论同条件候选 confirmed → corrected 修订，来源并集，createMemory 未被调用 84ms
+ ✓ o02-review.test.ts > O02-R2：rationale 变化 → semantic_conflict + 游标不推进 > commit 层：同结论同条件 rationale 不同 → skipped/semantic_conflict 54ms
+ ✓ o02-review.test.ts > O02-R2：rationale 变化 → semantic_conflict + 游标不推进 > 调度层：semantic_conflict 候选使 job 标 needsReevaluation 且游标不推进 108ms
+ ✓ o02-review.test.ts > O02-R3：confirmed→tentative 反向降级 > 库中 confirmed + 候选 tentative 同结论同条件 → skipped/semantic_conflict，不静默降级 52ms
+ ✓ o02-review.test.ts > O02-R4：同结论异条件 → flagged 且来源并集 > 条件不同触发重议；标记修订来源 = 旧来源 ∪ 本次触发来源 56ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > confirmed/user_statement 但来源全是 toolResult → rejected 60ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > confirmed/user_statement 但 quotedSpan 挂 assistant 条目 → rejected 65ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > quotedSpan sourceId 不在 candidate.sourceIds 内 → rejected 69ms
+ ✓ o02-review.test.ts > O02-R6：confirmed/execution 对偶面 > confirmed/execution + toolResult 来源 → 通过 64ms
+ ✓ o02-review.test.ts > O02-R6：confirmed/execution 对偶面 > confirmed/execution + 只有 user 来源 → rejected 45ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > 带 correct_id → 同一 ID 新修订，旧 conditions/rationale 保留，createMemory 未被调用 86ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > correct_id 不存在 → 如实失败（isError） 65ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > expected_revision 不匹配 → 如实失败（修订号已变） 51ms
+ ✓ o02-review.test.ts > O02-R8：CLI 纠正经 registerMemoryCommand > 带 conditions/rationale 条目经 /pao memory correct → 字段完整、新修订可读 memoryCorrect 正文、旧修订读原依据 46ms
+ ✓ o02-review.test.ts > O02-R9：无关结论不建 related > 同项目两条不同结论 decision 入库后 revision_links 无 related 记录 38ms
+ ✓ o02-review.test.ts > O02-R10：批内同结论异 confirmation > 批内第一条 confirmed 第二条 tentative 同结论 → 第二条 semantic_conflict，不静默合并 40ms
+ ✓ o02-review.test.ts > O02-R11：老路径回归 > 同来源同内容同条件重放 → duplicate 补链；全新来源独立事实 → submitted 42ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  14:51:56
+   Duration  14.06s (transform 9.85s, setup 0ms, import 12.74s, tests 1.03s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o02-fix-existing-vitest.json

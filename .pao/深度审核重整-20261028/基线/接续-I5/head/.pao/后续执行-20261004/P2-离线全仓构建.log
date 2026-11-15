@@ -1,0 +1,32 @@
+P2 离线全仓构建（PAO 根，按 §5.1 依赖序）
+
+命令:
+  npm run build:offline
+  （工作目录 D:\AI\workspace\pao-dev\PAO）
+
+输出（末 30 行）:
+  > @earendil-works/pi-agent-core@1.0.0 build
+  > tsc -p tsconfig.build.json
+
+  > @earendil-works/pi-protocol@1.0.0 build
+  > tsc -p tsconfig.build.json
+
+  > @earendil-works/pi-client@1.0.0 build
+  > tsc -p tsconfig.build.json
+
+  > @earendil-works/pi-server@1.0.0 build
+  > tsc -p tsconfig.build.json
+
+  > @earendil-works/pi-coding-agent@1.0.0 build
+  > npm run build:unbundled && node ../../scripts/build-coding-agent-bundle.mjs
+
+  > @earendil-works/pi-coding-agent@1.0.0 build:unbundled
+  > tsc -p tsconfig.build.json && shx chmod +x dist/cli.js dist/rpc-entry.js && npm run copy-assets
+
+  > @earendil-works/pi-coding-agent@1.0.0 copy-assets
+  > shx mkdir -p dist/modes/interactive/theme && shx cp src/modes/interactive/theme/*.json dist/modes/interactive/theme/ && shx mkdir -p dist/modes/interactive/assets && shx cp src/modes/interactive/assets/*.png dist/modes/interactive/assets/ && shx mkdir -p dist/core/export-html/vendor && shx cp src/core/export-html/template.html src/core/export-html/template.css src/core/export-html/template.js dist/core/export-html/ && shx cp src/core/export-html/vendor/*.js dist/core/export-html/vendor/
+
+  Built packages\coding-agent\dist\bundle (73 files, 9.3 MiB)
+  BUILD_EXIT=0
+
+结论: 依赖序全仓构建成功，coding-agent bundle 产出 73 文件 / 9.3 MiB，退出码 0。

@@ -1,0 +1,113 @@
+{
+  "mode": "real",
+  "requestId": "i04-2e773346-7af0-4473-8278-d1d24c787bef:stale:extract:1834b3ea-0baa-4436-95f8-c772e883cf0e",
+  "modelInvoked": true,
+  "callCount": 1,
+  "provider": "magpie",
+  "model": "group/deepseek",
+  "responseId": "fec6c5cba1d484aa050542753d733712",
+  "usage": {
+    "input": 315,
+    "output": 499,
+    "cacheRead": 768,
+    "cacheWrite": 0,
+    "reasoning": 134,
+    "totalTokens": 1582,
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 0
+    }
+  },
+  "totalLatencyMs": 6235.2366999999995,
+  "calls": [
+    {
+      "stage": "stale",
+      "index": 1,
+      "provider": "magpie",
+      "model": "group/deepseek",
+      "api": "openai-completions",
+      "requestedAt": "2026-11-09T16:24:41.402Z",
+      "context": {
+        "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+        "messages": [
+          {
+            "role": "user",
+            "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-session-710d4f83-9532-44af-bfb7-1c43010af11d-9ca74558-user entryId=9ca74558 eventType=user ---\n{\"v\":1,\"sessionId\":\"session-710d4f83-9532-44af-bfb7-1c43010af11d\",\"entryId\":\"9ca74558\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:24:31.275Z\",\"capturedAt\":\"2026-11-09T16:24:31.300Z\",\"content\":{\"role\":\"user\",\"content\":\"自动召回每轮取几条？\",\"timestamp\":1794146400000}}\n--- 条目 sourceId=src-session-710d4f83-9532-44af-bfb7-1c43010af11d-ccc06177-assistant entryId=ccc06177 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"session-710d4f83-9532-44af-bfb7-1c43010af11d\",\"entryId\":\"ccc06177\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:24:31.276Z\",\"capturedAt\":\"2026-11-09T16:24:31.305Z\",\"content\":{\"role\":\"assistant\",\"content\":\"目前缺省 top3。\",\"timestamp\":1794146405000}}\n--- 条目 sourceId=src-session-710d4f83-9532-44af-bfb7-1c43010af11d-628dcb94-user entryId=628dcb94 eventType=user ---\n{\"v\":1,\"sessionId\":\"session-710d4f83-9532-44af-bfb7-1c43010af11d\",\"entryId\":\"628dcb94\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:24:31.276Z\",\"capturedAt\":\"2026-11-09T16:24:31.306Z\",\"content\":{\"role\":\"user\",\"content\":\"改成 top5。\",\"timestamp\":1794146460000}}\n\n# 同范围已有决定（供关联/重议判断，不是新证据）\n- [decision/confirmed/active rev1] 自动召回每轮取 top5（原缺省为 top3）。（条件：自动召回场景，每轮召回条数配置）\n\n请输出候选 JSON 数组。",
+            "timestamp": 1794241481402
+          }
+        ]
+      },
+      "options": {
+        "maxTokens": 4096,
+        "reasoning": "low",
+        "signalProvided": false
+      },
+      "rawResponse": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "The conversation: user asks how many per round auto recall; assistant says default top3; user says change to top5. But there's already an existing decision \"自动召回每轮取 top5（原缺省为 top3）\". This is same content — the existing decision already covers it. Should I output a new candidate? The instruction says \"条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）\". So this is a decision confirmed by user statement. Output it.\n\nBut is it duplicate? Downstream dedupes. Output the decision.\n\nquote: \"改成 top5。\"",
+            "thinkingSignature": "reasoning_content"
+          },
+          {
+            "type": "text",
+            "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"自动召回每轮取 top5（原缺省为 top3）。\",\n    \"conditions\": \"自动召回场景，每轮召回条数的配置\",\n    \"rationale\": \"用户询问当前条数（缺省 top3）后明确要求改成 top5。\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-9ca74558-user\", \"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-ccc06177-assistant\", \"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-628dcb94-user\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-9ca74558-user\", \"text\": \"自动召回每轮取几条？\"},\n      {\"sourceId\": \"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-ccc06177-assistant\", \"text\": \"目前缺省 top3。\"},\n      {\"sourceId\": \"src-session-710d4f83-9532-44af-bfb7-1c43010af11d-628dcb94-user\", \"text\": \"改成 top5。\"}\n    ]\n  }\n]\n```"
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "magpie",
+        "model": "group/deepseek",
+        "usage": {
+          "input": 315,
+          "output": 499,
+          "cacheRead": 768,
+          "cacheWrite": 0,
+          "reasoning": 134,
+          "totalTokens": 1582,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "stop",
+        "timestamp": 1794241481405,
+        "responseId": "fec6c5cba1d484aa050542753d733712",
+        "rawStopReason": "stop"
+      },
+      "usage": {
+        "input": 315,
+        "output": 499,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "reasoning": 134,
+        "totalTokens": 1582,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "responseId": "fec6c5cba1d484aa050542753d733712",
+      "latencyMs": 5981.645600000002,
+      "cost": {
+        "providerFee": "unknown",
+        "normalizedTotal": 0,
+        "amount": null,
+        "currency": "unknown",
+        "source": "unknown",
+        "zeroNormalizationTreatedAsUnknown": true
+      },
+      "actualModel": "group/deepseek",
+      "requestId": "i04-2e773346-7af0-4473-8278-d1d24c787bef:stale:extract:1834b3ea-0baa-4436-95f8-c772e883cf0e"
+    }
+  ]
+}

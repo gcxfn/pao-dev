@@ -1,0 +1,71 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @pi-gui/catalogs@0.0.0 test
+> tsc -p tsconfig.json && node --test "test/**/*.test.mts"
+
+✔ writes new content and creates missing directories (9.2226ms)
+✔ leaves only the target file behind, no lingering temp files (9.09ms)
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (33.8703ms)
+✔ same-path stores serialize concurrent workspace, session, and worktree mutations (90.2885ms)
+✔ new stores reload an externally replaced catalog and preserve it on mutation (12.2701ms)
+✔ an interrupted temp write leaves the last committed catalog readable (5.2269ms)
+▶ invalid catalog data rejects reads and writes without dropping any saved records
+  ✔ future version (3.044ms)
+  ✔ null document (2.4175ms)
+  ✔ array document (2.3907ms)
+  ✔ missing v2 collection (3.0512ms)
+  ✔ wrong collection shape (3.2178ms)
+  ✔ null workspace among valid records (4.8747ms)
+  ✔ workspace timestamp (2.3673ms)
+  ✔ workspace sort order (2.4017ms)
+  ✔ workspace pinned (2.5764ms)
+  ✔ session reference (2.5109ms)
+  ✔ session workspace mismatch (2.4659ms)
+  ✔ session status (2.3164ms)
+  ✔ session optional field (3.042ms)
+  ✔ worktree kind (2.1467ms)
+  ✔ worktree status (3.1095ms)
+  ✔ worktree optional field (2.6011ms)
+  ✔ file map array (2.2765ms)
+  ✔ file map value (2.6563ms)
+  ✔ legacy malformed collection (3.3334ms)
+✔ invalid catalog data rejects reads and writes without dropping any saved records (54.6978ms)
+✔ legacy catalogs retain records and upgrade only when a mutation succeeds (5.5659ms)
+✔ a failed load can be retried after the original catalog is repaired (2.3696ms)
+✔ session writes that change nothing leave the catalog file alone (8.5111ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 344.4501
+
+✖ failing tests:
+
+test at test\atomic-write.test.mts:36:7
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (33.8703ms)
+  Error: EPERM: operation not permitted, rename 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-nfMNHe\catalog.json.30520.6.7cbf79dded93.tmp' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-nfMNHe\catalog.json'
+      at async rename (node:internal/fs/promises:785:10)
+      at async writeFileAtomic (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/dist/node/atomic-write.js:36:9)
+      at async Promise.all (index 2)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:41:5
+      at async withTempDir (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:11:5)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:37:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:36:1 {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'rename',
+    path: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-nfMNHe\\catalog.json.30520.6.7cbf79dded93.tmp',
+    dest: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-nfMNHe\\catalog.json'
+  }
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path D:\AI\workspace\pao-dev\desktop\packages\catalogs
+npm error workspace @pi-gui/catalogs@0.0.0
+npm error location D:\AI\workspace\pao-dev\desktop\packages\catalogs
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c tsc -p tsconfig.json && node --test "test/**/*.test.mts"

@@ -1,0 +1,614 @@
+packages\coding-agent\src\pao\worker\dispatch-core.ts:761:6 lint/correctness/noUnusedVariables ━━━━━━━━━━
+
+  ! This type alias DispatchGatePhase is unused.
+  
+    759 │  * - notCommitted：commit 前中断，finally 负责 release。
+    760 │  */
+  > 761 │ type DispatchGatePhase = "notCommitted" | "committed" | "settled";
+        │      ^^^^^^^^^^^^^^^^^
+    762 │ 
+    763 │ /**
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+
+packages\coding-agent\src\pao\worker\index.ts:26:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━━━
+
+  ! All these imports are only used as types.
+  
+    24 │ import { type Static, Type } from "typebox";
+    25 │ 
+  > 26 │ import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+       │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │ import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+    28 │ import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Use import type.
+  
+      24   24 │   import { type Static, Type } from "typebox";
+      25   25 │   
+      26      │ - import·{·type·ExtensionAPI,·type·ToolDefinition·}·from·"../../core/extensions/types.ts";
+           26 │ + import·type·{·ExtensionAPI,·ToolDefinition·}·from·"../../core/extensions/types.ts";
+      27   27 │   import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+      28   28 │   import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+  
+
+packages\coding-agent\src\pao\worker\index.ts:27:90 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    26 │ import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+  > 27 │ import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+       │                                                                                          ^^^^^^^^^^^^^^^
+    28 │ import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+    29 │ import {
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    27 │ import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+       │                                                                                          -----------------                                                                
+
+packages\coding-agent\test\pao\usage-gate-wiring.test.ts:17:69 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    15 │  * 一律 tmpdir + FakeRunner 替身，不碰真实 PAO_HOME，不起真实模型。
+    16 │  */
+  > 17 │ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+       │                                                                     ^^^^^^^^^^^^^
+    18 │ import { tmpdir } from "node:os";
+    19 │ import { join } from "node:path";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    17 │ import·{·mkdirSync,·mkdtempSync,·readdirSync,·readFileSync,·rmSync,·writeFileSync·}·from·"node:fs";
+       │                                                                     --------------                 
+
+packages\coding-agent\src\pao\desktop\plans.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    178 178 │   		return artifactResult(
+    179 179 │   			false,
+    180     │ - → → → lexicallyInside
+    181     │ - → → → → ?·"链接的真实路径越出项目，不作为产物展示"
+    182     │ - → → → → :·"路径越出工作区，不作为产物展示",
+        180 │ + → → → lexicallyInside·?·"链接的真实路径越出项目，不作为产物展示"·:·"路径越出工作区，不作为产物展示",
+    183 181 │   		);
+    184 182 │   
+    ······· │ 
+    283 281 │   		if (活干完 && definition?.审核 === true && control?.判定?.结果 !== "pass" && !control?.放行修复) 活干完 = false;
+    284 282 │   		// 轮次升序、卡号升序；Array.sort 稳定，同一轮内保持回执出现顺序。
+    285     │ - → → 产物.sort(
+    286     │ - → → → (a,·b)·=>·a.轮次·-·b.轮次·||·(a.卡号·<·b.卡号·?·-1·:·a.卡号·>·b.卡号·?·1·:·0),
+    287     │ - → → );
+        283 │ + → → 产物.sort((a,·b)·=>·a.轮次·-·b.轮次·||·(a.卡号·<·b.卡号·?·-1·:·a.卡号·>·b.卡号·?·1·:·0));
+    288 284 │   		return {
+    289 285 │   			步骤ID: node.名字,
+  
+
+packages\coding-agent\src\pao\knowledge\inspect.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    110 110 │   		const dir = join(libRoot, type);
+    111 111 │   		if (!existsSync(dir)) continue;
+    112     │ - → → const·files·=·readdirSync(dir)
+    113     │ - → → → .filter(isMarkdownEntryFile)
+    114     │ - → → → .sort();
+        112 │ + → → const·files·=·readdirSync(dir).filter(isMarkdownEntryFile).sort();
+    115 113 │   		const subindexFile = subindexPath(libRoot, type);
+    116 114 │   		const lines = existsSync(subindexFile) ? readFileSync(subindexFile, "utf8").split(/\r?\n/) : [];
+  
+
+packages\coding-agent\src\pao\usage\dispatch-gate.ts:12:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    10 │  * 这样"重启能核原请求"就是天然成立的（新进程读同一份账，得到同样的结论）。
+    11 │  */
+  > 12 │ import { createHash } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    13 │ 
+    14 │ import { reserveSharedRequest, type SharedBudgetConfig } from "../runtime/shared-budget.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     16  16 │   import {
+     17  17 │   	BudgetLedgerError,
+     18     │ - → budgetLedgerPath,
+         18 │ + → type·BudgetReservation,
+         19 │ + → budgetLedgerPath,
+     19  20 │   	currentGrant,
+     20  21 │   	inspectReservation,
+     21     │ - → releaseBudget,
+         22 │ + → readBudgetLedger,
+         23 │ + → releaseBudget,
+     22  24 │   	remainingBudget,
+     23  25 │   	reserveBudget,
+     24     │ - → readBudgetLedger,
+     25     │ - → settleBudget,
+     26     │ - → type·BudgetReservation,
+         26 │ + → settleBudget,
+     27  27 │   } from "./budget-ledger.ts";
+     28  28 │   
+  
+
+packages\coding-agent\src\pao\usage\dispatch-gate.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    247 247 │   	/** 现在（ISO 生成器）；缺省 `new Date()`，测试注入固定时间用。 */
+    248 248 │   	现在?: () => string;
+    249     │ - }):·((
+    250     │ - → card:·{·card_no:·number·|·string;·frontmatter:·{·budget?:·{·cost?:·number·};·goal?:·string·}·},
+    251     │ - → 尝试号:·number,
+    252     │ - → 剩余预算?:·{·cost?:·number·},
+    253     │ - )·=>·Promise<DispatchBudgetGateResult>)·|·undefined·{
+        249 │ + }):
+        250 │ + → |·((
+        251 │ + → → → card:·{·card_no:·number·|·string;·frontmatter:·{·budget?:·{·cost?:·number·};·goal?:·string·}·},
+        252 │ + → → → 尝试号:·number,
+        253 │ + → → → 剩余预算?:·{·cost?:·number·},
+        254 │ + → ··)·=>·Promise<DispatchBudgetGateResult>)
+        255 │ + → |·undefined·{
+    254 256 │   	const home = input.paoHome;
+    255 257 │   	if (!home) return undefined;
+    ······· │ 
+    282 284 │   			卡号,
+    283 285 │   		});
+    284     │ - → → if·(!verdict.ok)·return·{·ok:·false,·reason:·`${verdict.reason}（下一步：${BUDGET_REFUSAL_NEXT[verdict.kind]}）`·};
+        286 │ + → → if·(!verdict.ok)
+        287 │ + → → → return·{·ok:·false,·reason:·`${verdict.reason}（下一步：${BUDGET_REFUSAL_NEXT[verdict.kind]}）`·};
+    285 288 │   		return {
+    286 289 │   			ok: true,
+    ······· │ 
+    371 374 │   			});
+    372 375 │   			return 实际费用 === undefined
+    373     │ - → → → → ?·`总预算记「结果不明」:费用未知(${缺账轮次·>·0·?·`有·${缺账轮次}·轮没回·usage`·:·input.备注·??·"回执未带·usage"}),预留额·$${settled.预留额.toFixed(2)}·继续占着——先查清再结算,不重复授额`
+        376 │ + → → → → ?·`总预算记「结果不明」:费用未知(${缺账轮次·>·0·?·`有·${缺账轮次}·轮没回·usage`·:·(input.备注·??·"回执未带·usage")}),预留额·$${settled.预留额.toFixed(2)}·继续占着——先查清再结算,不重复授额`
+    374 377 │   				: undefined;
+    375 378 │   		} catch (error) {
+    ······· │ 
+    491 494 │   		if (!released) {
+    492 495 │   			// 账上没有这一笔：如实报，并把当前停着的判据键交出去让人自己抄，不猜他想还哪一笔。
+    493     │ - → → → return·{·ok:·false,·kind:·"没有这笔预留",·reservedKeys:·listReservedReservations(paoHome).map((row)·=>·row.idempotencyKey)·};
+        496 │ + → → → return·{
+        497 │ + → → → → ok:·false,
+        498 │ + → → → → kind:·"没有这笔预留",
+        499 │ + → → → → reservedKeys:·listReservedReservations(paoHome).map((row)·=>·row.idempotencyKey),
+        500 │ + → → → };
+    494 501 │   		}
+    495 502 │   		return { ok: true, reservation: released };
+  
+
+packages\coding-agent\src\pao\worker\index.ts:21:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    19 │  */
+    20 │ 
+  > 21 │ import { createHash } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    22 │ import { join, resolve } from "node:path";
+    23 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      25   25 │   
+      26   26 │   import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+      27      │ - import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+      28      │ - import·{·loadCardBodyTemplate,·resolveCardTemplatePath·}·from·"../cards/cardfile.ts";
+      29      │ - import·{
+      30      │ - → acceptIntake,
+      31      │ - → isIntakeOutcomeStale,
+      32      │ - → type·IntakeOutcome,
+      33      │ - → type·IntakeRequest,
+      34      │ - → type·IntakeTemplateBody,
+      35      │ - }·from·"../intake/index.ts";
+      36      │ - import·{·DEFAULT_WORKER_SILENCE_MINUTES,·readWorkerSilenceMinutes·}·from·"../host/config.ts";
+           27 │ + import·{·loadCardBodyTemplate,·resolveCardTemplatePath·}·from·"../cards/cardfile.ts";
+           28 │ + import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+           29 │ + import·{·DEFAULT_WORKER_SILENCE_MINUTES,·readWorkerSilenceMinutes·}·from·"../host/config.ts";
+           30 │ + import·{
+           31 │ + → defaultMinisterHost,
+           32 │ + → globalHotSessionLimit,
+           33 │ + → type·MinisterHost,
+           34 │ + → renderMinisterInventoryLine,
+           35 │ + }·from·"../host/index.ts";
+      37   36 │   import {
+      38      │ - → defaultMinisterHost,
+      39      │ - → globalHotSessionLimit,
+      40      │ - → type·MinisterHost,
+      41      │ - → renderMinisterInventoryLine,
+      42      │ - }·from·"../host/index.ts";
+           37 │ + → acceptIntake,
+           38 │ + → type·IntakeOutcome,
+           39 │ + → type·IntakeRequest,
+           40 │ + → type·IntakeTemplateBody,
+           41 │ + → isIntakeOutcomeStale,
+           42 │ + }·from·"../intake/index.ts";
+      43   43 │   import { nowString } from "../shared/time.ts";
+      44   44 │   import { buildDispatchBudgetGate } from "../usage/dispatch-gate.ts";
+  
+
+packages\coding-agent\src\pao\worker\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      25   25 │   
+      26   26 │   import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+      27      │ - import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+           27 │ + import·{
+           28 │ + → CARD_PRIORITIES,
+           29 │ + → CARD_TIERS,
+           30 │ + → type·CardBudget,
+           31 │ + → type·CardPriority,
+           32 │ + → type·CardTier,
+           33 │ + → type·ParsedCard,
+           34 │ + → parseCardRef,
+           35 │ + → readCard,
+           36 │ + → routeFailure,
+           37 │ + }·from·"../cards/index.ts";
+      28   38 │   import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+      29   39 │   import {
+    ········· │ 
+     841  851 │   		parts.dept.trim(),
+     842  852 │   		parts.acceptance.trim(),
+     843      │ - → → [...(parts.dependsOn·??·[])].map((item)·=>·item.trim()).sort().join(","),
+          853 │ + → → [...(parts.dependsOn·??·[])]
+          854 │ + → → → .map((item)·=>·item.trim())
+          855 │ + → → → .sort()
+          856 │ + → → → .join(","),
+     844  857 │   	].join("\u0000");
+     845  858 │   	return `${AUTO_INTAKE_KEY_PREFIX}${createHash("sha256").update(normalized, "utf8").digest("hex").slice(0, 16)}`;
+    ········· │ 
+     852  865 │   	inputs: Type.Optional(Type.Array(Type.String(), { description: "输入指针列表(可空):文件路径、链接、上游产物" })),
+     853  866 │   	constraints: Type.Optional(Type.String({ description: "约束正文(可空):边界、不许做的事" })),
+     854      │ - → depends_on:·Type.Optional(Type.Array(Type.String(),·{·description:·"依赖卡号列表(可空):未放行时不派发(如实报推迟)"·})),
+          867 │ + → depends_on:·Type.Optional(
+          868 │ + → → Type.Array(Type.String(),·{·description:·"依赖卡号列表(可空):未放行时不派发(如实报推迟)"·}),
+          869 │ + → ),
+     855  870 │   	tier: Type.Optional(
+     856  871 │   		Type.String({
+    ········· │ 
+     892  907 │   		}),
+     893  908 │   	),
+     894      │ - → cards_dir:·Type.Optional(
+     895      │ - → → Type.String({·description:·"cards_dir(可空):任务工作区卡目录;已配置默认卡目录时可省略"·}),
+     896      │ - → ),
+          909 │ + → cards_dir:·Type.Optional(Type.String({·description:·"cards_dir(可空):任务工作区卡目录;已配置默认卡目录时可省略"·})),
+     897  910 │   });
+     898  911 │   
+    ········· │ 
+     905  918 │   	dispatchInBackground: DispatchInBackground;
+     906  919 │   	/** 模板正文解析（缺省用 cards 模板库；测试可注入） */
+     907      │ - → resolveTemplate?:·(request:·IntakeRequest)·=>·Promise<IntakeTemplateBody·|·undefined>·|·IntakeTemplateBody·|·undefined;
+          920 │ + → resolveTemplate?:·(
+          921 │ + → → request:·IntakeRequest,
+          922 │ + → )·=>·Promise<IntakeTemplateBody·|·undefined>·|·IntakeTemplateBody·|·undefined;
+     908  923 │   }
+     909  924 │   
+    ········· │ 
+     942  957 │   /** 问题项逐条一行（不吞问题、不概括成「有风险」）。 */
+     943  958 │   function problemLines(outcome: IntakeOutcome): string[] {
+     944      │ - → return·outcome.problems.map((item)·=>·`····[${item.level}]·${item.subject}：${item.reason}${item.suggestion·?·`（建议：${item.suggestion}）`·:·""}`);
+          959 │ + → return·outcome.problems.map(
+          960 │ + → → (item)·=>
+          961 │ + → → → `····[${item.level}]·${item.subject}：${item.reason}${item.suggestion·?·`（建议：${item.suggestion}）`·:·""}`,
+          962 │ + → );
+     945  963 │   }
+     946  964 │   
+    ········· │ 
+     974  992 │   				lines.push(`首次受理身份：${identityLine(first ?? outcome)}`);
+     975  993 │   			} else {
+     976      │ - → → → → lines.push("首次身份不可得：受理账里这条判据没有记下卡号（账可能被改坏或卡已被删），请用·pao_inventory·核对现场。");
+          994 │ + → → → → lines.push(
+          995 │ + → → → → → "首次身份不可得：受理账里这条判据没有记下卡号（账可能被改坏或卡已被删），请用·pao_inventory·核对现场。",
+          996 │ + → → → → );
+     977  997 │   			}
+     978  998 │   			lines.push(`首次受理时间：${first?.acceptedAt ?? outcome.acceptedAt}`);
+    ········· │ 
+     980 1000 │   				// §5.4 的同一条纪律也管重复提交：首次那张卡已被停/被重开，
+     981 1001 │   				// 「已返回第一次的身份」就不再等于「它还在跑」——必须当场说清，否则等于用旧身份报成功。
+     982      │ - → → → → lines.push("注意：首次那张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以·pao_inventory·的现场为准）。");
+         1002 │ + → → → → lines.push(
+         1003 │ + → → → → → "注意：首次那张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以·pao_inventory·的现场为准）。",
+         1004 │ + → → → → );
+     983 1005 │   			}
+     984 1006 │   			lines.push("没有新建卡、没有重复派发；如果你要的是新任务，请换一条判据（request_key）。");
+  
+
+packages\coding-agent\src\pao\workflow\review.ts:9:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     7 │  */
+     8 │ 
+   > 9 │ import { formatCardNumber, listCards, loadCard, parseCardRef } from "../cards/index.ts";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    10 │ import type { CardStatus, ParsedCard } from "../cards/types.ts";
+    11 │ import {
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     14  14 │   	renderCrystallizeSection,
+     15  15 │   } from "../knowledge/crystallize.ts";
+     16     │ - import·{·parseWorkflowMarker,·type·WorkflowManifest·}·from·"./driver.ts";
+     17     │ - import·type·{·FlowControl·}·from·"./control.ts";
+         16 │ + import·type·{·FlowControl·}·from·"./control.ts";
+         17 │ + import·{·parseWorkflowMarker,·type·WorkflowManifest·}·from·"./driver.ts";
+     18  18 │   import type { WorkflowRecipe } from "./recipe.ts";
+     19  19 │   
+  
+
+packages\coding-agent\src\pao\workflow\review.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    161 161 │   			} catch (error) {
+    162 162 │   				const code = (error as NodeJS.ErrnoException).code;
+    163     │ - → → → → if·(code·===·"CARD_NOT_FOUND"·||·code·===·"ENOENT")·missing.push({·节点:·node.名字,·轮次:·round,·卡号:·number·});
+        163 │ + → → → → if·(code·===·"CARD_NOT_FOUND"·||·code·===·"ENOENT")
+        164 │ + → → → → → missing.push({·节点:·node.名字,·轮次:·round,·卡号:·number·});
+    164 165 │   				else throw error;
+    165 166 │   			}
+    ······· │ 
+    208 209 │   				卡号列表: cards.map(({ card }) => card.card_no),
+    209 210 │   				...(missingCards.length > 0 ? { 缺失卡号列表: [...new Set(missingCards)] } : {}),
+    210     │ - → → → → → //·多张当前轮卡取最需要处理的汇总态，避免用最后一张覆盖失败/在途卡。
+    211     │ - → → → → 卡状态:·statusPriority.find((status)·=>
+    212     │ - → → → → → currentCards.some((card)·=>·card.frontmatter.status·===·status),
+    213     │ - → → → → ),
+        211 │ + → → → → //·多张当前轮卡取最需要处理的汇总态，避免用最后一张覆盖失败/在途卡。
+        212 │ + → → → → 卡状态:·statusPriority.find((status)·=>·currentCards.some((card)·=>·card.frontmatter.status·===·status)),
+    214 213 │   				尝试: cards.reduce((sum, { card }) => sum + card.frontmatter.attempt, 0),
+    215 214 │   				重试: cards.reduce((sum, { card }) => sum + Math.max(card.frontmatter.attempt - 1, 0), 0),
+    ······· │ 
+    402 401 │   			? `；汇总不完整（CARD_NOT_FOUND）：缺失卡 ${report.v2控制.缺失卡.length} 张，控制引用未全部计入`
+    403 402 │   			: "";
+    404     │ - → lines.push("",·`总账:节点·${report.节点.length}、尝试·${totalAttempts}、派发·${totalDispatch}、打回·${totalRejected}${report.v2控制·?·`、重试·${totalRetries}${incomplete}`·:·""}。`);
+        403 │ + → lines.push(
+        404 │ + → → "",
+        405 │ + → → `总账:节点·${report.节点.length}、尝试·${totalAttempts}、派发·${totalDispatch}、打回·${totalRejected}${report.v2控制·?·`、重试·${totalRetries}${incomplete}`·:·""}。`,
+        406 │ + → );
+    405 407 │   	if (report.孤儿卡.length > 0)
+    406 408 │   		lines.push(
+  
+
+packages\coding-agent\src\pao\workflow\tools.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      67   67 │   	WorkflowRecipeError,
+      68   68 │   } from "./recipe.ts";
+      69      │ - import·{
+      70      │ - → buildReviewReport,
+      71      │ - → buildV2ReviewReport,
+      72      │ - → renderReviewReport,
+      73      │ - → WORKFLOW_REVIEW_SECTION,
+      74      │ - }·from·"./review.ts";
+           69 │ + import·{·buildReviewReport,·buildV2ReviewReport,·renderReviewReport,·WORKFLOW_REVIEW_SECTION·}·from·"./review.ts";
+      75   70 │   
+      76   71 │   /** 两面共用的注册态：终态复盘入队是注册闭包的会话内存态（命令面/工具面共用同一队列），toast 开关与 pao_start_flow 同源解析。 */
+  
+
+packages\coding-agent\test\pao\desktop-plans.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      3   3 │   import { join } from "node:path";
+      4   4 │   import { afterEach, describe, expect, it } from "vitest";
+      5     │ - import·{·changeCardStatus,·createCard,·loadCard,·parseCardRef·}·from·"../../src/pao/cards/index.ts";
+      6     │ - import·{·formatCardNumber·}·from·"../../src/pao/cards/counter.ts";
+          5 │ + import·{·formatCardNumber·}·from·"../../src/pao/cards/counter.ts";
+          6 │ + import·{·changeCardStatus,·createCard,·loadCard,·parseCardRef·}·from·"../../src/pao/cards/index.ts";
+      7   7 │   import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+      8   8 │   import { artifactOf, readDesktopPlans, stepProgress } from "../../src/pao/desktop/plans.ts";
+  
+
+packages\coding-agent\test\pao\f-budget-concurrency.test.ts:20:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    18 │  * 不读写正式 PAO_HOME。
+    19 │  */
+  > 20 │ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    21 │ import { tmpdir } from "node:os";
+    22 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     24  24 │   import { type CardCreateInput, createCard, type ParsedCard, readCard } from "../../src/pao/cards/index.ts";
+     25  25 │   import {
+     26     │ - → knownCostAmount,
+         26 │ + → formatMeteredCost,
+         27 │ + → knownCostAmount,
+     27  28 │   	sumMeteredCosts,
+     28     │ - → unknownAmount,
+     29     │ - → formatMeteredCost,
+         29 │ + → unknownAmount,
+     30  30 │   } from "../../src/pao/usage/basis.ts";
+     31  31 │   import {
+  
+
+packages\coding-agent\test\pao\f-budget-concurrency.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     23  23 │   import { afterEach, describe, expect, it } from "vitest";
+     24  24 │   import { type CardCreateInput, createCard, type ParsedCard, readCard } from "../../src/pao/cards/index.ts";
+     25     │ - import·{
+     26     │ - → knownCostAmount,
+     27     │ - → sumMeteredCosts,
+     28     │ - → unknownAmount,
+     29     │ - → formatMeteredCost,
+     30     │ - }·from·"../../src/pao/usage/basis.ts";
+         25 │ + import·{·knownCostAmount,·sumMeteredCosts,·unknownAmount,·formatMeteredCost·}·from·"../../src/pao/usage/basis.ts";
+     31  26 │   import {
+     32  27 │   	budgetLedgerPath,
+    ······· │ 
+    129 124 │   	home: string;
+    130 125 │   	cardNo: number;
+    131     │ - → gate:·(card:·ParsedCard,·尝试号:·number,·剩余预算?:·{·cost?:·number·})·=>·Promise<
+    132     │ - → → {
+    133     │ - → → → ok:·true;
+    134     │ - → → → commit:·()·=>·Promise<void>;
+    135     │ - → → → release:·()·=>·Promise<void>;
+    136     │ - → → → settle:·(receipt:·WorkerReceipt)·=>·Promise<string·|·undefined>;
+    137     │ - → → → settleUnknown:·(reason:·string)·=>·Promise<string·|·undefined>;
+    138     │ - → → }·|·{·ok:·false;·reason:·string·}
+        126 │ + → gate:·(
+        127 │ + → → card:·ParsedCard,
+        128 │ + → → 尝试号:·number,
+        129 │ + → → 剩余预算?:·{·cost?:·number·},
+        130 │ + → )·=>·Promise<
+        131 │ + → → |·{
+        132 │ + → → → → ok:·true;
+        133 │ + → → → → commit:·()·=>·Promise<void>;
+        134 │ + → → → → release:·()·=>·Promise<void>;
+        135 │ + → → → → settle:·(receipt:·WorkerReceipt)·=>·Promise<string·|·undefined>;
+        136 │ + → → → → settleUnknown:·(reason:·string)·=>·Promise<string·|·undefined>;
+        137 │ + → → ··}
+        138 │ + → → |·{·ok:·false;·reason:·string·}
+    139 139 │   	>;
+    140 140 │   	/** 完成回调被调用的次数观察点（认领发生才会被调用）。 */
+  
+
+packages\coding-agent\test\pao\knowledge-ingest.test.ts:5:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+     3 │  * 重复执行修索引不重复生成，中断重跑修复，子索引行可由条目文件校验生成。
+     4 │  */
+   > 5 │ import {
+       │ ^^^^^^^^
+   > 6 │ 	existsSync,
+        ...
+  > 13 │ 	writeFileSync,
+  > 14 │ } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^
+    15 │ import { tmpdir } from "node:os";
+    16 │ import { join, sep } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      7   7 │   	mkdirSync,
+      8   8 │   	mkdtempSync,
+      9     │ - → readFileSync,
+     10     │ - → readdirSync,
+          9 │ + → readdirSync,
+         10 │ + → readFileSync,
+     11  11 │   	renameSync,
+     12  12 │   	rmSync,
+  
+
+packages\coding-agent\test\pao\usage-gate-coverage.test.ts:26:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    24 │  * 一律 tmpdir + FakeRunner 替身，不碰真实 PAO_HOME，不起真实模型。
+    25 │  */
+  > 26 │ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │ import { tmpdir } from "node:os";
+    28 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     38  38 │   } from "../../src/pao/cards/index.ts";
+     39  39 │   import { executeFanout } from "../../src/pao/fanout/execute.ts";
+     40     │ - import·{·buildDispatchBudgetGate·}·from·"../../src/pao/usage/dispatch-gate.ts";
+     41     │ - import·{
+     42     │ - → BUDGET_LEDGER_FILENAME,
+     43     │ - → budgetLedgerPath,
+     44     │ - → grantBudget,
+     45     │ - → inspectReservation,
+     46     │ - }·from·"../../src/pao/usage/budget-ledger.ts";
+     47     │ - import·{·runAutoChain·}·from·"../../src/pao/workflow/auto.ts";
+     48     │ - import·{
+     49     │ - → addNodeCards,
+     50     │ - → bindMinister,
+     51     │ - → endDecomposition,
+     52     │ - → readControl,
+     53     │ - → startControl,
+     54     │ - }·from·"../../src/pao/workflow/control.ts";
+     55     │ - import·{·loadRecipe,·type·WorkflowRecipe·}·from·"../../src/pao/workflow/recipe.ts";
+     56     │ - import·{·registerWorkerTools·}·from·"../../src/pao/worker/index.ts";
+     57     │ - import·type·{·WorkerReceipt·}·from·"../../src/pao/worker/receipt.ts";
+     58     │ - import·{·WorkerRunner,·type·WorkerRunOptions·}·from·"../../src/pao/worker/runner.ts";
+         40 │ + import·{
+         41 │ + → BUDGET_LEDGER_FILENAME,
+         42 │ + → budgetLedgerPath,
+         43 │ + → grantBudget,
+         44 │ + → inspectReservation,
+         45 │ + }·from·"../../src/pao/usage/budget-ledger.ts";
+         46 │ + import·{·buildDispatchBudgetGate·}·from·"../../src/pao/usage/dispatch-gate.ts";
+         47 │ + import·{·registerWorkerTools·}·from·"../../src/pao/worker/index.ts";
+         48 │ + import·type·{·WorkerReceipt·}·from·"../../src/pao/worker/receipt.ts";
+         49 │ + import·{·WorkerRunner,·type·WorkerRunOptions·}·from·"../../src/pao/worker/runner.ts";
+         50 │ + import·{·runAutoChain·}·from·"../../src/pao/workflow/auto.ts";
+         51 │ + import·{
+         52 │ + → addNodeCards,
+         53 │ + → bindMinister,
+         54 │ + → endDecomposition,
+         55 │ + → readControl,
+         56 │ + → startControl,
+         57 │ + }·from·"../../src/pao/workflow/control.ts";
+         58 │ + import·{·loadRecipe,·type·WorkflowRecipe·}·from·"../../src/pao/workflow/recipe.ts";
+     59  59 │   
+     60  60 │   const dirs: string[] = [];
+  
+
+packages\coding-agent\test\pao\usage-gate-wiring.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     34  34 │   } from "../../src/pao/usage/budget-ledger.ts";
+     35  35 │   import { readBudgetStatus } from "../../src/pao/usage/dispatch-gate.ts";
+     36     │ - import·{
+     37     │ - → DISPATCH_NOTIFY_SECTION,
+     38     │ - → registerWorkerTools,
+     39     │ - }·from·"../../src/pao/worker/index.ts";
+         36 │ + import·{·DISPATCH_NOTIFY_SECTION,·registerWorkerTools·}·from·"../../src/pao/worker/index.ts";
+     40  37 │   import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
+     41  38 │   import type { ProcessEntry } from "../../src/pao/worker/registry.ts";
+  
+
+packages\coding-agent\test\pao\workflow-review.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    261 261 │   	it("v2 按控制正本当前轮与历史轮卡引用隔离实例,同卡去重,汇总行不双计,缺 usage 不当完整零", () => {
+    262 262 │   		const cardsDir = makeDir();
+    263     │ - → → const·writeV2Card·=·(
+    264     │ - → → → cardNo:·number,
+    265     │ - → → → instance:·string,
+    266     │ - → → → round:·number,
+    267     │ - → → → attempt:·number,
+    268     │ - → → → receipts:·string[],
+    269     │ - → → )·=>
+        263 │ + → → const·writeV2Card·=·(cardNo:·number,·instance:·string,·round:·number,·attempt:·number,·receipts:·string[])·=>
+    270 264 │   			writeCard(
+    271 265 │   				cardsDir,
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

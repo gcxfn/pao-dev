@@ -1,0 +1,77 @@
+packages\coding-agent\src\pao\worker\change-facts.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      2   2 │   import { readFile } from "node:fs/promises";
+      3   3 │   import { resolve } from "node:path";
+      4     │ - import·{
+      5     │ - → baselineSnapshotPath,
+      6     │ - → diffAgainstBaseline,
+      7     │ - → type·StatusEntry,
+      8     │ - }·from·"../cards/baseline.ts";
+          4 │ + import·{·baselineSnapshotPath,·diffAgainstBaseline,·type·StatusEntry·}·from·"../cards/baseline.ts";
+      9   5 │   import { loadCard } from "../cards/cardfile.ts";
+     10     │ - import·{
+     11     │ - → type·ExecutionBinding,
+     12     │ - → resolveExecutionContext,
+     13     │ - }·from·"../cards/execution-context.ts";
+          6 │ + import·{·type·ExecutionBinding,·resolveExecutionContext·}·from·"../cards/execution-context.ts";
+     14   7 │   import { pathKey } from "../shared/path-key.ts";
+     15   8 │   import { readWorkerExecutionFacts } from "./evidence-facts.ts";
+    ······· │ 
+    143 136 │   		return { ok: false, reason: "基线的任务根、执行根或仓库根与当前执行绑定不一致" };
+    144 137 │   	}
+    145     │ - → if·(
+    146     │ - → → baseline.bindingDigest·!==·binding.bindingDigest·||
+    147     │ - → → baseline.snapshotDigest·!==·binding.snapshotDigest
+    148     │ - → )·{
+        138 │ + → if·(baseline.bindingDigest·!==·binding.bindingDigest·||·baseline.snapshotDigest·!==·binding.snapshotDigest)·{
+    149 139 │   		return { ok: false, reason: "基线的执行绑定或输入摘要与当前执行绑定不一致" };
+    150 140 │   	}
+    ······· │ 
+    214 204 │   		});
+    215 205 │   	} catch (error) {
+    216     │ - → → return·unknown(
+    217     │ - → → → `当前执行绑定不可用：${error·instanceof·Error·?·error.message·:·String(error)}`,
+    218     │ - → → );
+        206 │ + → → return·unknown(`当前执行绑定不可用：${error·instanceof·Error·?·error.message·:·String(error)}`);
+    219 207 │   	}
+    220 208 │   	const mismatch = bindingMismatch(input.binding, live);
+    ······· │ 
+    228 216 │   	}
+    229 217 │   	if (card.frontmatter.attempt !== input.binding.key.attempt) {
+    230     │ - → → return·unknown(
+    231     │ - → → → `执行绑定·attempt·${input.binding.key.attempt}·不是卡面当前·attempt·${card.frontmatter.attempt}`,
+    232     │ - → → );
+        218 │ + → → return·unknown(`执行绑定·attempt·${input.binding.key.attempt}·不是卡面当前·attempt·${card.frontmatter.attempt}`);
+    233 219 │   	}
+    234 220 │   	if (!samePath(card.path, input.cardPath)) {
+  
+
+packages\coding-agent\test\pao\worker-change-facts.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      1   1 │   import { execFileSync } from "node:child_process";
+      2   2 │   import { createHash } from "node:crypto";
+      3     │ - import·{
+      4     │ - → mkdirSync,
+      5     │ - → mkdtempSync,
+      6     │ - → readFileSync,
+      7     │ - → rmSync,
+      8     │ - → unlinkSync,
+      9     │ - → writeFileSync,
+     10     │ - }·from·"node:fs";
+          3 │ + import·{·mkdirSync,·mkdtempSync,·readFileSync,·rmSync,·unlinkSync,·writeFileSync·}·from·"node:fs";
+     11   4 │   import { join } from "node:path";
+     12   5 │   import { afterAll, afterEach, describe, expect, it } from "vitest";
+  
+
+Checked 3 files in 152ms. No fixes applied.
+Found 2 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+EXIT_CODE=1

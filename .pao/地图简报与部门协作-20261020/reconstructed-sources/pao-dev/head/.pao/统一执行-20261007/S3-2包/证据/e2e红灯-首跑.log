@@ -1,0 +1,112 @@
+
+Running 3 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 节点改名：Esc 放弃、回车与失焦提交，重名保留原名 (19.3s)
+  x  2 apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 (19.5s)
+  x  3 apps\desktop\tests\core\workflow-canvas.spec.ts:245:5 › 连线模式建连与拖拽同判定：非法浮层、Esc 取消、审核回边右键直达 Inspector (41.5s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 节点改名：Esc 放弃、回车与失焦提交，重名保留原名 ────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveValue[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-inspector').getByLabel('节点名称')
+    Expected: [32m"开发"[39m
+    Received: [31m"临时名字"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveValue" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-inspector').getByLabel('节点名称')[22m
+    [2m    9 × locator resolved to <input value="临时名字"/>[22m
+    [2m      - unexpected value "临时名字"[22m
+
+
+      155 |     await nameInput.fill("临时名字");
+      156 |     await nameInput.press("Escape");
+    > 157 |     await expect(nameInput).toHaveValue("开发");
+          |                             ^
+      158 |     await expect(editor).toContainText("已保存");
+      159 |     // 回车提交：一次同步名字、坐标与依赖引用。
+      160 |     await nameInput.fill("实现新版");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:157:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-节点改名：Esc-放弃、回车与失焦提交，重名保留原名\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-节点改名：Esc-放弃、回车与失焦提交，重名保留原名\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-节点改名：Esc-放弃、回车与失焦提交，重名保留原名\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 ─────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('canvas-context-menu')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-context-menu')[22m
+
+
+      208 |     await graph.locator('.react-flow__node[data-id="审查"]').click({ button: "right" });
+      209 |     const menu = page.getByTestId("canvas-context-menu");
+    > 210 |     await expect(menu).toBeVisible();
+          |                        ^
+      211 |     await menu.getByRole("menuitem", { name: "复制节点" }).click();
+      212 |     await expect(menu).toHaveCount(0);
+      213 |     await expect(graph.getByTestId("workflow-node")).toHaveCount(3);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:210:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-右键复制节点：重名派生、依赖不复制，保存后读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workflow-canvas.spec.ts:245:5 › 连线模式建连与拖拽同判定：非法浮层、Esc 取消、审核回边右键直达 Inspector 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('recipe-canvas-editor').getByTestId('canvas-link-toggle')[22m
+
+
+      258 |     const float = page.getByTestId("canvas-connect-float");
+      259 |     // 已存在依赖：连线模式下重复连同一依赖，浮层明示而非无响应。
+    > 260 |     await linkToggle.click();
+          |                      ^
+      261 |     await developer.click();
+      262 |     await reviewer.click();
+      263 |     await expect(float).toContainText("已存在依赖");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:260:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-连线模式建-d3e00-层、Esc-取消、审核回边右键直达-Inspector\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-连线模式建-d3e00-层、Esc-取消、审核回边右键直达-Inspector\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-连线模式建-d3e00-层、Esc-取消、审核回边右键直达-Inspector\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 节点改名：Esc 放弃、回车与失焦提交，重名保留原名 ─────────────
+    apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 ──────────────
+    apps\desktop\tests\core\workflow-canvas.spec.ts:245:5 › 连线模式建连与拖拽同判定：非法浮层、Esc 取消、审核回边右键直达 Inspector 

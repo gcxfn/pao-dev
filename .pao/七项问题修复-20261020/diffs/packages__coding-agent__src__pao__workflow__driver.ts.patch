@@ -1,0 +1,37 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\driver.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\driver.ts"
+index 6143205..982a8ed 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\workflow\\driver.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\workflow\\driver.ts"
+@@ -392,24 +392,22 @@ export function readAutoChainDispatched(recipe: Pick<WorkflowRecipe, "名字">,
+ 	return loadManifestFile(manifestPath(recipe, options))?.已派卡 ?? 0;
+ }
+ 
+-/** 已派卡 +delta 落实例清单。计数是防失控护栏：写失败不拦链但如实告警（不静默欠记）；清单缺失不在此建。 */
++/**
++ * 已派卡 +delta 落实例清单。auto 是唯一调用方；返回 false 表示清单缺失，
++ * 保存失败直接抛出。worker 受理前必须确认计数已落盘，否则跨调用累计仍会沿用旧值。
++ */
+ export async function bumpManifestDispatched(
+ 	recipe: Pick<WorkflowRecipe, "名字">,
+ 	options: DriverOptions,
+ 	delta = 1,
+-): Promise<void> {
++): Promise<boolean> {
+ 	const path = manifestPath(recipe, options);
+ 	return withFileLock(path, () => {
+ 		const manifest = loadManifestFile(path);
+-		if (!manifest) return;
++		if (!manifest) return false;
+ 		manifest.已派卡 = (manifest.已派卡 ?? 0) + delta;
+-		try {
+-			saveManifest(path, manifest);
+-		} catch (error) {
+-			logWarn(
+-				`[pao] 自动链实例计数落盘失败（限额可能偏松）:${error instanceof Error ? error.message : String(error)}`,
+-			);
+-		}
++		saveManifest(path, manifest);
++		return true;
+ 	});
+ }
+ 

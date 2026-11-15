@@ -1,0 +1,22 @@
+JOB_CREATE runtime-smoke-single
+LiteLLM could not resolve model 'magpie/group/deepseek'; passing it unchanged to the agent. For an OpenAI-compatible endpoint, use openai/<model-id> with OPENAI_API_KEY and OPENAI_BASE_URL. Use --api-format if supported, or --api-key-name and --base-url to override the connection.
+JOB_RUN runtime-smoke-single
+  1/1 Mean: 0.000 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0:02:05 0:00:00
+JOB_DONE runtime-smoke-single {'n_completed_trials': 1, 'n_errored_trials': 0, 'n_running_trials': 0, 'n_pending_trials': 0, 'n_cancelled_trials': 0, 'n_retries': 0, 'evals': {'pao__magpie/group/deepseek__adhoc': {'n_trials': 1, 'n_errors': 0, 'metrics': [{'mean': 0.0}], 'pass_at_k': {}, 'reward_stats': {'reward': {'0.0': ['runtime-smoke__S55eJF7']}}, 'exception_stats': {}}}, 'n_input_tokens': None, 'n_cache_tokens': None, 'n_output_tokens': None, 'cost_usd': None}
+Traceback (most recent call last):
+  File "/run/desktop/mnt/host/d/AI/workspace/临时文件夹/地图简报基准-20261020/controller.py", line 116, in <module>
+    asyncio.run(main())
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/d/AI/workspace/临时文件夹/地图简报基准-20261020/f-harbor-linux/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/run/desktop/mnt/host/d/AI/workspace/临时文件夹/地图简报基准-20261020/controller.py", line 105, in main
+    await job(mode[len('smoke-'):], smoke=True)
+  File "/run/desktop/mnt/host/d/AI/workspace/临时文件夹/地图简报基准-20261020/controller.py", line 64, in job
+    raise RuntimeError('合成运行检查未通过；禁止当成正式题目成功。')
+RuntimeError: 合成运行检查未通过；禁止当成正式题目成功。

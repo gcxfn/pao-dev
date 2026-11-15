@@ -1,0 +1,68 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-0fb6d724-268d-480e-9852-b4e5bae8e324----1-4adf17c9-e83a-4889-8c73-91b5a20dbfd7",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"."
+		],
+		"excludes": [
+			"../solution（按任务约束不读取）",
+			"../tests（按任务约束不读取）",
+			".git",
+			".pao",
+			".pao（编排控制目录，不作为业务输入或成果）",
+			"任何 oracle/基准答案与在线检索"
+		]
+	},
+	"facts": [
+		"交付物是新建文件 /app/filter.py；当前不存在（read /app/filter.py → ENOENT），亦无 /app/index.html、/app/sample.html、/app/test.html 等样例 HTML。",
+		"/app 是 git 仓库（.git/HEAD = ref: refs/heads/master，refs/heads/master = 956ea21c5fa3a0e6b062eb8e46cf4bf6fd4fc33d，logs/HEAD 显示唯一提交 “benchmark input baseline”）；本节点判定包给出的基线为 4b825dc（空树），即仓库中没有既有业务代码可复用，需从零新建 /app/filter.py。",
+		"Python 版本为 3.12，site-packages 位于 /usr/local/lib/python3.12/site-packages。",
+		"已安装 beautifulsoup4 4.13.4（/usr/local/lib/python3.12/site-packages/bs4/__init__.py 中 __version__ = '4.13.4'），随带 soupsieve（/usr/local/lib/python3.12/site-packages/soupsieve/__init__.py 存在）。",
+		"已安装 lxml 6.1.1（/usr/local/lib/python3.12/site-packages/lxml/__init__.py 中 __version__ = '6.1.1'），lxml.html 可用（/usr/local/lib/python3.12/site-packages/lxml/html/__init__.py 存在）。",
+		"未安装 html5lib：/usr/local/lib/python3.12/site-packages/html5lib/__init__.py 不存在；bs4/builder/__init__.py 末尾显示 _htmlparser 总是注册，_html5lib 与 _lxml 条件注册 —— 故 bs4 可用 features 为 'html.parser' 与 'lxml'，不可用 'html5lib'。",
+		"未安装 bleach（site-packages/bleach 不存在）、未安装 nh3（site-packages/nh3 不存在）、未安装 lxml_html_clean（site-packages/lxml_html_clean 不存在）；lxml/html/clean.py 只是向后兼容 shim，实际导入依赖 lxml_html_clean，故 lxml.html.clean.Cleaner 不可用。",
+		"未安装 pytest（site-packages/pytest 与 site-packages/_pytest 均不存在），本地验证只能靠 stdlib（unittest 或直接 python3 脚本）自建断言。",
+		"bs4 注册表实测路径：bs4/builder/__init__.py 末尾 register_treebuilders_from(_htmlparser) → try _html5lib → try _lxml；bs4 支持 features='html.parser'/'lxml'，序列化由 formatter 控制。",
+		"本节点为只读规划节点，会话内 bash 派发通道被钩子拦截（每次返回“工作流部长只读规划；请通过 pao_minister_submit_cards 交工人执行”），因此本轮所有侦察均通过 read 工具读真实文件完成，未执行任何命令、未运行任何脚本；命令级验证证据需由实施/审核节点实际执行产生。",
+		"任务硬性接口：argv[1] 为待处理 HTML 文件路径，原地（in-place）写回同一文件；只允许使用环境中已安装的包；输出应与输入“功能等价”，仅去除有害子串，且不得改变格式（仅允许解析导致的归一化）。"
+	],
+	"unknowns": [
+		"评分/测试的调用方式与断言强度未知：例如是否 subprocess 执行 `python /app/filter.py file.html`、是否以模块 import 调用、是否做逐字节比对或仅做“功能等价 + 无 JS”判定；按约束不读 /tests。",
+		"“移除全部 JavaScript”的判定口径未知：是否要求连 <script> 标签本身一并删除、还是保留空标签；是否包含 javascript: URL、on* 事件、内联 CSS expression 等“非 <script> 类”载荷。",
+		"输入文件编码与规模分布未知（是否含 BOM、非 UTF-8、超大文件）。",
+		"是否允许/期望保留 HTML 注释、DOCTYPE、SVG/MathML 子树、模板占位符等边缘内容未知。",
+		"环境内除 bs4/lxml/soupsieve 外的第三方包未做全量枚举（无 pip list 权限，且目录列举工具被钩子拦截），仅逐个探测了与本任务相关的候选包。"
+	],
+	"relations": [],
+	"risks": [
+		"格式化漂移风险：BeautifulSoup 序列化会重写属性引号、闭合标签形式（<br/>）、实体转义（& → &amp;）、可能丢弃 DOCTYPE/注释或调整结构，直接违反“不得改变格式、输出功能等价”的要求；因此不建议用 bs4/lxml 解析后再整树序列化作为主方案。",
+		"建议路径：用标准库 html.parser.HTMLParser 的 getpos()/偏移定位或按标签扫描做“外科式字符串编辑”，只删除 <script>…</script>、on* 事件属性、javascript:/data:text/html 等 JS 载荷，最大限度保留原文其余字节。",
+		"JS 载体枚举不全的残余风险：<script>、on* 属性、javascript: URI、<iframe srcdoc>、<object>/<embed>、<svg><script>、<meta http-equiv=refresh>、<base href>、CSS expression()/url(javascript:)、<a href=\"javascript:\">、data: URI 等；需在实现中逐项处理并留下自测用例。",
+		"误删风险：把 <script> 之外的文本（如正文提到 “onclick=”）误判为属性；或删除 <script> 标签后留下其文本内容变成可见正文；应确认期望是删除整段脚本内容。",
+		"编码风险：读写未指定编码可能触发 UnicodeDecodeError 或改变原字节（UTF-8/BOM/GBK/latin-1）；建议按 bytes 读入、仅做 ASCII 安全的字节级编辑后写回，或用 utf-8 + surrogateescape 往返。",
+		"变异风险：<scr<script>ipt>、属性值中含 “>”、注释/条件注释包裹的脚本、<noscript> 内内容、大小写混写与属性无引号等边界，需要自测覆盖。",
+		"接口风险：测试可能以 subprocess 调用 python /app/filter.py <file> 或以 import 方式调用；未知调用方式下建议同时支持 `python3 /app/filter.py path`（argv[1]）并在缺少参数时给出清晰报错且不破坏文件。",
+		"并发/权限限制：本轮工人并发上限为 1，不能并行铺开大量用例，需在一个实施卡内串行完成多组样例验证。"
+	],
+	"integrationOwner": "实施（由实施部门拆卡派工人编写 /app/filter.py 并自测；审核部门独立核对）",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"原始公开任务文本（创建 /app/filter.py，argv[1] 传入 HTML 文件，原地去除全部 JavaScript，同时保留尽可能多的 HTML 结构与格式，除解析归一化外不得改变格式，且只使用环境已安装的包）",
+		"本轮任务范围与约束（只处理公开任务，不读 /tests、/solution、oracle，不伪造运行结果）"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "956ea21c5fa3a0e6b062eb8e46cf4bf6fd4fc33d",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+	},
+	"files": [],
+	"capturedAt": "2026-10-27T19:50:21.644Z",
+	"mapDigest": "sha256:60e26ac23e53cd55f78fd6cdb10eaa54e24f5a66cd2c04a7f8fb307c1275d94c"
+}

@@ -1,0 +1,312 @@
+
+=== SS6 2026-10-06 09:53:27 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts apps/desktop/tests/core/composer-controls.spec.ts apps/desktop/tests/core/new-thread-auto-title.spec.ts apps/desktop/tests/core/reopen-state.spec.ts apps/desktop/tests/core/review-scopes.spec.ts apps/desktop/tests/core/session-lease.spec.ts apps/desktop/tests/core/settings-appearance.spec.ts apps/desktop/tests/core/sidebar-folder-collapse.spec.ts
+
+Running 24 tests using 1 worker
+
+  x   1 apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface (15.0s)
+  x   2 apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing (20.9s)
+  ok  3 apps\desktop\tests\core\new-thread-auto-title.spec.ts:22:5 › auto-titles a brand-new local thread after showing the placeholder first (4.0s)
+  ok  4 apps\desktop\tests\core\new-thread-auto-title.spec.ts:56:5 › auto-titles a brand-new worktree thread after showing the placeholder first (5.0s)
+  ok  5 apps\desktop\tests\core\new-thread-auto-title.spec.ts:102:5 › switching away does not cancel a pending auto-title (11.8s)
+  ok  6 apps\desktop\tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result (4.7s)
+  ok  7 apps\desktop\tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop (13.9s)
+  ok  8 apps\desktop\tests\core\new-thread-auto-title.spec.ts:235:5 › later sends do not retrigger auto-title generation (5.9s)
+  ok  9 apps\desktop\tests\core\new-thread-auto-title.spec.ts:275:5 › reopen heals a stale placeholder catalog title after auto-title finished (7.8s)
+  x  10 apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates (40.4s)
+[31mWorker teardown timeout of 60000ms exceeded.[39m
+
+[31mFailed worker ran 8 tests:[39m
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:22:5 › auto-titles a brand-new local thread after showing the placeholder first
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:56:5 › auto-titles a brand-new worktree thread after showing the placeholder first
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:102:5 › switching away does not cancel a pending auto-title
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:235:5 › later sends do not retrigger auto-title generation
+apps\desktop\tests\core\new-thread-auto-title.spec.ts:275:5 › reopen heals a stale placeholder catalog title after auto-title finished
+apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates
+  ok 11 apps\desktop\tests\core\review-scopes.spec.ts:68:5 › Uncommitted preserves staged and unstaged changes that cancel each other (33.2s)
+  ok 12 apps\desktop\tests\core\review-scopes.spec.ts:101:5 › Uncommitted keeps a reviewed mark through stage and unstage until the file changes (25.6s)
+  ok 13 apps\desktop\tests\core\review-scopes.spec.ts:136:5 › Branch compares committed revisions and reports a missing base explicitly (36.7s)
+  ok 14 apps\desktop\tests\core\review-scopes.spec.ts:180:5 › an outdated comparison cannot mark or stage newer working content (21.3s)
+  ok 15 apps\desktop\tests\core\review-scopes.spec.ts:217:5 › binary, oversized, and conflicted files show incomplete review coverage (18.7s)
+  x  16 apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout (46.2s)
+  ok 17 apps\desktop\tests\core\review-scopes.spec.ts:316:5 › an existing task without captures shows Last turn as unavailable (20.3s)
+  x  18 apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage (49.1s)
+  x  19 apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds (10.0s)
+  ok 20 apps\desktop\tests\core\session-lease.spec.ts:88:5 › quitting releases the session lease of every open thread (3.9s)
+  ok 21 apps\desktop\tests\core\settings-appearance.spec.ts:21:5 › toggles and restores window transparency (11.6s)
+  ok 22 apps\desktop\tests\core\settings-appearance.spec.ts:72:5 › selects and restores theme presets (13.5s)
+  x  23 apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it (1.0m)
+  x  24 apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart (19.1s)
+
+
+  1) apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.composer').getByRole('button', { name: 'max', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.composer').getByRole('button', { name: 'max', exact: true })[22m
+
+
+      125 |     await expect(
+      126 |       window.locator(".composer").getByRole("button", { name: "max", exact: true }),
+    > 127 |     ).toBeVisible();
+          |       ^
+      128 |
+      129 |     await composer.fill("Keep the draft /thinking");
+      130 |     await expect(optionsMenu).toBeVisible();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\composer-controls.spec.ts:127:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-sup-b62b4-ls-through-the-user-surface\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-sup-b62b4-ls-through-the-user-surface\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-composer-controls-sup-b62b4-ls-through-the-user-surface\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('send')
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('send')[22m
+    [2m    9 × locator resolved to <button disabled type="button" data-testid="send" aria-label="Send message" class="button button--primary button--cta-icon">…</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      239 |
+      240 |     await window.getByTestId("composer").fill("make the arrow visible");
+    > 241 |     await expect(sendButton).toBeEnabled();
+          |                              ^
+      242 |     await expect
+      243 |       .poll(async () => {
+      244 |         const styles = await sendButton.evaluate((button) => {
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\composer-controls.spec.ts:241:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [test quit] before-quit
+    Debugger ending on ws://127.0.0.1:61459/605b64da-980e-433c-8ce5-aa9b4d2937f8
+    For help, see: https://nodejs.org/en/docs/inspector
+
+       at helpers\electron-app.ts:359
+
+      357 |         appProcess.kill("SIGKILL");
+      358 |       }
+    > 359 |       throw new Error(
+          |             ^
+      360 |         [
+      361 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      362 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\helpers\electron-app.ts:359:13)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\reopen-state.spec.ts:158:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('menu', { name: 'Review options', exact: true }).locator('[role="menuitemradio"][data-option-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-user-data-rfByRa\\worktrees\\review-checkout-root\\wt-d402e6"]')[22m
+
+
+       at helpers\electron-app.ts:1836
+
+      1834 | export async function chooseReviewCheckout(window: Page, checkoutId: string): Promise<void> {
+      1835 |   const menu = await openReviewOptions(window);
+    > 1836 |   await menu.locator(`[role="menuitemradio"][data-option-id="${checkoutId}"]`).click();
+           |                                                                                ^
+      1837 | }
+      1838 |
+      1839 | /** The resolved comparison shown at the top of the Review "…" menu; press Escape to close. */
+        at chooseReviewCheckout (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\helpers\electron-app.ts:1836:80)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\review-scopes.spec.ts:291:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"source 1999"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      388 |     await lastRow.locator(".diff-panel__file-name").focus();
+      389 |     await window.keyboard.press("Enter");
+    > 390 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      391 |       "source 1999",
+      392 |     );
+      393 |     await expect(lastRow).toBeInViewport();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\review-scopes.spec.ts:390:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m42676[39m
+    Received: [31m12640[39m
+
+      61 |     const [leasePath] = await findLeaseFiles(agentDir);
+      62 |     const firstPid = first.electronApp.process().pid;
+    > 63 |     expect(await leaseHolderPid(leasePath)).toBe(firstPid);
+         |                                             ^
+      64 |
+      65 |     // Once the holder quits its lease is dead, so the thread opens here and
+      66 |     // this process takes the lease over.
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\session-lease.spec.ts:63:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-settings-appearance-e-c71dc-ign-instead-of-restyling-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-IkmRaR\\collapse-alpha"]').locator('.session-row__title')
+    Timeout: 5000ms
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "Alpha planning",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-IkmRaR\\collapse-alpha"]').locator('.session-row__title')[22m
+    [2m    9 × locator resolved to 0 elements[22m
+
+
+      33 |     const group = window.locator(`.workspace-group[data-workspace-id="${workspaceId}"]`);
+      34 |     const folderRow = group.locator(".workspace-row__select");
+    > 35 |     await expect(group.locator(".session-row__title")).toHaveText(["Alpha planning"]);
+         |                                                        ^
+      36 |     await expect(folderRow).toHaveAttribute("aria-expanded", "true");
+      37 |     const selectedBefore = (await getDesktopState(window)).selectedSessionId;
+      38 |
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:35:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8 failed
+    apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface 
+    apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+    apps\desktop\tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+    apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+    apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+    apps\desktop\tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+    apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it 
+    apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+  16 passed (9.4m)
+  1 error was not a part of any test, see above for details
+SS6_EXIT=1

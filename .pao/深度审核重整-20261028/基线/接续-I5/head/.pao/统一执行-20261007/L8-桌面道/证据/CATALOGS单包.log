@@ -1,0 +1,72 @@
+=== L8 桌面道 catalogs 单包复跑 ===
+date: 2026-10-08 18:02:56
+desktop HEAD: 832fbfd38ca7d15dacb3a2dacc1b011beafa2004
+command: pnpm --filter @pi-gui/catalogs test
+
+
+> @pi-gui/catalogs@0.0.0 test D:\AI\workspace\pao-dev\desktop\packages\catalogs
+> tsc -p tsconfig.json && node --test "test/**/*.test.mts"
+
+✔ writes new content and creates missing directories (10.9085ms)
+✔ leaves only the target file behind, no lingering temp files (9.4499ms)
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (39.9181ms)
+✔ same-path stores serialize concurrent workspace, session, and worktree mutations (132.4084ms)
+✔ new stores reload an externally replaced catalog and preserve it on mutation (10.7263ms)
+✔ an interrupted temp write leaves the last committed catalog readable (8.9012ms)
+▶ invalid catalog data rejects reads and writes without dropping any saved records
+  ✔ future version (5.8904ms)
+  ✔ null document (4.8643ms)
+  ✔ array document (4.8357ms)
+  ✔ missing v2 collection (5.5737ms)
+  ✔ wrong collection shape (6.4956ms)
+  ✔ null workspace among valid records (8.1684ms)
+  ✔ workspace timestamp (5.4882ms)
+  ✔ workspace sort order (5.6804ms)
+  ✔ workspace pinned (5.0522ms)
+  ✔ session reference (4.1454ms)
+  ✔ session workspace mismatch (3.6911ms)
+  ✔ session status (3.6169ms)
+  ✔ session optional field (4.401ms)
+  ✔ worktree kind (3.9828ms)
+  ✔ worktree status (3.9002ms)
+  ✔ worktree optional field (3.9984ms)
+  ✔ file map array (3.4483ms)
+  ✔ file map value (3.4508ms)
+  ✔ legacy malformed collection (4.5711ms)
+✔ invalid catalog data rejects reads and writes without dropping any saved records (94.6367ms)
+✔ legacy catalogs retain records and upgrade only when a mutation succeeds (5.9102ms)
+✔ a failed load can be retried after the original catalog is repaired (3.3356ms)
+✔ session writes that change nothing leave the catalog file alone (11.2347ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 451.3017
+
+✖ failing tests:
+
+test at test\atomic-write.test.mts:36:7
+✖ concurrent writes never collide or leave a partial file; result is one of the inputs (39.9181ms)
+  Error: EPERM: operation not permitted, rename 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-oKaIyG\catalog.json.35672.13.0bd91dbe2dab.tmp' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-atomic-oKaIyG\catalog.json'
+      at async rename (node:internal/fs/promises:785:10)
+      at async writeFileAtomic (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/dist/node/atomic-write.js:36:9)
+      at async Promise.all (index 10)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:41:5
+      at async withTempDir (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:11:5)
+      at async TestContext.<anonymous> (file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:37:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      at async file:///D:/AI/workspace/pao-dev/desktop/packages/catalogs/test/atomic-write.test.mts:36:1 {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'rename',
+    path: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-oKaIyG\\catalog.json.35672.13.0bd91dbe2dab.tmp',
+    dest: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-atomic-oKaIyG\\catalog.json'
+  }
+D:\AI\workspace\pao-dev\desktop\packages\catalogs:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @pi-gui/catalogs@0.0.0 test: `tsc -p tsconfig.json && node --test "test/**/*.test.mts"`
+Exit status 1
+[退出码] CATALOGS_EXIT=1

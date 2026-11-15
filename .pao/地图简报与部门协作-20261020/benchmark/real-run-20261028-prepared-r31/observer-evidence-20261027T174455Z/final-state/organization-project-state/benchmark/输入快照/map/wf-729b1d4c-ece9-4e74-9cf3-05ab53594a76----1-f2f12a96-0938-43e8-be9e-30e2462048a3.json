@@ -1,0 +1,68 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-729b1d4c-ece9-4e74-9cf3-05ab53594a76----1-f2f12a96-0938-43e8-be9e-30e2462048a3",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			".git/COMMIT_EDITMSG",
+			".git/HEAD",
+			".git/config",
+			".git/logs/HEAD"
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao",
+			"oracle / 基准答案",
+			"项目根外的第三方包目录（仅作为环境事实记录在 facts，不计入 coverage）"
+		]
+	},
+	"facts": [
+		"目标入口唯一：需新建 /app/filter.py，命令行用法 python3 /app/filter.py <html_file>，argv[1] 为待处理 HTML 文件路径，结果就地写回同一文件。",
+		"项目根 /app 除 .git 外探测到的文件均不存在（/app/filter.py、requirements.txt、README.md、pyproject.toml、setup.py、.gitignore、run.sh、sample.html、Dockerfile 读取全部 ENOENT）。",
+		"/app 是 git 仓库：/app/.git/HEAD 指向 refs/heads/master，config 仅 core+user 段无 remote；.git/logs/HEAD 只有一条 “benchmark input baseline” 初始提交，工作区基本为空、无既有实现可复用。",
+		"解释器为 CPython 3.12，第三方包目录为 /usr/local/lib/python3.12/site-packages（3.10/3.11/3.13 路径下无 bs4）。",
+		"已安装：beautifulsoup4 4.13.4（bs4/__init__.py 明确 __version__ = \"4.13.4\"）、lxml 6.1.1（含 lxml.html）、soupsieve。",
+		"未安装（读取均 ENOENT）：html5lib、bleach、nh3、lxml_html_clean、pytest；不能依赖 html5lib 解析器、现成 HTML 清洗库或 pytest 运行器。",
+		"标准库 html.parser 存在（/usr/local/lib/python3.12/html/parser.py 可读，依赖 _markupbase 与 html.unescape），可作为零第三方依赖解析入口。",
+		"本节点 bash / grep / tool_search / ls 被编排层拦截（返回“请通过 pao_minister_submit_cards 交工人执行”），仅 read 可用；上述结论均为 read 探针证据，未实际执行 Python 代码。",
+		"公开任务约束归纳：只移除 JS（script 元素及其内容、on* 事件属性、javascript: 协议 URL 等），其余 HTML 结构/属性/排版必须保持不变，允许解析导致的规范化。",
+		"本地可用验证入口（供实施节点执行）：python3 -m py_compile /app/filter.py 语法检查；python3 /app/filter.py <临时样例> 跑命令行契约；python3 -c 内联断言或标准库 unittest（pytest 未安装）核对脚本标签、事件属性、javascript: 链接被清除且普通内容/表格/表头/无害属性逐字保留；原文件与处理后文件 diff 验证除目标片段外无差异；重复运行验证幂等。"
+	],
+	"unknowns": [
+		"无法用 ls 完整枚举 /app，存在探测未命中的其它文件的可能性。",
+		"隐藏验收用例覆盖面（实体、编码、畸形标签、注释中的 script、大小写变体）未知。",
+		"输入文件是否保证 UTF-8、是否含 BOM 或混合编码未在公开任务中说明。",
+		"“保留格式”倾向字节级最小改动（仅移除有害子串），但严格程度取决于隐藏验收。",
+		"是否存在离线 pip 源或额外预装 wheel 未验证（本节点无法执行命令）。"
+	],
+	"relations": [],
+	"risks": [
+		"用 bs4 或 lxml 解析后整体重新序列化会破坏“格式不变”要求：可能补齐 html/head/body、重排属性、规范化实体（如 &copy 与 © 互转），造成与输入字节级不一致。",
+		"源码级手术式删除（基于 html.parser 偏移量切片只摘除目标片段）可最大限度保持其余文本逐字不变，但需自行处理 script 原始文本区、属性引号变体、大小写与畸形标签。",
+		"本节点无法列出 /app，可能存在未被探针命名的既有文件；实施节点若发现冲突文件须先整合。",
+		"隐藏验收可能包含非 UTF-8 编码、BOM、超大文件与畸形 HTML；需明确读写编码与容错策略，避免 UnicodeDecodeError 或误删。",
+		"“移除所有 JavaScript”边界不明确：javascript: URL、data:text/html、iframe srcdoc、内联事件、svg 内脚本均可能被测到；建议覆盖但不过度删除无害属性。"
+	],
+	"integrationOwner": "实施",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"任务约束：只使用环境已安装的 Python 包；不得使用任务专属在线解法或提示。",
+		"原始公开任务：创建 /app/filter.py，argv[1] 接收 HTML 文件路径并就地修改，移除全部 JavaScript，同时最大限度保留 HTML 结构与格式。",
+		"只读节点，使用 read 探针核对 /app 工作区与已安装包；未读取 /tests、/solution、oracle 或在线基准答案。"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "d910338369831ae3bd9d9e89da753f420cf64e28",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+	},
+	"files": [],
+	"capturedAt": "2026-10-27T17:35:44.648Z",
+	"mapDigest": "sha256:0f3d2666760089f57475035085fc2b0b1ae89a1876df7e468139d319090cc2fb"
+}

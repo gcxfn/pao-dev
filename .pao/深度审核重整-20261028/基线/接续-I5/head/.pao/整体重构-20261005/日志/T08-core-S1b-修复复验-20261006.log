@@ -1,0 +1,65 @@
+
+Running 16 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (stop: Keep this prompt pending until Stop) (34.3s)
+  ok  2 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: Keep this prompt pending until Stop) (29.2s)
+  ok  3 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: /tmp/notes.md summarise this file) (29.2s)
+  ok  4 apps\desktop\tests\core\tree-command.spec.ts:18:5 › opens /tree from the composer, navigates branches, and blocks it on the new-thread surface (22.7s)
+  ok  5 apps\desktop\tests\core\tree-command.spec.ts:114:5 › restores focus to a remaining extension dialog after the tree modal closes (9.2s)
+  ok  6 apps\desktop\tests\core\tree-command.spec.ts:171:5 › renders tool results with compact previews in the tree modal (6.1s)
+  ok  7 apps\desktop\tests\core\tree-command.spec.ts:205:5 › opens /tree on a long branched session whose deepest path passes 500 entries (14.8s)
+  ok  8 apps\desktop\tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 (56.4s)
+  ok  9 apps\desktop\tests\core\workflow-canvas.spec.ts:103:5 › 导航、关闭窗口和退出程序均保留取消后的画布 (27.9s)
+  ok 10 apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 重命名节点保留位置和下游依赖，放弃后恢复 (19.9s)
+  ok 11 apps\desktop\tests\core\workflow-canvas.spec.ts:182:5 › 拖动和连线保存后刷新保持相同图 (55.3s)
+  ok 12 apps\desktop\tests\core\workflow-canvas.spec.ts:298:5 › 审核节点回边可以添加、编辑并真实保存 (33.1s)
+  x  13 apps\desktop\tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 (37.1s)
+  ok 14 apps\desktop\tests\core\workflow-control.spec.ts:29:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (26.0s)
+  ok 15 apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） (24.1s)
+  ok 16 apps\desktop\tests\core\workflow-control.spec.ts:180:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (18.1s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 ────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('recipe-canvas-editor')
+    Expected substring: [32m"[7m新建[27m验证 · 已保存"[39m
+    Received string:    [31m"[7m另存[27m验证 · 已保存[7m添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('recipe-canvas-editor')[22m
+    [2m    2 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 ● 未保存添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+    [2m    3 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 · 已保存添加部门任务保存放弃修改自动整理另存为开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+    [2m    4 × locator resolved to <div class="recipe-canvas-editor" data-testid="recipe-canvas-editor">…</div>[22m
+    [2m      - unexpected value "另存验证 · 已保存添加部门任务保存放弃修改自动整理另存为依赖开发工程 · 部门任务审查评审 · 部门任务任务1工程 · 部门任务Mini MapPress enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.已选择 任务1"[22m
+
+
+      411 |       .getByRole("button", { name: /Confirm|确认/ })
+      412 |       .click();
+    > 413 |     await expect(page.getByTestId("recipe-canvas-editor")).toContainText("新建验证 · 已保存");
+          |                                                            ^
+      414 |     expect(await readFile(join(home, "工作流", "新建验证.md"), "utf8")).toContain("新建目标");
+      415 |     await page.screenshot({ path: test.info().outputPath("另存与新建校验.png") });
+      416 |   } finally {
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workflow-canvas.spec.ts:413:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────
+  15 passed (7.4m)

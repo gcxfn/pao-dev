@@ -1,0 +1,95 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-4e1510af-10c2-41d5-a56a-c314314a8545",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"."
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao",
+			"oracle",
+			"在线基准答案"
+		]
+	},
+	"facts": [
+		"【复核触发】本次派发提示“覆盖内容已变化”。独立核对：/app/filter.py 已存在（上版地图记录其 ENOENT），/tmp/filter_test/ 目录已存在并含 t1.html。仓库洁净：/app 下除 .git、.pao 外仅新增 filter.py（README.md / index.html / test_filter.py 均 ENOENT）；.git/COMMIT_EDITMSG 仍为 “benchmark input baseline”，.git/index 仍只有空 TREE 项 → filter.py 为未跟踪文件、尚未提交。",
+		"【实际变更全文】已用 read 通读 /app/filter.py（约 600 行，仅标准库 html/re/sys）。结构：常量段（DANGEROUS_SCHEMES / DANGEROUS_DATA_MIME / DATA_BLOCK_TYPES / URL_ATTRIBUTE_NAMES / URL_ATTRIBUTE_SUBSTRINGS / RAWTEXT_TAGS / RAWTEXT_MARKUP_TAGS / _ON_ATTR_RE=^on[a-z] / _SCRIPT_BLOCK_RE / _CSS_* 正则）→ 工具函数（_unescape latin-1 视图、_strip_ctrl、_normalize_url_text、_css_unescape、_url_is_dangerous、_contains_dangerous_scheme、_is_url_attribute）→ CSS 清洗（_iter_calls 括号配平、clean_css）→ 属性解析（_parse_attributes 记录 ws_start/name_start/name_end/val_start/val_end/end）→ 判定（_decide_attributes）→ 渲染（_render_start_tag）→ 标记处理（_remove_script_blocks、_find_tag_end、_handle_script、_handle_rawtext、_handle_start_tag、_handle_markup）→ 入口（filter_bytes / filter_file / main，退出码 0/1/2）。",
+		"【与上版 D1/D2 一致（逐函数核对）】filter_bytes 全程 bytes 运算，输出＝按区间切除后的拼接；filter_file 以 open(path,'rb') 读、open(path,'wb') 写回，不整篇解码，BOM/CRLF/非 UTF-8 天然保留。文本段原样拷贝；注释、<!…>、<?…>、结束标签按原字节切片回写；开始标签由 _render_start_tag 依属性跨度重组（未删属性的区间为 data[ws_start:end] 原样）。静态推演：良性 HTML 预期逐字节相同（仍需实跑确认）。",
+		"【与上版 R1–R9 一致（逐条核对）】R1：_handle_script 删除 <script>…</script> 整块（含内容与结束标签），type 属 {application/json, application/ld+json, text/template, text/x-template} 时整块保留；结束标签匹配 </script> 或带命名空间前缀形式。R2：^on[a-z] 命中即删属性并连同前导空白。R3：URL 属性名集合（含 href/src/url/action/uri 子串）+ _url_is_dangerous（实体解码→剥离 \\x00-\\x20/\\x7f→小写→取冒号前 scheme）覆盖 javascript:/vbscript:/livescript:/jscript:/ecmascript:/mocha: 与可执行 MIME 的 data:；覆盖 &#106;avascript:、&#x6a;avascript:、JAVASCRIPT&#58;、“ javascript:”、“java\\tscript:”。R4：srcdoc 整体删。R5：meta refresh 的 content 含危险 scheme 时删属性。R6：clean_css 删 url(…) 危险 URL（额外解析 CSS 转义 \\6a）、expression(…)、裸露 scheme 词元，仅作用于 <style> 内容与 style 属性值。R7：<base href>/<object data>/<embed src>/<form action>/xlink:href 由 R3 覆盖。R8：注释内 script 块由 _SCRIPT_BLOCK_RE 切除，注释其余字节保留。R9：文本节点不改写。",
+		"【本次复核发现的实现侧待确认点（静态阅读，未运行验证）】F1 <script/>（XHTML 自闭合）与未闭合 <script> 不可区分：_parse_attributes 跳过 '/'，_handle_script 找不到 </script> 时按 HTML5 语义删除至 EOF；若评测样例用 <script src=\"x.js\"/> 并期望其后正文保留，现实现会连带删除后续正文——建议实施节点加判别（结束前一个字符为 '/' 时只删该标签），或写明取舍并用样例实测。F2 数据块 script 整块保留时，其标签上的 on*/危险 src 未再清洗。F3 RAWTEXT_MARKUP_TAGS（iframe/noembed/noframes）内容只切 <script> 块，不处理其中 on* 与 javascript: URL。F4 <noscript> 按普通标记解析（安全优先的刻意偏差，浏览器本为 RAWTEXT）；<textarea>/<title>/<xmp>/<style> 内容按原始文本保留。F5 注释内 script 块的兜底分支匹配到 \\Z，未闭合的 “<!-- <script>alert(1)” 会把注释剩余部分整体删掉。F6 <![CDATA[ … ]]> 被 '<!'+find('>') 分支截断在首个 '>'。",
+		"【验证现状】/tmp/filter_test/ 目录已存在；其中 t1.html 可读到，内容与上版 D7 的 B/C/D/E 合并样例一致（script、onerror/onclick、javascript: 多种绕过、https 正常链接、<a href=\"x\" > 多余空格、style 内 url(javascript:)、style 属性、meta refresh、svg 内 script/onclick、注释内 script）。但同目录未发现良性样例、输出文件或报告（benign.html/a.html/sample.html/case.html/in.html/out.html/report.txt/run.sh/samples/out 均 ENOENT）→ A（良性逐字节相同）、F（编码/BOM）、G（幂等）、H（畸形输入）四类样例与任何 cmp/grep 证据缺失。",
+		"【本次复核后的验收要求（交实施/审核执行并留证）】① 良性样例（doctype+h1+table/th/td+class/id/style+实体+中文 emoji+注释+自闭合 <br/>+<img src=\"x.png\" alt=\"a\">+<a href=\"https://example.com\">+<style>a{color:red}</style>+CRLF）→ cmp 与输入逐字节相同；② 对已有 t1.html 跑一次并留存输出：无 <script（不分大小写）、无 on*=、无 javascript:/vbscript:，且保留 before/after、class=\"c\"、https 链接、b{color:red}、<svg>/<circle>；③ 补齐 A/F/G/H 样例（latin-1 字节、BOM、未闭合标签、裸 <、属性含 >、注释内 script）；④ CLI：正常 0、缺参非 0、文件不存在非 0；⑤ 幂等（两次输出 cmp 相同）；⑥ python 与 python3 各跑一遍；⑦ 交叉解析校验：用 stdlib html.parser 重解析输出，断言无 script 元素、无 on* 属性。样例与产物放 /tmp/filter_test/，仓库只保留 /app/filter.py。",
+		"【边界与范围复核】本节点仍只读：未修改任何文件、未提交任何卡、未读取 /tests、/solution、oracle 或在线答案。bash/pao_query_kb/pao_worktree_list 仍被宿主拦截，仓库清单与样例目录内容只能靠逐路径 read 推断（目录不可枚举，存在未探测到的同名文件盲区，已如实登记）。"
+	],
+	"unknowns": [
+		"实现能否通过语法检查与实际运行未验证（本节点 bash 被拦截，只能静态阅读）；filter_bytes/filter_file/main 的真实行为、退出码、字节一致性均未知。",
+		"/tmp/filter_test/ 完整内容未知：目录不可枚举，除 t1.html 外是否还有良性样例、输出文件、报告或脚本无法确认（存在“未探测到同名文件”的盲区）。",
+		"仓库完整文件清单未枚举：只能确认 read 到的路径；是否存在其他未探测到的产物文件待实施/审核用 ls 或 git status 核实。",
+		"filter.py 由谁、在哪个受管工作目录写出、是否已提交未知；本节点不做归因推断。",
+		"评测输入的编码、DOCTYPE、结构与对比方式（逐字节 diff 还是语义比较）仍未知；现实现按逐字节保持设计，未跑过任何样例。",
+		"F1（<script/> 自闭合）、F2（数据块 script 属性未清洗）、F3（iframe 等内部属性未清洗）、F5（注释未闭合兜底）、F6（CDATA 截断）是否被评测覆盖未知，须由实施节点补样例实测后定夺。"
+	],
+	"relations": [],
+	"risks": [
+		"最大风险仍是评测口径未知：现实现按“最彻底”删除（script 连内容整块删、危险属性整属性删），若评测期望“保留 script 文本只去标签”或“把 javascript: URL 换成 #”，输出形态会判失败；须以样例对照确认并写入交付说明。",
+		"本节点无执行权限，所有实现结论均为静态阅读：语法是否可编译、实际输出字节、退出码、幂等性全部未运行验证；审核须以真实 cmp/grep 证据为准。",
+		"F1（<script/> 自闭合 → 删除至 EOF）是最可能造成“过度删除合法正文”的缺陷，直接冲撞 “preserve as much as possible”，须优先实跑确认并修正。",
+		"F5（注释内未闭合 script 的 \\Z 兜底）会连带删除注释其余内容，与 R8“注释其余字节保留”自相矛盾，需确认并修正。",
+		"样例覆盖不足：目前只见 t1.html 一个恶意样例，良性/编码/幂等/畸形四类缺失；单个样例的通过记录不足以判定核心验收“除 JS 外逐字节保持”。",
+		"只读限制造成的盲区：无法枚举 /app 与 /tmp/filter_test 完整文件清单，可能存在未探测到的额外文件（若进入仓库会影响 diff 审查）；本结论只覆盖实际 read 到的路径。",
+		"filter.py 仍未跟踪未提交：若评测以工作区文件为准无碍，若以 git 提交内容为准则产物缺失；提交属主控/实施职责，本节点不处置。",
+		"性能未验证：_SCRIPT_BLOCK_RE 与 CSS 清洗含回溯正则（.*? DOTALL / (?:\\Z)），超大文件或大量注释时可能退化，需在大样例上测耗时。"
+	],
+	"integrationOwner": "实施部门负责按本地图 F1–F6 修正或明确取舍（重点 F1 <script/> 自闭合语义），补齐 A/F/G/H 样例并实跑留存 cmp/grep/退出码证据；审核部门独立核对 /app/filter.py 的实际字节、复跑样例并对照 R1–R9 与本地图验收要求出双轴结论。两部门均不得改变“除 JS 外逐字节保持”的口径，不得读 /tests、/solution。",
+	"previousRef": "pao-map://wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-8ad73497-c401-4b09-a0cd-9d8129f6f56b?digest=sha256%3Ae3188b474a41fb434fc8aa9581cd3a1b73e2b6761d3bf40c565a6485c6bd8b52&status=valid",
+	"supersessionReason": "覆盖内容已变化：/app/filter.py 由不存在变为存在（另有 /tmp/filter_test/t1.html），故本轮不沿用旧摘要，而是通读实际实现全文并逐条复核：确认实现路径与 R1–R9 口径已落地、记录 F1–F6 实现侧待确认点、补记“仅有一个恶意样例、无任何运行证据”的真实验证现状，并把验收要求收敛为可直接交实施/审核执行的动作清单。",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"上版规划地图 pao-map://wf-7c70bd87-fe07-4edf-aa39-6a2fc175c087----1-8ad73497-c401-4b09-a0cd-9d8129f6f56b",
+		"原始公开任务文本（创建 /app/filter.py，就地去 JS，保留其余 HTML 与格式，仅用已安装包）",
+		"本次实际变更的只读核对：read /app/filter.py（全文通读）、read /app/.git/HEAD、read /app/.git/index、read /app/.git/COMMIT_EDITMSG、read /tmp/filter_test/t1.html，以及 README.md/index.html/test_filter.py/out.html/in.html/sample.html/case.html/a.html/benign.html/report.txt/run.sh/samples/out 等路径的 ENOENT 探测",
+		"本轮宿主给定的范围与约束（只处理公开任务，不读 /tests、/solution、oracle，不伪造运行结果；只复核这一张地图，不改卡、不动流程控制、不认领基线）"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "9ca607fb04ba8235dd4244f95630023e04665697",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:4770801ce5d81eed9f6f2aa8a1eba3ad86d636082bfe6c3977bc3ef2083b352e"
+	},
+	"files": [
+		{
+			"path": "filter.py",
+			"workingDigest": "sha256:45f8ac13de16d7a5393d55d730817668511ad93e3c33407bf37aa60f5c6fa758",
+			"contentDigest": "sha256:45f8ac13de16d7a5393d55d730817668511ad93e3c33407bf37aa60f5c6fa758",
+			"size": 19774
+		},
+		{
+			"path": "filter_test/benign.html",
+			"workingDigest": "sha256:94200f89f1f6a7243230875e038b0c3ecc8218fbf78ed718e749f6832757c032",
+			"contentDigest": "sha256:94200f89f1f6a7243230875e038b0c3ecc8218fbf78ed718e749f6832757c032",
+			"size": 899
+		},
+		{
+			"path": "filter_test/malicious.html",
+			"workingDigest": "sha256:6d25808a16e6ac44e2cc2583c531a1a80e5c6b6b9af073de540769ad9428d2f7",
+			"contentDigest": "sha256:6d25808a16e6ac44e2cc2583c531a1a80e5c6b6b9af073de540769ad9428d2f7",
+			"size": 507
+		},
+		{
+			"path": "filter_test/selftest.py",
+			"workingDigest": "sha256:720b51e45c01fdc9957bc0b6df505b749e51a4280719f03005cde73889f2e9cc",
+			"contentDigest": "sha256:720b51e45c01fdc9957bc0b6df505b749e51a4280719f03005cde73889f2e9cc",
+			"size": 14618
+		}
+	],
+	"capturedAt": "2026-10-27T21:03:15.402Z",
+	"mapDigest": "sha256:366e035fffc6fef136682dd743104f2564f2eb9708f64baf00bc22bfbe422185"
+}

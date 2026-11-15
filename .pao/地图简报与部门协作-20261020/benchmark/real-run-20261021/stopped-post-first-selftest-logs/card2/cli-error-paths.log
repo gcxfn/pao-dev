@@ -1,0 +1,31 @@
+== error paths ==
+no_args_exit=2
+stderr: usage: python3 filter.py <html-file> | --check <html-file>
+traceback_lines=0
+
+missing_path_exit=1
+stderr: error: cannot read /tmp/pf/card2/does-not-exist.html: No such file or directory
+traceback_lines=0
+
+directory_path_exit=1
+stderr: error: cannot read err/adir: Is a directory
+traceback_lines=0
+
+== --check read-only mode ==
+check: err/check-dirty.html: unsafe: dangerous URL in 'href'
+check_dirty_exit=1
+check_readonly_cmp=0
+check: err/check-clean.html: clean
+check_clean_exit=0
+
+== unreadable path (chmod 000) ==
+chmod000_exit=0
+note: this process runs as uid=0; root bypasses permission bits,
+      so a 000-mode file is still readable and this case cannot be
+      exercised as an EACCES path here (see unreadable-path/not-run).
+
+== truly unreadable source: FIFO with no writer is not used; instead
+   sysfs file that cannot be read as a regular document ==
+proc_mem_exit=1
+stderr: error: cannot read /proc/self/mem: Input/output error
+traceback_lines=0

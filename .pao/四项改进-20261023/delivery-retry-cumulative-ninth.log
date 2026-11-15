@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+········x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 真实受管 worktree 的重试链只交付已证明路径，宿主索引与成果保持原样
+AssertionError: expected 'A  用户便签.txt\n?? .pao/任务/delivery-resu…' to be 'A  用户便签.txt' // Object.is equality
+
+- Expected
++ Received
+
+  A  用户便签.txt
++ ?? .pao/任务/delivery-results/card-0001-attempt-2.json
++ ?? .pao/任务/execution-contexts/card-0001-attempt-1.json
++ ?? .pao/任务/execution-contexts/card-0001-attempt-2.json
++ ?? .pao/任务/卡/卡0001-受管累计交付.md
++ ?? .pao/任务/四指标账.txt
++ ?? .pao/任务/基线/卡0001-尝试1-基线.json
++ ?? .pao/任务/基线/卡0001-尝试2-基线.json
++ ?? .pao/卡号.txt
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:596:59
+    594|   expect(git(secondRoot, ["show", `${result.提交哈希}:旧成果.txt`])).toBe("受管…
+    595|   expect(readFileSync(join(source, ".git", "index"))).toEqual(hostInde…
+    596|   expect(git(source, ["status", "--porcelain", "-uall"])).toBe(hostWor…
+       |                                                           ^
+    597|  }, 60000);
+    598| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  09:42:15
+   Duration  85.84s (transform 219ms, setup 0ms, import 407ms, tests 85.28s, environment 0ms)
+

@@ -1,0 +1,31 @@
+
+Running 2 tests using 1 worker
+
+  ok 1 apps\desktop\tests\unit\extension-view-source.spec.ts:11:5 › desktop assets belong to one loaded extension and its browser build (17ms)
+  x  2 apps\desktop\tests\unit\extension-view-source.spec.ts:52:5 › desktop asset validation rejects symlink escapes at registration and serving (5ms)
+
+
+  1) apps\desktop\tests\unit\extension-view-source.spec.ts:52:5 › desktop asset validation rejects symlink escapes at registration and serving 
+
+    Error: EPERM: operation not permitted, symlink 'C:\Users\ASUS\AppData\Local\Temp\pi-desktop-escape-WpkpZO\secret.js' -> 'C:\Users\ASUS\AppData\Local\Temp\pi-desktop-escape-WpkpZO\extension\dist\escape.js'
+
+      60 |     await writeFile(source, "export default () => {};");
+      61 |     await writeFile(outside, "secret");
+    > 62 |     await symlink(outside, path.join(build, "escape.js"));
+         |     ^
+      63 |     await expect(
+      64 |       validateDesktopExtensionSource(
+      65 |         {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\extension-view-source.spec.ts:62:5
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-extension-view-source-fb459-at-registration-and-serving\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-extension-view-source-fb459-at-registration-and-serving\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\extension-view-source.spec.ts:52:5 › desktop asset validation rejects symlink escapes at registration and serving 
+  1 passed (867ms)

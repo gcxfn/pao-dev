@@ -1,0 +1,48 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\workflow-auto-chain.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-auto-chain.test.ts"
+index 85b2e30..958f9b1 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\workflow-auto-chain.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-auto-chain.test.ts"
+@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+ import { listPaoSubcommands, resetPaoSubcommandsForTest } from "../../src/pao/command-router.ts";
+ import * as toastModule from "../../src/pao/notify/toast.ts";
++import * as atomic from "../../src/pao/shared/atomic.ts";
+ import { locateDispatchCard } from "../../src/pao/worker/dispatch-core.ts";
+ import {
+ 	createDispatchNotifySurface,
+@@ -1194,6 +1195,35 @@ describe("M2-06 自动执行链", () => {
+ 		expect(readCount()).toBe(2);
+ 	});
+ 
++	it("第6项·v1 实例计数保存失败时中止在派发前,worker 实际零运行且卡保持未认领", async () => {
++		const f = setup("计数保存败", recipeYaml("计数保存败", true, nodeYaml("A", "存在: 产物.txt")));
++		f.scriptDefault(["产物.txt"]);
++		const recipe = loadRecipe(f.paoHome, "计数保存败");
++		const options = { cardsDir: f.cardsDir, 运行器: f.runner, paoHome: f.paoHome };
++		await startWorkflow(recipe, {}, options);
++		const manifestFile = join(f.repo, ".pao", "任务A", "工作流实例-计数保存败.md");
++		const original = atomic.writeFileAtomic;
++		const writes = vi.spyOn(atomic, "writeFileAtomic").mockImplementation((path, text) => {
++			if (path === manifestFile && text.includes("已派卡: 1")) throw new Error("注入清单保存失败");
++			original(path, text);
++		});
++		try {
++			await expect(runAutoChain(recipe, options)).rejects.toThrow("注入清单保存失败");
++		} finally {
++			writes.mockRestore();
++		}
++		expect(f.runner.runs).toHaveLength(0);
++		expect(cardAt(f.cardsDir, "0001").frontmatter.status).toBe("unclaimed");
++		expect(cardAt(f.cardsDir, "0001").frontmatter.attempt).toBe(0);
++		expect(parseManifest(readFileSync(manifestFile, "utf8")).已派卡).toBeUndefined();
++		// 模拟文件写入恢复后，同一实例仍可从 0 计数正常续跑。
++		await expect(runAutoChain(recipe, options)).resolves.toMatchObject({
++			report: { status: "completed" },
++		});
++		expect(f.runner.runs).toHaveLength(1);
++		expect(parseManifest(readFileSync(manifestFile, "utf8")).已派卡).toBe(1);
++	});
++
+ 	it("K2 绿·v1 合并规则=本次 options 与实例余量较严者:余量耗尽停实例上限,显式更大值可续", async () => {
+ 		const f = setup(
+ 			"合并",

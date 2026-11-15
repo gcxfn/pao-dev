@@ -1,0 +1,92 @@
+
+Running 2 tests using 1 worker
+
+(node:23916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 (16.3s)
+(node:27308) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27308) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 apps\desktop\tests\core\workbench-tabs.spec.ts:404:5 › hiding the workbench keeps the mounted terminal and its output until reopened (19.3s)
+
+
+  1) apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('task-status')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('task-status')[22m
+
+
+      267 |     const tools = window.getByTestId("workbench");
+      268 |     const composer = window.getByTestId("composer");
+    > 269 |     await expect(status).toBeVisible();
+          |                          ^
+      270 |     await expect(tools).toBeVisible();
+      271 |     await expect(composer).toBeVisible();
+      272 |     const statusBox = (await status.boundingBox())!;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d4-sidebar-draft.spec.ts:269:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workbench-tabs.spec.ts:404:5 › hiding the workbench keeps the mounted terminal and its output until reopened 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"MOUNTED_retained"[39m
+    Received string:    [31m"[7mWindows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-QrgRA5\\workbench-tabs> set \"PI_GUI_[27mMOUNTED_[7mCANARY=[27mretained[7m\"PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-QrgRA5\\workbench-tabs> echo MOUN^TED_%PI_GUI_MOUNTED_CANARY%MOUN^TED_%PI_GUI_MOUNTED_CANARY%PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-QrgRA5\\workbench-tabs>  [27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    5 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-QrgRA5\workbench-tabs>  "[22m
+    [2m    4 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShellCopyright (C) Microsoft Corporation. All rights reserved.PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-QrgRA5\workbench-tabs> set "PI_GUI_MOUNTED_CANARY=retained"PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-QrgRA5\workbench-tabs> echo MOUN^TED_%PI_GUI_MOUNTED_CANARY%MOUN^TED_%PI_GUI_MOUNTED_CANARY%PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-QrgRA5\workbench-tabs>  "[22m
+
+
+      420 |     await window.keyboard.type(echoEnvCommand("MOUNTED_", "PI_GUI_MOUNTED_CANARY"));
+      421 |     await window.keyboard.press("Enter");
+    > 422 |     await expect(terminal.locator(".xterm-rows")).toContainText("MOUNTED_retained");
+          |                                                   ^
+      423 |     const host = window.locator(".task-status-workbench-host");
+      424 |     await expect(host).toBeVisible();
+      425 |     await toggleWorkbench(window);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:422:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\playwright-results\round-14-core-d4-workbench-regression-20261019-151000\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ─────
+    apps\desktop\tests\core\workbench-tabs.spec.ts:404:5 › hiding the workbench keeps the mounted terminal and its output until reopened 

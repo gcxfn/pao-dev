@@ -1,0 +1,80 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/worker-receipt.test.ts > 回执收集:用量只从事件流聚合,各字段分开 > message_end 容忍异常内容块，保留原顺序拼接且空内容不覆盖最终输出 4ms
+ ✓ test/pao/worker-receipt.test.ts > 回执收集:用量只从事件流聚合,各字段分开 > 多条 message_end 事件的 usage 逐项累加,不混算 2ms
+ ✓ test/pao/worker-receipt.test.ts > 回执收集:用量只从事件流聚合,各字段分开 > 模型正文自报的用量不采信:文本里说用了多少都不进账目 1ms
+ ✓ test/pao/worker-receipt.test.ts > 回执收集:用量只从事件流聚合,各字段分开 > 非 JSON 行与非 assistant 消息忽略,不抛错 0ms
+ ✓ test/pao/worker-receipt.test.ts > 回执摘要:≤3 行 > 取前 3 行非空内容 1ms
+ ✓ test/pao/worker-receipt.test.ts > 回执摘要:≤3 行 > 最终输出为空时退回 stderr;再空则占位 0ms
+ ✓ test/pao/worker-receipt.test.ts > 回执结构校验:缺任一必填字段判无效 > 完整回执有效 1ms
+ ✓ test/pao/worker-receipt.test.ts > 回执结构校验:缺任一必填字段判无效 > 非对象回执:全部必填字段判缺失 0ms
+ ✓ test/pao/worker-receipt.test.ts > 回执结构校验:缺任一必填字段判无效 > 逐项删字段:卡号/尝试/用量/证据路径/摘要 缺失即无效 2ms
+ ✓ test/pao/worker-receipt.test.ts > 回执结构校验:缺任一必填字段判无效 > 摘要超 3 行、状态不在四值内、用量字段非法:判问题 1ms
+ ✓ test/pao/worker-receipt.test.ts > 回执结构校验:缺任一必填字段判无效 > 产物路径必须是字符串数组 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 前后说明包着唯一 json 围栏时，正式解析仍拒收，诊断保留原始证据并识别同一对象 4ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 唯一 json 回执围栏可以与普通命令代码块并存 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 普通说明里的 CSS 花括号和命令示例 JSON 不算额外回执候选 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 普通说明和行内代码中的多个 CSS 空规则不计候选，唯一 json 围栏仍可恢复 2ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 普通说明、多个非回执代码块和唯一裸 JSON 可以并存 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 普通说明文字包着唯一完整裸对象时，严格入口仍拒收，同次诊断按 bare 恢复全部自报字段 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 围栏外每个明确像 JSON 的尝试都计候选，坏候选不能因解析失败被跳过；内层字段数组不重复计数 10ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 普通说明中的 CSS、HTML 花括号和未标语言 shell 判断不计候选，并测试围栏边界 2ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 围栏外明确像 JSON 的数组尝试都计候选，普通括号说明不计，残缺值直接失败 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 围栏边界只计数完整且明确的回执候选 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 多个裸对象时拒绝裸对象恢复 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 同一行两个裸对象时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 数组包装时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 数组说明在前时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 数组说明在后时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 嵌套数组时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 残缺对象时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 未闭合围栏时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 嵌套围栏时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 伪围栏时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 坏 JSON时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 坏 schema时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 缺字段时拒绝裸对象恢复 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 额外结构化包装时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 声明产物不存在时拒绝裸对象恢复 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > failed 缺失败事实时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > unknown 缺失败事实时拒绝裸对象恢复 0ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 多个 JSON 候选、围栏 schema 错误或缺少回执都拒绝恢复 1ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > 恢复时仍核验声明产物真实存在；字符串中的括号、转义引号和嵌套结构原样解析 7ms
+ ✓ test/pao/worker-receipt.test.ts > 最终回执格式诊断:严格入口不放宽 > runner 恢复 helper 只返回唯一围栏或唯一裸对象候选及原错误，不把严格成功或坏 schema 当恢复 1ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 最终 JSON 自报：任务态四态与 verification/changes 解析 > completed + 全 pass verification + changes 完整解析 4ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 最终 JSON 自报：任务态四态与 verification/changes 解析 > 任务态非法值与 verification/changes 坏形状一律拒收 2ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 最终 JSON 自报：任务态四态与 verification/changes 解析 > 合法检查之后混入说明对象仍拒收整份回执，不默默丢弃末项 1ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 最终 JSON 自报：任务态四态与 verification/changes 解析 > 无任务态的旧链路最终输出仍按原样解析（兼容） 0ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 有效尝试的终结结果仅接纳一次 > 第二条终结自报只留档不重复接纳 60ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 有效尝试的终结结果仅接纳一次 > 终结后的迟到 checkpoint 同样留档（尝试已终结） 41ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 有效尝试的终结结果仅接纳一次 > checkpoint 之后的首条终结自报正常接纳（checkpoint 不是终结） 41ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 有效尝试的终结结果仅接纳一次 > 旧尝试的终结自报仍走旧尝试留档（不与当前尝试混算） 58ms
+ ✓ test/pao/s5p1-receipt-final.test.ts > 自报字段落卡往返（serializeReceipt → parseReceipts） > 任务态/verification/changes 落卡后重读不丢 36ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > execute 当场使用共享验证器报具体字段错误，成功时只返回待宿主复核的自报结果 10ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 结束事件必须同时匹配工具名与 call id，失败、缺结束和双来源都不能交卷 1ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：真实 node 子进程让 WorkerRunner 收取成功工具参数，最后消息可只写普通说明 164ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：成功工具后附相同 JSON 尾文时仍只采信工具结果 138ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：成功工具后的不同 JSON 尾文不得成为第二份回执或覆盖工具结果 150ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：真实 node 子进程的 isError=true 工具事件不被采纳，也不回退有效文本 211ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：被拒绝的调用不算已交结果，后续唯一成功调用可被 runner 采纳 196ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：工具名或调用 ID 未配对时，真实 WorkerRunner 不采纳参数也不回退文本 197ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 协议模拟：真实 node 子进程提交两次工具结果时按来源冲突拒绝 199ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 同一 WorkerRunner 的旧 run 成功结果不会串入下一次派发 341ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 旧最终文本 JSON 回执继续兼容，并同样由宿主补身份、证据、退出码和用量 411ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 旧文本回执拒绝执行根外的绝对产物路径 650ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 窄结构化结果工具 > 旧文本根内绝对路径经链接逃逸时仍拒绝 653ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 结果与 ExecutionBinding 一致性 > 产物只按当前 attempt 的实时执行根解析，不从任务根同名文件回退 2820ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 结果与 ExecutionBinding 一致性 > 持久绑定损坏时拒绝采信工具结果，不改用任务根或 run cwd 的产物 1490ms
+ ✓ test/pao/worker-result-channel.test.ts > worker 结果与 ExecutionBinding 一致性 > 绝对路径、父目录越界和链接逃逸都拒绝 57ms
+ ✓ test/pao/worker-result-channel.test.ts > WorkerRunner 可信子进程环境 > 按 process.env→childEnvironment→本次派发→强制身份顺序合并，且不打印环境值 421ms
+ ✓ test/pao/worker-result-channel.test.ts > WorkerRunner 可信子进程环境 > childEnvironment 抛错时派发失败并向外暴露原因 30ms
+ ✓ test/pao/worker-receipt-retry.test.ts > worker 重试回执：本次尝试与整卡累计成果分开 > 真实第二次认领使用独立基线，只读旧成果留在证据，候选差异只列本次新写入 16302ms
+ ✓ test/pao/worker-receipt-retry.test.ts > worker 重试回执：本次尝试与整卡累计成果分开 > worker 改写认领基线时，程序候选证据失败，不能靠重写基线绕过核查 11000ms
+
+ Test Files  4 passed (4)
+      Tests  70 passed (70)
+   Start at  01:03:31
+   Duration  29.19s (transform 1.61s, setup 0ms, import 2.88s, tests 35.76s, environment 1ms)
+
+EXIT_CODE=0

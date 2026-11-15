@@ -1,0 +1,89 @@
+
+Running 8 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\kanban-board.spec.ts:243:5 › 看板五列、搜索筛选、详情回执、刷新读盘、坏卡显异常 (33.1s)
+  x  2 apps\desktop\tests\core\kanban-board.spec.ts:398:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 (14.3s)
+  ok 3 apps\desktop\tests\core\kanban-board.spec.ts:440:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 (21.1s)
+  ok 4 apps\desktop\tests\core\kanban-board.spec.ts:568:5 › 工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情 (11.2s)
+  ok 5 apps\desktop\tests\core\kanban-board.spec.ts:623:5 › 混合权限批量取消逐卡准确：一张成功一张失败带原因，操作后重读磁盘换列 (15.0s)
+  ok 6 apps\desktop\tests\core\kanban-board.spec.ts:668:5 › 拖放反馈：拖到已交付列被拒点名验收链，拖到取消列真实执行 (11.7s)
+  ok 7 apps\desktop\tests\core\kanban-board.spec.ts:724:5 › 右键菜单：入口动作同受合法操作约束，取消直接执行并重读换列 (12.8s)
+  x  8 apps\desktop\tests\core\kanban-board.spec.ts:761:5 › 租约真实值：旧代行不覆盖新代呈现，被接管如实亮出 (14.6s)
+
+
+  1) apps\desktop\tests\core\kanban-board.spec.ts:398:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 ─────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('workboard-pending-row').filter({ hasText: '丁卡失败' })
+    Expected substring: [32m"missing_input"[39m
+    Received string:    [31m"缺输入补卡 · 卡0004 丁卡失败（隔离项目甲）打开卡详情为什么停失败分型为缺输入，按分型不自动重派（重派也是白跑）要决定什么由谁补上输入指针（派卡方或你）建议补上输入后走 失败→待认领 重试证据C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-ZB083b\\kanban-project-a\\.pao\\卡\\卡0004-丁卡失败.md"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workboard-pending-row').filter({ hasText: '丁卡失败' })[22m
+    [2m    9 × locator resolved to <li data-pending-dept="工程" data-testid="workboard-pending-row" class="workboard-row workboard-row--pending">…</li>[22m
+    [2m      - unexpected value "缺输入补卡 · 卡0004 丁卡失败（隔离项目甲）打开卡详情为什么停失败分型为缺输入，按分型不自动重派（重派也是白跑）要决定什么由谁补上输入指针（派卡方或你）建议补上输入后走 失败→待认领 重试证据C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-ZB083b\kanban-project-a\.pao\卡\卡0004-丁卡失败.md"[22m
+
+
+      419 |     const pendingRow = page.getByTestId("workboard-pending-row").filter({ hasText: "丁卡失败" });
+      420 |     await expect(pendingRow).toBeVisible();
+    > 421 |     await expect(pendingRow).toContainText("missing_input");
+          |                              ^
+      422 |
+      423 |     // 点部门行定位：同部门的待处理条目被高亮。
+      424 |     await deptRow.getByRole("button").click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:421:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\kanban-board.spec.ts:761:5 › 租约真实值：旧代行不覆盖新代呈现，被接管如实亮出 ─────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[data-testid="kanban-column"][data-status="in_progress"]').getByTestId('kanban-card').filter({ hasText: '乙卡进行中' }).getByTestId('kanban-lease')
+    Expected: [32m"active"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="kanban-column"][data-status="in_progress"]').getByTestId('kanban-card').filter({ hasText: '乙卡进行中' }).getByTestId('kanban-lease')[22m
+
+
+      842 |     await page.getByTestId("kanban-refresh").click();
+      843 |     const lease = live().getByTestId("kanban-lease");
+    > 844 |     await expect(lease).toHaveAttribute("data-lease-state", "active");
+          |                         ^
+      845 |     await expect(lease).toContainText(`租约至 ${leaseExpiry.slice(0, 10)}`);
+      846 |
+      847 |     // 只剩被接管行（接管发生过、新 worker 未登记）：如实亮「已被接管」，不冒充正常。
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:844:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-租约真实值：旧代行不覆盖新代呈现，被接管如实亮出\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-租约真实值：旧代行不覆盖新代呈现，被接管如实亮出\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-kanban-board-租约真实值：旧代行不覆盖新代呈现，被接管如实亮出\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\kanban-board.spec.ts:398:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 ──────────────────
+    apps\desktop\tests\core\kanban-board.spec.ts:761:5 › 租约真实值：旧代行不覆盖新代呈现，被接管如实亮出 ──────────────────
+  6 passed (2.3m)

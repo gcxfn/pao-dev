@@ -1,0 +1,44 @@
+COMMAND: playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/core/workbench-tabs.spec.ts --grep "keeps one resizable width"
+EXIT_CODE: 1
+BEGIN_OUTPUT
+
+Running 1 test using 1 worker
+
+(node:24004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › keeps one resizable width across tools, chooser, tasks, and restart (31.9s)
+
+
+  1) apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › keeps one resizable width across tools, chooser, tasks, and restart 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m14.333333969116211[39m
+    Received:   [31m9.666666984558105[39m
+
+      509 |     const title = (await window.locator(".chat-header__title").boundingBox())!;
+      510 |     expect(title.y).toBeLessThan(48);
+    > 511 |     expect(add.y).toBeGreaterThan(title.y);
+          |                   ^
+      512 |     await expect(window.getByTestId("topbar").getByRole("heading", { name: TASK_A })).toBeVisible();
+      513 |     await window.getByTestId("thread-header-menu").click();
+      514 |     await expect(window.locator('[data-thread-action="scheduled-task"]')).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:511:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\pre-fix-valid\core-workbench-tabs-keeps--63426-s-chooser-tasks-and-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\pre-fix-valid\core-workbench-tabs-keeps--63426-s-chooser-tasks-and-restart\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\R06-V03-V12-width-boundary-20261019-162746\playwright-results\pre-fix-valid\core-workbench-tabs-keeps--63426-s-chooser-tasks-and-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workbench-tabs.spec.ts:469:5 › keeps one resizable width across tools, chooser, tasks, and restart 
+END_OUTPUT

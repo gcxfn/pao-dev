@@ -1,0 +1,115 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\workflow-tools.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-tools.test.ts"
+index 83e1ea1..5b7de45 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\workflow-tools.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\workflow-tools.test.ts"
+@@ -6,16 +6,17 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, w
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
++import { stringify } from "yaml";
+ 
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+-import { listCards, loadCard, serializeCard } from "../../src/pao/cards/cardfile.ts";
++import { cardFileName, listCards, loadCard, serializeCard, serializeReceipt } from "../../src/pao/cards/cardfile.ts";
+ import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+ import { listPaoSubcommands, resetPaoSubcommandsForTest } from "../../src/pao/command-router.ts";
+ import * as atomic from "../../src/pao/shared/atomic.ts";
+ import { writeFileAtomic } from "../../src/pao/shared/atomic.ts";
+ import { withFileLock } from "../../src/pao/shared/lock.ts";
+-import { startControl } from "../../src/pao/workflow/control.ts";
+-import { parseManifest } from "../../src/pao/workflow/driver.ts";
++import { controlPath, readControl, startControl } from "../../src/pao/workflow/control.ts";
++import { parseManifest, workflowMarker } from "../../src/pao/workflow/driver.ts";
+ import { loadRecipe } from "../../src/pao/workflow/recipe.ts";
+ import { registerWorkflowTools } from "../../src/pao/workflow/tools.ts";
+ 
+@@ -572,6 +573,89 @@ describe("跑后复盘终态提醒（十八批,§11.6）", () => {
+ 	});
+ });
+ 
++describe("pao_review_flow v2 真实工具入口", () => {
++	test("从控制正本隔离当前/历史卡并输出重试/派发/摘要/产物/实耗与原始判定恢复记录", async () => {
++		const recipeText = `---
++版本: 2
++名字: 复盘工具流
++自动执行: false
++参数: []
++节点:
++  - 名字: 侦察
++    部门: 侦察
++    目标: 扫仓库
++    验收: "包含: 扫"
++    人工确认: false
++---
++`;
++		writeFileSync(join(paoHome, "工作流", "复盘工具流.md"), recipeText, "utf8");
++		const recipe = loadRecipe(paoHome, "复盘工具流");
++		const options = { cardsDir, ownerSessionId: "session-1", now: () => "2026-10-03 09:00" };
++		await startControl(recipe, {}, options);
++		const flow = readControl(recipe, options);
++		const instance = flow.实例;
++		const decision = {
++			结果: "change" as const,
++			理由: "补证据",
++			失败轴: "card" as const,
++			引用: ["src/a.ts:1"],
++			目标: "侦察",
++			时间: "2026-10-03 10:30",
++		};
++		flow.状态 = "已完成";
++		flow.节点[0]!.轮次 = 2;
++		flow.节点[0]!.卡 = ["0002"];
++		flow.节点[0]!.拆解结束 = true;
++		flow.节点[0]!.历史 = [{ 轮次: 1, 卡: ["0001"], 判定: decision, 原因: "补证据" }];
++		flow.回边次数 = { "侦察→侦察": 1 };
++		flow.记录 = [{ 时间: "2026-10-03 11:00", 事件: "人工恢复", 理由: "核对后继续" }];
++		writeFileAtomic(controlPath(recipe, options), `---\n${stringify(flow)}---\n`);
++
++		const writeReviewCard = (cardNo: number, round: number, summary: string, artifact: string) => {
++			const goal = `扫仓库${cardNo}`;
++			writeFileAtomic(
++				join(cardsDir, cardFileName(cardNo, goal)),
++				serializeCard(
++					{
++						goal,
++						dept: "侦察",
++						acceptance: "包含: 扫",
++						attempt: 1,
++						created: "2026-10-03 10:00",
++						completed: "2026-10-03 10:20",
++						status: "delivered",
++					},
++					[
++						workflowMarker("复盘工具流", "侦察"),
++						`<!-- pao-workflow-v2:实例=${instance}/轮次=${round} -->`,
++						serializeReceipt({
++							card_no: cardNo,
++							attempt: 1,
++							time: `2026-10-03 10:${cardNo}0`,
++							result: "success",
++							summary,
++							artifact_path: [artifact],
++							usage: { turns: cardNo, toolCalls: cardNo * 2, cost: cardNo / 10 },
++						}),
++					].join("\n\n"),
++				),
++			);
++		};
++		writeReviewCard(1, 1, "历史轮成功", "docs/历史.md");
++		writeReviewCard(2, 2, "当前轮成功", "docs/当前.md");
++
++		const { tools } = setup(fixtureOptions());
++		const text = await runTool(tools.get("pao_review_flow")!, { name: "复盘工具流" });
++		expect(text).toContain("━ 侦察 | 卡0001、卡0002 | delivered | 尝试2（重试0） | 派发2");
++		expect(text).toContain("末次成功摘要:当前轮成功");
++		expect(text).toContain("产物:docs/历史.md、docs/当前.md");
++		expect(text).toContain("3轮/6次/$0.30");
++		expect(text).toContain('回边次数:{"侦察→侦察":1}');
++		expect(text).toContain('"结果":"change"');
++		expect(text).toContain("人工恢复");
++	});
++});
++
+ // /pao recipe-del <名字>：机械核 deleteRecipe（recipe.ts）+ 命令面回显。fixture 一律临时目录。
+ describe("/pao recipe-del 子命令", () => {
+ 	test("存在→删除配方本体并回显名字与路径,同名 .bak 备份保留", async () => {

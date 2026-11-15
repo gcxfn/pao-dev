@@ -1,0 +1,33 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\repair.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\repair.ts"
+index da82644..6d18c89 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\repair.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\repair.ts"
+@@ -13,7 +13,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
+ import { writeFileAtomic } from "../shared/atomic.ts";
+ import { withFileLock } from "../shared/lock.ts";
+-import { parseEntry, subindexRow } from "./entry.ts";
++import { isMarkdownEntryFile, parseEntry, subindexRow } from "./entry.ts";
+ import { INDEX_FILE } from "./paths.ts";
+ import { ENTRY_TYPES } from "./types.ts";
+ 
+@@ -47,9 +47,7 @@ async function reconcileSubindex(libRoot: string, area: string): Promise<string[
+ 	const subindexFile = join(dir, "子索引.md");
+ 	const actions: string[] = [];
+ 	await withFileLock(subindexFile, () => {
+-		const entries = readdirSync(dir)
+-			.filter((f) => f.endsWith(".md") && f !== "子索引.md")
+-			.sort();
++		const entries = readdirSync(dir).filter(isMarkdownEntryFile).sort();
+ 		let lines: string[];
+ 		if (existsSync(subindexFile)) {
+ 			lines = readFileSync(subindexFile, "utf8").split(/\r?\n/);
+@@ -133,7 +131,7 @@ function scanFacadeStale(libRoot: string, facadePath: string): string[] {
+ 		const m = /\[[^\]]*\]\(([^)]+)\)/.exec(line);
+ 		if (!m) continue;
+ 		const target = m[1];
+-		if (!target.endsWith(".md") || /^https?:/.test(target)) continue;
++		if (!target.toLowerCase().endsWith(".md") || /^https?:/.test(target)) continue;
+ 		const resolved = join(libRoot, target); // 门面在库根，链接目标相对库根解析
+ 		if (!existsSync(resolved)) stale.push(`索引.md: ${target}`);
+ 	}

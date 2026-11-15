@@ -1,0 +1,764 @@
+diff --git a/packages/coding-agent/src/core/agent-session-runtime.ts b/packages/coding-agent/src/core/agent-session-runtime.ts
+index 9165b7277..c4e086cb4 100644
+--- a/packages/coding-agent/src/core/agent-session-runtime.ts
++++ b/packages/coding-agent/src/core/agent-session-runtime.ts
+@@ -80,6 +80,7 @@ export class AgentSessionRuntime {
+ 	private readonly createRuntime: CreateAgentSessionRuntimeFactory;
+ 	private _diagnostics: AgentSessionRuntimeDiagnostic[];
+ 	private _modelFallbackMessage?: string;
++	private _disposePromise: Promise<void> | undefined;
+ 
+ 	constructor(
+ 		_session: AgentSession,
+@@ -166,9 +167,11 @@ export class AgentSessionRuntime {
+ 	}
+ 
+ 	private async teardownCurrent(reason: SessionShutdownEvent["reason"], targetSessionFile?: string): Promise<void> {
++		this.session.beginClose();
+ 		// Settle any active response first so the aborted turn (including tool
+ 		// results) is persisted to the outgoing session before it is replaced.
+ 		await this.session.abort();
++		await this.session.close();
+ 		await emitSessionShutdownEvent(this.session.extensionRunner, {
+ 			type: "session_shutdown",
+ 			reason,
+@@ -404,13 +407,20 @@ export class AgentSessionRuntime {
+ 	}
+ 
+ 	async dispose(): Promise<void> {
+-		await emitSessionShutdownEvent(this.session.extensionRunner, {
+-			type: "session_shutdown",
+-			reason: "quit",
+-		});
+-		releaseBackgroundWorkPort(this.session.sessionManager);
+-		this.beforeSessionInvalidate?.();
+-		this.session.dispose();
++		if (this._disposePromise) return this._disposePromise;
++		this._disposePromise = (async () => {
++			this.session.beginClose();
++			await this.session.abort();
++			await this.session.close();
++			await emitSessionShutdownEvent(this.session.extensionRunner, {
++				type: "session_shutdown",
++				reason: "quit",
++			});
++			releaseBackgroundWorkPort(this.session.sessionManager);
++			this.beforeSessionInvalidate?.();
++			this.session.dispose();
++		})();
++		await this._disposePromise;
+ 	}
+ }
+ 
+diff --git a/packages/coding-agent/src/core/agent-session.ts b/packages/coding-agent/src/core/agent-session.ts
+index 8c01d1891..dd4849681 100644
+--- a/packages/coding-agent/src/core/agent-session.ts
++++ b/packages/coding-agent/src/core/agent-session.ts
+@@ -372,6 +372,10 @@ export class AgentSession {
+ 	private _eventListeners: AgentSessionEventListener[] = [];
+ 	private _isAgentRunActive = false;
+ 	private _agentRunAbortRequested = false;
++	private _acceptedActivityCount = 0;
++	private _isClosing = false;
++	private _closeWaitPromise: Promise<void> | undefined;
++	private _resolveCloseWait: (() => void) | undefined;
+ 	private _idleWaitPromise: Promise<void> | undefined;
+ 	private _resolveIdleWait: (() => void) | undefined;
+ 
+@@ -416,6 +420,7 @@ export class AgentSession {
+ 	private _isBeforeSettle = false;
+ 	private _abortDuringBeforeSettle = false;
+ 	private _isEmittingAgentSettled = false;
++	private _isDrainingSettledActions = false;
+ 	private readonly _deferredSettledActions: Array<() => Promise<void>> = [];
+ 
+ 	private _resourceLoader: ResourceLoader;
+@@ -1039,19 +1044,42 @@ export class AgentSession {
+ 	}
+ 
+ 	private _resolveIdleWaitIfIdle(): void {
+-		if (!this.isIdle || !this._resolveIdleWait) {
+-			return;
++		if (this.isIdle && this._resolveIdleWait) {
++			const resolve = this._resolveIdleWait;
++			this._idleWaitPromise = undefined;
++			this._resolveIdleWait = undefined;
++			queueMicrotask(resolve);
++		}
++		if (this._isClosing && this._isSettled()) {
++			const resolve = this._resolveCloseWait;
++			this._closeWaitPromise = undefined;
++			this._resolveCloseWait = undefined;
++			resolve?.();
++		}
++	}
++
++	private _isSettled(): boolean {
++		return (
++			this._acceptedActivityCount === 0 &&
++			!this._isAgentRunActive &&
++			!this.isCompacting &&
++			!this._isEmittingAgentSettled &&
++			!this._isDrainingSettledActions &&
++			this._deferredSettledActions.length === 0
++		);
++	}
++
++	private _throwIfClosing(): void {
++		if (this._isClosing) {
++			throw new Error("Agent session is closing and no longer accepts new turns");
+ 		}
+-		const resolve = this._resolveIdleWait;
+-		this._idleWaitPromise = undefined;
+-		this._resolveIdleWait = undefined;
+-		resolve();
+ 	}
+ 
+ 	private async _emitAgentSettled(): Promise<void> {
+ 		this._cacheWarmer?.onAgentSettled();
+ 		this._isAgentRunActive = false;
+ 		this._isEmittingAgentSettled = true;
++		this._resolveIdleWaitIfIdle();
+ 		try {
+ 			await this._extensionRunner.emit({ type: "agent_settled" });
+ 			this._emit({ type: "agent_settled" });
+@@ -1061,9 +1089,11 @@ export class AgentSession {
+ 
+ 		const deferred = this._deferredSettledActions.splice(0);
+ 		if (deferred.length > 0) {
++			this._isDrainingSettledActions = true;
+ 			try {
+ 				for (const action of deferred) await action();
+ 			} finally {
++				this._isDrainingSettledActions = false;
+ 				this._resolveIdleWaitIfIdle();
+ 			}
+ 			return;
+@@ -1362,6 +1392,7 @@ export class AgentSession {
+ 	 * Call this when completely done with the session.
+ 	 */
+ 	dispose(): void {
++		this._isClosing = true;
+ 		try {
+ 			this.abortRetry();
+ 			this.abortCompaction();
+@@ -1774,6 +1805,8 @@ export class AgentSession {
+ 	// =========================================================================
+ 
+ 	private async _runAgentPrompt(messages: AgentMessage | AgentMessage[]): Promise<void> {
++		// Public entry points gate acceptance before reaching this internal runner.
++		// Re-checking here would reject work that was accepted before a close began.
+ 		// Single-flight pre-check, thrown before the try block: a concurrent prompt that
+ 		// slipped past prompt()'s isStreaming check during the pre-flight window must fail
+ 		// cleanly instead of reaching agent.prompt() and settling early from this method's
+@@ -1929,23 +1962,42 @@ export class AgentSession {
+ 	 * @throws Error if no model selected or no API key available (when not streaming)
+ 	 */
+ 	async prompt(text: string, options?: PromptOptions): Promise<void> {
+-		if (this._isEmittingAgentSettled) {
+-			this._deferredSettledActions.push(async () => await this.prompt(text, options));
+-			return;
+-		}
++		this._throwIfClosing();
++		await this._runPrompt(text, options);
++	}
++
++	private async _runPrompt(text: string, options?: PromptOptions): Promise<void> {
+ 		const expandPromptTemplates = options?.expandPromptTemplates ?? true;
+-		const preflightResult = options?.preflightResult;
+ 		// Handle extension commands first (execute immediately, even during streaming)
+ 		// Extension commands manage their own LLM interaction via pi.sendMessage()
+ 		if (expandPromptTemplates && text.startsWith("/")) {
+-			const handled = await this._tryExecuteExtensionCommand(text);
+-			if (handled) {
+-				// Extension command executed, no prompt to send
+-				preflightResult?.("handled");
+-				return;
++			const spaceIndex = text.indexOf(" ");
++			const commandName = spaceIndex === -1 ? text.slice(1) : text.slice(1, spaceIndex);
++			if (this._extensionRunner.getCommand(commandName)) {
++				const handled = await this._tryExecuteExtensionCommand(text);
++				if (handled) {
++					// Extension command executed, no prompt to send
++					options?.preflightResult?.("handled");
++					return;
++				}
+ 			}
+ 		}
+ 
++		// Extension commands may replace this session themselves, so only count
++		// work that remains inside this session. Unknown slash commands, skills,
++		// and regular input are accepted here before their first await.
++		this._acceptedActivityCount++;
++		try {
++			await this._runAcceptedPrompt(text, options);
++		} finally {
++			this._acceptedActivityCount--;
++			this._resolveIdleWaitIfIdle();
++		}
++	}
++
++	private async _runAcceptedPrompt(text: string, options?: PromptOptions): Promise<void> {
++		const expandPromptTemplates = options?.expandPromptTemplates ?? true;
++		const preflightResult = options?.preflightResult;
+ 		if (this._compactionAbortController !== undefined) {
+ 			throw new Error(
+ 				"Cannot submit a prompt while compaction is in progress. Wait for compaction to finish and retry.",
+@@ -1972,6 +2024,23 @@ export class AgentSession {
+ 			expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
+ 		}
+ 
++		if (this._isEmittingAgentSettled) {
++			this._deferredSettledActions.push(
++				async () => await this._runAcceptedPromptAfterInput(expandedText, currentImages, options),
++			);
++			return;
++		}
++
++		await this._runAcceptedPromptAfterInput(expandedText, currentImages, options);
++	}
++
++	private async _runAcceptedPromptAfterInput(
++		expandedText: string,
++		currentImages: ImageContent[] | undefined,
++		options?: PromptOptions,
++	): Promise<void> {
++		const preflightResult = options?.preflightResult;
++
+ 		// If streaming, queue via steer() or followUp() based on option
+ 		if (this.isStreaming) {
+ 			if (!options?.streamingBehavior) {
+@@ -1988,7 +2057,7 @@ export class AgentSession {
+ 			return;
+ 		}
+ 
+-		// Flush any pending bash and custom messages before the new prompt
++		// Flush any pending bash and custom messages before the new prompt.
+ 		this._flushPendingBashMessages();
+ 		this._flushPendingCustomMessages();
+ 
+@@ -2139,27 +2208,34 @@ export class AgentSession {
+ 		behavior: "steer" | "followUp",
+ 		source: InputSource,
+ 	): Promise<QueuedInputDisposition> {
+-		if (text.startsWith("/")) {
+-			this._throwIfExtensionCommand(text);
+-		}
++		this._throwIfClosing();
++		this._acceptedActivityCount++;
++		try {
++			if (text.startsWith("/")) {
++				this._throwIfExtensionCommand(text);
++			}
+ 
+-		const processedInput = await this._runInputHandlers(
+-			text,
+-			images,
+-			source,
+-			this.isStreaming ? behavior : undefined,
+-		);
+-		if (!processedInput) return "handled";
++			const processedInput = await this._runInputHandlers(
++				text,
++				images,
++				source,
++				this.isStreaming ? behavior : undefined,
++			);
++			if (!processedInput) return "handled";
+ 
+-		let expandedText = this._expandSkillCommand(processedInput.text);
+-		expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
++			let expandedText = this._expandSkillCommand(processedInput.text);
++			expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
+ 
+-		if (behavior === "steer") {
+-			await this._queueSteer(expandedText, processedInput.images);
+-		} else {
+-			await this._queueFollowUp(expandedText, processedInput.images);
++			if (behavior === "steer") {
++				await this._queueSteer(expandedText, processedInput.images);
++			} else {
++				await this._queueFollowUp(expandedText, processedInput.images);
++			}
++			return "queued";
++		} finally {
++			this._acceptedActivityCount--;
++			this._resolveIdleWaitIfIdle();
+ 		}
+-		return "queued";
+ 	}
+ 
+ 	/**
+@@ -2257,6 +2333,11 @@ export class AgentSession {
+ 		message: Pick<CustomMessage<T>, "customType" | "content" | "display" | "details">,
+ 		options?: { triggerTurn?: boolean; deliverAs?: "steer" | "followUp" | "nextTurn" },
+ 	): Promise<void> {
++		const willStartOrQueueTurn =
++			options?.triggerTurn === true ||
++			options?.deliverAs === "nextTurn" ||
++			(this.isStreaming && options?.triggerTurn !== false);
++		if (willStartOrQueueTurn) this._throwIfClosing();
+ 		const appMessage = {
+ 			role: "custom" as const,
+ 			customType: message.customType,
+@@ -2275,11 +2356,24 @@ export class AgentSession {
+ 				this.agent.steer(appMessage);
+ 			}
+ 		} else if (options?.triggerTurn) {
++			this._acceptedActivityCount++;
+ 			if (this._isEmittingAgentSettled) {
+-				this._deferredSettledActions.push(async () => await this._runAgentPrompt(appMessage));
++				this._deferredSettledActions.push(async () => {
++					try {
++						await this._runAgentPrompt(appMessage);
++					} finally {
++						this._acceptedActivityCount--;
++						this._resolveIdleWaitIfIdle();
++					}
++				});
+ 				return;
+ 			}
+-			await this._runAgentPrompt(appMessage);
++			try {
++				await this._runAgentPrompt(appMessage);
++			} finally {
++				this._acceptedActivityCount--;
++				this._resolveIdleWaitIfIdle();
++			}
+ 		} else if (this.isStreaming) {
+ 			// Appending now would put the message between an assistant tool call and its
+ 			// result, which providers that validate message order reject on replay. Defer
+@@ -2407,6 +2501,23 @@ export class AgentSession {
+ 		await Promise.all([this.waitForIdle(), precompaction]);
+ 	}
+ 
++	/**
++	 * Stop accepting new turns while allowing already accepted work to settle.
++	 * Callers must await `close()` before disposing the session.
++	 */
++	beginClose(): void {
++		this._isClosing = true;
++	}
++
++	async close(): Promise<void> {
++		this.beginClose();
++		if (this._isSettled()) return;
++		this._closeWaitPromise ??= new Promise((resolve) => {
++			this._resolveCloseWait = resolve;
++		});
++		await this._closeWaitPromise;
++	}
++
+ 	async waitForIdle(): Promise<void> {
+ 		if (this.isIdle) {
+ 			return;
+diff --git a/packages/coding-agent/src/modes/print-mode.ts b/packages/coding-agent/src/modes/print-mode.ts
+index e3eefd498..ead93ab5a 100644
+--- a/packages/coding-agent/src/modes/print-mode.ts
++++ b/packages/coding-agent/src/modes/print-mode.ts
+@@ -176,6 +176,7 @@ export async function runPrintMode(runtimeHost: AgentSessionRuntime, options: Pr
+ 			await session.prompt(message);
+ 		}
+ 		await waitForBackground();
++		await runtimeHost.session.close();
+ 
+ 		if (mode === "text") {
+ 			const state = session.state;
+diff --git a/packages/coding-agent/test/agent-session-runtime-events.test.ts b/packages/coding-agent/test/agent-session-runtime-events.test.ts
+index 32bb828ff..829a0c85d 100644
+--- a/packages/coding-agent/test/agent-session-runtime-events.test.ts
++++ b/packages/coding-agent/test/agent-session-runtime-events.test.ts
+@@ -1,4 +1,4 @@
+-import { existsSync, mkdirSync, rmSync } from "node:fs";
++import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { fauxAssistantMessage, registerFauxProvider } from "@earendil-works/pi-ai/compat";
+@@ -35,7 +35,10 @@ describe("AgentSessionRuntime session lifecycle events", () => {
+ 		}
+ 	});
+ 
+-	async function createRuntimeHost(extensionFactory: ExtensionFactory) {
++	async function createRuntimeHost(
++		extensionFactory: ExtensionFactory,
++		options: { additionalSkillPaths?: string[] } = {},
++	) {
+ 		const tempDir = join(tmpdir(), `pi-runtime-events-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+ 		mkdirSync(tempDir, { recursive: true });
+ 
+@@ -73,7 +76,8 @@ describe("AgentSessionRuntime session lifecycle events", () => {
+ 			model: faux.getModel(),
+ 			resourceLoaderOptions: {
+ 				extensionFactories: [extensionFactory],
+-				noSkills: true,
++				additionalSkillPaths: options.additionalSkillPaths,
++				noSkills: options.additionalSkillPaths === undefined,
+ 				noPromptTemplates: true,
+ 				noThemes: true,
+ 			},
+@@ -254,4 +258,203 @@ describe("AgentSessionRuntime session lifecycle events", () => {
+ 		expect(cancelAtResult).toEqual({ cancelled: true });
+ 		expect(events).toEqual([{ type: "session_before_fork", entryId: "missing-entry", position: "at" }]);
+ 	});
++
++	it("closes after an accepted prompt preflight and rejects turns submitted after the close gate", async () => {
++		const events: RecordedSessionEvent[] = [];
++		let releaseInput!: () => void;
++		const inputGate = new Promise<void>((resolve) => {
++			releaseInput = resolve;
++		});
++		let markInputStarted!: () => void;
++		const inputStarted = new Promise<void>((resolve) => {
++			markInputStarted = resolve;
++		});
++		const { runtimeHost, faux } = await createRuntimeHost((pi) => {
++			pi.on("input", async () => {
++				markInputStarted();
++				await inputGate;
++				return { action: "continue" };
++			});
++			pi.on("session_shutdown", (event) => {
++				events.push(event);
++			});
++		});
++		const session = runtimeHost.session;
++
++		const acceptedPrompt = session.prompt("accepted before close");
++		await inputStarted;
++		const closing = session.close();
++
++		await expect(session.prompt("late prompt")).rejects.toThrow("no longer accepts new turns");
++		await expect(
++			session.sendCustomMessage(
++				{ customType: "late-trigger", content: [{ type: "text", text: "late trigger" }], display: false },
++				{ triggerTurn: true },
++			),
++		).rejects.toThrow("no longer accepts new turns");
++		await expect(session.steer("late steer")).rejects.toThrow("no longer accepts new turns");
++		await expect(session.followUp("late follow-up")).rejects.toThrow("no longer accepts new turns");
++		expect(faux.state.callCount).toBe(0);
++		expect(events).toEqual([]);
++
++		releaseInput();
++		await Promise.all([acceptedPrompt, closing]);
++		expect(faux.state.callCount).toBe(1);
++		expect(events).toEqual([]);
++
++		await runtimeHost.dispose();
++		expect(events).toEqual([{ type: "session_shutdown", reason: "quit" }]);
++	});
++
++	it("closes after accepting an unknown slash prompt", async () => {
++		let releaseInput!: () => void;
++		const inputGate = new Promise<void>((resolve) => {
++			releaseInput = resolve;
++		});
++		let markInputStarted!: () => void;
++		const inputStarted = new Promise<void>((resolve) => {
++			markInputStarted = resolve;
++		});
++		const { runtimeHost, faux } = await createRuntimeHost((pi) => {
++			pi.on("input", async () => {
++				markInputStarted();
++				await inputGate;
++				return { action: "continue" };
++			});
++		});
++		const session = runtimeHost.session;
++
++		const acceptedPrompt = session.prompt("/unknown-command");
++		const closing = session.close();
++		await inputStarted;
++		expect(faux.state.callCount).toBe(0);
++
++		releaseInput();
++		await Promise.all([acceptedPrompt, closing]);
++		expect(faux.state.callCount).toBe(1);
++	});
++
++	it("closes after accepting an existing skill command", async () => {
++		const tempDir = join(tmpdir(), `pi-runtime-skill-${Date.now()}-${Math.random().toString(36).slice(2)}`);
++		mkdirSync(tempDir, { recursive: true });
++		const skillFile = join(tempDir, "SKILL.md");
++		writeFileSync(skillFile, "---\nname: close-test\ndescription: Close ordering test.\n---\n\nSkill body.");
++		let releaseInput!: () => void;
++		const inputGate = new Promise<void>((resolve) => {
++			releaseInput = resolve;
++		});
++		let markInputStarted!: () => void;
++		const inputStarted = new Promise<void>((resolve) => {
++			markInputStarted = resolve;
++		});
++		const { runtimeHost, faux } = await createRuntimeHost(
++			(pi) => {
++				pi.on("input", async () => {
++					markInputStarted();
++					await inputGate;
++					return { action: "continue" };
++				});
++			},
++			{ additionalSkillPaths: [skillFile] },
++		);
++		const session = runtimeHost.session;
++
++		const acceptedPrompt = session.prompt("/skill:close-test");
++		const closing = session.close();
++		await inputStarted;
++		expect(faux.state.callCount).toBe(0);
++
++		releaseInput();
++		await Promise.all([acceptedPrompt, closing]);
++		expect(faux.state.callCount).toBe(1);
++	});
++
++	it("drains a turn accepted by an agent_settled handler before closing", async () => {
++		const phases: string[] = [];
++		let releaseSettled!: () => void;
++		const settledGate = new Promise<void>((resolve) => {
++			releaseSettled = resolve;
++		});
++		let markSettledStarted!: () => void;
++		const settledStarted = new Promise<void>((resolve) => {
++			markSettledStarted = resolve;
++		});
++		let queuedFollowUp = false;
++		const { runtimeHost, faux } = await createRuntimeHost((pi) => {
++			let triggerQueued = false;
++			pi.on("agent_settled", async () => {
++				if (triggerQueued) return;
++				triggerQueued = true;
++				phases.push("settled-before");
++				queuedFollowUp = true;
++				pi.sendMessage(
++					{ customType: "settled-trigger", content: [{ type: "text", text: "follow-up" }], display: false },
++					{ triggerTurn: true },
++				);
++				markSettledStarted();
++				await settledGate;
++				phases.push("settled-after");
++			});
++			pi.on("agent_start", () => {
++				if (queuedFollowUp) phases.push("trigger-start");
++			});
++			pi.on("session_shutdown", () => {
++				phases.push("shutdown");
++			});
++		});
++		const session = runtimeHost.session;
++
++		const firstPrompt = session.prompt("first");
++		await settledStarted;
++		let closeResolved = false;
++		const closing = session.close().then(() => {
++			closeResolved = true;
++		});
++		expect(faux.state.callCount).toBe(1);
++		expect(closeResolved).toBe(false);
++
++		releaseSettled();
++		await Promise.all([firstPrompt, closing]);
++		expect(faux.state.callCount).toBe(2);
++		expect(closeResolved).toBe(true);
++		expect(phases).toEqual(["settled-before", "settled-after", "trigger-start"]);
++
++		await runtimeHost.dispose();
++		expect(phases).toEqual(["settled-before", "settled-after", "trigger-start", "shutdown"]);
++	});
++
++	it("makes runtime disposal idempotent", async () => {
++		let shutdownCount = 0;
++		let abortObserved = false;
++		let markResponseReached!: () => void;
++		const responseReached = new Promise<void>((resolve) => {
++			markResponseReached = resolve;
++		});
++		const { runtimeHost, faux } = await createRuntimeHost((pi) => {
++			pi.on("session_shutdown", () => {
++				shutdownCount++;
++			});
++		});
++		faux.setResponses([
++			(_context, options) =>
++				new Promise((_resolve, reject) => {
++					markResponseReached();
++					options!.signal!.addEventListener(
++						"abort",
++						() => {
++							abortObserved = true;
++							reject(options!.signal!.reason);
++						},
++						{ once: true },
++					);
++				}),
++		]);
++		const runningPrompt = runtimeHost.session.prompt("active");
++		await responseReached;
++
++		await Promise.all([runtimeHost.dispose(), runtimeHost.dispose(), runningPrompt]);
++		await runtimeHost.dispose();
++		expect(abortObserved).toBe(true);
++		expect(shutdownCount).toBe(1);
++	});
+ });
+diff --git a/packages/coding-agent/test/print-mode.test.ts b/packages/coding-agent/test/print-mode.test.ts
+index 0011dabae..e37456ab5 100644
+--- a/packages/coding-agent/test/print-mode.test.ts
++++ b/packages/coding-agent/test/print-mode.test.ts
+@@ -43,6 +43,7 @@ type FakeSession = {
+ 	prompt: ReturnType<typeof vi.fn>;
+ 	reload: ReturnType<typeof vi.fn>;
+ 	waitForIdle: ReturnType<typeof vi.fn>;
++	close: ReturnType<typeof vi.fn>;
+ };
+ 
+ type FakeRuntimeHost = {
+@@ -105,6 +106,7 @@ function createRuntimeHost(assistantMessage: AssistantMessage, boundPort?: Bound
+ 		prompt: vi.fn(async () => {}),
+ 		reload: vi.fn(async () => {}),
+ 		waitForIdle: vi.fn(async () => {}),
++		close: vi.fn(async () => {}),
+ 	};
+ 
+ 	return {
+@@ -128,6 +130,7 @@ async function createFauxRuntime(options: {
+ 	onSessionStart: (sessionManager: object, notify: () => void) => void;
+ 	onSessionShutdown?: (sessionManager: object) => void;
+ 	initialSessionManager?: SessionManager;
++	extensionFactory?: (pi: ExtensionAPI) => void;
+ }) {
+ 	const root = mkdtempSync(join(tmpdir(), "pao-print-background-"));
+ 	const runtime = await ModelRuntime.create({
+@@ -148,6 +151,7 @@ async function createFauxRuntime(options: {
+ 		pi.on("session_shutdown", (_event, ctx) => {
+ 			options.onSessionShutdown?.(ctx.sessionManager);
+ 		});
++		options.extensionFactory?.(pi);
+ 	};
+ 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
+ 		const services = await createAgentSessionServices({
+@@ -382,10 +386,14 @@ describe("runPrintMode", () => {
+ 
+ 	it("uses a real faux AgentSession, runs the follow-up turn, and disposes only after convergence", async () => {
+ 		let fixture!: Awaited<ReturnType<typeof createFauxRuntime>>;
++		let shutdownCount = 0;
+ 		fixture = await createFauxRuntime({
+ 			onSessionStart(sessionManager, _notify) {
+ 				bindBackgroundWorkPort(sessionManager, fixture.port);
+ 			},
++			onSessionShutdown() {
++				shutdownCount++;
++			},
+ 		});
+ 		const runtimeSession = fixture.host.session;
+ 		let disposeCalled = false;
+@@ -448,7 +456,19 @@ describe("runPrintMode", () => {
+ 			await expect(running).resolves.toBe(0);
+ 			expect(started).toEqual([1, 2]);
+ 			expect(disposeCalled).toBe(true);
++			expect(shutdownCount).toBe(1);
+ 			expect(getBackgroundWorkPort(runtimeSession.sessionManager)).toBeUndefined();
++			await expect(
++				runtimeSession.sendCustomMessage(
++					{
++						customType: "late-background-result",
++						content: [{ type: "text", text: "关闭后晚到的通知" }],
++						display: false,
++					},
++					{ triggerTurn: true },
++				),
++			).rejects.toThrow("no longer accepts new turns");
++			expect(started).toEqual([1, 2]);
+ 		} catch (error) {
+ 			throw new Error(
+ 				`real faux print test state ${JSON.stringify({
+@@ -471,6 +491,90 @@ describe("runPrintMode", () => {
+ 		}
+ 	}, 15_000);
+ 
++	it("closes print after an accepted settled follow-up instead of leaving an idle shutdown window", async () => {
++		let fixture!: Awaited<ReturnType<typeof createFauxRuntime>>;
++		let releaseSettled!: () => void;
++		const settledGate = new Promise<void>((resolve) => {
++			releaseSettled = resolve;
++		});
++		let markSettledStarted!: () => void;
++		const settledStarted = new Promise<void>((resolve) => {
++			markSettledStarted = resolve;
++		});
++		let followUpAccepted = false;
++		let shutdowns = 0;
++		const phases: string[] = [];
++		fixture = await createFauxRuntime({
++			onSessionStart(sessionManager) {
++				bindBackgroundWorkPort(sessionManager, fixture.port);
++			},
++			onSessionShutdown() {
++				shutdowns++;
++				phases.push("shutdown");
++			},
++			extensionFactory(pi) {
++				pi.on("agent_settled", async () => {
++					if (followUpAccepted) return;
++					followUpAccepted = true;
++					phases.push("settled-before");
++					pi.sendMessage(
++						{
++							customType: "print-settled-follow-up",
++							content: [{ type: "text", text: "已受理的关闭后续" }],
++							display: false,
++						},
++						{ triggerTurn: true, deliverAs: "followUp" },
++					);
++					markSettledStarted();
++					await settledGate;
++					phases.push("settled-after");
++				});
++			},
++		});
++		fixture.faux.setResponses([
++			fauxAssistantMessage("首轮完成"),
++			() => {
++				phases.push("follow-up-start");
++				return fauxAssistantMessage("后续完成");
++			},
++		]);
++		const stdout = vi.spyOn(process.stdout, "write").mockImplementation(((_chunk, encodingOrCallback, callback) => {
++			const done = typeof encodingOrCallback === "function" ? encodingOrCallback : callback;
++			done?.();
++			return true;
++		}) as typeof process.stdout.write);
++
++		try {
++			const running = runPrintMode(fixture.host, { mode: "text", initialMessage: "开始" });
++			await settledStarted;
++			expect(fixture.faux.state.callCount).toBe(1);
++			expect(shutdowns).toBe(0);
++
++			fixture.setState({ running: 0, unread: 0 });
++			releaseSettled();
++			await expect(running).resolves.toBe(0);
++
++			expect(fixture.faux.state.callCount).toBe(2);
++			expect(phases).toEqual(["settled-before", "settled-after", "follow-up-start", "shutdown"]);
++			await expect(
++				fixture.host.session.sendCustomMessage(
++					{
++						customType: "late-print-result",
++						content: [{ type: "text", text: "关闭后晚到" }],
++						display: false,
++					},
++					{ triggerTurn: true },
++				),
++			).rejects.toThrow("no longer accepts new turns");
++			expect(fixture.faux.state.callCount).toBe(2);
++			expect(shutdowns).toBe(1);
++		} finally {
++			await fixture.dispose();
++			fixture.cleanup();
++			stdout.mockRestore();
++		}
++	}, 15_000);
++
+ 	it("binds the port to the exact SessionManager exposed by session_start", async () => {
+ 		let startedManager: object | undefined;
+ 		let fixture!: Awaited<ReturnType<typeof createFauxRuntime>>;

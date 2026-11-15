@@ -1,0 +1,426 @@
+Running formatting, linting, and type checking...
+
+> pi-monorepo@0.0.3 check
+> biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:install-lock:coding-agent && tsc --noEmit && npm run check:browser-smoke
+
+packages\coding-agent\test\pao\desktop-read-model.test.ts:244:3 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    242 │ 	writeFileSync(
+    243 │ 		join(directory, "20261018_minister-test.jsonl"),
+  > 244 │ 		JSON.stringify({
+        │ 		^^^^^^^^^^^^^^^^
+  > 245 │ 			type: "message",
+  > 246 │ 			message: { role: "assistant", content: [{ type: "text", text: "部长真实会话记录" }] },
+  > 247 │ 		}) + "\n",
+        │ 		^^^^^^^^^
+    248 │ 	);
+    249 │ 	expect(readDesktopWorkflowMinister(f.root, flow.实例, "审查", 1).行[0].内容).toEqual([
+  
+  i Unsafe fix: Use a template literal.
+  
+    242 242 │   	writeFileSync(
+    243 243 │   		join(directory, "20261018_minister-test.jsonl"),
+    244     │ - → → JSON.stringify({
+        244 │ + → → `${JSON.stringify({
+    245 245 │   			type: "message",
+    246 246 │   			message: { role: "assistant", content: [{ type: "text", text: "部长真实会话记录" }] },
+    247     │ - → → })·+·"\n",
+        247 │ + → → })}\n`,
+    248 248 │   	);
+    249 249 │   	expect(readDesktopWorkflowMinister(f.root, flow.实例, "审查", 1).行[0].内容).toEqual([
+  
+
+packages\coding-agent\test\pao\dispatch-brief-artifacts.test.ts:961:5 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    959 │ 				"goal: 消费旧尝试简报",
+    960 │ 				"dept: 测试",
+  > 961 │ 				'inputs: ["src/caller.ts", "' + oldSnapshot.brief.ref + '"]',
+        │ 				^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    962 │ 				"acceptance: 旧简报所绑定的旧契约升级仍能命中",
+    963 │ 				"attempt: 0",
+  
+  i Unsafe fix: Use a template literal.
+  
+     959  959 │   				"goal: 消费旧尝试简报",
+     960  960 │   				"dept: 测试",
+     961      │ - → → → → 'inputs:·["src/caller.ts",·"'·+·oldSnapshot.brief.ref·+·'"]',
+          961 │ + → → → → `inputs:·["src/caller.ts",·"${oldSnapshot.brief.ref}"]`,
+     962  962 │   				"acceptance: 旧简报所绑定的旧契约升级仍能命中",
+     963  963 │   				"attempt: 0",
+  
+
+packages\coding-agent\src\pao\cards\integration.ts:15:13 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! This import is unused.
+  
+    13 │ import { type ExecutionKey, type ResolvedExecutionContext, resolveExecutionContext } from "./execution-context.ts";
+    14 │ import { CardProcessStopUnconfirmedError, runCardProcess } from "./process.ts";
+  > 15 │ import type { ParsedCard } from "./types.ts";
+       │             ^^^^^^^^^^^^^^
+    16 │ 
+    17 │ /**
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     13  13 │   import { type ExecutionKey, type ResolvedExecutionContext, resolveExecutionContext } from "./execution-context.ts";
+     14  14 │   import { CardProcessStopUnconfirmedError, runCardProcess } from "./process.ts";
+     15     │ - import·type·{·ParsedCard·}·from·"./types.ts";
+     16  15 │   
+     17  16 │   /**
+  
+
+packages\coding-agent\src\pao\cards\integration.ts:238:10 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This function sameSource is unused.
+  
+    236 │ }
+    237 │ 
+  > 238 │ function sameSource(left: IntegrationRecord["source"], right: IntegrationRecord["source"]): boolean {
+        │          ^^^^^^^^^^
+    239 │ 	return (
+    240 │ 		samePath(left.cardsDir, right.cardsDir) &&
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend sameSource with an underscore.
+  
+    236 236 │   }
+    237 237 │   
+    238     │ - function·sameSource(left:·IntegrationRecord["source"],·right:·IntegrationRecord["source"]):·boolean·{
+        238 │ + function·_sameSource(left:·IntegrationRecord["source"],·right:·IntegrationRecord["source"]):·boolean·{
+    239 239 │   	return (
+    240 240 │   		samePath(left.cardsDir, right.cardsDir) &&
+  
+
+packages\coding-agent\src\pao\cards\integration.ts:248:10 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This function sameTarget is unused.
+  
+    246 │ }
+    247 │ 
+  > 248 │ function sameTarget(left: IntegrationRecord["target"], right: IntegrationRecord["target"]): boolean {
+        │          ^^^^^^^^^^
+    249 │ 	return (
+    250 │ 		samePath(left.projectRoot, right.projectRoot) &&
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend sameTarget with an underscore.
+  
+    246 246 │   }
+    247 247 │   
+    248     │ - function·sameTarget(left:·IntegrationRecord["target"],·right:·IntegrationRecord["target"]):·boolean·{
+        248 │ + function·_sameTarget(left:·IntegrationRecord["target"],·right:·IntegrationRecord["target"]):·boolean·{
+    249 249 │   	return (
+    250 250 │   		samePath(left.projectRoot, right.projectRoot) &&
+  
+
+packages\coding-agent\src\pao\cards\integration.ts:327:8 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable status is unused.
+  
+    325 │ 	}
+    326 │ 	const contentTree = captured.tree;
+  > 327 │ 	const status = captured.status;
+        │ 	      ^^^^^^
+    328 │ 	if (!OBJECT_ID_PATTERN.test(head) || !OBJECT_ID_PATTERN.test(headTree) || !OBJECT_ID_PATTERN.test(contentTree)) {
+    329 │ 		throw new PaoCardError("INVALID_CARD", "整合目标 HEAD/tree 不是 Git 对象", { head, headTree, contentTree });
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend status with an underscore.
+  
+    325 325 │   	}
+    326 326 │   	const contentTree = captured.tree;
+    327     │ - → const·status·=·captured.status;
+        327 │ + → const·_status·=·captured.status;
+    328 328 │   	if (!OBJECT_ID_PATTERN.test(head) || !OBJECT_ID_PATTERN.test(headTree) || !OBJECT_ID_PATTERN.test(contentTree)) {
+    329 329 │   		throw new PaoCardError("INVALID_CARD", "整合目标 HEAD/tree 不是 Git 对象", { head, headTree, contentTree });
+  
+
+packages\coding-agent\src\pao\dept\catalog.ts:313:2 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+  
+    311 │ /** 按派发核心的次序解析默认档位（卡面缺省时:配方→档位.json 部门默认→主力） */
+    312 │ function resolveDefaultTier(
+  > 313 │ 	paoHome: string,
+        │ 	^^^^^^^
+    314 │ 	deptName: string,
+    315 │ 	recipeTier: string | undefined,
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend paoHome with an underscore.
+  
+    311 311 │   /** 按派发核心的次序解析默认档位（卡面缺省时:配方→档位.json 部门默认→主力） */
+    312 312 │   function resolveDefaultTier(
+    313     │ - → paoHome:·string,
+        313 │ + → _paoHome:·string,
+    314 314 │   	deptName: string,
+    315 315 │   	recipeTier: string | undefined,
+  
+
+packages\coding-agent\src\pao\dispatch-brief\tool.ts:4:24 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    2 │ import { Type } from "typebox";
+    3 │ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+  > 4 │ import { findCardFile, loadCard, readCard } from "../cards/cardfile.ts";
+      │                        ^^^^^^^^^^^^^^^^^^
+    5 │ import {
+    6 │ 	appendCardInputReference,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    4 │ import·{·findCardFile,·loadCard,·readCard·}·from·"../cards/cardfile.ts";
+      │                        -------------------                              
+
+packages\coding-agent\src\pao\dispatch-brief\tool.ts:16:15 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    14 │ import { commitDispatchReconResult } from "./recon.ts";
+    15 │ import { DISPATCH_RECON_CATEGORIES } from "./recon-artifact.ts";
+  > 16 │ import type { DispatchBriefRequirements, DispatchCardWriteExpectation, DispatchReferenceImpact } from "./types.ts";
+       │               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │ import { captureDispatchMap } from "./workspace.ts";
+    18 │ 
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    16 │ import·type·{·DispatchBriefRequirements,·DispatchCardWriteExpectation,·DispatchReferenceImpact·}·from·"./types.ts";
+       │               ---------------------------                                                                          
+
+packages\coding-agent\src\pao\dispatch-brief\workspace.ts:145:11 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable error is unused.
+  
+    143 │ 	try {
+    144 │ 		if (existsSync(absolute) && statSync(absolute).isFile()) working = readFileSync(absolute);
+  > 145 │ 	} catch (error) {
+        │ 	         ^^^^^
+    146 │ 		throw new DispatchBriefError("missing_input", `地图文件读取失败：${path}`, { path });
+    147 │ 	}
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend error with an underscore.
+  
+    143 143 │   	try {
+    144 144 │   		if (existsSync(absolute) && statSync(absolute).isFile()) working = readFileSync(absolute);
+    145     │ - → }·catch·(error)·{
+        145 │ + → }·catch·(_error)·{
+    146 146 │   		throw new DispatchBriefError("missing_input", `地图文件读取失败：${path}`, { path });
+    147 147 │   	}
+  
+
+packages\coding-agent\src\pao\status\context-recovery.ts:27:15 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    25 │ import { projectRootForCards, scanCards } from "../cards/cardfile.ts";
+    26 │ import { formatCardNumber, parseCardRef } from "../cards/counter.ts";
+  > 27 │ import type { ParsedCard, Receipt } from "../cards/types.ts";
+       │               ^^^^^^^^^^
+    28 │ import { listProjects } from "../dept/projects.ts";
+    29 │ import type { TodoItem } from "../todo/core.ts";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    27 │ import·type·{·ParsedCard,·Receipt·}·from·"../cards/types.ts";
+       │               ------------                                   
+
+packages\coding-agent\src\pao\status\context-recovery.ts:31:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! This import is unused.
+  
+    29 │ import type { TodoItem } from "../todo/core.ts";
+    30 │ import { STALE_REMINDER_THRESHOLD, TODO_REMINDER_MARKER } from "../todo/core.ts";
+  > 31 │ import { controlView, readControl } from "../workflow/control.ts";
+       │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    32 │ import {
+    33 │ 	listPlanHistory,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     29  29 │   import type { TodoItem } from "../todo/core.ts";
+     30  30 │   import { STALE_REMINDER_THRESHOLD, TODO_REMINDER_MARKER } from "../todo/core.ts";
+     31     │ - import·{·controlView,·readControl·}·from·"../workflow/control.ts";
+     32  31 │   import {
+     33  32 │   	listPlanHistory,
+  
+
+packages\coding-agent\src\pao\status\context-recovery.ts:451:11 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable error is unused.
+  
+    449 │ 	try {
+    450 │ 		return queryTemporaryPlan(项目根, 计划ID).启动;
+  > 451 │ 	} catch (error) {
+        │ 	         ^^^^^
+    452 │ 		// 定义坏时不阻断调用方拿问题清单
+    453 │ 		return [];
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend error with an underscore.
+  
+    449 449 │   	try {
+    450 450 │   		return queryTemporaryPlan(项目根, 计划ID).启动;
+    451     │ - → }·catch·(error)·{
+        451 │ + → }·catch·(_error)·{
+    452 452 │   		// 定义坏时不阻断调用方拿问题清单
+    453 453 │   		return [];
+  
+
+packages\coding-agent\src\pao\worker\lock.ts:2:63 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    1 │ import { createHash } from "node:crypto";
+  > 2 │ import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+      │                                                               ^^^^^^
+    3 │ import { mkdir, readFile, realpath, rm, rmdir, writeFile } from "node:fs/promises";
+    4 │ import * as path from "node:path";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    2 │ import·{·appendFileSync,·existsSync,·mkdirSync,·readFileSync,·rmSync,·writeFileSync·}·from·"node:fs";
+      │                                                               --------                               
+
+packages\coding-agent\test\pao\dispatch-brief-artifacts.test.ts:1139:27 lint/correctness/noUnusedVariables ━━━━━━━━━━
+
+  ! This variable cardPath is unused.
+  
+    1138 │ 	it("间接来源与重启式重读都阻止旧来源；旧版本仍只读可加载", async () => {
+  > 1139 │ 		const { root, cardsDir, cardPath } = tempRepo();
+         │ 		                        ^^^^^^^^
+    1140 │ 		const contractPath = join(root, "src", "contract.md");
+    1141 │ 		writeFileSync(contractPath, "export interface Api { version: 1 }\n");
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+
+packages\coding-agent\test\pao\e-batch-sample.test.ts:4:21 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    2 │ import { tmpdir } from "node:os";
+    3 │ import { join } from "node:path";
+  > 4 │ import { afterEach, beforeEach, describe, expect, it } from "vitest";
+      │                     ^^^^^^^^^^
+    5 │ 
+    6 │ import { readCard, serializeCard } from "../../src/pao/cards/index.ts";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    4 │ import·{·afterEach,·beforeEach,·describe,·expect,·it·}·from·"vitest";
+      │                     ------------                                     
+
+packages\coding-agent\test\pao\e-batch-sample.test.ts:11:2 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+     9 │ 	acceptIntake,
+    10 │ 	acceptIntakeBatch,
+  > 11 │ 	acceptIntakeDesktop,
+       │ 	^^^^^^^^^^^^^^^^^^^
+    12 │ 	type IntakeOutcome,
+    13 │ 	type IntakeRequest,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+      9   9 │   	acceptIntake,
+     10  10 │   	acceptIntakeBatch,
+     11     │ - → acceptIntakeDesktop,
+     12  11 │   	type IntakeOutcome,
+     13  12 │   	type IntakeRequest,
+  
+
+packages\coding-agent\test\pao\f-results-files.test.ts:65:10 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This function toPosix is unused.
+  
+    64 │ /** 项目内相对路径统一正斜杠（与 `artifactOf` 的口径一致，断言才可移植）。 */
+  > 65 │ function toPosix(root: string, path: string): string {
+       │          ^^^^^^^
+    66 │ 	return relative(root, path).split(sep).join("/");
+    67 │ }
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend toPosix with an underscore.
+  
+     63  63 │   
+     64  64 │   /** 项目内相对路径统一正斜杠（与 `artifactOf` 的口径一致，断言才可移植）。 */
+     65     │ - function·toPosix(root:·string,·path:·string):·string·{
+         65 │ + function·_toPosix(root:·string,·path:·string):·string·{
+     66  66 │   	return relative(root, path).split(sep).join("/");
+     67  67 │   }
+  
+
+packages\coding-agent\test\pao\card-process-stop.test.ts:190:62 lint/correctness/noUnsafeFinally ━━━━━━━━━━
+
+  × Unsafe usage of 'throw'.
+  
+    188 │ 						process.kill(pid);
+    189 │ 					} catch (error) {
+  > 190 │ 						if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+        │ 						                                                       ^^^^^^^^^^^^
+    191 │ 					}
+    192 │ 				}
+  
+  i 'throw' in 'finally' overwrites the control flow statements inside 'try' and 'catch'.
+  
+
+packages\coding-agent\test\pao\delivery-commit.test.ts:458:63 lint/correctness/noUnsafeFinally ━━━━━━━━━━
+
+  × Unsafe usage of 'throw'.
+  
+    456 │ 					for (const pid of owned.reverse()) {
+    457 │ 						try { process.kill(pid); } catch (error) {
+  > 458 │ 							if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+        │ 							                                                       ^^^^^^^^^^^^
+    459 │ 						}
+    460 │ 					}
+  
+  i 'throw' in 'finally' overwrites the control flow statements inside 'try' and 'catch'.
+  
+
+Skipped 33 suggested fixes.
+If you wish to apply the suggested (unsafe) fixes, use the command biome check --write --unsafe
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 31.
+Checked 1918 files in 11s. Fixed 64 files.
+Found 10 errors.
+Found 33 warnings.
+Found 8 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+
+husky - pre-commit script failed (code 1)

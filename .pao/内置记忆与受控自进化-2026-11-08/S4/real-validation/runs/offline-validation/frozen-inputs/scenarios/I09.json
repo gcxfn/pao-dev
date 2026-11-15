@@ -1,0 +1,90 @@
+{
+  "id": "I09",
+  "description": "关闭重启后回读原文",
+  "sessions": [
+    {
+      "sessionId": "sess-j",
+      "messages": [
+        {
+          "role": "user",
+          "content": "记忆库的并发策略？",
+          "timestamp": "2026-11-08T20:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "WAL 模式：单写多读，写不阻塞读。",
+          "timestamp": "2026-11-08T20:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "就用 WAL。",
+          "timestamp": "2026-11-08T20:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "记忆库使用 WAL 模式",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "并发策略",
+          "mustContain": ["mem-wal"],
+          "mustNotContain": []
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-j-restart",
+      "messages": [
+        {
+          "role": "user",
+          "content": "刚才定的并发策略是什么？",
+          "timestamp": "2026-11-09T09:00:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "记忆库使用 WAL 模式",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "并发策略",
+          "mustContain": ["mem-wal"],
+          "mustNotContain": []
+        },
+        {
+          "query": "readMemorySource src-sess-j-001",
+          "mustContain": ["就用 WAL"],
+          "mustNotContain": []
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-wal",
+        "kind": "decision",
+        "conclusion": "记忆库使用 WAL 模式",
+        "confirmation": "confirmed",
+        "usageState": "active"
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-j-001",
+        "sessionId": "sess-j",
+        "entryId": "entry-003",
+        "readable": true
+      }
+    ]
+  }
+}

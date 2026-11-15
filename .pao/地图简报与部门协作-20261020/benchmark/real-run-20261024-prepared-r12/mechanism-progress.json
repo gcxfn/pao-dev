@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-24T15:11:29.403335+00:00",
+  "instance": "2d77c730-5c8c-48b3-afa6-9b947221272c",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "2d77c730-5c8c-48b3-afa6-9b947221272c",
+      "owner": "01a16e55-fefd-7754-834d-0564f7b34004",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "f426ea5353496fc19b86ed21f9daa7982515f710d200e0e0b9d51a0aae32711c"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "实施节点第1轮，需要裁定：卡0001 已交付且机械验收全过（filter.py、filter_selftest.py 存在；def main；py_compile exit=0；selftest exit=0、20/20 PASS、RESULT OK；/app 无多余文件；仅标准库；未读禁区/未联网），回执与证据我已逐条核对为真。但现场核对发现一处原始任务目标内的残留：卡0001 把 HTML 注释与 <style> 块内容整体当「永不改动」（上游 R8，selftest A17 断言「注释里的 <script 字面量保留」），输出中仍残留 \"<script\"、\"onclick=\"、\"javascript:\" 危险字面量，与公开任务「清除文件中的 JavaScript」有落差（工人自己也把「验收方对注释内字面 <script 的判定口径」列为 not_run）。我已判定需要做一次有界加固：注释与 style 块内按同一危险判定清单清除危险片段（注释标记与其余文字、缩进、换行原样保留；可见文本与 title/textarea 的 RCDATA 文本不动；良性文件仍字节级不变；R1-R6 与幂等不回退），并扩展自测。\n\n阻塞（我无法自行解开）：\n1) pao_minister_rework_cards 返修卡0001 被流程闸拦：「卡卡0001当前状态为 in_progress，只有已交付或失败卡可返修」——卡文件 frontmatter 仍是 status: in_progress，虽已落回执且机械验收「全过停人工审」。\n2) pao_minister_submit_cards 补交加固卡被拦：「派发交接的地图覆盖内容已变化」——规划期地图按空工作树生成，卡0001 交付后 /app 新增 filter.py、filter_selftest.py，地图覆盖已过期（inputs 置空亦被拦）。\n3) 能刷新该地图的两个工具对本节点均不可用：pao_dispatch_brief（action=map）返回「工作流部长只读规划」权限闸；pao_minister_save_node_map 返回「节点地图只允许当前轮零卡的只读节点保存」。\n\n请求裁定（任一即可）：\nA. 把卡0001 状态置为 delivered（或明确授权对其返修），并在下一轮刷新派发交接地图覆盖（覆盖 .，排除 .git/.pao）——随后由本节点提交一张加固卡并复验。\nB. 若本轮不授权补卡，请明确按现交付状态收口，并把「注释内字面 <script 是否需要清除」作为验收口径风险写入交审核节点的说明，由审核节点决定是否要求返修。\n\n本节点不自行改代码、不伪造证据；在裁定到达前不再提交新卡，也不重复重试已失败的派发/返修调用。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-24T15:03:19.286Z",
+    "事件": "自动链停因",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "节点 实施：卡0001 第 1 次尝试有 4 条自报未达项（not_run 4，fail 0），待 owner 逐项裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，填写总 basis，并用 accepted_deviations 恰好覆盖当前 attempt 的全部自报未达项；或先返修并重新执行。"
+  },
+  "latest_business_event_at": "2026-10-24T15:03:19.286Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-24T15:03:19.286Z\", \"理由\": \"节点 实施：卡0001 第 1 次尝试有 4 条自报未达项（not_run 4，fail 0），待 owner 逐项裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，填写总 basis，并用 accepted_deviations 恰好覆盖当前 attempt 的全部自报未达项；或先返修并重新执行。\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-24T15:03:22.843988+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅
+[1A[2K  1) apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ─────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('dialog').filter({ hasText: '保存工作流配方' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog').filter({ hasText: '保存工作流配方' })[22m
+
+
+      703 |     await guard.getByRole("button", { name: "保存并继续" }).click();
+      704 |     const saveConfirm = page.getByRole("dialog").filter({ hasText: "保存工作流配方" });
+    > 705 |     await expect(saveConfirm).toBeVisible();
+          |                               ^
+      706 |     await saveConfirm.getByRole("button", { name: /Confirm|确认/ }).click();
+      707 |     // 配方以新名真实落盘（保存链本身成功）。
+      708 |     expect(await readFile(join(home, "工作流", "改名验证.md"), "utf8")).toContain("改名目标");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:705:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ──────────
+EXIT=1

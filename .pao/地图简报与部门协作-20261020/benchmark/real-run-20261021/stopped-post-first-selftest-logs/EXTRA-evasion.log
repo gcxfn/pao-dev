@@ -1,0 +1,57 @@
+# Extra edge cases + evasion regression (FINAL)
+# filter.py md5: 33f20be60951ad990baab551f56d5885  /app/filter.py
+
+## edge fixtures
+(fixtures restored from .in)
+=== extra/base_tag.html ===
+$ python3 /app/filter.py extra/base_tag.html
+exit=0
+<html><head><base target="_blank"></head><body><p>t</p></body></html>
+=== extra/comment_evil.html ===
+$ python3 /app/filter.py extra/comment_evil.html
+exit=0
+<html><body><!-- hello >alert(1)> alert(2) keep --><p>t</p></body></html>
+=== extra/doctype_ent.html ===
+$ python3 /app/filter.py extra/doctype_ent.html
+exit=0
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"><HTML><BODY><P CLASS='x' ID=y>&amp;&nbsp;TEXT</P></BODY></HTML>
+=== extra/namespace_event.html ===
+$ python3 /app/filter.py extra/namespace_event.html
+exit=0
+<html><body><svg><a>z</a></svg></body></html>
+=== extra/selfclose_script.html ===
+$ python3 /app/filter.py extra/selfclose_script.html
+exit=0
+<html><body><p>a</p><p>b</p><!-- note --></body></html>
+=== extra/style_attr_evil.html ===
+$ python3 /app/filter.py extra/style_attr_evil.html
+exit=0
+<html><body><div>d</div><p>t</p></body></html>
+=== extra/style_benign.html ===
+$ python3 /app/filter.py extra/style_benign.html
+exit=0
+<html><head><style>body{color:red}</style></head><body><p>x</p></body></html>
+=== extra/style_evil.html ===
+$ python3 /app/filter.py extra/style_evil.html
+exit=0
+<html><head></head><body><p>x</p></body></html>
+=== extra/tab_obf.html ===
+$ python3 /app/filter.py extra/tab_obf.html
+exit=0
+<html><body><a>t</a><a>u</a><a>v</a></body></html>
+=== extra/unclosed_script.html ===
+$ python3 /app/filter.py extra/unclosed_script.html
+exit=0
+<html><body><p>keep</p>
+## evasion regression (direct sanitize calls)
+[PASS] double entity   residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] zero-width      residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] BOM             residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] named colon     residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] CDATA           residual=[] out='<html><body><![CDATA[>alert(1)>]]><p>t</p></body></html>'
+[PASS] tab             residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] newline         residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] null            residual=[] out='<html><body><a>t</a></body></html>'
+[PASS] svg data        residual=[] out='<html><body><img></body></html>'
+[PASS] vbscript        residual=[] out='<html><body><a>t</a></body></html>'
+evasion_residual_total: 0

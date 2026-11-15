@@ -1,0 +1,27 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ✓ o02-review.test.ts > O02-R1：tentative→confirmed 确认升级 > 同结论同条件候选 confirmed → corrected 修订，来源并集，createMemory 未被调用 205ms
+ ✓ o02-review.test.ts > O02-R2：rationale 变化 → semantic_conflict + 游标不推进 > commit 层：同结论同条件 rationale 不同 → skipped/semantic_conflict 173ms
+ ✓ o02-review.test.ts > O02-R2：rationale 变化 → semantic_conflict + 游标不推进 > 调度层：semantic_conflict 候选使 job 标 needsReevaluation 且游标不推进 252ms
+ ✓ o02-review.test.ts > O02-R3：confirmed→tentative 反向降级 > 库中 confirmed + 候选 tentative 同结论同条件 → skipped/semantic_conflict，不静默降级 167ms
+ ✓ o02-review.test.ts > O02-R4：同结论异条件 → flagged 且来源并集 > 条件不同触发重议；标记修订来源 = 旧来源 ∪ 本次触发来源 170ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > confirmed/user_statement 但来源全是 toolResult → rejected 163ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > confirmed/user_statement 但 quotedSpan 挂 assistant 条目 → rejected 152ms
+ ✓ o02-review.test.ts > O02-R5：confirmed 证据身份 > quotedSpan sourceId 不在 candidate.sourceIds 内 → rejected 141ms
+ ✓ o02-review.test.ts > O02-R6：confirmed/execution 对偶面 > confirmed/execution + toolResult 来源 → 通过 146ms
+ ✓ o02-review.test.ts > O02-R6：confirmed/execution 对偶面 > confirmed/execution + 只有 user 来源 → rejected 128ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > 带 correct_id → 同一 ID 新修订，旧 conditions/rationale 保留，createMemory 未被调用 178ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > correct_id 不存在 → 如实失败（isError） 154ms
+ ✓ o02-review.test.ts > O02-R7：工具 correct_id 纠正 > expected_revision 不匹配 → 如实失败（修订号已变） 171ms
+ ✓ o02-review.test.ts > O02-R8：CLI 纠正经 registerMemoryCommand > 带 conditions/rationale 条目经 /pao memory correct → 字段完整、新修订可读 memoryCorrect 正文、旧修订读原依据 185ms
+ ✓ o02-review.test.ts > O02-R9：无关结论不建 related > 同项目两条不同结论 decision 入库后 revision_links 无 related 记录 147ms
+ ✓ o02-review.test.ts > O02-R10：批内同结论异 confirmation > 批内第一条 confirmed 第二条 tentative 同结论 → 第二条 semantic_conflict，不静默合并 161ms
+ ✓ o02-review.test.ts > O02-R11：老路径回归 > 同来源同内容同条件重放 → duplicate 补链；全新来源独立事实 → submitted 161ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  22:08:46
+   Duration  28.91s (transform 20.77s, setup 0ms, import 25.82s, tests 2.86s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o02-j01-final-existing-vitest.json

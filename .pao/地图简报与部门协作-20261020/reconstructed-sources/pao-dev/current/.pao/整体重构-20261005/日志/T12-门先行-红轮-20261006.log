@@ -1,0 +1,59 @@
+# T12 门先行 红轮日志（2026-10-06）
+
+## 门A 内核导入副作用（gate-kernel-import.mjs）
+```
+[FAIL] root(.) — 新增监听:["SIGINT","SIGTERM","SIGHUP"] 写出:[] stdinRef:false
+[FAIL] ./pao — 新增监听:["SIGINT","SIGTERM","SIGHUP"] 写出:[] stdinRef:false
+[FAIL] ./pao/desktop — 新增监听:["SIGINT","SIGTERM","SIGHUP"] 写出:[] stdinRef:false
+[FAIL] vendor ./pao/desktop — 新增监听:["SIGINT","SIGTERM","SIGHUP"] 写出:[] stdinRef:false
+exit=1
+```
+
+## 门B 静态边界（gate-boundary.mjs，B6 为门脚本正则误报：client 被当 cli）
+```
+[PASS] B1: CLI 源闭包 385 文件无 electron/react/ink（裸外部依赖 740 条全为包依赖）
+[PASS] B2: bundle cli.js（0.0 MB）无 electron/react 引用
+[PASS] B3: 宿主闭包 92 文件无 CLI 入口引用、无全局 pao/pi spawn
+[PASS] B4: 宿主闭包 32 文件无 CLI 入口引用、无全局 pao/pi spawn
+[PASS] B5(pao/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/desktop/index.ts): 公开导出闭包无 CLI 入口引用
+[FAIL] B6: exports 指向 cli: [["./client","./src/client/index.ts"]]
+exit=1
+```
+
+## 门C 路径兜底探针（gate-path-probe.mjs，S1 为探针转义损坏的假红，见红轮归因）
+```
+getPackageDir() = D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[RED] S1 worker子进程内(argv1=cli.js): command=pao argsHead=["--mode","json"]
+[PASS] S2 桌面主进程内(argv1=main.js): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[RED] S3 SDK内嵌无脚本(argv1=undefined): command=pao argsHead=["--mode","json"]
+[RED] S4 argv1指向不存在文件: command=pao argsHead=["--mode","json"]
+[PASS] S5 ELECTRON_RUN_AS_NODE 读 asar 内内核入口 → true
+exit=1
+```
+
+## 门脚本修正后红基线（三门复跑；修正=门A判据收窄归因 signal-exit、门B6 正则修 client 误报、门C 路径 JSON 嵌入修转义假红）
+```
+[PASS] root(.) — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[PASS] ./pao — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[PASS] ./pao/desktop — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[PASS] vendor ./pao/desktop — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+gateA exit=0
+[PASS] B1: CLI 源闭包 385 文件无 electron/react/ink（裸外部依赖 740 条全为包依赖）
+[PASS] B2: bundle cli.js（0.0 MB）无 electron/react 引用
+[PASS] B3: 宿主闭包 92 文件无 CLI 入口引用、无全局 pao/pi spawn
+[PASS] B4: 宿主闭包 32 文件无 CLI 入口引用、无全局 pao/pi spawn
+[PASS] B5(pao/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/desktop/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B6: exports ., ./rpc-entry, ./pao, ./pao/desktop, ./client, ./experimental/plugin 均不含 cli 目标
+gateB exit=0
+getPackageDir() = D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[PASS] S1 worker子进程内(argv1=cli.js): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[PASS] S2 桌面主进程内(argv1=main.js): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[RED] S3 SDK内嵌无脚本(argv1=undefined): command=pao argsHead=["--mode","json"]
+[RED] S4 argv1指向不存在文件: command=pao argsHead=["--mode","json"]
+[PASS] S5 ELECTRON_RUN_AS_NODE 读 asar 内内核入口 → true
+gateC exit=1
+```
+
+红基线归因：唯一真红=门C S3/S4——defaultInvocation 在无当前脚本（SDK 内嵌/argv[1] 缺失或不存在）时 return {command:"pao"}，暗退 PATH 全局命令；worker-run.test.ts 既有 PATH 垫片回退测试以该分支为前提。

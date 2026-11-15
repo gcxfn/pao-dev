@@ -1,0 +1,92 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o07-independent.test.ts > O07 独立完成审核 > I1 删除重放保留共享来源时，历史原文仍可发现 534ms
+   → expected undefined to be true // Object.is equality
+ × o07-independent.test.ts > O07 独立完成审核 > I2 备份缺失的归档段恢复后不回旧 home 读取 268ms
+   → expected true to be false // Object.is equality
+ × o07-independent.test.ts > O07 独立完成审核 > I3 备份缺失的受管成果恢复后不回旧 home 读取 287ms
+   → expected true to be false // Object.is equality
+ × o07-independent.test.ts > O07 独立完成审核 > I4 快照前的新来源登记不会使数据库与备份段清单脱节 274ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o07-independent.test.ts > O07 独立完成审核 > I1 删除重放保留共享来源时，历史原文仍可发现
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ o07-independent.test.ts:76:70
+     74|     results.I1 = { alive: await target.service.getMemory({ id: alive }…
+     75|     expect(direct.ok).toBe(true);
+     76|     expect(history.sourceHits?.some(hit => hit.sourceId === shared)).t…
+       |                                                                      ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  o07-independent.test.ts > O07 独立完成审核 > I2 备份缺失的归档段恢复后不回旧 home 读取
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ o07-independent.test.ts:93:21
+     91|     const read = await readSourceEvents(target.store.db, f.targetHome,…
+     92|     results.I2 = { backup, restored, read, paths: target.store.db.prep…
+     93|     expect(read.ok).toBe(false);
+       |                     ^
+     94|   });
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  o07-independent.test.ts > O07 独立完成审核 > I3 备份缺失的受管成果恢复后不回旧 home 读取
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ o07-independent.test.ts:115:41
+    113|     results.I3 = { backup, restored, read: read.ok ? { available: read…
+    114|     expect(read.ok).toBe(true);
+    115|     if (read.ok) expect(read.available).toBe(false);
+       |                                         ^
+    116|   });
+    117|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  o07-independent.test.ts > O07 独立完成审核 > I4 快照前的新来源登记不会使数据库与备份段清单脱节
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ o07-independent.test.ts:139:21
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  23:56:58
+   Duration  19.46s (transform 14.88s, setup 0ms, import 17.92s, tests 1.37s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o07-independent-vitest.json

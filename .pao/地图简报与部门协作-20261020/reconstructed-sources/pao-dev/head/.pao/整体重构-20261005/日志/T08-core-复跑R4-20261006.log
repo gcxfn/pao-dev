@@ -1,0 +1,180 @@
+
+=== 复跑R4 2026-10-06 10:28:54 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts --output=/d/AI/workspace/pao-dev/桌面端/apps/desktop/test-results/重跑R4 apps/desktop/tests/core/timeline-overflow.spec.ts apps/desktop/tests/core/timeline-pinning.spec.ts apps/desktop/tests/core/transcript-annotations.spec.ts
+
+Running 14 tests using 1 worker
+
+  x   1 apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths (8.1s)
+  x   2 apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript (9.1s)
+  ok  3 apps\desktop\tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread (5.2s)
+  ok  4 apps\desktop\tests\core\timeline-pinning.spec.ts:362:5 › restores bottom pinning after leaving and returning to the thread surface (5.1s)
+  ok  5 apps\desktop\tests\core\timeline-pinning.spec.ts:414:5 › restores the true bottom when reopening a virtualized thread with oversized late rows (13.3s)
+  ok  6 apps\desktop\tests\core\timeline-pinning.spec.ts:475:5 › keeps a virtualized thread off-bottom after switching sessions (10.0s)
+  x   7 apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions (15.9s)
+  ok  8 apps\desktop\tests\core\timeline-pinning.spec.ts:601:5 › lands a reopened bottom-pinned thread without a smooth scroll from the top (7.0s)
+  ok  9 apps\desktop\tests\core\timeline-pinning.spec.ts:662:5 › keeps a reopened virtualized long transcript stable (1.1m)
+  x  10 apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom (12.1s)
+  ok 11 apps\desktop\tests\core\timeline-pinning.spec.ts:853:5 › keeps transcript pinning semantics while assistant deltas stream into the same row (7.1s)
+  ok 12 apps\desktop\tests\core\timeline-pinning.spec.ts:926:5 › lands an opened thread at the bottom without a smooth scroll from the top (7.9s)
+  x  13 apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message (1.5m)
+  ok 14 apps\desktop\tests\core\transcript-annotations.spec.ts:239:5 › a multi-line drag that runs past the text still adds its lines (53.1s)
+
+
+  1) apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 950,[39m
+    [32m-   "width": 1500,[39m
+    [31m+   "height": 914,[39m
+    [31m+   "width": 1486,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:248:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 900,[39m
+    [32m-   "width": 800,[39m
+    [31m+   "height": 864,[39m
+    [31m+   "width": 786,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:297:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-8a309-the-composer-and-transcript\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R4\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m700[39m
+    Received:   [31m520.3330078125[39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      558 |
+      559 |     await window.getByTestId("timeline-pane").hover();
+    > 560 |     await expect
+          |     ^
+      561 |       .poll(async () => {
+      562 |         await window.mouse.wheel(0, -520);
+      563 |         return (await getTimelineScrollMetrics(window)).remainingFromBottom;
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-pinning.spec.ts:560:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R4\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      831 |     await streamAssistantDeltas(harness, window, ["WIDTH_REFLOW_NEW_ACTIVITY"]);
+      832 |     await expect(window.getByTestId("timeline-jump")).toBeVisible();
+    > 833 |     await expect
+          |     ^
+      834 |       .poll(() =>
+      835 |         sentinelRow.evaluate(async (row, expectedY) => {
+      836 |           let maximumDrift = 0;
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-pinning.spec.ts:833:5
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R4\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+
+    [31mTest timeout of 90000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-transcript-annotation-a6c30-nds-them-before-the-message\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R4\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R4\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+    apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+    apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+    apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+    apps\desktop\tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+  9 passed (5.2m)
+复跑R4_EXIT=1

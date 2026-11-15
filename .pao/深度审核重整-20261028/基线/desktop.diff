@@ -1,0 +1,1917 @@
+diff --git a/apps/desktop/src/features/task-status/task-status-rail.tsx b/apps/desktop/src/features/task-status/task-status-rail.tsx
+index 719076d9..090e48b4 100644
+--- a/apps/desktop/src/features/task-status/task-status-rail.tsx
++++ b/apps/desktop/src/features/task-status/task-status-rail.tsx
+@@ -319,7 +319,7 @@ export function TaskStatusRail({
+         {(() => {
+           const executions = group.workers.filter((row) => row.executionId);
+           return executions.length > 0
+-            ? `${executions.length} 个实际执行 · ${executions[0]?.executionId}${executions.length > 1 ? "…" : ""}`
++            ? `${executions.length} 个实际执行 · 悬停查看标识`
+             : "尚无实际执行标识";
+         })()}
+       </small>
+@@ -367,23 +367,60 @@ export function TaskStatusRail({
+           </button>
+         </div>
+       </header>
+-      <section className="task-status__section" aria-label="文件变更">
+-        <div className="task-status__section-head">
+-          <h2>文件变更</h2>
+-          <button
+-            type="button"
+-            className="task-status__link"
+-            data-testid="task-status-open-changes"
+-            disabled={!target}
+-            onClick={onOpenChanges}
+-          >
+-            查看差异 ↗
+-          </button>
+-        </div>
+-        <div className="task-status__scroll" data-testid="task-status-files">
+-          <FileSummary summary={files} />
+-        </div>
+-      </section>
++      {planStatuses.some((status) => status.attention.length + status.reviews.length > 0) ||
++      activeGroups.some((group) => group.state === "blocked") ? (
++        <section
++          className="task-status__section task-status__section--attention"
++          aria-label="需要你处理"
++          data-testid="task-status-attention"
++        >
++          <div className="task-status__section-head">
++            <h2>需要你处理</h2>
++          </div>
++          <div className="task-status__scroll task-status__attention-list">
++            {planStatuses.flatMap((status) => [
++              ...status.attention.map((step) => (
++                <button
++                  key={`${status.plan.planId}:${step.step.stepId}:attention`}
++                  type="button"
++                  className="task-status__attention-item"
++                  data-state="failed"
++                  onClick={() => openPlan(status, step.step.stepId)}
++                >
++                  <strong>{step.step.title}</strong>
++                  <small>阻塞或失败 · 查看处理</small>
++                </button>
++              )),
++              ...status.reviews.map((step) => (
++                <button
++                  key={`${status.plan.planId}:${step.step.stepId}:review`}
++                  type="button"
++                  className="task-status__attention-item"
++                  data-state="review"
++                  onClick={() => openPlan(status, step.step.stepId)}
++                >
++                  <strong>{step.step.title}</strong>
++                  <small>等待确认 · 查看成果并放行</small>
++                </button>
++              )),
++            ])}
++            {activeGroups
++              .filter((group) => group.state === "blocked")
++              .map((group) => (
++                <button
++                  key={group.id}
++                  type="button"
++                  className="task-status__attention-item"
++                  data-state="failed"
++                  onClick={() => navigate(() => onOpenDepartment(group.id))}
++                >
++                  <strong>{group.department}</strong>
++                  <small>{group.title} · 查看阻塞</small>
++                </button>
++              ))}
++          </div>
++        </section>
++      ) : null}
+       <section className="task-status__section" aria-label="目标与待办">
+         <div className="task-status__section-head">
+           <h2>目标与待办</h2>
+@@ -482,9 +519,9 @@ export function TaskStatusRail({
+           ) : null}
+         </div>
+       </section>
+-      <section className="task-status__section" aria-label="部门概况">
++      <section className="task-status__section" aria-label="部门任务">
+         <div className="task-status__section-head">
+-          <h2>部门概况</h2>
++          <h2>部门任务</h2>
+           <button
+             type="button"
+             className="task-status__link"
+@@ -518,6 +555,23 @@ export function TaskStatusRail({
+           ) : null}
+         </div>
+       </section>
++      <section className="task-status__section" aria-label="文件变更">
++        <div className="task-status__section-head">
++          <h2>文件变更</h2>
++          <button
++            type="button"
++            className="task-status__link"
++            data-testid="task-status-open-changes"
++            disabled={!target}
++            onClick={onOpenChanges}
++          >
++            查看差异 ↗
++          </button>
++        </div>
++        <div className="task-status__scroll" data-testid="task-status-files">
++          <FileSummary summary={files} />
++        </div>
++      </section>
+     </aside>
+   );
+ }
+diff --git a/apps/desktop/src/features/task-status/use-task-status-collapsed.ts b/apps/desktop/src/features/task-status/use-task-status-collapsed.ts
+index 2988faf9..43072052 100644
+--- a/apps/desktop/src/features/task-status/use-task-status-collapsed.ts
++++ b/apps/desktop/src/features/task-status/use-task-status-collapsed.ts
+@@ -47,7 +47,7 @@ export function taskStatusCollapseState(input: {
+   const constrained = input.narrow || constrainedBySpace;
+   return {
+     constrained,
+-    collapsed: constrained ? !input.expandedDuringConstraint : input.preference === true,
++    collapsed: constrained ? !input.expandedDuringConstraint : input.preference !== false,
+     nextExpandedDuringConstraint: constrained && input.expandedDuringConstraint,
+   };
+ }
+@@ -56,7 +56,7 @@ export function taskStatusCollapseState(input: {
+  * 右上概况的收起态。显示状态由手动偏好与临时空间条件共同决定：
+  *
+  * - 用户手动收起或展开会保存为窗口级偏好。
+- * - 无手动偏好时，980px 以下默认显示短条。
++ * - 无手动偏好时默认显示短条；只有显式展开才在宽屏常驻概况。
+  * - 主区不足以同时容纳正文与工具面板时显示短条，但当时的手动展开仍有效。
+  * - 空间或窗口宽度恢复后，按保存的手动偏好恢复；自动收起从不写偏好。
+  */
+diff --git a/apps/desktop/src/features/threads/sidebar.tsx b/apps/desktop/src/features/threads/sidebar.tsx
+index e58f4432..d3ad93e4 100644
+--- a/apps/desktop/src/features/threads/sidebar.tsx
++++ b/apps/desktop/src/features/threads/sidebar.tsx
+@@ -115,21 +115,6 @@ interface SidebarProps {
+ 
+ const SIDEBAR_WIDTH_RANGE = { min: 200, max: 520 } as const;
+ 
+-/**
+- * 工作入口卡片的文字块（计划 §7.3）：主标签一行、定位提示一行。
+- * 样式放这里而不是 sidebar.css，是因为侧栏样式属别处的写范围；
+- * 这几行只描述两行文字的排布，不引入新的视觉语言。
+- */
+-const NAV_TEXT_STYLE = {
+-  display: "flex",
+-  flexDirection: "column",
+-  alignItems: "flex-start",
+-  gap: 1,
+-  minWidth: 0,
+-  lineHeight: 1.25,
+-} as const;
+-const NAV_HINT_STYLE = { fontSize: 11, opacity: 0.72, fontWeight: 400 } as const;
+-
+ function sidebarWidthBounds(_sidebar: HTMLElement, shell: HTMLElement): PaneWidthBounds {
+   return {
+     min: SIDEBAR_WIDTH_RANGE.min,
+@@ -462,12 +447,7 @@ export function Sidebar(props: SidebarProps) {
+             onClick={() => onSetActiveView("threads")}
+           >
+             <FolderIcon />
+-            <span className="sidebar__nav-text" style={NAV_TEXT_STYLE}>
+-              <span className="sidebar__nav-label">{t("Threads")}</span>
+-              <span className="sidebar__nav-hint" style={NAV_HINT_STYLE}>
+-                {t("Conversations")}
+-              </span>
+-            </span>
++            <span>{t("Threads")}</span>
+           </button>
+           <button
+             className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
+@@ -476,16 +456,9 @@ export function Sidebar(props: SidebarProps) {
+             onClick={() => onSetActiveView("scheduled")}
+           >
+             <ClockIcon />
+-            <span className="sidebar__nav-text" style={NAV_TEXT_STYLE}>
+-              <span className="sidebar__nav-label">{t("Scheduled")}</span>
+-            </span>
++            <span>{t("Scheduled")}</span>
+           </button>
+         </div>
+-        {/*
+-          「新建专属主控对话」不再是临时流的入口：它是显式的建会话动作，不是工作位置。
+-          当前对话才是默认工作位置，所以这里只说清它做什么，不引导用户拿它当临时流。
+-        */}
+-        <p className="sidebar__new-hint">{t("The open conversation is where you work.")}</p>
+       </div>
+ 
+       <div className="sidebar__section">
+diff --git a/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx b/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
+index 3825f5fe..e0cb9e8e 100644
+--- a/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
++++ b/apps/desktop/src/features/workflow-cards/workflow-cards-view.tsx
+@@ -31,6 +31,7 @@ import type {
+   WorkflowControlNodeRow,
+ } from "../../../contracts/workflow-control";
+ import { useI18n } from "../../i18n/react";
++import { CloseIcon, MoreIcon } from "../../ui/icons";
+ import { useViewAutoRefresh } from "../../ui/view-auto-refresh";
+ import type { PendingHandover } from "./use-master-control-handover";
+ import {
+@@ -394,7 +395,7 @@ export function WorkflowCardsView({
+     [views, cardQuery, cardStates],
+   );
+   const selectedStep = useMemo(
+-    () => views.find((view) => view.step.stepId === selectedStepId) ?? views[0],
++    () => views.find((view) => view.step.stepId === selectedStepId),
+     [views, selectedStepId],
+   );
+   const done = completedStepCount(views);
+@@ -494,30 +495,54 @@ export function WorkflowCardsView({
+     setSaveError(undefined);
+   }, []);
+ 
+-  /** 打开一份文件：钉住这一版（有新版本只提示、不抢换正文）。 */
+-  const openPreview = useCallback((path: string, round?: number) => {
++  const rememberInspectorTrigger = useCallback(() => {
+     const active = document.activeElement;
+     if (active instanceof HTMLElement && active !== document.body) {
+       previewTriggerRef.current = active;
+     }
+-    setPreviewPath(path);
+-    setPreviewRound(round);
+-    setInspector("file");
+-    setScope(round === undefined ? { kind: "file", path } : { kind: "file", path, round });
+   }, []);
+ 
++  /** 打开一份文件：钉住这一版（有新版本只提示、不抢换正文）。 */
++  const openPreview = useCallback(
++    (path: string, round?: number) => {
++      rememberInspectorTrigger();
++      setPreviewPath(path);
++      setPreviewRound(round);
++      setInspector("file");
++      setScope(round === undefined ? { kind: "file", path } : { kind: "file", path, round });
++    },
++    [rememberInspectorTrigger],
++  );
++
+   /**
+    * 查看某一步：只改「在看哪一步」，不改发言对象（计划 §7.1 第 8 条）。
+    * 讨论对象要用户明确点「讨论这一步/就此文件提意见」才换。
+    */
+-  const viewStep = useCallback((stepId: string) => {
+-    setSelectedStepId(stepId);
+-    setInspector("step");
+-  }, []);
+-  const discussStep = useCallback((stepId: string) => {
+-    setSelectedStepId(stepId);
++  const viewStep = useCallback(
++    (stepId: string) => {
++      rememberInspectorTrigger();
++      setSelectedStepId(stepId);
++      setInspector("step");
++    },
++    [rememberInspectorTrigger],
++  );
++  const discussStep = useCallback(
++    (stepId: string) => {
++      rememberInspectorTrigger();
++      setSelectedStepId(stepId);
++      setInspector("step");
++      setScope({ kind: "step", stepId });
++    },
++    [rememberInspectorTrigger],
++  );
++  const closeInspector = useCallback(() => {
++    setSelectedStepId(undefined);
++    setPreviewPath(undefined);
++    setPreviewRound(undefined);
+     setInspector("step");
+-    setScope({ kind: "step", stepId });
++    setReading(false);
++    const trigger = previewTriggerRef.current;
++    if (trigger?.isConnected) trigger.focus();
+   }, []);
+ 
+   const runControlAction = useCallback(
+@@ -711,13 +736,14 @@ export function WorkflowCardsView({
+             centerView={centerView}
+             onCenterView={setCenterView}
+             inspector={inspector}
++            inspectorOpen={selectedStep !== undefined || previewPath !== undefined}
+             onInspector={setInspector}
++            onCloseInspector={closeInspector}
+             previewPath={previewPath}
+             previewRound={previewRound}
+             reading={reading}
+             onToggleReading={() => setReading((value) => !value)}
+             readingPositionsRef={readingPositionsRef}
+-            previewTriggerRef={previewTriggerRef}
+             inspectorRef={inspectorRef}
+             cardQuery={cardQuery}
+             onCardQuery={setCardQuery}
+@@ -775,7 +801,10 @@ export function WorkflowCardsView({
+               setCenterView("steps");
+               setSelectedStepId(stepId);
+             }}
+-            onBackToStep={() => setInspector("step")}
++            onBackToStep={(stepId) => {
++              if (stepId) setSelectedStepId(stepId);
++              setInspector("step");
++            }}
+             onScopeReset={() => setScope({ kind: "flow" })}
+             scope={scope}
+             opinionText={opinionText}
+@@ -823,13 +852,14 @@ interface PlanWorkspaceProps {
+   readonly centerView: "steps" | "output";
+   readonly onCenterView: (value: "steps" | "output") => void;
+   readonly inspector: "step" | "file";
++  readonly inspectorOpen: boolean;
+   readonly onInspector: (value: "step" | "file") => void;
++  readonly onCloseInspector: () => void;
+   readonly previewPath: string | undefined;
+   readonly previewRound: number | undefined;
+   readonly reading: boolean;
+   readonly onToggleReading: () => void;
+   readonly readingPositionsRef: React.RefObject<Map<string, number>>;
+-  readonly previewTriggerRef: React.RefObject<HTMLElement | undefined>;
+   readonly inspectorRef: React.RefObject<HTMLElement | undefined>;
+   readonly cardQuery: string;
+   readonly onCardQuery: (value: string) => void;
+@@ -870,7 +900,7 @@ interface PlanWorkspaceProps {
+   readonly onDiscussStep: (stepId: string) => void;
+   readonly onOpenPreview: (path: string, round?: number) => void;
+   readonly onLocateStep: (stepId: string) => void;
+-  readonly onBackToStep: () => void;
++  readonly onBackToStep: (stepId?: string) => void;
+   readonly onScopeReset: () => void;
+   readonly scope: DiscussionScope;
+   readonly opinionText: string;
+@@ -901,7 +931,6 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+     onInspector,
+     previewPath,
+     previewRound,
+-    previewTriggerRef,
+     inspectorRef,
+     cardQuery,
+     onCardQuery,
+@@ -986,7 +1015,7 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+           </button>
+           <button
+             type="button"
+-            className="button"
++            className="button button--ghost"
+             data-testid="workflow-cards-pause"
+             disabled={!props.runnableNode}
+             title={
+@@ -1002,7 +1031,7 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+           </button>
+           <button
+             type="button"
+-            className="button"
++            className="button button--ghost"
+             data-testid="workflow-cards-resume"
+             disabled={!control?.pauseReason}
+             title={t("Resume needs a written on-site check")}
+@@ -1013,14 +1042,28 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+           >
+             {t("Resume manually")}
+           </button>
+-          <button
+-            type="button"
+-            className="button"
+-            data-testid="workflow-cards-save"
+-            onClick={props.onSavePanelOpen}
+-          >
+-            {t("Save workflow")}
+-          </button>
++          <details className="workflow-cards__more">
++            <summary
++              className="button button--ghost"
++              aria-label="更多工作流操作"
++              data-testid="workflow-cards-more"
++            >
++              <MoreIcon />
++              <span>更多</span>
++            </summary>
++            <div className="workflow-cards__more-menu">
++              <button
++                type="button"
++                data-testid="workflow-cards-save"
++                onClick={(event) => {
++                  event.currentTarget.closest("details")?.removeAttribute("open");
++                  props.onSavePanelOpen();
++                }}
++              >
++                {t("Save workflow")}
++              </button>
++            </div>
++          </details>
+         </div>
+       </header>
+ 
+@@ -1032,15 +1075,15 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+         >
+           <div>
+             <h2 className="workflow-cards__confirm-title">
+-              {t("This step is delivered; it needs your confirmation.")}
+-            </h2>
+-            <p className="workflow-cards__hint">
+               {t("Step {step}: {title}", {
+                 step: String(
+                   plan.steps.findIndex((step) => step.stepId === reviewStep.step.stepId) + 1,
+                 ),
+                 title: reviewStep.step.title,
+               })}
++            </h2>
++            <p className="workflow-cards__hint">
++              {t("This step is delivered; it needs your confirmation.")}
+             </p>
+           </div>
+           <div className="workflow-cards__row">
+@@ -1243,7 +1286,12 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+           </button>
+         </div>
+         <span className="workflow-cards__progress" data-testid="workflow-cards-progress">
+-          {t("{done} / {total} steps done", { done: String(done), total: String(views.length) })}
++          <span className="workflow-cards__progress-track" aria-hidden="true">
++            <span style={{ transform: `scaleX(${views.length > 0 ? done / views.length : 0})` }} />
++          </span>
++          <span>
++            {t("{done} / {total} steps done", { done: String(done), total: String(views.length) })}
++          </span>
+         </span>
+       </div>
+ 
+@@ -1304,7 +1352,7 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+         </div>
+       </details>
+ 
+-      <div className="workflow-cards__body">
++      <div className={`workflow-cards__body ${props.inspectorOpen ? "has-inspector" : ""}`}>
+         <div className={`workflow-cards__center ${props.reading ? "is-reading" : ""}`}>
+           {centerView === "steps" ? (
+             filteredViews.length === 0 ? (
+@@ -1350,135 +1398,151 @@ function PlanWorkspace(props: PlanWorkspaceProps) {
+             />
+           )}
+         </div>
+-        <aside
+-          className="workflow-cards__inspector"
+-          data-testid="workflow-cards-inspector"
+-          ref={(node) => {
+-            inspectorRef.current = node ?? undefined;
+-          }}
+-          onKeyDown={(event) => {
+-            // Escape 收起文件预览并把焦点还给打开它的那个入口（计划 §7.1 第 7 条）。
+-            // 只在文件预览态生效：步骤详情里的 textarea 也在右栏，不该被满栏 Escape 抢走。
+-            if (event.key !== "Escape" || inspector !== "file") return;
+-            event.stopPropagation();
+-            onInspector("step");
+-            const trigger = previewTriggerRef.current;
+-            if (trigger && trigger.isConnected) trigger.focus();
+-          }}
+-        >
+-          <div className="workflow-cards__switch" role="group" aria-label={t("Inspector view")}>
+-            <button
+-              type="button"
+-              className={inspector === "step" ? "is-active" : ""}
+-              data-testid="workflow-cards-panel-step"
+-              aria-pressed={inspector === "step"}
+-              onClick={() => onInspector("step")}
+-            >
+-              {t("Step details")}
+-            </button>
+-            <button
+-              type="button"
+-              className={inspector === "file" ? "is-active" : ""}
+-              data-testid="workflow-cards-panel-file"
+-              aria-pressed={inspector === "file"}
+-              onClick={() => onInspector("file")}
+-            >
+-              {t("File preview")}
+-            </button>
+-          </div>
+-          {inspector === "step" && selectedStep ? (
+-            <StepDetail
+-              plan={plan}
+-              view={selectedStep}
+-              progressRow={props.progress.get(selectedStep.step.stepId)}
+-              durationText={props.durationText}
+-              depts={props.depts}
+-              deptUnavailable={props.deptUnavailable}
+-              locked={locked}
+-              changes={props.changes}
+-              onChange={props.onChange}
+-              onRequestModify={() => {
+-                const step = selectedStep.step;
+-                const original = {
+-                  title: step.title,
+-                  dept: step.dept,
+-                  requirement: step.requirement,
+-                  expectedArtifacts: step.expectedArtifacts ?? "",
+-                };
+-                const fields = (Object.keys(CHANGE_FIELD_LABELS) as (keyof StepChanges)[])
+-                  .filter((key) => props.changes[key] !== original[key])
+-                  .map((key) => CHANGE_FIELD_LABELS[key]);
+-                sendInstruction(
+-                  modifyStepInstruction(plan, step, props.changes),
+-                  t("Change step {id}", { id: step.stepId }),
+-                );
+-                props.onPendingChange({ stepId: step.stepId, fields });
+-              }}
+-              onRequestUndo={() =>
+-                sendInstruction(undoInstruction(plan), t("Undo the last change"))
+-              }
+-              opinionText={opinionText}
+-              onOpinionText={(text) => {
+-                onOpinionText(text);
+-                opinionDraftsRef.current.set(
+-                  discussionScopeKey({ kind: "step", stepId: selectedStep.step.stepId }),
+-                  text,
+-                );
+-              }}
+-              onSubmitOpinion={() => {
+-                const target: DiscussionScope = { kind: "step", stepId: selectedStep.step.stepId };
+-                sendInstruction(
+-                  opinionInstruction(plan, target, opinionText),
+-                  t("Opinion on step {id}", { id: selectedStep.step.stepId }),
+-                );
+-                opinionDraftsRef.current.delete(discussionScopeKey(target));
+-                onOpinionText("");
+-              }}
+-              onDiscuss={() => props.onDiscussStep(selectedStep.step.stepId)}
+-              t={t}
+-            />
+-          ) : null}
+-          {inspector === "file" ? (
+-            <FilePreview
+-              api={props.api}
+-              workspaceId={props.workspaceId}
+-              plan={plan}
+-              path={previewPath}
+-              round={previewRound}
+-              onSwitchRound={props.onOpenPreview}
+-              progress={props.progress}
+-              reading={props.reading}
+-              onToggleReading={props.onToggleReading}
+-              readingPositionsRef={props.readingPositionsRef}
+-              onLocate={props.onLocateStep}
+-              onBackToStep={props.onBackToStep}
+-              opinionText={opinionText}
+-              onOpinionText={(text) => {
+-                onOpinionText(text);
+-                opinionDraftsRef.current.set(discussionScopeKey(scope), text);
+-              }}
+-              onSubmitOpinion={() => {
+-                if (!previewPath) return;
+-                const target: DiscussionScope = {
+-                  kind: "file",
+-                  path: previewPath,
+-                  ...(previewRound === undefined ? {} : { round: previewRound }),
+-                };
+-                sendInstruction(
+-                  opinionInstruction(plan, target, opinionText),
+-                  t("Opinion on a file"),
+-                );
+-                opinionDraftsRef.current.delete(discussionScopeKey(target));
+-                onOpinionText("");
+-              }}
+-              onDiscussThisFile={() => {
+-                if (!previewPath) return;
+-                props.onOpenPreview(previewPath, previewRound);
+-              }}
+-              t={t}
+-            />
+-          ) : null}
+-        </aside>
++        {props.inspectorOpen ? (
++          <aside
++            className="workflow-cards__inspector"
++            data-testid="workflow-cards-inspector"
++            ref={(node) => {
++              inspectorRef.current = node ?? undefined;
++            }}
++            onKeyDown={(event) => {
++              // 步骤详情里的输入区保留自己的 Escape；文件预览可关闭整个检查器。
++              if (event.key !== "Escape" || inspector !== "file") return;
++              event.stopPropagation();
++              props.onCloseInspector();
++            }}
++          >
++            <div className="workflow-cards__inspector-head">
++              <div className="workflow-cards__switch" role="group" aria-label={t("Inspector view")}>
++                <button
++                  type="button"
++                  className={inspector === "step" ? "is-active" : ""}
++                  data-testid="workflow-cards-panel-step"
++                  aria-pressed={inspector === "step"}
++                  disabled={!selectedStep}
++                  onClick={() => onInspector("step")}
++                >
++                  {t("Step details")}
++                </button>
++                <button
++                  type="button"
++                  className={inspector === "file" ? "is-active" : ""}
++                  data-testid="workflow-cards-panel-file"
++                  aria-pressed={inspector === "file"}
++                  disabled={!previewPath}
++                  onClick={() => onInspector("file")}
++                >
++                  {t("File preview")}
++                </button>
++              </div>
++              <button
++                type="button"
++                className="icon-button workflow-cards__inspector-close"
++                data-testid="workflow-cards-inspector-close"
++                aria-label="关闭详情面板"
++                title="关闭详情面板"
++                onClick={props.onCloseInspector}
++              >
++                <CloseIcon />
++              </button>
++            </div>
++            {inspector === "step" && selectedStep ? (
++              <StepDetail
++                plan={plan}
++                view={selectedStep}
++                progressRow={props.progress.get(selectedStep.step.stepId)}
++                durationText={props.durationText}
++                depts={props.depts}
++                deptUnavailable={props.deptUnavailable}
++                locked={locked}
++                changes={props.changes}
++                onChange={props.onChange}
++                onRequestModify={() => {
++                  const step = selectedStep.step;
++                  const original = {
++                    title: step.title,
++                    dept: step.dept,
++                    requirement: step.requirement,
++                    expectedArtifacts: step.expectedArtifacts ?? "",
++                  };
++                  const fields = (Object.keys(CHANGE_FIELD_LABELS) as (keyof StepChanges)[])
++                    .filter((key) => props.changes[key] !== original[key])
++                    .map((key) => CHANGE_FIELD_LABELS[key]);
++                  sendInstruction(
++                    modifyStepInstruction(plan, step, props.changes),
++                    t("Change step {id}", { id: step.stepId }),
++                  );
++                  props.onPendingChange({ stepId: step.stepId, fields });
++                }}
++                onRequestUndo={() =>
++                  sendInstruction(undoInstruction(plan), t("Undo the last change"))
++                }
++                opinionText={opinionText}
++                onOpinionText={(text) => {
++                  onOpinionText(text);
++                  opinionDraftsRef.current.set(
++                    discussionScopeKey({ kind: "step", stepId: selectedStep.step.stepId }),
++                    text,
++                  );
++                }}
++                onSubmitOpinion={() => {
++                  const target: DiscussionScope = {
++                    kind: "step",
++                    stepId: selectedStep.step.stepId,
++                  };
++                  sendInstruction(
++                    opinionInstruction(plan, target, opinionText),
++                    t("Opinion on step {id}", { id: selectedStep.step.stepId }),
++                  );
++                  opinionDraftsRef.current.delete(discussionScopeKey(target));
++                  onOpinionText("");
++                }}
++                onDiscuss={() => props.onDiscussStep(selectedStep.step.stepId)}
++                t={t}
++              />
++            ) : null}
++            {inspector === "file" ? (
++              <FilePreview
++                api={props.api}
++                workspaceId={props.workspaceId}
++                plan={plan}
++                path={previewPath}
++                round={previewRound}
++                onSwitchRound={props.onOpenPreview}
++                progress={props.progress}
++                reading={props.reading}
++                onToggleReading={props.onToggleReading}
++                readingPositionsRef={props.readingPositionsRef}
++                onLocate={props.onLocateStep}
++                onBackToStep={props.onBackToStep}
++                opinionText={opinionText}
++                onOpinionText={(text) => {
++                  onOpinionText(text);
++                  opinionDraftsRef.current.set(discussionScopeKey(scope), text);
++                }}
++                onSubmitOpinion={() => {
++                  if (!previewPath) return;
++                  const target: DiscussionScope = {
++                    kind: "file",
++                    path: previewPath,
++                    ...(previewRound === undefined ? {} : { round: previewRound }),
++                  };
++                  sendInstruction(
++                    opinionInstruction(plan, target, opinionText),
++                    t("Opinion on a file"),
++                  );
++                  opinionDraftsRef.current.delete(discussionScopeKey(target));
++                  onOpinionText("");
++                }}
++                onDiscussThisFile={() => {
++                  if (!previewPath) return;
++                  props.onOpenPreview(previewPath, previewRound);
++                }}
++                t={t}
++              />
++            ) : null}
++          </aside>
++        ) : null}
+       </div>
+ 
+       {props.pendingChange ? (
+@@ -2275,7 +2339,7 @@ interface FilePreviewProps {
+   readonly onToggleReading: () => void;
+   readonly readingPositionsRef: React.RefObject<Map<string, number>>;
+   readonly onLocate: (stepId: string) => void;
+-  readonly onBackToStep: () => void;
++  readonly onBackToStep: (stepId?: string) => void;
+   readonly opinionText: string;
+   readonly onOpinionText: (value: string) => void;
+   readonly onSubmitOpinion: () => void;
+@@ -2468,7 +2532,8 @@ function FilePreview({
+           type="button"
+           className="button button--ghost"
+           data-testid="workflow-cards-back-to-step"
+-          onClick={onBackToStep}
++          disabled={locatedStepId === undefined}
++          onClick={() => onBackToStep(locatedStepId)}
+         >
+           {t("Back to step details")}
+         </button>
+diff --git a/apps/desktop/src/styles/main.css b/apps/desktop/src/styles/main.css
+index 9963712a..c09a30b1 100644
+--- a/apps/desktop/src/styles/main.css
++++ b/apps/desktop/src/styles/main.css
+@@ -801,7 +801,6 @@
+   border: 1px solid var(--line);
+   background: var(--surface);
+   width: 100%;
+-  box-shadow: var(--shadow-sm);
+   overflow: visible;
+   transition:
+     border-color var(--motion-base) var(--ease-out),
+diff --git a/apps/desktop/src/styles/sidebar.css b/apps/desktop/src/styles/sidebar.css
+index bfe388b5..6e4563ed 100644
+--- a/apps/desktop/src/styles/sidebar.css
++++ b/apps/desktop/src/styles/sidebar.css
+@@ -1022,10 +1022,3 @@
+ .enable-transparency.dark .sidebar {
+   backdrop-filter: var(--glass-blur) var(--glass-saturation);
+ }
+-
+-.sidebar__new-hint {
+-  margin: 14px 8px;
+-  color: var(--muted);
+-  font-size: 11px;
+-  line-height: 1.6;
+-}
+diff --git a/apps/desktop/src/styles/task-status.css b/apps/desktop/src/styles/task-status.css
+index c5d03e44..b5366fec 100644
+--- a/apps/desktop/src/styles/task-status.css
++++ b/apps/desktop/src/styles/task-status.css
+@@ -81,8 +81,8 @@
+   justify-self: end;
+   margin: 12px 12px 12px 0;
+   border: 1px solid var(--line);
+-  border-radius: var(--radius-2xl);
+-  box-shadow: var(--shadow-lg);
++  border-radius: var(--radius-xl);
++  box-shadow: var(--shadow-sm);
+   background: var(--surface);
+   overflow-y: auto;
+ }
+@@ -156,7 +156,7 @@
+   min-width: 0;
+   min-height: 0;
+   display: grid;
+-  grid-template-rows: auto repeat(3, auto);
++  grid-template-rows: auto;
+   color: var(--text-strong);
+ }
+ .task-status__header {
+@@ -246,6 +246,35 @@
+   line-height: 1.6;
+   overflow-wrap: anywhere;
+ }
++.task-status__attention-list {
++  display: grid;
++  gap: 4px;
++}
++.task-status__attention-item {
++  display: grid;
++  gap: 2px;
++  width: 100%;
++  min-width: 0;
++  padding: 7px 8px;
++  border-radius: var(--radius-md);
++  color: inherit;
++  text-align: left;
++}
++.task-status__attention-item:hover {
++  background: var(--overlay-hover);
++}
++.task-status__attention-item strong {
++  font-size: 12px;
++  font-weight: 500;
++}
++.task-status__attention-item small {
++  color: var(--muted);
++  font-size: 10px;
++}
++.task-status__attention-item[data-state="review"] small,
++.task-status__attention-item[data-state="failed"] small {
++  color: var(--status-warning);
++}
+ .task-status__empty {
+   color: var(--muted);
+   margin: 8px 4px;
+diff --git a/apps/desktop/src/styles/workflow-cards.css b/apps/desktop/src/styles/workflow-cards.css
+index ce1c9dbb..879a0b56 100644
+--- a/apps/desktop/src/styles/workflow-cards.css
++++ b/apps/desktop/src/styles/workflow-cards.css
+@@ -223,20 +223,20 @@
+ 
+ .workflow-cards__badge {
+   padding: var(--space-0-5) var(--space-2);
+-  border: 1px solid var(--border-default);
+   border-radius: var(--radius-pill);
++  background: var(--overlay-subtle);
+   font-size: var(--text-xs);
+   color: var(--muted);
+   white-space: nowrap;
+ }
+ 
+ .workflow-cards__badge--warn {
+-  border-color: var(--status-warning);
++  background: var(--danger-tint-bg);
+   color: var(--status-warning);
+ }
+ 
+ .workflow-cards__badge--muted {
+-  border-style: dashed;
++  background: transparent;
+ }
+ 
+ .workflow-cards__actions {
+@@ -245,6 +245,45 @@
+   gap: var(--space-2);
+ }
+ 
++.workflow-cards__more {
++  position: relative;
++}
++
++.workflow-cards__more > summary {
++  min-height: 36px;
++  list-style: none;
++  cursor: pointer;
++}
++
++.workflow-cards__more > summary::-webkit-details-marker {
++  display: none;
++}
++
++.workflow-cards__more-menu {
++  position: absolute;
++  z-index: 30;
++  top: calc(100% + 4px);
++  right: 0;
++  min-width: 160px;
++  padding: var(--space-1);
++  border: 1px solid var(--border-default);
++  border-radius: var(--radius-md);
++  background: var(--surface);
++  box-shadow: var(--elevation-menu);
++}
++
++.workflow-cards__more-menu button {
++  width: 100%;
++  min-height: 32px;
++  padding: var(--space-1) var(--space-2);
++  border-radius: var(--radius-sm);
++  text-align: left;
++}
++
++.workflow-cards__more-menu button:hover {
++  background: var(--overlay-hover);
++}
++
+ .workflow-cards__status,
+ .workflow-cards__empty,
+ .workflow-cards__note {
+@@ -315,20 +354,44 @@
+ }
+ 
+ .workflow-cards__progress {
++  display: inline-flex;
++  align-items: center;
++  gap: var(--space-2);
+   font-size: var(--text-sm);
+   color: var(--muted);
+ }
+ 
++.workflow-cards__progress-track {
++  width: 64px;
++  height: 3px;
++  overflow: hidden;
++  border-radius: var(--radius-pill);
++  background: var(--overlay-active);
++}
++
++.workflow-cards__progress-track > span {
++  display: block;
++  width: 100%;
++  height: 100%;
++  border-radius: inherit;
++  background: var(--accent);
++  transform-origin: left;
++  transition: transform var(--motion-base) var(--ease-out);
++}
++
+ /* ---- 中栏 + 右栏 ---- */
+ 
+ .workflow-cards__body {
+-  /* 草案 .pc-body：两栏、自然高度、整页一起滚。 */
+   display: grid;
+-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
++  grid-template-columns: minmax(0, 1fr);
+   gap: 22px;
+   align-items: start;
+ }
+ 
++.workflow-cards__body.has-inspector {
++  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
++}
++
+ .workflow-cards__center {
+   display: flex;
+   flex-direction: column;
+@@ -353,15 +416,23 @@
+ /* ---- 步骤卡：按草案 .pc-step 的排版（序号方块 / 标题 / 右上状态 / 缩进副行 / 文件链接）---- */
+ 
+ .workflow-cards__step {
+-  border: 1px solid var(--border-default);
+-  border-radius: 10px;
+-  background: var(--surface);
++  border: 1px solid var(--line);
++  border-radius: var(--radius-md);
++  background: transparent;
+   overflow: clip;
++  transition:
++    border-color var(--motion-base) var(--ease-out),
++    background-color var(--motion-base) var(--ease-out);
++}
++
++.workflow-cards__step:hover {
++  background: var(--surface);
+ }
+ 
+ .workflow-cards__step.is-selected {
+   border-color: var(--accent-tint-border);
+-  box-shadow: inset 3px 0 var(--accent);
++  background: var(--surface);
++  box-shadow: inset 2px 0 var(--accent);
+ }
+ 
+ .workflow-cards__step-main {
+@@ -627,8 +698,28 @@
+   flex-direction: column;
+   gap: var(--space-2);
+   min-width: 0;
+-  padding-left: 14px;
+-  border-left: 1px solid var(--border-default);
++  padding-left: 18px;
++  border-left: 1px solid var(--line);
++}
++
++.workflow-cards__inspector-head {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: var(--space-2);
++  min-height: 32px;
++  padding-bottom: var(--space-2);
++  border-bottom: 1px solid var(--line);
++}
++
++.workflow-cards__inspector-head .workflow-cards__switch {
++  border: 0;
++  padding: 0;
++}
++
++.workflow-cards__inspector-close {
++  flex: 0 0 auto;
++  color: var(--muted);
+ }
+ 
+ .workflow-cards__detail-title {
+@@ -762,9 +853,9 @@
+   gap: var(--space-2);
+   margin: 0;
+   padding: 10px 14px;
+-  border: 1px solid var(--border-default);
+-  border-radius: var(--radius-sm);
+-  background: var(--surface);
++  border: 1px solid var(--accent-tint-border);
++  border-radius: var(--radius-md);
++  background: var(--accent-tint-bg);
+ }
+ 
+ .workflow-cards__confirm-title {
+@@ -799,8 +890,7 @@
+   flex-direction: column;
+   gap: var(--space-2);
+   padding: 12px 18px 15px;
+-  /* 草案 .pc-chat 用一条粗顶线把对话区和上面的工作区分开。 */
+-  border-top: 5px solid var(--border-default);
++  border-top: 1px solid var(--line);
+ }
+ 
+ /* 复用的真实会话可能很长；草案把消息区限高（.pc-messages max-height:132px），
+@@ -1013,7 +1103,8 @@
+     grid-template-columns: 160px minmax(0, 1fr);
+   }
+ 
+-  .workflow-cards__body {
++  .workflow-cards__body,
++  .workflow-cards__body.has-inspector {
+     grid-template-columns: minmax(0, 1fr);
+   }
+ 
+diff --git a/apps/desktop/tests/core/d4-sidebar-draft.spec.ts b/apps/desktop/tests/core/d4-sidebar-draft.spec.ts
+index 74d2c984..fd3f7292 100644
+--- a/apps/desktop/tests/core/d4-sidebar-draft.spec.ts
++++ b/apps/desktop/tests/core/d4-sidebar-draft.spec.ts
+@@ -228,7 +228,7 @@ test("reports an unsent message as unsent and hands the text back", async () =>
+   }
+ });
+ 
+-test("侧栏四个入口与右侧常驻状态，矮窗口中的会话列表可以用滚轮滚动", async () => {
++test("侧栏四个入口与右侧短条，矮窗口中的会话列表可以用滚轮滚动", async () => {
+   test.setTimeout(120_000);
+   const userDataDir = await makeUserDataDir();
+   const workspacePath = await makeWorkspace("d4-summary-workspace");
+@@ -251,7 +251,8 @@ test("侧栏四个入口与右侧常驻状态，矮窗口中的会话列表可
+       await expect(window.getByTestId(id)).toBeVisible();
+     }
+     await expect(window.locator(".sidebar__nav-item")).toHaveCount(4);
+-    await expect(window.getByTestId("task-status")).toBeVisible();
++    await expect(window.getByTestId("task-status")).toHaveCount(0);
++    await expect(window.getByTestId("task-status-expand")).toBeVisible();
+     await expect(window.getByTestId("sidebar-summary")).toHaveCount(0);
+     await expect(window.locator(".sidebar__advanced")).toHaveCount(0);
+     const sessions = window.locator(".sidebar__section");
+@@ -296,8 +297,8 @@ test("keeps the open conversation as the default work surface in the sidebar", a
+       await expect(window.getByTestId(id)).toBeVisible();
+     }
+     await expect(window.getByTestId("sidebar-plans")).toHaveCount(0);
+-    // 「当前对话就是你干活的地方」这句定位在首屏可见（测试环境默认英文界面）。
+-    await expect(window.getByText("The open conversation is where you work.")).toBeVisible();
++    await expect(window.getByText("The open conversation is where you work.")).toHaveCount(0);
++    await expect(window.getByTestId("sidebar-threads")).toHaveAccessibleName("Threads");
+     // 这些入口不嵌完整主页面：侧栏里没有画布、配方编辑器和第二套输入框。
+     await expect(window.getByTestId("sidebar-work-surfaces").locator("textarea")).toHaveCount(0);
+     await expect(window.getByTestId("sidebar-work-surfaces").getByTestId("composer")).toHaveCount(
+@@ -308,7 +309,7 @@ test("keeps the open conversation as the default work surface in the sidebar", a
+   }
+ });
+ 
+-test("窄窗口里右侧状态栏默认收起，展开能看、收起能记住", async () => {
++test("无偏好时右侧状态栏默认收起，手动展开与收起跨刷新保持", async ({}, testInfo) => {
+   test.setTimeout(120_000);
+   const userDataDir = await makeUserDataDir();
+   const workspacePath = await makeWorkspace("d4-narrow-rail-workspace");
+@@ -322,18 +323,20 @@ test("窄窗口里右侧状态栏默认收起，展开能看、收起能记住",
+     await createNamedThread(window, "Narrow rail session");
+     await expect(window.getByTestId("composer")).toBeVisible();
+ 
+-    // 宽窗保持常驻：默认 320px，其它入口都靠它进详情。
+     const rail = window.getByTestId("task-status");
+-    await expect(rail).toBeVisible();
+-    expect(Math.round((await rail.boundingBox())!.width)).toBe(320);
++    const expand = window.getByTestId("task-status-expand");
++    await expect(rail).toHaveCount(0);
++    await expect(expand).toBeVisible();
++    expect(
++      await window.evaluate(() => localStorage.getItem("pi-gui.task-status-collapsed")),
++    ).toBeNull();
++    await saveProof(window, testInfo, "00-概况默认短条.png");
+ 
+-    // 窄窗让位：状态栏默认收起，只留展开按钮。
+     await window.setViewportSize({ width: 900, height: 700 });
+     await expect(rail).toHaveCount(0);
+-    const expand = window.getByTestId("task-status-expand");
+     await expect(expand).toBeVisible();
+ 
+-    // 展开是临时动作：宽度受 320px 上限约束，且不把「窄窗收起」这条默认写坏。
++    // 显式展开写入偏好，概况宽度仍受 320px 上限约束。
+     await expand.click();
+     await expect(rail).toBeVisible();
+     expect(Math.round((await rail.boundingBox())!.width)).toBeLessThanOrEqual(320);
+@@ -461,6 +464,7 @@ test("从画布打开概况文件变更时保持画布并显示工具", async ()
+     await expect.poll(async () => (await getDesktopState(window)).activeView).toBe("canvas");
+ 
+     const source = await getDesktopState(window);
++    await window.getByTestId("task-status-expand").click();
+     await window.getByTestId("task-status-open-changes").click();
+ 
+     await expect(canvasContent).toBeVisible();
+@@ -490,6 +494,7 @@ test("概况按内容收紧、长分区内部滚动，辅助对话说明使用
+     const window = await harness.firstWindow();
+     await window.setViewportSize({ width: 1440, height: 900 });
+     await createNamedThread(window, "概况空态");
++    await window.getByTestId("task-status-expand").click();
+ 
+     // 空态仍完整显示说明与文件错误，卡片高度由内容决定，不再撑满可用高度。
+     const emptyRail = window.getByTestId("task-status");
+@@ -497,7 +502,7 @@ test("概况按内容收紧、长分区内部滚动，辅助对话说明使用
+     await expect(window.getByTestId("task-status-files")).toContainText("文件变更不可用");
+     await expect(window.getByTestId("task-status-todos")).toContainText("当前会话尚无 PAO 计划");
+     await expect(window.getByTestId("task-status-departments")).toContainText(
+-      "当前会话没有进行中的部门任务",
++      "部门状态读取失败：卡聚合列表字段缺失。",
+     );
+     const emptyHeight = (await emptyRail.boundingBox())!.height;
+     expect(emptyHeight).toBeLessThan(500);
+diff --git a/apps/desktop/tests/core/d5-workflow-layout.spec.ts b/apps/desktop/tests/core/d5-workflow-layout.spec.ts
+index dad23770..0619d1f2 100644
+--- a/apps/desktop/tests/core/d5-workflow-layout.spec.ts
++++ b/apps/desktop/tests/core/d5-workflow-layout.spec.ts
+@@ -7,6 +7,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+   reloadDesktopRenderer,
+ } from "../helpers/electron-app";
+ 
+@@ -48,7 +49,7 @@ const created = await plan.createTemporaryPlan({
+   请求ID: "req-d5-1",
+   已注册部门: ["策划部", "写作部", "审稿部", "资料部"],
+   步骤: [
+-    // s1 是人工门审核节点：内核只允许「审核: true」的步骤做 decideNode，而标了审核就必须带部门标准；
++    // s1 是人工门审核节点：内核只允许「审核: true」的步骤做 decideNode，审核必须声明部门标准与只读；
+     // 且内核要求回边必须指向依赖链上游，所以审核节点只能打回它的上游——这里没有更上游，
+     // 所以 s1 不带回边，只在 s6 上做回边打回 s2（s6 依赖 s1，s2 依赖 s1，见下）。
+     {
+@@ -57,6 +58,7 @@ const created = await plan.createTemporaryPlan({
+       要求: "把方向与章节计划讨论清楚",
+       人工门: true,
+       审核: true,
++      只读: true,
+       部门标准: "方向可执行、与章节计划一致",
+     },
+     { 标题: "写初稿", 部门: "写作部", 要求: "按计划写初稿" },
+@@ -71,6 +73,7 @@ const created = await plan.createTemporaryPlan({
+       部门: "策划部",
+       要求: "定下资料检索方向",
+       审核: true,
++      只读: true,
+       部门标准: "方向可执行、与章节计划一致",
+       依赖: ["s2"],
+       回边: [{ 目标: "s2", 上限: 3, 超限动作: "停滞" }],
+@@ -288,8 +291,11 @@ test("三档宽度下工作流主页与右栏都可用：不横向溢出、触
+   const { app } = await launchD5Fixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
++    await expect(page.getByTestId("workflow-cards-inspector")).toHaveCount(0);
++    await expect(page.locator(".workflow-cards__step.is-selected")).toHaveCount(0);
++    await page.getByTestId("workflow-cards-step-s6").click();
+     await page.locator(".workflow-cards__filter-panel > summary").click();
+     await page.getByTestId("workflow-cards-overview").locator(":scope > summary").click();
+ 
+@@ -490,7 +496,7 @@ test("三档宽度下工作流主页与右栏都可用：不横向溢出、触
+     if ((await page.getByTestId("sidebar-toggle").getAttribute("aria-pressed")) === "false") {
+       await page.getByTestId("sidebar-toggle").click();
+     }
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
+     const activeAfterReload = await page.evaluate(() => {
+       const active = globalThis.document.activeElement;
+@@ -512,7 +518,7 @@ test("键盘可操作：中文名可见、Tab 落点有序、Enter/Space 生效
+   try {
+     const page = await app.firstWindow();
+     await page.setViewportSize({ width: 1280, height: 960 });
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
+     await page.locator(".workflow-cards__filter-panel > summary").click();
+ 
+diff --git a/apps/desktop/tests/core/department-workspace.spec.ts b/apps/desktop/tests/core/department-workspace.spec.ts
+index d32e0ee5..448cfb7f 100644
+--- a/apps/desktop/tests/core/department-workspace.spec.ts
++++ b/apps/desktop/tests/core/department-workspace.spec.ts
+@@ -10,6 +10,7 @@ import {
+   launchPackagedDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+   selectSession,
+ } from "../helpers/electron-app";
+ 
+@@ -92,6 +93,7 @@ test("定稿工作台：主控分组、四列部门与真实会话读取、返
+       ],
+       { windowsHide: true, env: { ...process.env, PAO_HOME: home } },
+     );
++    await page.getByTestId("task-status-expand").click();
+     await page
+       .getByTestId("task-status")
+       .getByRole("button", { name: "刷新", exact: true })
+@@ -108,7 +110,7 @@ test("定稿工作台：主控分组、四列部门与真实会话读取、返
+     await selectSession(page, "第二主控");
+     await expect(page.getByTestId("task-status-todos")).toContainText("独立任务");
+     await expect(page.getByTestId("task-status-department")).toHaveCount(0);
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("sidebar-plans")).toHaveCount(0);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("另一主控的独立计划");
+     await page.getByTestId(`workflow-owner-${first}`).click();
+diff --git a/apps/desktop/tests/core/f-desktop-owner.spec.ts b/apps/desktop/tests/core/f-desktop-owner.spec.ts
+index 08277ea3..4c8cf16e 100644
+--- a/apps/desktop/tests/core/f-desktop-owner.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-owner.spec.ts
+@@ -9,6 +9,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+@@ -166,7 +167,7 @@ async function launchControlFixture(prefix: string) {
+   });
+   const fixture = JSON.parse(stdout.trim().split("\n").at(-1)!) as ControlFixture;
+ 
+-  await page.getByTestId("task-status-open-workflow").click();
++  await openWorkflowCards(page);
+   await expect(page.getByTestId("workflow-cards-title")).toContainText("F15 控制场景", {
+     timeout: 20_000,
+   });
+diff --git a/apps/desktop/tests/core/f-desktop-t11-forged.spec.ts b/apps/desktop/tests/core/f-desktop-t11-forged.spec.ts
+index bcee4a9b..08baaedb 100644
+--- a/apps/desktop/tests/core/f-desktop-t11-forged.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-t11-forged.spec.ts
+@@ -10,6 +10,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+@@ -224,7 +225,7 @@ async function launchForgedFixture(prefix: string) {
+   });
+   const fixture = JSON.parse(stdout.trim().split("\n").at(-1)!) as ForgedFixture;
+ 
+-  await page.getByTestId("task-status-open-workflow").click();
++  await openWorkflowCards(page);
+   await expect(page.getByTestId("workflow-cards-title")).toContainText("F11 伪造交付场景", {
+     timeout: 20_000,
+   });
+diff --git a/apps/desktop/tests/core/f-desktop-t18-files.spec.ts b/apps/desktop/tests/core/f-desktop-t18-files.spec.ts
+index 5b0c1ef4..b8d6c5b6 100644
+--- a/apps/desktop/tests/core/f-desktop-t18-files.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-t18-files.spec.ts
+@@ -7,6 +7,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ /**
+@@ -178,10 +179,7 @@ async function launchFileFixture(prefix: string, options: { withWorkspace?: bool
+     throw new Error(`夹具工作区没被加进列表：${project}`);
+   }
+   if (before.selectedWorkspaceId !== projectRow.id) {
+-    await page.evaluate(
+-      async (id) => globalThis.window.piApp.selectWorkspace(id),
+-      projectRow.id,
+-    );
++    await page.evaluate(async (id) => globalThis.window.piApp.selectWorkspace(id), projectRow.id);
+     await expect
+       .poll(async () => (await getDesktopState(page)).selectedWorkspaceId, { timeout: 20_000 })
+       .toBe(projectRow.id);
+@@ -212,7 +210,7 @@ async function launchFileFixture(prefix: string, options: { withWorkspace?: bool
+   );
+   const fixture = JSON.parse(stdout.trim().split("\n").at(-1)!) as FileFixture;
+ 
+-  await page.getByTestId("task-status-open-workflow").click();
++  await openWorkflowCards(page);
+   await expect(page.getByTestId("workflow-cards-title")).toContainText("F18 文件与草稿", {
+     timeout: 20_000,
+   });
+@@ -274,7 +272,8 @@ test("T18 文件异常：产物从盘上消失后，预览如实说盘上没了
+     // 让产物真的消失，再让界面重新拉一次投影。
+     await rm(join(project, fixture.产物路径), { force: true });
+     await page.getByTestId("sidebar-threads").click();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await expect(page.getByTestId("composer")).toBeVisible();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("F18 文件与草稿", {
+       timeout: 20_000,
+     });
+@@ -369,7 +368,13 @@ test("T18 未保存编辑：切步骤/切预览/刷投影都不丢，换工作
+     // ——— 1. 保存工作流面板里的名字：关掉再开，名字要还在。
+     // 这是「未保存编辑」最直接的现场：用户打了流程名还没交给主控。
+     const saveOpen = page.getByTestId("workflow-cards-save");
+-    await saveOpen.click();
++    const openSavePanel = async () => {
++      if (!(await saveOpen.isVisible())) {
++        await page.getByTestId("workflow-cards-more").click();
++      }
++      await saveOpen.click();
++    };
++    await openSavePanel();
+     const savePanel = page.getByTestId("workflow-cards-save-panel");
+     await expect(savePanel).toBeVisible({ timeout: 20_000 });
+     const nameInput = page.getByTestId("workflow-cards-template-name");
+@@ -378,7 +383,7 @@ test("T18 未保存编辑：切步骤/切预览/刷投影都不丢，换工作
+     // 关面板 → 名字留着（onSavePanelClose 只关面板，`:575-578`）。
+     await page.getByTestId("workflow-cards-save-cancel").click();
+     await expect(savePanel).toHaveCount(0);
+-    await saveOpen.click();
++    await openSavePanel();
+     await expect(savePanel).toBeVisible();
+     await expect(nameInput).toHaveValue("没保存的流程名");
+     await page.getByTestId("workflow-cards-save-cancel").click();
+@@ -391,7 +396,7 @@ test("T18 未保存编辑：切步骤/切预览/刷投影都不丢，换工作
+       "true",
+     );
+     await page.getByTestId("workflow-cards-step-s1").click();
+-    await saveOpen.click();
++    await openSavePanel();
+     await expect(nameInput).toHaveValue("没保存的流程名");
+     await page.getByTestId("workflow-cards-save-cancel").click();
+ 
+@@ -431,21 +436,19 @@ test("T18 未保存编辑：切步骤/切预览/刷投影都不丢，换工作
+       .toBe(other!.id);
+ 
+     // 第二个工作区没有临时计划：计划相关输入真的不在，不是「有但被清空」。
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-save")).toHaveCount(0);
+     await expect(page.getByTestId("workflow-cards-template-name")).toHaveCount(0);
+     await expect(page.getByTestId("workflow-cards-file-opinion")).toHaveCount(0);
+ 
+     // 切回原工作区：名字必须为空 —— 证明 workspaceId effect 真的清了 state，
+     // 而不是「第二个工作区看不到，切回来还在」。
+-    await page.evaluate(
+-      async (id) => globalThis.window.piApp.selectWorkspace(id),
+-      project,
+-    );
++    await page.evaluate(async (id) => globalThis.window.piApp.selectWorkspace(id), project);
+     await expect
+       .poll(async () => (await getDesktopState(page)).selectedWorkspaceId, { timeout: 20_000 })
+       .toBe(workspaceId);
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
++    await page.getByTestId("workflow-cards-more").click();
+     await page.getByTestId("workflow-cards-save").click();
+     await expect(page.getByTestId("workflow-cards-template-name")).toHaveValue("");
+   } finally {
+diff --git a/apps/desktop/tests/core/f-desktop-t21-tech-display.spec.ts b/apps/desktop/tests/core/f-desktop-t21-tech-display.spec.ts
+index 63aea4cc..738859de 100644
+--- a/apps/desktop/tests/core/f-desktop-t21-tech-display.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-t21-tech-display.spec.ts
+@@ -9,6 +9,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ /**
+@@ -189,6 +190,7 @@ async function launchT21Fixture() {
+ test("T21 看板入口：预算与用量分项给人看，契约外的键折叠在原始值里", async () => {
+   const { app, page } = await launchT21Fixture();
+   try {
++    await page.getByTestId("task-status-expand").click();
+     await page.getByTestId("task-status-open-board").click();
+     await expect(page.getByTestId("kanban-view")).toBeVisible();
+ 
+@@ -307,7 +309,7 @@ test("T21 工作流入口：执行记录原始值默认收起，成果只列盘
+   try {
+     // 工作流页需要一份临时计划；本用例的重点不是计划内容，所以直接看它「没有计划时怎么说」。
+     // 空态本身也是展示面：不能说成「加载失败」，也不能把 JSON 铺出来。
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     const view = page.getByTestId("workflow-cards");
+     await expect(view).toBeVisible({ timeout: 20_000 });
+     const empty = page.getByTestId("workflow-cards-empty");
+@@ -331,7 +333,7 @@ test("T21 工作流入口：执行记录原始值默认收起，成果只列盘
+     }
+ 
+     // 九类 5：成果文件页只列盘上真有的文件（或无产物时明说），不把预期路径伪装成文件。
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(view).toBeVisible();
+     const outputTab = page.getByTestId("workflow-cards-tab-output");
+     if ((await outputTab.count()) > 0) {
+diff --git a/apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts b/apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts
+index 086511e2..88d3ca40 100644
+--- a/apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts
+@@ -10,6 +10,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ /**
+@@ -19,9 +20,8 @@ import {
+  * 「中文控件名可见 / Tab 落点有序 / Enter·Space 真的生效 / Escape 归还焦点给产物入口 /
+  * 刷新后焦点不抢到输入框」。**这里不重复它**，只补它明确没覆盖、而 T22 要求的三件：
+  *
+- * 1. **侧栏入口**：本批 D 批把侧栏导航从「一行文字」改成「卡片（标题 + 副标题）」，
+- *    testid 没变，但可访问名变了。读屏按可访问名找人，所以入口必须**真的能用名字找到**，
+- *    且 `Tab` 能落到它上面（不是只能鼠标点）。
++ * 1. **侧栏入口**：导航保持单一主标签。读屏按可访问名找人，所以入口必须
++ *    **真的能用名字找到**，且 `Tab` 能落到它上面（不是只能鼠标点）。
+  * 2. **焦点返回的**另一半**：Escape 归还焦点，只在「打开预览」这条路径验过；
+  *    这里验「右栏 `步骤详情 ⇄ 文件预览` 切换 + Escape」时焦点仍然有着落，
+  *    且切回步骤详情后 Escape **不会**满栏抢走步骤详情里 textarea 的按键
+@@ -42,10 +42,8 @@ const ARTIFACT_DIRECTORY = "设计资产/样式";
+ /** 中文界面下的期望文案（正本：`contracts/i18n-zh.ts`）。 */
+ const ZH = {
+   navWorkflow: "工作流",
+-  navWorkflowHint: "在跑计划的步骤",
+   navThreads: "会话",
+   navScheduled: "定时任务",
+-  newHint: "当前对话就是你干活的地方。",
+   stepCards: "步骤卡",
+   outputFiles: "成果文件",
+   panelStep: "步骤详情",
+@@ -226,12 +224,15 @@ test("T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上", asy
+ 
+     // 一、按**可访问名**找入口：这是读屏用户唯一能用的导航方式。
+     // 断具体中文文案而不是「有个中文字符」，因为漏键会静默回退英文源串。
+-    await expect(surfaces.getByRole("button", { name: ZH.navWorkflow, exact: false })).toBeVisible();
++    await expect(
++      surfaces.getByRole("button", { name: ZH.navWorkflow, exact: false }),
++    ).toBeVisible();
+     await expect(surfaces.getByRole("button", { name: ZH.navThreads, exact: false })).toBeVisible();
+-    await expect(surfaces.getByRole("button", { name: ZH.navScheduled, exact: false })).toBeVisible();
+-    // 副标题也必须是中文——它是本批新增的提示，最容易漏键。
+-    await expect(surfaces).toContainText(ZH.navWorkflowHint);
+-    await expect(page.getByText(ZH.newHint)).toBeVisible();
++    await expect(
++      surfaces.getByRole("button", { name: ZH.navScheduled, exact: false }),
++    ).toBeVisible();
++    await expect(surfaces.getByRole("button", { name: ZH.navThreads, exact: true })).toBeVisible();
++    await expect(page.getByText("当前对话就是你干活的地方。")).toHaveCount(0);
+ 
+     // 二、Tab 能落到导航上：用真实键盘从会话输入框往回走/往前走都可以，
+     // 这里从侧栏第一个入口出发，连按 Tab，确认焦点**走过**了每个导航卡片，
+@@ -242,7 +243,9 @@ test("T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上", asy
+       focusOrder.push(await describeFocus(page));
+       await page.keyboard.press("Tab");
+     }
+-    const navHits = focusOrder.filter((entry) => /\[sidebar-(canvas|workboard|plans|threads|scheduled)\]/.test(entry));
++    const navHits = focusOrder.filter((entry) =>
++      /\[sidebar-(canvas|workboard|plans|threads|scheduled)\]/.test(entry),
++    );
+     expect(
+       navHits.length,
+       `Tab 走过侧栏导航时没落到导航卡片上，实际顺序：${focusOrder.join(" → ")}`,
+@@ -273,17 +276,17 @@ test("T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上", asy
+ test("T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢步骤详情里的按键", async () => {
+   const { app, page, fixture } = await launchA11yFixture();
+   try {
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("F22 键盘与焦点", {
+       timeout: 20_000,
+     });
+ 
+-    // 一、双态按钮的可访问名是中文（「步骤卡 / 成果文件」在 `:1013-1032`，是 role=group 不是 tab）。
++    // 一、双态按钮的可访问名是中文（「步骤卡 / 成果文件」是 role=group 不是 tab）。
+     const stepsTab = page.getByTestId("workflow-cards-tab-steps");
+     const outputTab = page.getByTestId("workflow-cards-tab-output");
+     await expect(stepsTab).toHaveAccessibleName(ZH.stepCards);
+     await expect(outputTab).toHaveAccessibleName(ZH.outputFiles);
+-    // 右栏两个面板名同样是中文（`:1154-1170`）。
++    await page.getByTestId("workflow-cards-step-s1").click();
+     await expect(page.getByTestId("workflow-cards-panel-step")).toHaveAccessibleName(ZH.panelStep);
+     await expect(page.getByTestId("workflow-cards-panel-file")).toHaveAccessibleName(ZH.panelFile);
+ 
+@@ -300,23 +303,19 @@ test("T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢
+       `打开预览后焦点没进右栏，实际焦点：${await describeFocus(page)}`,
+     ).toBe(true);
+ 
+-    // 三、Escape 归还焦点给打开它的产物入口（与 d5 同一条机制，这里换成中文界面复验）。
++    // 三、Escape 关闭整个检查器，焦点回到打开预览的产物入口。
+     await page.keyboard.press("Escape");
+     expect(
+       await artifact.evaluate((node) => globalThis.document.activeElement === node),
+       `Escape 后焦点没回到产物入口，实际焦点：${await describeFocus(page)}`,
+     ).toBe(true);
+-    // 归还后右栏回到步骤详情（Escape 的语义是「收起预览」，不是「清空选择」）。
+-    await expect(inspector.getByTestId("workflow-cards-detail-state")).toBeVisible();
++    await expect(inspector).toHaveCount(0);
+     await expect(page.getByTestId("workflow-cards-file-preview")).toHaveCount(0);
+ 
+-    // 四、**不越权**：已经在步骤详情态时，Escape 不该满栏插手。
+-    // 守卫在 `workflow-cards-view.tsx:1145-1147`：`inspector !== "file"` 时直接 return，
+-    // 注释原话是「步骤详情里的 textarea 也在右栏，不该被满栏 Escape 抢走」。
+-    //
+-    // 这里验的是「不越权」的三个可观察面：右栏留在步骤详情、焦点不被抢走、页面不发生跳转。
+-    // 操作对象取**搜索框** `workflow-cards-search`（`:1039-1047`，常驻可编辑）：
+-    // 步骤详情里的输入框在运行中是 `disabled`（`locked`，`:1853`/`:1880`），无法打字。
++    // 四、步骤详情里的 Escape 仍归输入控件自己处理，不被面板抢走。
++    await stepsTab.click();
++    await page.getByTestId("workflow-cards-step-s1").click();
++    await page.locator(".workflow-cards__filter-panel > summary").click();
+     const search = page.getByTestId("workflow-cards-search");
+     await expect(search).toBeVisible();
+     await search.fill("写初稿");
+@@ -326,7 +325,6 @@ test("T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢
+       await search.evaluate((node) => globalThis.document.activeElement === node),
+       `步骤详情态按 Escape 把焦点从输入框抢走了，实际焦点：${await describeFocus(page)}`,
+     ).toBe(true);
+-    // 清干净，别让搜索条件影响后面截图里看到的内容。
+     await search.fill("");
+ 
+     await saveProof(page, "T22-右栏Escape与焦点归还.png");
+@@ -338,10 +336,11 @@ test("T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢
+ test("T22 中文界面不漏英文源串：侧栏与本页可见文案都走词典", async () => {
+   const { app, page } = await launchA11yFixture();
+   try {
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("F22 键盘与焦点", {
+       timeout: 20_000,
+     });
++    await page.getByTestId("workflow-cards-step-s1").click();
+ 
+     // 漏键会静默回退英文源串（`contracts/i18n.ts:21` `dictionaries[language][key] ?? key`），
+     // DOM 里不报错、测试也不红——所以这里直接扫一遍**真可见文本**里还有没有英文源串。
+diff --git a/apps/desktop/tests/core/f-desktop-t23-instance.spec.ts b/apps/desktop/tests/core/f-desktop-t23-instance.spec.ts
+index 7768ae02..2d59aba1 100644
+--- a/apps/desktop/tests/core/f-desktop-t23-instance.spec.ts
++++ b/apps/desktop/tests/core/f-desktop-t23-instance.spec.ts
+@@ -9,6 +9,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+@@ -233,7 +234,8 @@ console.log(JSON.stringify({
+ }));
+ `;
+ 
+-interface BadCardFixture {  readonly 实例: string;
++interface BadCardFixture {
++  readonly 实例: string;
+   readonly 配方名: string;
+   readonly 卡目录: string;
+   readonly 好卡路径: string;
+@@ -274,7 +276,7 @@ async function launchBadCardFixture(prefix: string) {
+   );
+   const fixture = JSON.parse(stdout.trim().split("\n").at(-1)!) as BadCardFixture;
+ 
+-  await page.getByTestId("task-status-open-workflow").click();
++  await openWorkflowCards(page);
+   await expect(page.getByTestId("workflow-cards-title")).toContainText("F23 坏卡与耗时", {
+     timeout: 20_000,
+   });
+@@ -312,7 +314,8 @@ test("T23 坏实例身份：卡读不出来时如实报问题，不编造状态"
+ 
+     // 让界面重新拉一次投影（重开该计划视图）。
+     await page.getByTestId("sidebar-threads").click();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await expect(page.getByTestId("composer")).toBeVisible();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("F23 坏卡与耗时", {
+       timeout: 20_000,
+     });
+@@ -356,7 +359,10 @@ test("T23 耗时口径：内核按真实时间差算耗时，缺完成时间时
+     const page = await app.firstWindow();
+     await createNamedThread(page, "f23-duration 会话");
+ 
+-    const kernelDist = join(__dirname, "../../node_modules/@earendil-works/pi-coding-agent/dist/pao");
++    const kernelDist = join(
++      __dirname,
++      "../../node_modules/@earendil-works/pi-coding-agent/dist/pao",
++    );
+     const scriptPath = join(home, "f23-duration.mjs");
+     await writeFile(scriptPath, DURATION_SCRIPT, "utf8");
+     const { stdout } = await execFileAsync(process.execPath, [scriptPath, kernelDist, project], {
+diff --git a/apps/desktop/tests/core/f-probe-owner.spec.ts b/apps/desktop/tests/core/f-probe-owner.spec.ts
+index 0d1c932f..03d0eddc 100644
+--- a/apps/desktop/tests/core/f-probe-owner.spec.ts
++++ b/apps/desktop/tests/core/f-probe-owner.spec.ts
+@@ -9,6 +9,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+@@ -140,7 +141,7 @@ test("probe: does a desktop session act as a real control owner", async () => {
+     const controlBefore = await readFile(fixture.控制清单, "utf8");
+     console.log("PROBE2-CONTROL-BEFORE-LEN", controlBefore.length);
+ 
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("owner 探针", {
+       timeout: 20_000,
+     });
+diff --git a/apps/desktop/tests/core/kanban-board.spec.ts b/apps/desktop/tests/core/kanban-board.spec.ts
+index 5a5fdf5e..1328ef58 100644
+--- a/apps/desktop/tests/core/kanban-board.spec.ts
++++ b/apps/desktop/tests/core/kanban-board.spec.ts
+@@ -26,6 +26,7 @@ import { launchDesktop, makeUserDataDir, makeWorkspace } from "../helpers/electr
+ const execFileAsync = promisify(execFile);
+ 
+ async function openRawKanban(page: Page): Promise<void> {
++  await page.getByTestId("task-status-expand").click();
+   await page.getByTestId("task-status-open-board").click();
+   await page.getByRole("button", { name: "原始任务卡", exact: true }).click();
+ }
+diff --git a/apps/desktop/tests/core/pao-review-version.spec.ts b/apps/desktop/tests/core/pao-review-version.spec.ts
+index fc017b86..c8ea54ef 100644
+--- a/apps/desktop/tests/core/pao-review-version.spec.ts
++++ b/apps/desktop/tests/core/pao-review-version.spec.ts
+@@ -8,6 +8,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+   reloadDesktopRenderer,
+ } from "../helpers/electron-app";
+ 
+@@ -101,7 +102,7 @@ test("真实桌面读取审核版本：完成状态一致，源码变化后不
+         { workspaceId, fixture },
+       );
+     await expect.poll(query).toMatchObject({ state: "ok", control: { status: "已完成" } });
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("审核版本验收");
+     await expect(page.getByTestId("workflow-cards-flow-status")).toContainText("已完成");
+     await writeFile(join(project, "source.txt"), "unverified new source\n");
+@@ -111,7 +112,7 @@ test("真实桌面读取审核版本：完成状态一致，源码变化后不
+     });
+     await reloadDesktopRenderer(page);
+     if (!(await page.getByTestId("workflow-cards-title").isVisible())) {
+-      await page.getByTestId("task-status-open-workflow").click();
++      await openWorkflowCards(page);
+     }
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("审核版本验收");
+     await expect(page.getByTestId("workflow-cards-flow-status")).not.toContainText("已完成");
+diff --git a/apps/desktop/tests/core/plan-recovery.spec.ts b/apps/desktop/tests/core/plan-recovery.spec.ts
+index 813a716e..b6905e0a 100644
+--- a/apps/desktop/tests/core/plan-recovery.spec.ts
++++ b/apps/desktop/tests/core/plan-recovery.spec.ts
+@@ -14,7 +14,12 @@ import { mkdir, writeFile } from "node:fs/promises";
+ import { join } from "node:path";
+ import { promisify } from "node:util";
+ import { expect, test } from "@playwright/test";
+-import { launchDesktop, makeUserDataDir, makeWorkspace } from "../helpers/electron-app";
++import {
++  launchDesktop,
++  makeUserDataDir,
++  makeWorkspace,
++  openWorkflowCards,
++} from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+ 
+@@ -183,7 +188,7 @@ function launch(home: string, project: string, userDataDir: string) {
+ async function assertWorkbenchStillKnows(
+   page: Awaited<ReturnType<Awaited<ReturnType<typeof launch>>["firstWindow"]>>,
+ ) {
+-  await page.getByTestId("task-status-open-workflow").click();
++  await openWorkflowCards(page);
+   await expect(page.getByTestId("workflow-cards-title")).toContainText("恢复现场样例");
+   await expect(page.getByTestId("workflow-cards-progress")).toContainText("0 / 3");
+   // s1 的卡还在 in_progress，但内核控制正本同时写着挂起原因「等待部长本轮拆解结束」
+@@ -207,7 +212,7 @@ test("只读计划页在真实 Electron 里显示计划、步骤、启动与意
+   const app = await launch(home, project, userDataDir);
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await page.getByRole("button", { name: "计划历史", exact: true }).click();
+     await expect(page.getByTestId("plans-list")).toBeVisible();
+     await page.getByTestId(`plan-item-${fixture.计划ID}`).click();
+diff --git a/apps/desktop/tests/core/workbench-tabs.spec.ts b/apps/desktop/tests/core/workbench-tabs.spec.ts
+index 972b82f3..552e2620 100644
+--- a/apps/desktop/tests/core/workbench-tabs.spec.ts
++++ b/apps/desktop/tests/core/workbench-tabs.spec.ts
+@@ -743,6 +743,7 @@ test("saved wide tool width uses its real CSS width when deciding overview space
+     await selectSession(window, TASK_A);
+     await openWorkbench(window);
+     await setWindowWidth(1900);
++    await window.getByTestId("task-status-expand").click();
+     await expect(window.getByTestId("task-status")).toBeVisible();
+     await expect.poll(() => window.getByTestId("task-status").isVisible()).toBe(true);
+     await expect(window.getByTestId("task-status-expand")).toHaveCount(0);
+diff --git a/apps/desktop/tests/core/workflow-cards.spec.ts b/apps/desktop/tests/core/workflow-cards.spec.ts
+index 197a847a..e8612137 100644
+--- a/apps/desktop/tests/core/workflow-cards.spec.ts
++++ b/apps/desktop/tests/core/workflow-cards.spec.ts
+@@ -17,6 +17,7 @@ import {
+   launchDesktop,
+   makeUserDataDir,
+   makeWorkspace,
++  openWorkflowCards,
+ } from "../helpers/electron-app";
+ 
+ const execFileAsync = promisify(execFile);
+@@ -378,6 +379,7 @@ const created = await plan.createTemporaryPlan({
+       要求: "核对初稿是否达标",
+       依赖: ["w1"],
+       审核: true,
++      只读: true,
+       部门标准: "开场必须抓住读者",
+       回边: [{ 目标: "w1", 上限: 0, 超限动作: "停滞" }],
+     },
+@@ -540,7 +542,13 @@ test("步骤卡工作台按真实计划渲染，步骤状态、人工门与真
+   const { app, fixture } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
++    await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
++    await page.getByTestId("workflow-cards-step-s1").click();
++    await expect(page.getByTestId("workflow-cards-step-s1")).toHaveAttribute(
++      "aria-current",
++      "true",
++    );
+ 
+     // 坏计划文件要点名路径与原因，不静默当「没有计划」（§8.2 错误出口）。
+     await expect(page.getByTestId("workflow-cards-issues")).toContainText("p-20261014-broken");
+@@ -604,11 +612,37 @@ test("步骤卡工作台按真实计划渲染，步骤状态、人工门与真
+   }
+ });
+ 
++test("检查器按需打开，关闭按钮与 Escape 都把焦点还给原入口", async () => {
++  const { app } = await launchWorkflowCardsFixture();
++  try {
++    const page = await app.firstWindow();
++    await openWorkflowCards(page);
++    await expect(page.getByTestId("workflow-cards-inspector")).toHaveCount(0);
++
++    const step = page.getByTestId("workflow-cards-step-s1").getByRole("button").first();
++    await step.click();
++    await expect(page.getByTestId("workflow-cards-inspector")).toBeVisible();
++    await page.getByTestId("workflow-cards-inspector-close").click();
++    await expect(page.getByTestId("workflow-cards-inspector")).toHaveCount(0);
++    await expect(step).toBeFocused();
++
++    await page.getByTestId("workflow-cards-tab-output").click();
++    const artifact = page.getByTestId("workflow-cards-artifact-创作成果/初稿.md");
++    await artifact.click();
++    await expect(page.getByTestId("workflow-cards-file-preview")).toBeVisible();
++    await page.keyboard.press("Escape");
++    await expect(page.getByTestId("workflow-cards-inspector")).toHaveCount(0);
++    await expect(artifact).toBeFocused();
++  } finally {
++    await app.close();
++  }
++});
++
+ test("耗时只报卡面 created→completed；没卡就说「暂无卡」，不拿轮次或会话时长顶替", async () => {
+   const { app } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+ 
+     // 第 1 步的卡：created 10:00、delivered 10:31（夹具注入了建卡时钟）⇒ 31 分钟。
+     await page.getByTestId("workflow-cards-step-s1").click();
+@@ -631,7 +665,7 @@ test("搜索与筛选只在界面上收窄，不改写计划；人工门确认
+   const { app, fixture } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
+ 
+     // 搜索：总数仍显示全量，另给「显示 N / 5」。
+@@ -686,7 +720,7 @@ test("单卡停止入口只出现在执行中的步骤，点了只把指令交
+     // 底部「主控对话」复用当前会话：没有打开的会话就没有输入框，所以先开一个再切到工作台。
+     await createSessionViaIpc(page, fixture.项目根, "停卡验证会话");
+     await clickSession(page, "停卡验证会话");
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
+ 
+     // 只有第 2 步真的有一张执行中的卡；其余步骤没有可停的卡，就不该有这个入口。
+@@ -712,8 +746,10 @@ test("三种窗口宽度与 125% 缩放下不横向溢出，键盘与读屏语
+   const { app } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
++    await expect(page.getByTestId("workflow-cards-inspector")).toHaveCount(0);
++    await page.getByTestId("workflow-cards-step-s1").click();
+ 
+     const fitsViewport = () =>
+       page.evaluate(() => {
+@@ -778,7 +814,7 @@ test("同路径多轮次：新版只提示不抢换，用户主动切换后正
+   const { app, fixture } = await launchRoundVersionsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("跨轮次版本");
+     await page.getByTestId("workflow-cards-tab-output").click();
+ 
+@@ -868,7 +904,7 @@ test("并行分组只认真并行：同前置异部门只读成组，同部门
+   const { app } = await launchParallelFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("并行分支");
+ 
+     // 组头落在组的第一个成员上，并写清「为什么算一组」：共享前置 + 组内成员名。
+@@ -925,7 +961,7 @@ test("状态不只靠颜色：13 个细分状态各自成键，未知不译成
+   const { app, fixture } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
+ 
+     // 摘要按固定顺序给每种状态一个独立数值键（模型 13 值，界面逐个摊开，不合并成「其它」）。
+@@ -1010,8 +1046,9 @@ test("看板与步骤卡切换：选卡片同步右栏且不丢上下文，查
+   const { app } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
++    await page.getByTestId("workflow-cards-step-s1").click();
+ 
+     // 默认落在步骤卡视图；切到看板（成果页）再切回来，右栏选的步骤不被清掉。
+     await expect(page.getByTestId("workflow-cards-tab-steps")).toHaveAttribute(
+@@ -1067,8 +1104,9 @@ test("右栏两态分工：步骤详情可改字段、文件预览只读且返
+   const { app } = await launchWorkflowCardsFixture();
+   try {
+     const page = await app.firstWindow();
+-    await page.getByTestId("task-status-open-workflow").click();
++    await openWorkflowCards(page);
+     await expect(page.getByTestId("workflow-cards-title")).toContainText("小说首章");
++    await page.getByTestId("workflow-cards-step-s1").click();
+ 
+     // 步骤详情面板：可编辑字段与「交给主控」入口都在。
+     await expect(page.getByTestId("workflow-cards-panel-step")).toHaveAttribute(
+diff --git a/apps/desktop/tests/helpers/electron-app.ts b/apps/desktop/tests/helpers/electron-app.ts
+index a372c35d..c31aa11e 100644
+--- a/apps/desktop/tests/helpers/electron-app.ts
++++ b/apps/desktop/tests/helpers/electron-app.ts
+@@ -1906,6 +1906,15 @@ export async function openManagementSurface(
+   await window.getByRole("option", { name: new RegExp(`^${title}`) }).click();
+ }
+ 
++export async function openWorkflowCards(window: Page): Promise<void> {
++  if (await window.getByTestId("workflow-cards").isVisible()) return;
++  const open = window.getByTestId("task-status-open-workflow");
++  if (!(await open.isVisible())) {
++    await window.getByTestId("task-status-expand").click();
++  }
++  await open.click();
++}
++
+ /**
+  * 收起侧栏。
+  *
+diff --git a/apps/desktop/tests/unit/task-status.spec.ts b/apps/desktop/tests/unit/task-status.spec.ts
+index c99b7af1..3b943dcb 100644
+--- a/apps/desktop/tests/unit/task-status.spec.ts
++++ b/apps/desktop/tests/unit/task-status.spec.ts
+@@ -101,7 +101,7 @@ test("概况偏好区分未设置、显式收起和显式展开，并在临时
+       ...overrides,
+     });
+ 
+-  expect(state(undefined).collapsed).toBe(false);
++  expect(state(undefined).collapsed).toBe(true);
+   expect(state(true).collapsed).toBe(true);
+   expect(state(false).collapsed).toBe(false);
+   expect(state(undefined, { narrow: true }).collapsed).toBe(true);

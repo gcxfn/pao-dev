@@ -1,0 +1,97 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o03-independent.test.ts > C1：停用旧来源被拦截后，新用户明确重申应可正常提炼 257ms
+   → expected 1 to be 2 // Object.is equality
+ × o03-independent.test.ts > C2：同 home 同进程 A 前台忙时，B 的空闲事件不能领取提炼作业 177ms
+   → expected 1 to be +0 // Object.is equality
+ × o03-independent.test.ts > C3：前台连续抢占三次后，空闲仍可续作未提交来源 241ms
+   → expected 3 to be 4 // Object.is equality
+ × o03-independent.test.ts > C4：同 home 同进程 A 前台忙时，B 不能领取维护作业 139ms
+   → expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o03-independent.test.ts > C1：停用旧来源被拦截后，新用户明确重申应可正常提炼
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ o03-independent.test.ts:100:17
+     98|   const active = f.store.db.prepare("SELECT COUNT(*) AS n FROM memorie…
+     99|   results.push({ id: "C1", calls, job: row(f, s.scope.sessionId), acti…
+    100|   expect(calls).toBe(2);
+       |                 ^
+    101|   expect(active.n).toBe(1);
+    102|   expect(row(f, s.scope.sessionId).status).toBe("done");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  o03-independent.test.ts > C2：同 home 同进程 A 前台忙时，B 的空闲事件不能领取提炼作业
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ o03-independent.test.ts:115:17
+    113|   a.emit("agent_start"); b.emit("agent_settled"); await tick();
+    114|   results.push({ id: "C2", calls, job: row(f, a.scope.sessionId) });
+    115|   expect(calls).toBe(0);
+       |                 ^
+    116|   expect(row(f, a.scope.sessionId).status).toBe("pending");
+    117| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  o03-independent.test.ts > C3：前台连续抢占三次后，空闲仍可续作未提交来源
+AssertionError: expected 3 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 3
+
+ ❯ o03-independent.test.ts:136:17
+    134|   s.emit("agent_settled"); await tick();
+    135|   results.push({ id: "C3", calls, job: row(f, s.scope.sessionId) });
+    136|   expect(calls).toBe(4);
+       |                 ^
+    137|   expect(row(f, s.scope.sessionId).status).toBe("done");
+    138| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  o03-independent.test.ts > C4：同 home 同进程 A 前台忙时，B 不能领取维护作业
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ o03-independent.test.ts:152:19
+    150|   results.push({ id: "C4", handled,
+    151|     job: f.store.db.prepare("SELECT * FROM extraction_jobs WHERE scope…
+    152|   expect(handled).toBe(0);
+       |                   ^
+    153| });
+    154|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  23:16:26
+   Duration  4.33s (transform 2.62s, setup 0ms, import 3.35s, tests 820ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o03-independent-vitest.json

@@ -1,0 +1,154 @@
+[I0-4a] cwd=D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[I0-4a] PAO_HOME=D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-4a-behavior-groups\PAO_HOME
+[I0-4a] PI_OFFLINE=1
+[I0-4a] PI_NO_LOCAL_LLM=1
+[I0-4a] command=node ../../node_modules/vitest/vitest.mjs run test/pao/dispatch-workflow-check.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 合法 v2 卡正常派发,技能来自冻结快照;仅编辑最新配方不使旧实例失效 108ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 暂停后拒绝启动,卡不被认领 41ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 旧轮次身份标记拒绝启动 43ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 实例身份不匹配拒绝启动 43ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 错误 owner 拒绝启动（owner 核对经注入回调生效） 46ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 缺校验回调一律拒派（fail-closed,不默认放行） 44ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+ ✓ test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 普通卡（无工作流标记）行为不变:校验回调返回 undefined,照常认领拉起 778ms
+ × test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > v1 卡缺 PAO_HOME 不拒派:沿旧 fail-open 整体跳过校验（T05 定案保留现状） 50ms
+   → [FLOW_CONTROL] 直接节点不启动部长
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 合法 v2 卡正常派发,技能来自冻结快照;仅编辑最新配方不使旧实例失效
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:120:50
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 暂停后拒绝启动,卡不被认领
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:133:44
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 旧轮次身份标记拒绝启动
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:142:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 实例身份不匹配拒绝启动
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:151:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 错误 owner 拒绝启动（owner 核对经注入回调生效）
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:160:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > 缺校验回调一律拒派（fail-closed,不默认放行）
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:172:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  test/pao/dispatch-workflow-check.test.ts > T02 工作流卡派发实例校验（fail-closed,锁后重核） > v1 卡缺 PAO_HOME 不拒派:沿旧 fail-open 整体跳过校验（T05 定案保留现状）
+Error: [FLOW_CONTROL] 直接节点不启动部长
+ ❯ fail src/pao/workflow/control.ts:165:8
+    163| }
+    164| function fail(message: string): never {
+    165|  throw new Error(`[FLOW_CONTROL] ${message}`);
+       |        ^
+    166| }
+    167| function canonical(path: string): string {
+ ❯ src/pao/workflow/control.ts:943:67
+ ❯ src/pao/workflow/control.ts:799:24
+ ❯ withFileLock src/pao/shared/lock.ts:74:18
+ ❯ setupV2 test/pao/dispatch-workflow-check.test.ts:89:2
+ ❯ test/pao/dispatch-workflow-check.test.ts:201:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  02:06:58
+   Duration  3.65s (transform 1.61s, setup 0ms, import 2.18s, tests 1.15s, environment 0ms)
+
+
+[I0-4a] exitCode=1

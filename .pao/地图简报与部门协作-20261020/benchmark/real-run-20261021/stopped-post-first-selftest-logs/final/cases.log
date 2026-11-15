@@ -1,0 +1,415 @@
+=== 01-script-inline-body ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/01-script-inline-body.html
+note: inline script removed, both siblings kept
+exit=0  stderr=''
+bytes_in=76 bytes_out=51 sha256_in=c8231364e4cf75dec920f9bead8c9b3d1e840c72d18ca656de5448c4e6977de0 sha256_out=58b9e0385e633686d1865163c51fba1908ef88508b719319f3d10cc106e7c2c5
+second_pass: exit=0 sha256=58b9e0385e633686d1865163c51fba1908ef88508b719319f3d10cc106e7c2c5 idempotent=True
+output='<html><body><p>before</p><p>after</p></body></html>'
+  [PASS] inline script removed, both siblings kept
+
+=== 02-script-external ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/02-script-external.html
+note: external script in head removed with its src
+exit=0  stderr=''
+bytes_in=90 bytes_out=47 sha256_in=ef40d90a29dee74ce8a55d986d0ae615810170257af1a02bf6c6f26fe0d83dd7 sha256_out=c07e7f6e8f15a3b25bd374cdc6e268a95a000785a12751734a782b130fbe54df
+second_pass: exit=0 sha256=c07e7f6e8f15a3b25bd374cdc6e268a95a000785a12751734a782b130fbe54df idempotent=True
+output='<html><head></head><body><p>k</p></body></html>'
+  [PASS] external script in head removed with its src
+
+=== 03-script-selfclose ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/03-script-selfclose.html
+note: self-closing script tag removed, following sibling survives
+exit=0  stderr=''
+bytes_in=47 bytes_out=27 sha256_in=ec3569e255216bc9cd7f6dd4e725ae412c0d81757f6fd8dce4f12364312d3193 sha256_out=ffe3cdeefb7b469a385d57c571ad282dfa5abd15e360d2599d144fca7161a357
+second_pass: exit=0 sha256=ffe3cdeefb7b469a385d57c571ad282dfa5abd15e360d2599d144fca7161a357 idempotent=True
+output='<div><p>a</p><p>b</p></div>'
+  [PASS] self-closing script tag removed, following sibling survives
+
+=== 04-script-unclosed ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/04-script-unclosed.html
+note: unclosed script deletes to EOF (browser swallows the rest too)
+exit=0  stderr=''
+bytes_in=50 bytes_out=16 sha256_in=4b3ea6eac419ec8a1d9a9e21f300b6e674a0177eb91c2a44eff05465e407a626 sha256_out=6f123264b62042a8dc29c24e40354f3c800d68803218d72d1ca7df28b72792b1
+second_pass: exit=0 sha256=6f123264b62042a8dc29c24e40354f3c800d68803218d72d1ca7df28b72792b1 idempotent=True
+output='<div><p>keep</p>'
+  [PASS] unclosed script deletes to EOF (browser swallows the rest too)
+
+=== 05-script-in-table-cell ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/05-script-in-table-cell.html
+note: script inside a table cell removed; table skeleton intact
+exit=0  stderr=''
+bytes_in=75 bytes_out=50 sha256_in=acc829dffd2f575ecf3dd62656b50064807ceca133e4e883bb7fff46a16081a4 sha256_out=1260655785dfe7869241f6ffdae6d989dc62216088d09156be113c49ae89d13e
+second_pass: exit=0 sha256=1260655785dfe7869241f6ffdae6d989dc62216088d09156be113c49ae89d13e idempotent=True
+output='<table><tr><td>left</td><td>cell</td></tr></table>'
+  [PASS] script inside a table cell removed; table skeleton intact
+
+=== 06-script-in-attr-value-only ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/06-script-in-attr-value-only.html
+note: escaped script text inside an attribute value is inert and kept byte-exactly
+exit=0  stderr=''
+bytes_in=71 bytes_out=71 sha256_in=f273fa0aa19a32f088e9da45fa6bf28b185535241656481f2f71ca4346b40b3b sha256_out=f273fa0aa19a32f088e9da45fa6bf28b185535241656481f2f71ca4346b40b3b
+second_pass: exit=0 sha256=f273fa0aa19a32f088e9da45fa6bf28b185535241656481f2f71ca4346b40b3b idempotent=True
+output='<div title="&lt;script&gt;alert(1)&lt;/script&gt;" class="c">text</div>'
+  [PASS] escaped script text inside an attribute value is inert and kept byte-exactly
+
+=== 07-script-literal-in-text ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/07-script-literal-in-text.html
+note: escaped script in visible text is not a tag; nothing changes
+exit=0  stderr=''
+bytes_in=62 bytes_out=62 sha256_in=e852304c0c39474d50794f3b078782ce8264b58964e624ab4e17bc5d725d7780 sha256_out=e852304c0c39474d50794f3b078782ce8264b58964e624ab4e17bc5d725d7780
+second_pass: exit=0 sha256=e852304c0c39474d50794f3b078782ce8264b58964e624ab4e17bc5d725d7780 idempotent=True
+output='<p>The literal text &lt;script&gt; is not a tag and stays.</p>'
+  [PASS] escaped script in visible text is not a tag; nothing changes
+
+=== 08-script-mixed-case ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/08-script-mixed-case.html
+note: mixed-case script with src and spaced end tag removed
+exit=0  stderr=''
+bytes_in=72 bytes_out=40 sha256_in=55ce83c0196e636cacb05ace4ef3ade8a5cabab10bd4c7df2b13eb231da055ca sha256_out=1ea56af68ae16433d1db4be43b0ed252341c9a117779bb26d2d92fcea75e90c7
+second_pass: exit=0 sha256=1ea56af68ae16433d1db4be43b0ed252341c9a117779bb26d2d92fcea75e90c7 idempotent=True
+output='<html><HEAD></HEAD><body>b</body></html>'
+  [PASS] mixed-case script with src and spaced end tag removed
+
+=== 09-script-in-attribute-string ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/09-script-in-attribute-string.html
+note: attribute value equal to the word 'script' kept, real script removed
+exit=0  stderr=''
+bytes_in=53 bytes_out=28 sha256_in=d6b2b62e18444eccb14193c4876a489312c59d6245d2650b129b247fe0c46af4 sha256_out=266d378b3850fc23fec16775d21d7636d35f58139e74074942e10e419ceb4451
+second_pass: exit=0 sha256=266d378b3850fc23fec16775d21d7636d35f58139e74074942e10e419ceb4451 idempotent=True
+output='<p data-note="script">ab</p>'
+  [PASS] attribute value equal to the word 'script' kept, real script removed
+
+=== 10-events-basic ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/10-events-basic.html
+note: onclick/ONERROR dropped, src/alt/class kept
+exit=0  stderr=''
+bytes_in=82 bytes_out=49 sha256_in=eb8c839f793021acddc404f86b886416b02ff4f7103e7f9ec64cd0f9a2fd6246 sha256_out=e2c3f4d8d9cdcccb93814761cdb7606e4d52d9888065d1e95d7bbffdbb0dd25e
+second_pass: exit=0 sha256=e2c3f4d8d9cdcccb93814761cdb7606e4d52d9888065d1e95d7bbffdbb0dd25e idempotent=True
+output='<img src="pic.png" alt="a"><div class="c">d</div>'
+  [PASS] onclick/ONERROR dropped, src/alt/class kept
+
+=== 11-events-spaced-assignment ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/11-events-spaced-assignment.html
+note: 'onclick = "..."' and unquoted onmouseover dropped, id kept
+exit=0  stderr=''
+bytes_in=75 bytes_out=33 sha256_in=f02b324a74001f1fe1fc10c1002cd6b7ec43bcd378daa8999bb55360e07ca89f sha256_out=241608fad5b39ceef6a4637c4ef218daf2dcac12f45a292370ebd82bf975780c
+second_pass: exit=0 sha256=241608fad5b39ceef6a4637c4ef218daf2dcac12f45a292370ebd82bf975780c idempotent=True
+output='<div id="i">x</div><span>y</span>'
+  [PASS] 'onclick = "..."' and unquoted onmouseover dropped, id kept
+
+=== 12-events-namespaced ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/12-events-namespaced.html
+note: xlink:onload and onbegin dropped, benign xlink:href=#ok kept
+exit=0  stderr=''
+bytes_in=84 bytes_out=46 sha256_in=7663752bed63013bfe2793e17809e8481eac52b49fda9ea2f4eb37a0103f0702 sha256_out=a15254aba301da2882ca08b1927b8e2f542ceb484c8c96e3425dd4cf672aa90e
+second_pass: exit=0 sha256=a15254aba301da2882ca08b1927b8e2f542ceb484c8c96e3425dd4cf672aa90e idempotent=True
+output='<svg><a xlink:href="#ok">t</a><animate/></svg>'
+  [PASS] xlink:onload and onbegin dropped, benign xlink:href=#ok kept
+
+=== 13-url-tab-scheme ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/13-url-tab-scheme.html
+note: tab-split javascript: scheme -> href dropped, class kept
+exit=0  stderr=''
+bytes_in=46 bytes_out=18 sha256_in=76a6fc70306cc97f8ff23b1e642ce5522b7287629f8b6b464ec66c5a8301974f sha256_out=a397d0e65ad5578f017843c90b6bede51a098b8c360fa7527df1c250c2d469b0
+second_pass: exit=0 sha256=a397d0e65ad5578f017843c90b6bede51a098b8c360fa7527df1c250c2d469b0 idempotent=True
+output='<a class="k">t</a>'
+  [PASS] tab-split javascript: scheme -> href dropped, class kept
+
+=== 14-url-entity-newline ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/14-url-entity-newline.html
+note: &#x0A; inside the scheme -> href dropped; benign href kept
+exit=0  stderr=''
+bytes_in=61 bytes_out=28 sha256_in=5eb0ad2ec98a12beaead86ba83df59256af5e1bff06658965c295b0aad45a916 sha256_out=eecfb3a7a385c7e57e105447f871010e715f6af09d4776f685fce7a069f6c59c
+second_pass: exit=0 sha256=eecfb3a7a385c7e57e105447f871010e715f6af09d4776f685fce7a069f6c59c idempotent=True
+output='<a>t</a><a href="/ok">ok</a>'
+  [PASS] &#x0A; inside the scheme -> href dropped; benign href kept
+
+=== 15-url-entity-decimal ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/15-url-entity-decimal.html
+note: &#106;avascript: -> href dropped
+exit=0  stderr=''
+bytes_in=40 bytes_out=8 sha256_in=b3dcd9c8ada877ab073830b4b01a1ff9614ebc2630399814d34fa13d0f8418a5 sha256_out=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c
+second_pass: exit=0 sha256=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c idempotent=True
+output='<a>t</a>'
+  [PASS] &#106;avascript: -> href dropped
+
+=== 16-url-mixed-case ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/16-url-mixed-case.html
+note: mixed-case JaVaScRiPt: dropped; uppercase HTTPS URL kept
+exit=0  stderr=''
+bytes_in=72 bytes_out=45 sha256_in=7e5f8520127fddc34b01745de2b1f1d57b344a3eb5ce5c8f3fb1e35d30e77d62 sha256_out=ccf73102a1f14e9b086c90b2dc0189bdcfab4b0e3916968e348d7f9b91627923
+second_pass: exit=0 sha256=ccf73102a1f14e9b086c90b2dc0189bdcfab4b0e3916968e348d7f9b91627923 idempotent=True
+output='<a>t</a><a href="HTTPS://EXAMPLE.COM/">ok</a>'
+  [PASS] mixed-case JaVaScRiPt: dropped; uppercase HTTPS URL kept
+
+=== 17-url-leading-space ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/17-url-leading-space.html
+note: leading whitespace before the scheme -> href dropped
+exit=0  stderr=''
+bytes_in=38 bytes_out=8 sha256_in=0ee067f7c8448d589dac8dde444bda903fe0d9b154fee1214032fe711b8f2f14 sha256_out=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c
+second_pass: exit=0 sha256=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c idempotent=True
+output='<a>t</a>'
+  [PASS] leading whitespace before the scheme -> href dropped
+
+=== 18-url-data-text-html ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/18-url-data-text-html.html
+note: data:text/html src dropped from the iframe
+exit=0  stderr=''
+bytes_in=64 bytes_out=17 sha256_in=885601cf6487ed4070a4a18601c3a4abfb687fe99be3ee55e43db2058357a3f2 sha256_out=b3188b07601172a44ad836105c52b5c3c842ab8a36c2721db8f02d9f8c440125
+second_pass: exit=0 sha256=b3188b07601172a44ad836105c52b5c3c842ab8a36c2721db8f02d9f8c440125 idempotent=True
+output='<iframe></iframe>'
+  [PASS] data:text/html src dropped from the iframe
+
+=== 19-url-vbscript ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/19-url-vbscript.html
+note: vbscript: href dropped
+exit=0  stderr=''
+bytes_in=34 bytes_out=8 sha256_in=54ad058119d45e5a48ab52b1fce76cc7088a151e22558f750cc6f8d181be4686 sha256_out=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c
+second_pass: exit=0 sha256=9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c idempotent=True
+output='<a>t</a>'
+  [PASS] vbscript: href dropped
+
+=== 20-url-all-url-attrs ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/20-url-all-url-attrs.html
+note: href/src/action/formaction/poster/background/xlink:href each cleansed
+exit=0  stderr=''
+bytes_in=265 bytes_out=90 sha256_in=99c1894baa097c9b744435ea7e5fd5f0e5b20cc70a221d8b42b1a365e5625e35 sha256_out=be07adb118b4dcfadd4ccbc33d9b6c869939781d941d7b34d802515608055ed6
+second_pass: exit=0 sha256=be07adb118b4dcfadd4ccbc33d9b6c869939781d941d7b34d802515608055ed6 idempotent=True
+output='<a>h</a><img alt="a"><form><button>b</button></form><video></video><body><svg><use/></svg>'
+  [PASS] href/src/action/formaction/poster/background/xlink:href each cleansed
+
+=== 21-srcdoc-nested ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/21-srcdoc-nested.html
+note: srcdoc (escaped nested HTML) attribute dropped, title kept
+exit=0  stderr=''
+bytes_in=97 bytes_out=27 sha256_in=fbded0623e5d034386328defb5ade47d99dca8df7335f003cbc2e5a59eabb4e0 sha256_out=362fe41052df32657187aeb0774902b5533af89a803abd4c5ff1c9b4384f16d6
+second_pass: exit=0 sha256=362fe41052df32657187aeb0774902b5533af89a803abd4c5ff1c9b4384f16d6 idempotent=True
+output='<iframe title="t"></iframe>'
+  [PASS] srcdoc (escaped nested HTML) attribute dropped, title kept
+
+=== 22-meta-refresh-danger ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/22-meta-refresh-danger.html
+note: dangerous refresh dropped, benign meta charset kept
+exit=0  stderr=''
+bytes_in=112 bytes_out=49 sha256_in=4e45bdd93009d749eaa71ede7fb8af759ef797d3433f2da5331e3fb23628dac3 sha256_out=cd0b9ec2ba4c405fe5c54c91508acd6a357e447df4525f45b06137f70a5aefdb
+second_pass: exit=0 sha256=cd0b9ec2ba4c405fe5c54c91508acd6a357e447df4525f45b06137f70a5aefdb idempotent=True
+output='<head><meta charset="utf-8"></head><body>b</body>'
+  [PASS] dangerous refresh dropped, benign meta charset kept
+
+=== 23-meta-refresh-benign ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/23-meta-refresh-benign.html
+note: benign refresh is untouched byte-exactly
+exit=0  stderr=''
+bytes_in=77 bytes_out=77 sha256_in=bfcd22ce3f759095003450b35169801aa81196c70b11bf20828a9517ebd59938 sha256_out=bfcd22ce3f759095003450b35169801aa81196c70b11bf20828a9517ebd59938
+second_pass: exit=0 sha256=bfcd22ce3f759095003450b35169801aa81196c70b11bf20828a9517ebd59938 idempotent=True
+output='<head><meta http-equiv="refresh" content="5; url=/next"></head><body>b</body>'
+  [PASS] benign refresh is untouched byte-exactly
+
+=== 24-base-href ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/24-base-href.html
+note: <base href> element dropped, title and in-page link kept
+exit=0  stderr=''
+bytes_in=95 bytes_out=60 sha256_in=9d44c532c01b45c360d1f46a0111973d1e55f091822d258bd47686c7382e4153 sha256_out=803bc00ea3436d647c46d293e5d5e188aa9613033739af0a26bd4e97f6e81b55
+second_pass: exit=0 sha256=803bc00ea3436d647c46d293e5d5e188aa9613033739af0a26bd4e97f6e81b55 idempotent=True
+output='<head><title>t</title></head><body><a href="/x">x</a></body>'
+  [PASS] <base href> element dropped, title and in-page link kept
+
+=== 25-object-embed ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/25-object-embed.html
+note: object data / embed src dropped, elements (and fallback text) kept
+exit=0  stderr=''
+bytes_in=79 bytes_out=26 sha256_in=e4a48af3e24a84ece572ac701f35d4cc0953ec09fb1cefa6ccce77c295d36eef sha256_out=95692e5b52991c9261c73dfa7338cdb1ee8e68c706ffd13b15c8a632d8ec87d4
+second_pass: exit=0 sha256=95692e5b52991c9261c73dfa7338cdb1ee8e68c706ffd13b15c8a632d8ec87d4 idempotent=True
+output='<object>fb</object><embed>'
+  [PASS] object data / embed src dropped, elements (and fallback text) kept
+
+=== 26-style-attr-benign ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/26-style-attr-benign.html
+note: benign style attribute untouched byte-exactly
+exit=0  stderr=''
+bytes_in=70 bytes_out=70 sha256_in=4e3022377c2e49ad9c3c4f10e9e0ca873f99597564547da6e7a964fc14b23eec sha256_out=4e3022377c2e49ad9c3c4f10e9e0ca873f99597564547da6e7a964fc14b23eec
+second_pass: exit=0 sha256=4e3022377c2e49ad9c3c4f10e9e0ca873f99597564547da6e7a964fc14b23eec idempotent=True
+output='<div style="color:red; margin:0 auto; background:url(pic.png)">s</div>'
+  [PASS] benign style attribute untouched byte-exactly
+
+=== 27-style-attr-expression ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/27-style-attr-expression.html
+note: expression() style attribute dropped entirely, sibling kept
+exit=0  stderr=''
+bytes_in=67 bytes_out=20 sha256_in=fb293c4e5777c38e96f97989be8ec42882819cd3c0cb9b8759e5eabe433b6f0b sha256_out=468e1fc98ace2337e5535c9b5ba62431d9f8643715f10c74e019be4096cc3a5c
+second_pass: exit=0 sha256=468e1fc98ace2337e5535c9b5ba62431d9f8643715f10c74e019be4096cc3a5c idempotent=True
+output='<div>s</div><p>k</p>'
+  [PASS] expression() style attribute dropped entirely, sibling kept
+
+=== 28-style-element-benign ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/28-style-element-benign.html
+note: benign <style> element untouched byte-exactly
+exit=0  stderr=''
+bytes_in=57 bytes_out=57 sha256_in=14401e518c21cf5496521838786fc5154acd5e983162b3d9d812d429480a9d68 sha256_out=14401e518c21cf5496521838786fc5154acd5e983162b3d9d812d429480a9d68
+second_pass: exit=0 sha256=14401e518c21cf5496521838786fc5154acd5e983162b3d9d812d429480a9d68 idempotent=True
+output='<style>body{color:#333}\n.a{margin:0 auto}</style><p>k</p>'
+  [PASS] benign <style> element untouched byte-exactly
+
+=== 29-style-element-danger ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/29-style-element-danger.html
+note: <style> containing javascript: is dropped as a whole (documented trade-off)
+exit=0  stderr=''
+bytes_in=61 bytes_out=8 sha256_in=97bbe54ba2e917b777b6ffc698473efe742df58462367ff456fd4044ed757287 sha256_out=aeb803294515923397575857f6e4cc9bc345975db680197ffac2ac7f1c7775b1
+second_pass: exit=0 sha256=aeb803294515923397575857f6e4cc9bc345975db680197ffac2ac7f1c7775b1 idempotent=True
+output='<p>k</p>'
+  [PASS] <style> containing javascript: is dropped as a whole (documented trade-off)
+
+=== 30-comment-danger ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/30-comment-danger.html
+note: comment kept, dangerous substrings inside it removed
+exit=0  stderr=''
+bytes_in=66 bytes_out=40 sha256_in=306cf291ba745fcd2bf0d575554b3c871d81a9630c99c34bf50c83a90ea1b9f3 sha256_out=480d49480bd2f2cbbc98f42c4fbf99ebd3b2585a2afdb289d7a24c0e5993cd2c
+second_pass: exit=0 sha256=480d49480bd2f2cbbc98f42c4fbf99ebd3b2585a2afdb289d7a24c0e5993cd2c idempotent=True
+output='<!-- >alert(1)> and alert(2) --><p>k</p>'
+  [PASS] comment kept, dangerous substrings inside it removed
+
+=== 31-comment-benign ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/31-comment-benign.html
+note: benign comment untouched byte-exactly
+exit=0  stderr=''
+bytes_in=48 bytes_out=48 sha256_in=c34a77a687af2316fdf0f17c71dc7b2e5da519f0ffa99d31bac0192de355bb1a sha256_out=c34a77a687af2316fdf0f17c71dc7b2e5da519f0ffa99d31bac0192de355bb1a
+second_pass: exit=0 sha256=c34a77a687af2316fdf0f17c71dc7b2e5da519f0ffa99d31bac0192de355bb1a idempotent=True
+output='<!-- keep this comment: no code here --><p>k</p>'
+  [PASS] benign comment untouched byte-exactly
+
+=== 32-cdata-pseudo ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/32-cdata-pseudo.html
+note: CDATA section keeps its brackets, dangerous substrings removed
+exit=0  stderr=''
+bytes_in=45 bytes_out=30 sha256_in=7642d776ec62e6477222f240671831dc84cc2baa1bbc0c6ee26a3b231083a44b sha256_out=92edd69accc01b852c8e52a2ed75efd2e98ca17c1b1f0c341df0da58c69a4117
+second_pass: exit=0 sha256=92edd69accc01b852c8e52a2ed75efd2e98ca17c1b1f0c341df0da58c69a4117 idempotent=True
+output='<![CDATA[>alert(1)>]]><p>k</p>'
+  [PASS] CDATA section keeps its brackets, dangerous substrings removed
+
+=== 33-conditional-comment ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/33-conditional-comment.html
+note: conditional-comment guard kept, inner markup still sanitised
+exit=0  stderr=''
+bytes_in=74 bytes_out=32 sha256_in=cbd11733ffb9d45fa3b19adacdddf93b2368cc880b1dcfc52f9f327b24ddc620 sha256_out=3b82429b471f2c3643799009f295bce9aebe9c580089963aae9f9477e19a2c31
+second_pass: exit=0 sha256=3b82429b471f2c3643799009f295bce9aebe9c580089963aae9f9477e19a2c31 idempotent=True
+output='<![if !IE]><img src=x><![endif]>'
+  [PASS] conditional-comment guard kept, inner markup still sanitised
+
+=== 34-svg-events ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/34-svg-events.html
+note: svg root/child event attributes dropped, geometry kept
+exit=0  stderr=''
+bytes_in=95 bytes_out=63 sha256_in=f6b86a45279a691e582d249c6f95e80db7aca3f42366ff5535990ce64046c156 sha256_out=5b701af03a491f97b5ab297d617e96add5b896fa5fbc7c70b2dc8eb2c23fd965
+second_pass: exit=0 sha256=5b701af03a491f97b5ab297d617e96add5b896fa5fbc7c70b2dc8eb2c23fd965 idempotent=True
+output='<svg width="10" height="10"><circle cx="5" cy="5" r="4"/></svg>'
+  [PASS] svg root/child event attributes dropped, geometry kept
+
+=== 35-svg-animate ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/35-svg-animate.html
+note: SMIL retargeting animate element and xlink:onload dropped
+exit=0  stderr=''
+bytes_in=103 bytes_out=19 sha256_in=2800bd37e8989bc3a1aeeb97bc22e0dc3eb6e973e43a6bd5a6b795c28f655d86 sha256_out=c9a4fec14dd5cca5a4b460fc30b870bef6a459c649880e80a85cc1f43826d6bc
+second_pass: exit=0 sha256=c9a4fec14dd5cca5a4b460fc30b870bef6a459c649880e80a85cc1f43826d6bc idempotent=True
+output='<svg><a>t</a></svg>'
+  [PASS] SMIL retargeting animate element and xlink:onload dropped
+
+=== 36-mathml-events ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/36-mathml-events.html
+note: MathML event attributes dropped, math structure kept
+exit=0  stderr=''
+bytes_in=76 bytes_out=39 sha256_in=93b8cec768859dbcb43bca1b153c760f403dcf7b69f43cac07eb9cd08ed3233d sha256_out=af9755d560d265a9bcf1eda8bdc5da5c82fece46aec95f7c3a83be2bcdbd6f41
+second_pass: exit=0 sha256=af9755d560d265a9bcf1eda8bdc5da5c82fece46aec95f7c3a83be2bcdbd6f41 idempotent=True
+output='<math><mtext>x</mtext><mi>y</mi></math>'
+  [PASS] MathML event attributes dropped, math structure kept
+
+=== 37-benign-complex ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/37-benign-complex.html
+note: fully benign complex page must stay byte-exact
+exit=0  stderr=''
+bytes_in=1207 bytes_out=1207 sha256_in=a9e62e5e1c6d3c28d4279193949327d1152f89c53b3976e47e982d6218e89a85 sha256_out=a9e62e5e1c6d3c28d4279193949327d1152f89c53b3976e47e982d6218e89a85
+second_pass: exit=0 sha256=a9e62e5e1c6d3c28d4279193949327d1152f89c53b3976e47e982d6218e89a85 idempotent=True
+output='<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Fully benign complex page</title>\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<style>body{color:#222} .grid{border:1px solid #ccc}</style>\n</head>\n<body class="page  main" id="top" data-role="root">\n<!-- navigation -->\n<header id="h"><h1 class="title">Title &amp; more</h1>\n<nav><ul class="nav">\n<li><a href="/one?a=1&amp;b=2">one</a></li>\n<li><a href=\'#two\' title=\'quoted "text"\'>two</a></li>\n</ul></nav></header>\n<main>\n<h2 id="s1">Section &lt;one&gt;</h2>\n<h3>Sub&nbsp;three</h3>\n<table class="grid" border="1">\n  <caption>Cap</caption>\n  <thead><tr><th scope="col">Name</th><th>Value</th></tr></thead>\n  <tbody>\n    <tr data-row="1"><td>alpha</td><td>1</td></tr>\n    <tr data-row=\'2\'><td>beta &amp; gamma</td><td>2</td></tr>\n  </tbody>\n</table>\n<p title="a>b" data-x="y">Paragraph with   spaces, a newline,\nand an entity &amp; mixed quotes &quot;dq&quot; &#39;sq&#39;.</p>\n<form method="post" action="/submit"><input type="text" name="q" value="v"><button type="submit">go</button></form>\n<img src="pic.png" alt="a picture" width="10" height="10">\n</main>\n<footer><p>&copy; 2024</p></footer>\n</body>\n</html>\n'
+  [PASS] fully benign complex page must stay byte-exact
+
+=== 38-benign-prose-literal ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/38-benign-prose-literal.html
+note: visible prose containing the literal javascript: is text (rule 9), kept
+exit=0  stderr=''
+bytes_in=69 bytes_out=69 sha256_in=52bbd3bf7094bea803c4c96ab8ee3f953c7f858e120a52df89bdb761a4f0e7ac sha256_out=52bbd3bf7094bea803c4c96ab8ee3f953c7f858e120a52df89bdb761a4f0e7ac
+second_pass: exit=0 sha256=52bbd3bf7094bea803c4c96ab8ee3f953c7f858e120a52df89bdb761a4f0e7ac idempotent=True
+output='<p>To debug, open the console and type javascript:alert(1) there.</p>'
+  [PASS] visible prose containing the literal javascript: is text (rule 9), kept
+
+=== 39-url-quoted-value ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/39-url-quoted-value.html
+note: URL wrapped in a second quote pair is rejected; benign link kept
+exit=0  stderr=''
+bytes_in=94 bytes_out=36 sha256_in=c3c3df62e25b7616b22d067afd8efee14b72f6125468bbbb34b9fe78169f7cbe sha256_out=c55b8b7e8d962ee5364bd058a1e84c18d6a285fe2efa1a3e66297e1c84489a95
+second_pass: exit=0 sha256=c55b8b7e8d962ee5364bd058a1e84c18d6a285fe2efa1a3e66297e1c84489a95 idempotent=True
+output='<a>t</a><a>u</a><a href="/ok">ok</a>'
+  [PASS] URL wrapped in a second quote pair is rejected; benign link kept
+
+=== 40-css-quoted-url ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/40-css-quoted-url.html
+note: CSS url() with quoted (or entity-quoted) javascript: drops the style attribute
+exit=0  stderr=''
+bytes_in=126 bytes_out=24 sha256_in=07dc5d7a6e1f84a67952e88926795b9d9732938390b76fef18bcb8a34ba020f7 sha256_out=1835952b506a31632ddd5893f56363bece23a9ef4dbc99d71e8b44f46c3f18b4
+second_pass: exit=0 sha256=1835952b506a31632ddd5893f56363bece23a9ef4dbc99d71e8b44f46c3f18b4 idempotent=True
+output='<div>x</div><div>y</div>'
+  [PASS] CSS url() with quoted (or entity-quoted) javascript: drops the style attribute
+
+=== 41-event-namespaced-colon ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/41-event-namespaced-colon.html
+note: on:click / xlink:on:load removed, class kept
+exit=0  stderr=''
+bytes_in=81 bytes_out=41 sha256_in=7e61275886adb81cb9ec7f18968948bc80489a6ee1c0721f3068e6737b5c386c sha256_out=03ca9f00e4e1604eca9c65a2bac028bfee743594d062e7e02db0f0180082268e
+second_pass: exit=0 sha256=03ca9f00e4e1604eca9c65a2bac028bfee743594d062e7e02db0f0180082268e idempotent=True
+output='<div class="c">x</div><svg><a>t</a></svg>'
+  [PASS] on:click / xlink:on:load removed, class kept
+
+=== 42-smil-retarget ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/42-smil-retarget.html
+note: SMIL retargeting elements (attributeName=href / onload) removed
+exit=0  stderr=''
+bytes_in=114 bytes_out=11 sha256_in=12ce61d625838a65a177275b233e68e4ff8b38efae85d35ce20f6eaa9bee5723 sha256_out=b12e0d83ce2357d80b89c57694814d0a3abdaf8c40724f2049af8b7f01b7812b
+second_pass: exit=0 sha256=b12e0d83ce2357d80b89c57694814d0a3abdaf8c40724f2049af8b7f01b7812b idempotent=True
+output='<svg></svg>'
+  [PASS] SMIL retargeting elements (attributeName=href / onload) removed
+
+=== 43-srcset ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/43-srcset.html
+note: dangerous srcset dropped, benign srcset + alt kept
+exit=0  stderr=''
+bytes_in=86 bytes_out=44 sha256_in=76509c3a1d9fb08f6298f743f3667e08b25f61d45a7b8dfe31877eee0d445a3f sha256_out=de625994215845f5d6ea728380d4a84f04237de373eed1c55e1e4d2f03d55c95
+second_pass: exit=0 sha256=de625994215845f5d6ea728380d4a84f04237de373eed1c55e1e4d2f03d55c95 idempotent=True
+output='<img alt="a"><img srcset="c.png 2x" alt="b">'
+  [PASS] dangerous srcset dropped, benign srcset + alt kept
+
+=== 44-bogus-declaration ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/44-bogus-declaration.html
+note: bogus declaration keeps its <! ... > shape, payload substrings removed
+exit=0  stderr=''
+bytes_in=41 bytes_out=30 sha256_in=7cbcb18034d7495bf840455967b64e209063963f0d15c88d635d66fa055b6075 sha256_out=82540ca8b6afa0d868019e4775d43ae614e8dd81852465e0a6094943aedfa617
+second_pass: exit=0 sha256=82540ca8b6afa0d868019e4775d43ae614e8dd81852465e0a6094943aedfa617 idempotent=True
+output='<! dangerous alert(1)><p>k</p>'
+  [PASS] bogus declaration keeps its <! ... > shape, payload substrings removed
+
+=== 45-textarea-rcdata ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/45-textarea-rcdata.html
+note: documented trade-off: <script> inside <textarea> (RCDATA) is removed as well
+exit=0  stderr=''
+bytes_in=54 bytes_out=29 sha256_in=ced1d5e40efcd5eadeb403683974ab6e0a5b3afcea2fea38466bdcee65721697 sha256_out=bb561f07df5bd065691f9268845e4d01fd713f8131cd45ce6b6b71182f159119
+second_pass: exit=0 sha256=bb561f07df5bd065691f9268845e4d01fd713f8131cd45ce6b6b71182f159119 idempotent=True
+output='<textarea></textarea><p>k</p>'
+  [PASS] documented trade-off: <script> inside <textarea> (RCDATA) is removed as well
+
+=== 46-on-prefixed-benign-name ===
+cmd: python3 /app/filter.py /tmp/pf/final/work/46-on-prefixed-benign-name.html
+note: documented trade-off: attribute names matching on[a-z0-9_:.-]* (only/once/online) are dropped
+exit=0  stderr=''
+bytes_in=41 bytes_out=12 sha256_in=2024ff8f2eee3b47102deef384f82c12e5052bdceb71f9e62fa692c131d64a56 sha256_out=ead7fe23046fb14ed8156eaffd3a2a59a08c905fbcce053d6d242c1265c0407e
+second_pass: exit=0 sha256=ead7fe23046fb14ed8156eaffd3a2a59a08c905fbcce053d6d242c1265c0407e idempotent=True
+output='<div>x</div>'
+  [PASS] documented trade-off: attribute names matching on[a-z0-9_:.-]* (only/once/online) are dropped
+
+cases=46 pass=46 fail=0

@@ -1,0 +1,2627 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "",
+      "sections": {
+        "preamble": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.",
+        "tools": "<tools>\n- read: Read file contents\n- bash: Execute bash commands (ls, grep, find, etc.)\n- edit: Make precise file edits with exact text replacement, including multiple disjoint edits in one call\n- write: Create or overwrite files\n- todo_write: todo_write：维护会话待办清单（四态、整表替换、上限 20 项）。\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n</tools>",
+        "rules": "<rules>\n- Use bash for file operations like ls, rg, find\n- Use read to examine files instead of cat or sed.\n- You can inspect PI_* environment variables for current model and session details.\n- Use edit for precise changes (edits[].oldText must match exactly)\n- When changing multiple separate locations in one file, use one edit call with multiple entries in edits[] instead of multiple edit calls\n- Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits. Merge nearby changes into one edit.\n- Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions.\n- Use write only for new files or complete rewrites.\n- 任务预计至少三步、并行多任务或用户要求列计划时，先用 todo_write 建立待办清单；一步能完成的小任务与纯问答不建。\n- 清单整表替换：每次调用提交完整清单。每完成一步（并验证过）立即更新状态，不攒批；completed 必须真实完成并验证，不凭意图。\n- 计划变化时立即重构整张清单（去掉已完成项、补上新增步骤）；交付前对账，全部条目应为 completed 或明确 cancelled。\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+        "docs": "<docs>\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\README.md\n- Additional docs: D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\docs\n- Examples: D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n</docs>",
+        "project_context": "<project_context>\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"D:\\AI\\workspace\\AGENTS.md\">\n# Workspace Rules — 多 Agent 共享工作区\r\n\r\n本文件是所有在本工作区干活的 agent 的共同契约，只管三件事：**文件规范、通用原则、项目索引**。\r\n单个 agent 自己的行为规则（调度、记忆、汇报格式等）放各自配置，不放本文件。\r\n\r\n## 0. 两个世界\r\n\r\n| 区域 | 路径 | 只放 |\r\n|---|---|---|\r\n| 工作区 | `D:\\AI\\workspace` | 干活的工作产物 |\r\n| 知识库 Vault | `D:\\notebook` | 要长期保留的记忆与知识 |\r\n\r\n一个文件放哪，先问：它是「某次工作的产物」还是「以后还要查的知识」。\r\n工作产物不进 Vault，记忆与知识不散落工作区。Vault 细则见 `D:\\notebook\\00_系统\\使用规范.md`。\r\n\r\n## 1. 文件规范\r\n\r\n总原则：**一个事实一个家**——任何内容只在一个归属处维护，别处用链接引用；\r\n想要第二份副本时，先怀疑是分类错了。\r\n\r\n### 1.1 归属总表（任何文件落位前先查此表）\r\n\r\n| 内容类型 | 唯一归属 | 说明 |\r\n|---|---|---|\r\n| 项目代码、数据、文档 | `<项目>/` 内 | 内部结构由项目 AGENTS.md 定义 |\r\n| 项目决策（代码与非代码） | `<项目>/.agents/notes/{implemented,rejected}/` | 选型/架构/流程的 why 与被否方案；纯机械改动不留 |\r\n| 项目编排状态（任务卡、计划、运行留档） | `<项目>/` 自己的编排目录（默认 `.hermes/`） | 各项目通用、各管各的；项目 AGENTS.md 可另声明路径；根 `.hermes/` 只放跨项目任务 |\r\n| 归档与冻结快照 | `<项目>/archive/` 或 `<名>_frozen/` | 只读，不追加 |\r\n| 一次性任务 | `临时文件夹/<任务简称>-YYYYMMDD/` | 结束删过程缓存，留脚本与成品 |\r\n| 代码图数据 | `D:\\cbm-cache\\`（CBM_CACHE_DIR 指定） | codebase-memory-mcp 全局缓存（按项目分库）：建图一次，运行期自动同步；勿手改 |\r\n| 经验教训 | Vault `01_经验教训/` | 各项目相关条目由该项目对应会话维护，全局共用一个库 |\r\n| 对话日志 | Vault `09_日志/对话日志/YYYY-MM-DD/<项目>.md` | 按项目分文件，各自项目的事记各自文件，只追加；由每日自动任务生成；一次性任务归其来源项目，无来源项目的才归 Hermes.md |\r\n| 跨项目决策、已否决方案 | Vault `05_决策/` | 只放影响多个项目的；单项目决策放各自项目 |\r\n| 退役登记、未决事项 | Vault `00_系统/` | 全局共用；工具退役当天登记 |\r\n| 凭证 | 环境变量或专用 .env | 不入库、不进日志与报告 |\r\n| 项目上下文规则 | `<项目>/AGENTS.md` | 项目级唯一规则正本；顶部含上级公约嵌入区（由 agents-md-authoring 维护） |\r\n| 可复用脚本 | 通用且带流程 → 对应 skill 的 `scripts/`；项目专用 → `<项目>/` 内 | 一次性脚本留任务文件夹随任务清理；不建集中脚本库（2026-10-02 拍板） |\r\n\r\n### 1.2 新建文件夹\r\n\r\n- **一级目录 = 独立项目**：新建必须同批创建项目级 AGENTS.md，**通过 agents-md-authoring skill 创建**\r\n  （截至 2026-10-01 定义文件（v0.4.0）：`C:\\Users\\ASUS\\AppData\\Local\\hermes\\skills\\governance\\agents-md-authoring\\SKILL.md`；\r\n  非 Hermes agent 参照其流程：调查真实项目 → 最小必要内容 → 用户确认后写入）；\r\n  完成前不开始大规模实现；同步更新第 3 节索引。\r\n- **新项目须 git init 并纳入备份**：git 只管本地版本控制，不等于备份；备份指远端或备份脚本覆盖。细则见 agents-md-authoring skill 的「新项目入门要求」。\r\n- **项目内部**：由项目 AGENTS.md 自行定义，遵循「一个事实一个家」。\r\n- **临时目录**：`<任务简称>-YYYYMMDD/`，脚本顶部注明用途/输入/输出；不写入项目子目录，不放系统 Temp。\r\n- **根目录**：只放本文件与跨项目编排状态，不放任何工作产物。\r\n\r\n### 1.3 命名\r\n\r\n- 目录与文件名用中文；保留原名的例外：AGENTS.md、package.json 等工程约定文件、\r\n  凭证文件、外部导入的原始文件。\r\n- 日期统一 `YYYY-MM-DD`（目录后缀用 `YYYYMMDD`）。\r\n\r\n## 2. 通用原则\r\n\r\n1. **先读再改**：动文件前先读项目 AGENTS.md 与相关源文件；不猜路径、命令、版本。\r\n2. **最小改动**：只改任务所需范围；不覆盖他人无关修改；跨项目修改须说明并经确认。\r\n3. **真实汇报**：区分「已修改／已检查／实际运行成功」；不编造，失败如实报。\r\n4. **现状断言带日期**：写「在用什么、路径在哪」注明截至日期；来源退役即同批订正。\r\n5. **全局操作须授权**：磁盘权限、系统服务、全局工具链变更必须先经用户批准。\r\n6. **显式解释器**：不依赖 PATH 里的 python；项目用项目声明的解释器，临时脚本用绝对路径。\r\n7. **清理边界**：只删自己本轮创建且确认无用的文件与进程。\r\n8. **优先复用，不重复造轮子**：写代码前先查项目内既有实现，再查本机成熟依赖\r\n   （标准库、npm/PyPI 现成包），本地都没有才上网找公开方案——找到了能直接用就别自己写。\r\n   引入第三方代码时把许可证与维护状态记进决策笔记备查（无维护但好用的代码可以用，\r\n   风险自己知情即可）。\r\n9. **改代码先查代码图**：已建图项目里修改函数/重构/修 bug 前，先用 codebase-memory-mcp\r\n   查调用链与影响面（`cli trace_path` / `search_graph`），代替逐文件翻读；\r\n   代码项目首次开工建一次图（`cli index_repository --repo_path <项目>`）；\r\n   图随文件改动自动同步，服务未运行期间发生大改动后用 `cli index_status` 确认未过期。\r\n10. **先查表再落文件**：归属表查不到的类型，先补表再落文件。\r\n11. **用中文、说人话、说简洁**：与用户交流及写文档一律中文；输出通俗易懂，术语首次\r\n    出现时用一句大白话解释它是什么；不用行业黑话、自造简称和未解释的缩写；先给结论\r\n    不绕弯，能一句说清的不写三句。\r\n12. **汇报结构**：向用户汇报按「结论 → 经过 → 做了什么 → 待决策」组织——结论先行；\r\n    经过记事情怎么发展（含岔路与意外）；做了什么只列采取的动作与改动；待决策逐条独立\r\n    成段，每条说清背景并附建议。小任务可退化为「结论 + 做了什么」两段，不写八股。\r\n\r\n## 3. 项目索引\r\n\r\n<!-- 新建、重命名、移动或删除一级目录必须同步维护。 -->\r\n\r\n- `小说写作` — 番茄短篇写作流，成稿存 novel/；语料库与字段拆解归属此项目（2026-10-01 原小说训练并入后为唯一小说侧项目）\r\n- `个人量化` — A 股日频短线量化研究：个股主线因子与区间契约回测、QuantDesk 桌面与服务器（2026-10-01 自 D:\\量化 迁入，AGENTS.md v2 已对接本公约）\r\n- `比价小程序` — AI 商品比价与决策助手\r\n- `知识库` — 记忆体系脚本（经验抽取/记忆审计/过期扫描；kb 检索服务于 2026-10-03 退役，检索改走 gbrain）\r\n- `每日改进报告` — 对话质量日报与纠错采集脚本（每小时备份已于 2026-10-01 下线）\r\n- `小程序候选研究` — 选题调研（待定去留）\r\n- `外部工具参考` — 外部工具资料（待定去留）\r\n- `工程辅助` — 工程标书 AI 辅助工作台（基于 pi）\r\n- `番茄下载器AI桥` — 番茄小说下载器（Tauri v2）的 MCP 桥接，让 AI 直接驱动其搜索/下载/书架能力\r\n- `pao` — 以 pi 为内核的个人编码 agent（v2）：终端先行、桌面端二期，目标完全替代 ZCode\r\n- `微信小游戏` — 《谁在说谎》微信小游戏，聊天证词与证据推理\r\n\r\n## 4. 维护\r\n\r\n- 本文件与实际不符即订正：索引变了改索引，规则变了改规则，不留过时表述。\r\n- 修改本文件前向用户展示完整差异，确认后落盘。\r\n\n</project_instructions>\n\n<project_instructions path=\"D:\\AI\\workspace\\pao-dev\\AGENTS.md\">\n# PAO（开发项目）\n\n以 pi 为基座的个人编码 agent。CLI 与内嵌内核的桌面应用共用业务实现；需求与架构在 `plans/`，本文件只放执行约束。\n\n开发源码、工程文档和开发留档属于 `pao-dev`；正式运行数据属于独立 PAO_HOME。测试使用隔离 PAO_HOME。Windows 文件名大小写不敏感，勿在 `PAO/` 同级创建仅大小写不同的 `pao/`。\n\n<!-- 上级公约嵌入区：由 agents-md-authoring 按根公约现行版刷新，勿手改 -->\n\n## 0. 两个世界\n\n| 区域 | 路径 | 只放 |\n|---|---|---|\n| 工作区 | `D:\\AI\\workspace` | 干活的工作产物 |\n| 知识库 Vault | `D:\\notebook` | 要长期保留的记忆与知识 |\n\n一个文件放哪，先问：它是「某次工作的产物」还是「以后还要查的知识」。\n工作产物不进 Vault，记忆与知识不散落工作区。Vault 细则见 `D:\\notebook\\00_系统\\使用规范.md`。\n\n## 1. 文件规范\n\n总原则：**一个事实一个家**——任何内容只在一个归属处维护，别处用链接引用；\n想要第二份副本时，先怀疑是分类错了。\n\n### 1.1 归属总表（任何文件落位前先查此表）\n\n| 内容类型 | 唯一归属 | 说明 |\n|---|---|---|\n| 项目代码、数据、文档 | `<项目>/` 内 | 内部结构由项目 AGENTS.md 定义 |\n| 项目决策（代码与非代码） | `<项目>/.agents/notes/{implemented,rejected}/` | 选型/架构/流程的 why 与被否方案；纯机械改动不留 |\n| 项目编排状态（任务卡、计划、运行留档） | `<项目>/` 自己的编排目录（默认 `.hermes/`） | 各项目通用、各管各的；项目 AGENTS.md 可另声明路径；根 `.hermes/` 只放跨项目任务 |\n| 归档与冻结快照 | `<项目>/archive/` 或 `<名>_frozen/` | 只读，不追加 |\n| 一次性任务 | `临时文件夹/<任务简称>-YYYYMMDD/` | 结束删过程缓存，留脚本与成品 |\n| 代码图数据 | `D:\\cbm-cache\\`（CBM_CACHE_DIR 指定） | codebase-memory-mcp 全局缓存（按项目分库）：建图一次，运行期自动同步；勿手改 |\n| 经验教训 | Vault `01_经验教训/` | 各项目相关条目由该项目对应会话维护，全局共用一个库 |\n| 对话日志 | Vault `09_日志/对话日志/YYYY-MM-DD/<项目>.md` | 按项目分文件，各自项目的事记各自文件，只追加；由每日自动任务生成；一次性任务归其来源项目，无来源项目的才归 Hermes.md |\n| 跨项目决策、已否决方案 | Vault `05_决策/` | 只放影响多个项目的；单项目决策放各自项目 |\n| 退役登记、未决事项 | Vault `00_系统/` | 全局共用；工具退役当天登记 |\n| 凭证 | 环境变量或专用 .env | 不入库、不进日志与报告 |\n| 项目上下文规则 | `<项目>/AGENTS.md` | 项目级唯一规则正本；顶部含上级公约嵌入区（由 agents-md-authoring 维护） |\n\n### 1.2 新建文件夹\n\n- **一级目录 = 独立项目**：新建必须同批创建项目级 AGENTS.md，**通过 agents-md-authoring skill 创建**\n  （截至 2026-10-01 定义文件（v0.4.0）：`C:\\Users\\ASUS\\AppData\\Local\\hermes\\skills\\governance\\agents-md-authoring\\SKILL.md`；\n  非 Hermes agent 参照其流程：调查真实项目 → 最小必要内容 → 用户确认后写入）；\n  完成前不开始大规模实现；同步更新第 3 节索引。\n- **新项目须 git init 并纳入备份**：git 只管本地版本控制，不等于备份；备份指远端或备份脚本覆盖。细则见 agents-md-authoring skill 的「新项目入门要求」。\n- **项目内部**：由项目 AGENTS.md 自行定义，遵循「一个事实一个家」。\n- **临时目录**：`<任务简称>-YYYYMMDD/`，脚本顶部注明用途/输入/输出；不写入项目子目录，不放系统 Temp。\n- **根目录**：只放本文件与跨项目编排状态，不放任何工作产物。\n\n### 1.3 命名\n\n- 目录与文件名用中文；保留原名的例外：AGENTS.md、package.json 等工程约定文件、\n  凭证文件、外部导入的原始文件。\n- 日期统一 `YYYY-MM-DD`（目录后缀用 `YYYYMMDD`）。\n\n## 2. 通用原则\n\n1. **先读再改**：动文件前先读项目 AGENTS.md 与相关源文件；不猜路径、命令、版本。\n2. **最小改动**：只改任务所需范围；不覆盖他人无关修改；跨项目修改须说明并经确认。\n3. **真实汇报**：区分「已修改／已检查／实际运行成功」；不编造，失败如实报。\n4. **现状断言带日期**：写「在用什么、路径在哪」注明截至日期；来源退役即同批订正。\n5. **全局操作须授权**：磁盘权限、系统服务、全局工具链变更必须先经用户批准。\n6. **显式解释器**：不依赖 PATH 里的 python；项目用项目声明的解释器，临时脚本用绝对路径。\n7. **清理边界**：只删自己本轮创建且确认无用的文件与进程。\n8. **优先复用，不重复造轮子**：写代码前先查项目内既有实现，再查本机成熟依赖\n   （标准库、npm/PyPI 现成包），本地都没有才上网找公开方案——找到了能直接用就别自己写。\n   引入第三方代码时把许可证与维护状态记进决策笔记备查（无维护但好用的代码可以用，\n   风险自己知情即可）。\n9. **改代码先查代码图**：已建图项目里修改函数/重构/修 bug 前，先用 codebase-memory-mcp\n   查调用链与影响面（`cli trace_path` / `search_graph`），代替逐文件翻读；\n   代码项目首次开工建一次图（`cli index_repository --repo_path <项目>`）；\n   图随文件改动自动同步，服务未运行期间发生大改动后用 `cli index_status` 确认未过期。\n10. **先查表再落文件**：归属表查不到的类型，先补表再落文件。\n11. **用中文、说人话、说简洁**：与用户交流及写文档一律中文；输出通俗易懂，术语首次\n    出现时用一句大白话解释它是什么；不用行业黑话、自造简称和未解释的缩写；先给结论\n    不绕弯，能一句说清的不写三句。\n12. **汇报结构**：向用户汇报按「结论 → 经过 → 做了什么 → 待决策」组织——结论先行；\n    经过记事情怎么发展（含岔路与意外）；做了什么只列采取的动作与改动；待决策逐条独立\n    成段，每条说清背景并附建议。小任务可退化为「结论 + 做了什么」两段，不写八股。\n\n<!-- 嵌入区结束 -->\n\n## 本项目对上级公约的补充\n\n- 上述“根目录只放规则”指工作区根 `D:\\AI\\workspace`，不限制本项目根的 README 与工程文件。临时目录位于工作区的 `临时文件夹/`，不放进源码子目录。\n- 工程命名按下文英文命名例外执行；中文计划、运行数据及历史文档保持原约定。\n- 本项目编排目录为 `.pao/`；PAO 专属经验正本在部门知识库，跨项目经验仍归 Vault，不复制正文。\n- 用户启动整体重构计划后，开发根、内核与桌面三个仓内的计划任务属于同一授权范围；正式 PAO_HOME 与其他项目不在其中。\n\n## 架构原则\n\n1. **模块职责明确**：工作流、执行、状态、界面分别负责，不互相读取内部状态。\n2. **可插拔但不过度设计**：需要替换的模型、记忆供应商、执行方式使用小接口；不预建插件市场、动态加载或通用框架。\n3. **优先复用 pi**：先用 pi 的配置、公开 API 和扩展钩子，只有确实不够时才改 fork 源码。\n4. **减少 fork 面**：PAO 业务集中在自己的模块里，不把业务规则散进 pi 内核。\n5. **同一规则只实现一次**：终端、桌面、单任务、批量任务共用业务入口和数据契约。\n6. **重构按模块推进**：一次只整理一个边界，保留现有行为，不顺手做全库改名或无关重写。\n7. **控制复杂度**：新增抽象必须解决真实重复或隔离真实变化，不能为了“以后可能用到”提前搭框架。\n\n## 项目规则索引\n\n- `plans/`：需求、架构和实施计划的正本；当前状态与验收证据只看执行总册和报告。\n- `PAO/`：pi fork 与 PAO 内核；专属规则见 `PAO/AGENTS.md`。\n- `desktop/`：内嵌内核的桌面应用；专属规则见 `desktop/AGENTS.md`。\n- `.agents/notes/`：架构决策与被否方案，只记录原因，不复制规则正文。\n- `.pao/`：任务卡、运行留档和验收产物。\n- `D:\\AI\\workspace\\pao`：独立的 PAO_HOME 使用现场，只存运行时配置和数据。\n\n## 长期维护\n\n- 工程命名为上级中文目录约定的项目级例外：自有源码、测试、脚本和工程目录使用 ASCII 英文；普通目录/文件用 kebab-case，组件文件沿本包既有约定，变量/函数用 camelCase，类型/类用 PascalCase。说明文字、注释和界面继续使用中文；README.md、AGENTS.md 等使用标准文件名。\n- 已有上游名称保留；卡协议、配置键、持久化字段、用户数据目录和公开工具名属于兼容契约，不能用全局替换改名。中文内部标识符按重构模块迁移，历史中文计划与日志不批量改名。\n- `pao-dev` 是开发源码与工程文档项目，PAO_HOME 是运行数据现场。共享内核不依赖 CLI 或桌面；CLI 与桌面是平级宿主，桌面发行物内嵌内核，不依赖全局 CLI 或开发仓路径。具体目录迁移与接口边界见整体重构计划。\n- README.md 说明项目用途、安装/开发/测试入口和文档导航；AGENTS.md 只放执行约束，架构和接口说明放对应文档，进度与日志不堆进 README。\n\n- AGENTS.md 只写长期有效的约束，不写版本号、测试数量、当前阶段、历史经过或一次性故障。\n- 事实变化时更新对应正本；执行报告、摩擦日志和 git 历史保存经过，不把经过复制到规则文件。\n- 规则冲突时，以用户最新决定和 `plans/` 当前定案为准。\n\n</project_instructions>\n</project_context>",
+        "cwd": "<cwd>\nD:/AI/workspace/pao-dev/.pao/协作机制重构-20261023/请求组成测量/主控/project\n</cwd>",
+        "pao-dispatch-lifecycle": "<pao-dispatch-lifecycle>\n你是主控。后台派发被受理后，若没有其他可立即处理的事项，结束当前回答。不要用 sleep、反复盘点或轮询维持会话；程序会在结果、异常或监督检查到达后唤醒你。你负责目标、验收、分工与取舍；明确任务优先由部门直接执行，需要拆解或整合时才启用部长。普通交接与交付由程序完成，按需核查证据并处理待裁决事项。监督检查对照任务目标、近期实际进展与证据，判断偏航、重复劳动及无关扩展；无须干预时说明继续后结束本轮。\n</pao-dispatch-lifecycle>",
+        "pao_temporary_plan": "<pao_temporary_plan>\n临时工作台纪律（讨论 → 计划 → 用户确认启动）：\n1. 讨论出步骤后，由你显式调 pao_plan_create 落计划；普通回复里的编号清单/Todo/原型关键字都不会触发真实创建。\n2. 创建成功只表示定义已落盘，不等于已启动；启动要用户确认（pao_plan_start 只认宿主交回的用户确认事实，你自己写 confirmed 不算）。\n3. 部门只能从下面这份已登记部门里选；缺关键信息（要解决什么问题、几步、每步哪个部门、哪步设人工门）时定向问用户，一次只问当轮挡路的，别替他决定。\n4. 改/撤销用 pao_plan_update（带 definition_version，防覆盖别人的改动）；已启动的计划定义冻结，只能另建新计划。\n5. 用户对某一步或某个文件说的话用 pao_plan_feedback 记下来，绑定当时那一版；「已送达」只能由真实投递回执写入。\n已登记部门：（注册表为空，先和用户确认建哪些部门，别自己造部门名）\n临时计划 0 份（D:\\AI\\workspace\\pao-dev\\.pao\\协作机制重构-20261023\\请求组成测量\\主控\\project\\.pao\\临时工作流）\n（还没有临时计划）\n</pao_temporary_plan>",
+        "pao-resident-memory": "<pao-resident-memory>\n以下为常驻记忆索引(每轮注入;只收事实:用户契约/环境/偏好,任务态不入):\n# 主控记忆·常驻索引\n\n每轮注入主控系统提示的少数必知事实。只放:用户契约、环境约定、长期偏好。\n任务状态不入(R10);一条一行;注入上限约 2000 字,超长截断——保持精简。\n\n</pao-resident-memory>",
+        "pao_dept_registry": "<pao_dept_registry>\n截至 2026-10-24:部门注册表为空,尚无任何部门。建部用 pao_create_dept 工具;本片段随注册表更新在下次请求自动刷新。\n</pao_dept_registry>"
+      },
+      "toolsAdded": [
+        {
+          "name": "read",
+          "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "path"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the file to read (relative or absolute)"
+              },
+              "offset": {
+                "type": "number",
+                "description": "Line number to start reading from (1-indexed)"
+              },
+              "limit": {
+                "type": "number",
+                "description": "Maximum number of lines to read"
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        },
+        {
+          "name": "bash",
+          "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Shell command to execute"
+              },
+              "timeout": {
+                "type": "number",
+                "description": "Timeout in seconds (optional, no default timeout)"
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        },
+        {
+          "name": "edit",
+          "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes.",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "path",
+              "edits"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the file to edit (relative or absolute)"
+              },
+              "edits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "oldText",
+                    "newText"
+                  ],
+                  "properties": {
+                    "oldText": {
+                      "type": "string",
+                      "description": "Exact text for one targeted replacement. It must be unique in the original file and must not overlap with any other edits[].oldText in the same call."
+                    },
+                    "newText": {
+                      "type": "string",
+                      "description": "Replacement text for this targeted edit."
+                    }
+                  }
+                },
+                "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits. If two changes touch the same block or nearby lines, merge them into one edit instead."
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        },
+        {
+          "name": "write",
+          "description": "Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories.",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "path",
+              "content"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the file to write (relative or absolute)"
+              },
+              "content": {
+                "type": "string",
+                "description": "Content to write to the file"
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        },
+        {
+          "name": "todo_write",
+          "description": "维护当前会话的任务待办清单（会话级，四态 pending/in_progress/completed/cancelled）。每次调用全量替换整张清单，不是增量修改；空数组清空。适用：任务至少三步、并行多任务、用户要求列计划或新指令改变计划。条目为祈使句且互不重复，上限 20 项；activeForm 可选。每完成一步（并已验证）立即更新状态，不攒批；同一时间只保留一项 in_progress。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "todos"
+            ],
+            "properties": {
+              "todos": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "content",
+                    "status"
+                  ],
+                  "properties": {
+                    "content": {
+                      "type": "string",
+                      "description": "祈使句任务描述，非空且互不重复"
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "pending"
+                        },
+                        {
+                          "type": "string",
+                          "const": "in_progress"
+                        },
+                        {
+                          "type": "string",
+                          "const": "completed"
+                        },
+                        {
+                          "type": "string",
+                          "const": "cancelled"
+                        }
+                      ],
+                      "description": "pending 未开始 / in_progress 进行中 / completed 已完成并验证 / cancelled 已取消"
+                    },
+                    "activeForm": {
+                      "type": "string",
+                      "description": "进行时表述（如「正在跑测试」），可选"
+                    }
+                  }
+                },
+                "description": "整张清单全量替换（不是增量修改）；空数组=清空；上限 20 项"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_create_card",
+          "description": "在卡目录内建任务卡：发号（跨进程文件锁、按项目唯一递增）→ 写入 卡NNNN-目标简述.md（YAML frontmatter 信封字段 + 正文回执区，原子写）。新卡状态为 待认领。可选「模板」参数带入已批准卡模板（PAO_HOME/pao配置/卡模板/ 下的 侦察/巡库/评审 等，或绝对路径）的正文骨架——预填目标写法、机械验收三句式与约束引用；frontmatter 仍由本工具参数生成，模板只贡献正文。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "goal",
+              "dept",
+              "acceptance"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录（任务工作区的 卡/ 目录，绝对路径）；已配置默认卡目录时可省略"
+              },
+              "goal": {
+                "type": "string",
+                "description": "一句话目标"
+              },
+              "dept": {
+                "type": "string",
+                "description": "能力标签（部门名）"
+              },
+              "acceptance": {
+                "type": "string",
+                "description": "可判验收条件，尽量机械化"
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "指针列表：路径/卡#N/知识库条目，不装内容"
+              },
+              "constraints": {
+                "type": "string",
+                "description": "引用规则文件，不复述标准"
+              },
+              "depends_on": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "前置卡引用（卡#N），全部已交付才放行"
+              },
+              "parent": {
+                "type": "string",
+                "description": "协作卡归属父卡（卡#N）；只表归属与预算，不参与依赖判断"
+              },
+              "tier": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "fast"
+                  },
+                  {
+                    "type": "string",
+                    "const": "primary"
+                  }
+                ],
+                "description": "模型档位：fast/primary"
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "turns": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "模型轮次上限"
+                  },
+                  "toolCalls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "工具调用次数上限"
+                  },
+                  "cost": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "独立的费用上限，不是调用次数"
+                  },
+                  "collab_quota": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "description": "卡预算：turns＝模型轮次，toolCalls＝工具调用次数（如 100/1000＝100 轮、1000 次工具调用）；cost 是独立费用上限。卡类型参考：微任务≈20/200、常规≈100/1000、大活≈500/5000。主控按任务规模逐卡预估，不设全局死数；worker 用实际计数执行机械熔断。这里只校验非负数值，不裁决预算是否合理。"
+              },
+              "priority": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "high"
+                  },
+                  {
+                    "type": "string",
+                    "const": "medium"
+                  },
+                  {
+                    "type": "string",
+                    "const": "low"
+                  }
+                ],
+                "description": "high/medium/low，缺省 medium"
+              },
+              "owner": {
+                "type": "string",
+                "description": "初始 owner（指派时填）；缺省为待认领无主"
+              },
+              "template": {
+                "type": "string",
+                "description": "卡正文模板（M2-09 卡模板库）：模板文件绝对路径，或 PAO_HOME/pao配置/卡模板/ 下的模板名（如 侦察/巡库/评审）。模板正文骨架插入新卡正文（机械验收句式＋约束引用），frontmatter 仍由本工具其余参数生成；缺 PAO_HOME 时只收绝对路径"
+              },
+              "counter_path": {
+                "type": "string",
+                "description": "卡号计数器文件路径；缺省取 卡目录/../../卡号.txt（项目 .pao/ 下）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_submit_receipt",
+          "description": "worker 交回执（只追加通道）：必带卡号+尝试号，追加到卡正文回执区（原子写）。硬校验三格：声明了产物路径则须真实存在（相对项目根）、摘要 ≤3 行、尝试号与卡面一致（旧尝试走留档通道）。不能改状态、不能改信封字段；旧尝试回执只留档不推进状态；卡已终态按迟到回执留档。回执≠终态：回执只代表 worker 声称完成，卡的终态变更唯经 owner 执行 pao_change_status。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref",
+              "attempt"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir；已配置默认卡目录时可省略"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "card_ref（数字或 卡#N）"
+              },
+              "attempt": {
+                "type": "number",
+                "description": "本次尝试号（认领启动后卡上的当前尝试）"
+              },
+              "result": {
+                "type": "string",
+                "description": "结果：完成/失败/部分完成"
+              },
+              "summary": {
+                "type": "string",
+                "description": "≤3 行摘要"
+              },
+              "artifact_path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "产物指针列表"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "证据（测试命令/输出位置）"
+              },
+              "usage": {
+                "type": "object",
+                "patternProperties": {
+                  "^.*$": {}
+                },
+                "description": "用量（turns/token 等）"
+              },
+              "worth_distilling": {
+                "type": "string",
+                "description": "值得沉淀的知识候选（可选）"
+              },
+              "failure_type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "transient"
+                  },
+                  {
+                    "type": "string",
+                    "const": "missing_input"
+                  },
+                  {
+                    "type": "string",
+                    "const": "insufficient_capability"
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome"
+                  }
+                ],
+                "description": "失败时建议标注：transient/missing_input/insufficient_capability/unknown_outcome"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_change_status",
+          "description": "owner 改卡状态（单写者，owner 验收唯一通道）：待认领→进行中（依赖全部已交付才放行、实际启动递增尝试）、进行中→已交付/失败/取消、失败→待认领（尝试数须低于上限）。非法迁移与越权写入会被拒绝。转 delivered 会重跑机械验收并核对当前 attempt 回执；自报 fail/not_run 不自动放行，owner 必须填写总 basis，并用 accepted_deviations 为每项携带当前 attempt、原始 verification_index、原 condition 和逐项 basis，必须恰好全部覆盖；旧 attempt 参数不得重放。缺或坏 worker JSON 时按结果未知处理，成果待 owner 复核，不能视为成功。failed 卡不能直接 delivered，须先按合法迁移重试或取消。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref",
+              "operator",
+              "new_status"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir；已配置默认卡目录时可省略"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "card_ref（数字或 卡#N）"
+              },
+              "operator": {
+                "type": "string",
+                "description": "调用者身份（owner 名）；取消可传“用户”"
+              },
+              "new_status": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "unclaimed"
+                  },
+                  {
+                    "type": "string",
+                    "const": "in_progress"
+                  },
+                  {
+                    "type": "string",
+                    "const": "delivered"
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed"
+                  },
+                  {
+                    "type": "string",
+                    "const": "canceled"
+                  }
+                ],
+                "description": "目标状态"
+              },
+              "failure_type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "transient"
+                  },
+                  {
+                    "type": "string",
+                    "const": "missing_input"
+                  },
+                  {
+                    "type": "string",
+                    "const": "insufficient_capability"
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome"
+                  }
+                ],
+                "description": "转入失败时必填"
+              },
+              "basis": {
+                "type": "string",
+                "description": "迁移依据说明，落卡审计区；所有非自动人工完成转 delivered 时必须填写总验收依据。accepted_deviations 中的逐项 basis 不能代替本字段"
+              },
+              "accepted_deviations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "attempt",
+                    "verification_index",
+                    "condition",
+                    "basis"
+                  ],
+                  "properties": {
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "接受时绑定的卡片当前 attempt；必须等于卡面当前 attempt，旧参数不得重放"
+                    },
+                    "verification_index": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "当前 attempt 回执 verification 数组的 0 起稳定索引（历史 attempt 不算）"
+                    },
+                    "condition": {
+                      "type": "string",
+                      "description": "该索引对应未达条件的原文，必须完全一致"
+                    },
+                    "basis": {
+                      "type": "string",
+                      "description": "owner 接受这一项的单独依据；每项分别核对"
+                    }
+                  }
+                },
+                "description": "仅 new_status=delivered 的 owner 人工验收时使用。每项 attempt 必须等于卡当前 attempt，并恰好覆盖当前 attempt 全部 fail/not_run 索引；同条件重复项按索引分别接受。真实机械失败、越界、声明哈希变化、blocked/checkpoint 仍阻断。"
+              },
+              "max_attempts": {
+                "type": "number",
+                "description": "同轮授权尝试上限（默认 2）；提高须 owner 显式给出"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_query_queue",
+          "description": "读卡目录渲染队列：按状态分组，活卡优先级降序+创建升序，已交付完成倒序；显示依赖边、父卡边与待审标记。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir；已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_handoff",
+          "description": "交接页机械生成（M2-09）：四段 markdown——当前目标（队列非终态卡目标列表）／已发生改动（逐活卡认领基线比对，无基线如实标不可核验）／验证结果（卡上 ## 机械验收 段最近结论，无则标未验收）／未决事项（待审卡＋失败/取消卡）。整页只读不落盘、纯机械数据源，「已验证的」与「还在猜的」分明；worker 不得调用（owner/主控侧专用）。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir；已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_check_overreach",
+          "description": "越界写检测（§14）：以 git 真相（认领基线后的工作区差异）比对回执声明的产物清单，输出 虚报（声明了没改）/越界（改了没声明）/相符/不可核验 四清单与五态结论。只读检测不落任何改动；主控在改状态前跑，worker 交付与扇出认领已内置同款核查。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir；已配置默认卡目录时可省略"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "card_ref（数字或 卡#N）"
+              },
+              "artifact_path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "回执声明的产物清单；缺省取卡上最新一条回执的产物路径"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_collab_relay",
+          "description": "协作卡星型中转正门：对部门起草的协作卡（带 parent）做机械校验——部门在注册表、信封字段齐全、协作配额未超（默认 2，父卡可覆写）、依赖全部已交付、同 parent 同目标无活卡（幂等）、协作卡不得再生协作卡；通过即落目标部门队列并留审计（JSONL）。带插队/新权限/超预算覆写/验收存疑任一裁决标记时不落队列，返回裁决摘要交主控判断。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "goal",
+              "dept",
+              "acceptance",
+              "parent"
+            ],
+            "properties": {
+              "goal": {
+                "type": "string",
+                "description": "一句话目标"
+              },
+              "dept": {
+                "type": "string",
+                "description": "目标部门名（须在部门注册表中）"
+              },
+              "acceptance": {
+                "type": "string",
+                "description": "可判验收条件，尽量机械化"
+              },
+              "parent": {
+                "type": "string",
+                "description": "归属父卡引用（卡#N）：发起方自己那张卡；协作卡必填"
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "指针列表：路径/卡#N/知识库条目，不装内容"
+              },
+              "constraints": {
+                "type": "string",
+                "description": "引用规则文件，不复述标准"
+              },
+              "depends_on": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "前置卡引用（卡#N），全部已交付才放行"
+              },
+              "template": {
+                "type": "string",
+                "description": "已批准模板名（M2-09 卡模板库，只收 PAO_HOME/pao配置/卡模板/ 库内名字，不收任意路径）：模板正文骨架（机械验收句式＋约束引用）带入卡正文——模板绑定既有授权范围，字段填齐不扩大授权"
+              },
+              "tier": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "fast"
+                  },
+                  {
+                    "type": "string",
+                    "const": "primary"
+                  }
+                ],
+                "description": "模型档位：快/主力"
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "turns": {
+                    "type": "number"
+                  },
+                  "toolCalls": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cost": {
+                    "type": "number"
+                  },
+                  "collab_quota": {
+                    "type": "number"
+                  }
+                }
+              },
+              "priority": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "high"
+                  },
+                  {
+                    "type": "string",
+                    "const": "medium"
+                  },
+                  {
+                    "type": "string",
+                    "const": "low"
+                  }
+                ],
+                "description": "高/中/低，缺省中"
+              },
+              "source_dept": {
+                "type": "string",
+                "description": "起草部门（审计用）；主控代递交时填「主控」，缺省同"
+              },
+              "jump_queue": {
+                "type": "string",
+                "description": "裁决标记声明：请求插队及理由。声明后机械放行失效，转主控裁决"
+              },
+              "new_permissions": {
+                "type": "string",
+                "description": "裁决标记声明：所需新权限及说明。声明后机械放行失效，转主控裁决"
+              },
+              "budget_override": {
+                "type": "string",
+                "description": "裁决标记声明：超出父卡预算池的覆写请求。声明后机械放行失效，转主控裁决"
+              },
+              "acceptance_dispute": {
+                "type": "string",
+                "description": "裁决标记声明：验收条件何处存疑。声明后机械放行失效，转主控裁决"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "既有卡所在的任务工作区卡目录；已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_inventory",
+          "description": "重启只读盘点:扫任务工作区 卡/ 目录列未完卡(状态+当前尝试有效回执+最近收到回执(可能历史)+最后回执摘要),列本轮登记表后台进程(部门+派单理由,供上级监督审查)与热部长会话行(pid/轮次/调用/指纹/活性标记,定案11),并对开工基线做 git status 差异摘要。绝不写文件、不清锁、不重跑——盘点结果供人决定重派或作废。读法(计划 §5.4):本工具列出的卡状态与尝试号是**当前**真相;若先前 pao_accept_task 的受理结果与这里对不上(卡已 canceled/已终结,或尝试号已变),那份旧受理结果就不能再当成功——以本工具为准。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "workspace"
+            ],
+            "properties": {
+              "workspace": {
+                "type": "string",
+                "description": "workspace:任务工作区绝对路径，必须直接内含 卡/ 目录(支持 <项目根>/.pao/卡、<项目根>/.pao/<任务目录>/卡，以及显式 project_root 配合的自定义任务目录);不能传项目根"
+              },
+              "project_root": {
+                "type": "string",
+                "description": "project_root:可选的目标项目根。标准 .pao 布局省略时从层级推导，显式给出时须与所属项目一致；非 .pao 自定义布局须显式给出"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_stop_background",
+          "description": "停止本轮登记在案的全部后台 worker 进程和宿主部长会话(树杀并等真退出),并停止宿主监督跟踪;之后本轮不再派发。只处理当前进程登记在案的对象,不按进程名全局清理;返回 worker 停止清单、部长停止情况与所有失败原因。",
+          "parameters": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        {
+          "name": "pao_dispatch_card",
+          "description": "单卡派发(非阻塞,B 档):把一张卡派给一次性 worker,受理即返回——本工具不等 worker 跑完。认领/基线/预算/名额/写锁/运行/回执落卡全部在后台按 fail-closed 链执行(与 pao_fanout 同链路,进程进同一登记册,pao_stop_background 可全停);结果(终态/摘要/失败路由)以后以 pao 派卡通知 注入送达(伴 toast),被护栏拒派/失败同样通知——派出后不要傻等轮询,期间可继续干别的。派前自省:真的需要额外多派一个吗;理由必填且留痕供上级审查(理由必填,trim 后不得为空)。权限 fail-closed:部长角色只能派本部门卡——须 PAO_DEPT 环境变量已设且与卡的「部门」frontmatter 一致,否则拒派;主控不限。部门并发上限护栏:登记表中同部门且仍活着的进程数达上限即拒派(上限读 $PAO_HOME/pao配置\\保温.json 的「部门并发上限」,文件或键缺失时缺省 3 照样生效——护栏安全默认开,与「缺保温文件=不保温」的功能语义相反)。共享上游额度(M2-03):保温.json 可选键「上游并发上限」＝账号级硬顶(全部活进程跨部门合并计;键缺失＝不启用,派单缺省 2 照旧)。任务黑板(M2-03):认领成功即在工作区首建 黑板.md(幂等)并给 worker 注入指针——同伴中间结论与便条页,便签先挂链接再散写,归档即冻结。认领纪律与扇出同源:unclaimed→in_progress(尝试 +1,无主则 owner=派单者:主控写「主控」,部长写 PAO_DEPT 值),认领即落基线快照;in_progress/已终态卡不拉起(派单即时回执直接给拒派原因,不等派卡通知)。监督与裁决(B 档):worker 静默(保温.json「worker 静默分钟」,缺省 30,0=关)会收到静默提醒,提醒带 live 输出路径与输出尾——继续等＝不用做任何事(有输出后计时自动重置);确认卡死须终止＝调 pao_terminate_card(只终止本会话派出的运行中 worker)。机械超时缺省 24 小时,只兜「静默叫了人但无人应答」的底,不是主判决。卡状态与信封字段由程序单写者维护，并发和共享名额由派发器检查。优先用受理入口自动完成验收与交付；底层派卡入口保留显式验收责任。主控按需读取产物和证据作判断，部长负责必要拆解与整合。派完即停，等结果通知，不轮询；正常交接由程序推进，仅处理失败、待确认或需判断事项。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref",
+              "reason"
+            ],
+            "properties": {
+              "card_ref": {
+                "type": "string",
+                "description": "card_ref(卡0017/卡#17/17 均可)"
+              },
+              "reason": {
+                "type": "string",
+                "description": "派单理由(必填,trim 后不得为空;派前自省:真的需要额外多派一个吗)。理由会留痕:进程登记表记录与工具回执都带此理由,供上级审查。"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir:任务工作区卡目录(内含 卡NNNN-*.md);已配置默认卡目录时可省略"
+              },
+              "worktree_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "本次派发使用的宿主已登记工作树 ID（由 pao_worktree_create 或 pao_worktree_list 获取），不接受任意执行路径；省略沿用宿主默认目标（通常为 primary 主目录）。无有效宿主或 ID 校验失败时拒派，不降级到主目录。"
+              },
+              "接管": {
+                "type": "boolean",
+                "description": "孤儿显式接管(缺省 false):仅对 进行中＋当前尝试无回执＋登记表无活进程 的卡生效——推进认领代数并把卡落失败重开新尝试(旧 worker 状态不再覆盖)。当前尝试已有回执(同号去重,按回执处理)或仍有活进程(先 pao_terminate_card)时一律拒;非进行中卡此参数无效。"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_terminate_card",
+          "description": "上级裁决·终止 worker(B 档):按卡号终止本卡目录下本会话派出的运行中 worker(登记表按卡路径匹配,他项目同号不误伤),复用 runner 停止链(树杀→等真退出→StopProof),派发链凭停止确认放项目写锁(先停后放锁)、摘除登记,并落「canceled(被上级终止)」回执到卡。只终止本会话派出的运行中 worker,跨会话不越权;找不到运行中条目即报错不误伤。用法:静默提醒叫人后,读了 live 输出确认卡死才调本工具;继续等＝不用调。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref"
+            ],
+            "properties": {
+              "card_ref": {
+                "type": "string",
+                "description": "card_ref(卡0017/卡#17/17 均可)"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir:任务工作区卡目录(终止匹配范围与回执落卡定位用;同号卡在其他项目运行时不误伤);已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_accept_task",
+          "description": "完整任务受理：一次调用做完「集中预检→建卡→可选派发」，直接返回受理身份（卡号/尝试号）或**真实拒绝原因**。与旧入口的关系（旧入口名字与行为都不变，继续可用）：本工具的第 2 步就是 pao_create_card 的建卡、第 3 步就是 pao_dispatch_card 的派发；查询仍用 pao_inventory，停止仍用 pao_terminate_card。dispatch 缺省 false——受理默认不替你花钱，要立刻跑必须显式 dispatch=true 且给 reason。尝试号由后台派发产生，工具返回时刻可能尚未产生（文本会写「尝试号未产生」，不是失败）；要权威的当前身份与尝试号，用 pao_inventory 复查。幂等：request_key 是请求判据，同一判据重复提交返回第一次的身份、不重复建卡；不给则按『目标+部门+验收+依赖』自动生成并在返回里写明。停止/重派后旧受理结果即失效（计划 §5.4），别拿旧 outcome 当成功。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "target",
+              "dept",
+              "acceptance"
+            ],
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "目标(必填):这次要办成什么。写清结果,不写过程"
+              },
+              "dept": {
+                "type": "string",
+                "description": "部门(必填):须为已登记部门;不自动建部,部门不存在会如实拒绝"
+              },
+              "acceptance": {
+                "type": "string",
+                "description": "验收标准(必填):凭什么算做完了"
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "输入指针列表(可空):文件路径、链接、上游产物"
+              },
+              "constraints": {
+                "type": "string",
+                "description": "约束正文(可空):边界、不许做的事"
+              },
+              "depends_on": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "依赖卡号列表(可空):未放行时不派发(如实报推迟)"
+              },
+              "tier": {
+                "type": "string",
+                "description": "档位(可空,可选值:fast/primary):给了就由集中预检核对配置里是否真有这一档"
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "turns": {
+                    "type": "number",
+                    "description": "模型轮次上限"
+                  },
+                  "toolCalls": {
+                    "type": "number",
+                    "description": "工具调用次数上限"
+                  },
+                  "cost": {
+                    "type": "number",
+                    "description": "费用上限"
+                  },
+                  "collab_quota": {
+                    "type": "number",
+                    "description": "协作次数上限"
+                  }
+                },
+                "description": "预算(可空):0 值视为阻止启动,由预检把关"
+              },
+              "priority": {
+                "type": "string",
+                "description": "优先级(可空,可选值:high/medium/low;缺省 medium,与建卡同口径)"
+              },
+              "template": {
+                "type": "string",
+                "description": "模板(可空):已批准模板名或绝对路径;正文骨架取自模板库,frontmatter 仍由受理生成"
+              },
+              "dispatch": {
+                "type": "boolean",
+                "description": "是否立即派发(缺省 false)。受理默认不替你花钱:false＝只建卡待认领;true＝建卡后经既有后台派发链派出,此时 reason 必填"
+              },
+              "reason": {
+                "type": "string",
+                "description": "派单理由(dispatch=true 时必填):会留痕供上级审查;派前自省——真的需要现在派吗"
+              },
+              "request_key": {
+                "type": "string",
+                "description": "请求判据/幂等键(可空):同一判据重复提交＝同一次受理,返回第一次的身份,不重复建卡。不给则按『目标+部门+验收+依赖』自动生成并在返回里写明"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "cards_dir(可空):任务工作区卡目录;已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_dispatch_brief",
+          "description": "保存准备派遣所需的结构化输入，不改变卡状态。action=map 生成并保存带覆盖范围、真实文件内容、暂存/未暂存/未跟踪状态的 Git 地图；action=contract 保存精确接口契约引用；action=brief 保存可注入的简报正文；action=append 把受控 URI 写入卡现有 inputs。地图不会默认全库扫描，目录覆盖用于检出新增调用方，覆盖边界不明时会标为需复核。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "action"
+            ],
+            "properties": {
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "map"
+                  },
+                  {
+                    "type": "string",
+                    "const": "contract"
+                  },
+                  {
+                    "type": "string",
+                    "const": "brief"
+                  },
+                  {
+                    "type": "string",
+                    "const": "append"
+                  }
+                ]
+              },
+              "cards_dir": {
+                "type": "string"
+              },
+              "card_path": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "project_root": {
+                "type": "string"
+              },
+              "execution_root": {
+                "type": "string"
+              },
+              "coverage": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "excludes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "card_no": {
+                "type": "number"
+              },
+              "attempt": {
+                "type": "number"
+              },
+              "version": {
+                "type": "string"
+              },
+              "digest": {
+                "type": "string"
+              },
+              "content_path": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "affected_cards": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "markdown": {
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "facts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "unknowns": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "risks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "integration_owner": {
+                "type": "string"
+              },
+              "scope_basis": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scope_confirmed": {
+                "type": "boolean"
+              },
+              "scope_review_required": {
+                "type": "boolean"
+              },
+              "previous_ref": {
+                "type": "string"
+              },
+              "supersession_reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_preview_cleanup",
+          "description": "只读展开卡正文「## 删除目标」中的显式相对或绝对路径，列出真实绝对叶子文件、元数据和各目标所属 Git 仓库的跟踪清单；遇到 symlink/junction、受保护路径或任意 .git 即报风险。预演写入卡目录上一级 cleanup/卡NNNN，不改卡、不执行删除。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref"
+            ],
+            "properties": {
+              "card_ref": {
+                "type": "string",
+                "description": "卡引用（卡0017、卡#17 或 17）"
+              },
+              "operator": {
+                "type": "string",
+                "description": "预演人；不改变卡状态，不构成删除授权"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录；已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_confirm_cleanup",
+          "description": "owner 专用删除确认：要求卡已有明确 owner 且可待认领，沿 checkWriterAuthority 核对身份；重扫目标并与预演摘要比对，任何文件、目标或 Git 清单变化都拒绝。只写受控确认文件，不执行删除。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref",
+              "operator",
+              "confirm"
+            ],
+            "properties": {
+              "card_ref": {
+                "type": "string",
+                "description": "卡引用（卡0017、卡#17 或 17）"
+              },
+              "operator": {
+                "type": "string",
+                "description": "当前 owner 身份；须与卡 frontmatter 的 owner 一致"
+              },
+              "confirm": {
+                "type": "boolean",
+                "description": "显式确认，必须为 true；预演本身不是删除授权"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录；已配置默认卡目录时可省略"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_health_check",
+          "description": "对当前会话模型做端点冒烟体检:普通对话/工具调用(两跳含结果消费)/思考档三条固定探针,结果按评测条目格式落盘到 $PAO_HOME/.pao/体检/。深度=true 加跑「逼近上下文上限」(最贵,默认跳过)。缓存探针(显式选填)对同一固定上下文按延迟序列重发补全并输出缓存衰减曲线——缺省绝不触发:每次采样都是真实计费的 API 请求,只在确实要测供应商缓存衰减供预热择时才传。换端点/换模型/升级后跑一次,得到可入库的实测记录。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "deep": {
+                "type": "boolean",
+                "description": "加跑「逼近上下文上限」探针(最贵的一条,约消耗 1.1 倍窗口的输入 token);缺省 false 只跑三条便宜探针"
+              },
+              "cache_probe": {
+                "type": "object",
+                "required": [
+                  "context_chars",
+                  "sample_points"
+                ],
+                "properties": {
+                  "context_chars": {
+                    "type": "integer",
+                    "description": "固定上下文的填充字符数(粗估 4 字符≈1 token);每次采样整包重发、按输入计费",
+                    "minimum": 1
+                  },
+                  "sample_points": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "description": "相对首采样的延迟秒(绝对偏移,按升序执行)"
+                    },
+                    "description": "重发采样的延迟秒序列,如 [30, 120, 600];每次采样都是一次真实补全请求",
+                    "minItems": 1
+                  },
+                  "decay_threshold": {
+                    "type": "number",
+                    "description": "判定衰减的缓存命中率阈值(0-1,相对首个成功读缓存的采样;冷启动首采样只写不读,不作参照);缺省 0.5",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "description": "缓存衰减探针:对同一固定上下文按延迟序列重发补全,记录每次 usage 并输出缓存衰减曲线(纯文本,不落盘)。缺省绝不触发——每次采样都是真实计费的 API 请求,只在确实要测供应商 prompt/KV 缓存衰减时才传"
+              },
+              "out_dir": {
+                "type": "string",
+                "description": "评测条目落盘目录;缺省 $PAO_HOME/.pao/体检"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_query_kb",
+          "description": "查部门知识库：词法+语义双路混合检索，返回每条命中带完整户口（path/summary/status/scope/last_verified/source）。云端嵌入未配置或失败时自动降级为词法独跑并标注 degraded。一次最多应用 3 条命中，不够用就明说。归档区不进检索；待验证、待复核或未知命中只作风险提示。查询项目由宿主工作目录绑定。传 routing:\"auto\" 进自动路由（架构 §18.3 门面）：按部门注册表能力标签/部门名机械匹配相关库（含主控部，查无就如实不含），并行查多个库＋记忆供应商语义召回（若已接线），合并结果带来源部门；无标签命中退化为查全部注册库并标注；注册表为空则报错。自动模式忽略 部门/知识库路径。自动模式总量上限：每库缺省 3 条、合并正式依据最多 12 条、语义召回最多 3 条，防上下文爆。单库失败不拖垮整次查询，失败库如实标注。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "query"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "查询词；含可检索的具体名词（模块名/工具名/报错码）效果最好"
+              },
+              "dept": {
+                "type": "string",
+                "description": "部门名（如 平台评测）：工具自动解析为 $PAO_HOME/部门/<部门名>/知识库，不要自己拼路径"
+              },
+              "kb_path": {
+                "type": "string",
+                "description": "知识库根目录（含 教训/导览/做法/评测/待验证/归档 与 索引.md）；一般留空，改传 部门 让工具从 PAO_HOME 解析"
+              },
+              "top_k": {
+                "type": "number",
+                "description": "返回条数上限，默认 5；自动模式下是每库条数上限，缺省 3"
+              },
+              "expected_version": {
+                "type": "string",
+                "description": "仅查询与来源版本有关的资料时填写；版本不符或未注明版本的命中只作风险提示"
+              },
+              "routing": {
+                "type": "string",
+                "const": "auto",
+                "description": "传 \"auto\" 进自动路由模式：按注册表能力标签并行查相关库＋语义库（若已接线），合并带来源部门；忽略 部门/知识库路径"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_restricted_query",
+          "description": "worker 一次受限补查：只查本部、只读、限一次（按卡号+授权轮次计，重试不恢复额度）、查询词记进回执。只准在派卡指针不够用、发现明确缺口时用；仍不够再报部长补指针。部门参数只接受本部名，全部/别名一律拒绝。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "query"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "查询词，只查本部知识库"
+              },
+              "top_k": {
+                "type": "number",
+                "description": "返回条数上限，默认 5"
+              },
+              "expected_version": {
+                "type": "string",
+                "description": "仅查询与来源版本有关的资料时填写；版本不符或未注明版本的命中只作风险提示"
+              },
+              "dept": {
+                "type": "string",
+                "description": "只接受本部名；传全部/别名会被拒绝"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_ingest_kb",
+          "description": "知识入库转正（部长专用纪律通道）：把 待验证/ 候选条目移入类型目录、子索引加行、核验本条目，三件事一次完成；全区巡检使用 pao_inspect_kb。同批机械订正条目内候选语义的状态行为「状态: 正式」。幂等可重放：重复执行或中断后重跑都只修复、不重复生成。多条目钩子同文时检索区分度弱，可传 新钩子 改写条目首行钩子（子索引行随之用它）提升区分度。可传 适用范围 落「适用范围:」标记行（禁外发门禁键，语义查库靠它放行云端嵌入）。入库只获得建议资格，不获得扩大权限的资格。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "candidate_path",
+              "type"
+            ],
+            "properties": {
+              "dept": {
+                "type": "string",
+                "description": "部门名（如 平台评测）：工具自动解析为 $PAO_HOME/部门/<部门名>/知识库，不要自己拼路径"
+              },
+              "kb_path": {
+                "type": "string",
+                "description": "知识库根目录（含 教训/导览/做法/评测/待验证/归档 与 索引.md）；一般留空，改传 部门 让工具从 PAO_HOME 解析"
+              },
+              "candidate_path": {
+                "type": "string",
+                "description": "候选条目文件路径（通常在 待验证/ 下）"
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "教训"
+                  },
+                  {
+                    "type": "string",
+                    "const": "导览"
+                  },
+                  {
+                    "type": "string",
+                    "const": "做法"
+                  },
+                  {
+                    "type": "string",
+                    "const": "评测"
+                  }
+                ],
+                "description": "目标类型区：教训/导览/做法/评测"
+              },
+              "new_filename": {
+                "type": "string",
+                "description": "落位文件名；缺省沿用原名"
+              },
+              "new_hook": {
+                "type": "string",
+                "description": "改写条目首行钩子（子索引行随之用它）：写成含可检索具体名词的一句话（部门/模块/工具/报错码），并保留最后核验日期（如 「…手法 2026-10-02」）；缺日期巡检会标 ⚠️。不传沿用原首行"
+              },
+              "scope": {
+                "type": "string",
+                "description": "落/改条目「适用范围:」标记行（禁外发门禁键）：值须与 PAO_HOME/知识库配置/外发许可.json 白名单键一致（如 PAO），语义查库按它放行云端嵌入。无行则插入、值不同则改写、一致则不动。不传不动"
+              },
+              "verification_source": {
+                "type": "string",
+                "description": "落/改条目「验证出处:」标记行（借鉴③）：写清这条做法由哪张卡、哪次真实验证过（如「卡0007 2026-10-04 真机验收」）。无出处的旧条目标注「未验证」，不删除、不参与高置信引用；与「来源:」不同——来源是抄自哪，验证出处是本地哪次真跑过。无行则插入、值不同则改写、一致则不动。不传不动"
+              },
+              "expected_version": {
+                "type": "string",
+                "description": "期望的来源版本，巡检时比对"
+              },
+              "stale_days": {
+                "type": "number",
+                "description": "巡检超期阈值（天），默认 90"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_inspect_kb",
+          "description": "知识库机械巡检：扫全库条目首行的日期与来源版本，超期未核或版本不符 → 子索引行标 ⚠️。纯比对、开销极小；机器只说多久没核/版本对不上，不说错了。⚠️ 的消化（更新/退役/打回）由部长终审。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "dept": {
+                "type": "string",
+                "description": "部门名（如 平台评测）：工具自动解析为 $PAO_HOME/部门/<部门名>/知识库，不要自己拼路径"
+              },
+              "kb_path": {
+                "type": "string",
+                "description": "知识库根目录（含 教训/导览/做法/评测/待验证/归档 与 索引.md）；一般留空，改传 部门 让工具从 PAO_HOME 解析"
+              },
+              "expected_version": {
+                "type": "string",
+                "description": "期望的来源版本（如 pi 升级后的新版本）"
+              },
+              "stale_days": {
+                "type": "number",
+                "description": "超期阈值（天），默认 90"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_fanout",
+          "description": "主控扇出:一次把多张卡并行派给一次性 worker(每卡一个子进程,全部进程进登记册,pao_stop_background可全停)。并发上限默认 2,超限的卡排队、前一个完成立刻补位,不拒绝不丢弃。并发上限只是最大数量；同一执行目录受写入互斥保护，仍会串行，独立工作目录才可并行。逐卡处理:待认领卡先认领进行中(尝试 +1)再拉起;失败卡先转待认领再拉起(点名即重派决定);进行中与已终态的卡不重复拉起,在摘要注明原因。理由必填(派前自省:真的需要额外多派这几个吗;理由会留痕供上级审查——登记表逐条记录与聚合摘要都带此理由)。worker 结构化回执逐卡落卡(卡号+尝试号,不混批);完成后返回聚合摘要:每卡终态(成功/失败/结果未知/取消/未拉起),失败按四型给路由建议(与卡片失败分型一致)。取消本次工具调用 = 先阻新卡再树杀在跑进程并确认退出(R05);证据与已落回执保留。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_refs",
+              "reason"
+            ],
+            "properties": {
+              "card_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "要扇出的卡引用列表(卡0017/卡#17/17 均可);去重保序,全部入队不丢弃"
+              },
+              "max_concurrency": {
+                "type": "number",
+                "description": "同时运行的 worker 进程上限,默认 2;超限的卡排队补位"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "任务工作区卡目录(内含 卡NNNN-*.md);已配置默认卡目录时可省略"
+              },
+              "reason": {
+                "type": "string",
+                "description": "批量派单理由(必填,trim 后不得为空;派前自省:真的需要额外多派这几个吗)。理由会留痕:每条进程登记表记录与聚合摘要都带此理由,供上级审查。"
+              },
+              "background": {
+                "type": "boolean",
+                "description": "§20 background:true＝派完就走——受理后立即返回受理摘要,不等 worker;完成摘要下一轮自动注入(pao-fanout-done section)。查询:pao_inventory 看在跑进程、/pao queue 看卡状态。缺省 false＝同步等完全部 worker 返回聚合摘要(行为不变)。R05:后台扇出仍归主会话,主会话关闭全停。"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_spawn_minister",
+          "description": "拉起(或命中)一个部门×项目的热部长会话(RPC 常驻子进程,env 强制 PAO_ROLE=部长+PAO_DEPT)。同 部门+项目根 同时最多一个热会话,已有则直接返回既有句柄。保温.json 缺失时不保温(无空闲熔断/提示线/监督,仅手动散场与主会话关闭全停)。拉起后用 pao_inventory 看部长会话行;派卡到同部门+项目时交接页指针自动附进信封。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "dept",
+              "reason"
+            ],
+            "properties": {
+              "dept": {
+                "type": "string",
+                "description": "部门名(绑定 key 一半,同时是 PAO_DEPT 注入值;须在部门/注册表.md)"
+              },
+              "project_root": {
+                "type": "string",
+                "description": "项目根(绑定 key 另一半,归一化绝对路径);缺省当前工作目录"
+              },
+              "reason": {
+                "type": "string",
+                "description": "为什么需要热部长会话(留痕口径同 pao_dispatch_card:空洞理由是干涉信号,须先自省真的需要吗)"
+              },
+              "first_message": {
+                "type": "string",
+                "description": "拉起后立即注入的第一条输入(新卡通知/任务指令);已有热会话时也照注入"
+              },
+              "inject_mode": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "steer"
+                  },
+                  {
+                    "type": "string",
+                    "const": "followUp"
+                  }
+                ],
+                "description": "first_message 的投递语义:steer＝即时干预(插进当前轮,用于当前任务/确认门的紧急补充);followUp＝排队(等本轮结束再新开一轮,普通新增任务的缺省)。部长空闲时两种都立刻开始,该字段只在它正忙时有区别"
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "turns": {
+                    "type": "number",
+                    "description": "轮次上限——到线先催回执一次(预算内唯一提醒:只许交回执/输出结论),再犯即停。整个预算对象:注入后子会话三口执行前检查(turns/cost/工具次数);已有热会话时忽略,预算只在拉起时注入"
+                  },
+                  "toolCalls": {
+                    "type": "number",
+                    "description": "工具调用次数上限"
+                  },
+                  "cost": {
+                    "type": "number",
+                    "description": "金额上限(依据已返回费用;缺用量轮次按保守计)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_dismiss_minister",
+          "description": "显式散场一个热部长会话(主控干涉/用完即散):先落短交接页(部门/<名>/交接/,失败如实通知不阻断)→树杀进程→登记表摘除。与空闲熔断同款散场语义,但不要求空闲。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "dept"
+            ],
+            "properties": {
+              "dept": {
+                "type": "string",
+                "description": "部门名(与拉起时一致)"
+              },
+              "project_root": {
+                "type": "string",
+                "description": "项目根(与拉起时一致);缺省当前工作目录"
+              },
+              "cause": {
+                "type": "string",
+                "description": "散场原因(写进散场记录);缺省「主控显式散场」"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_ack_supervision",
+          "description": "明确确认已处理某个工人/部门监督对象或已作实质检查,并从此刻重新计时。模型结束、agent_settled、通知注入和普通工具调用都不自动确认;未确认对象不会重复唤醒。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "监督提醒里标出的对象 key;显式确认已处理或已作实质检查后,该对象从确认时重新计时。"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_verify_card",
+          "description": "机械验收员（§12）：解析卡验收字段的三种机械句式（跑:命令看退出码／存在:文件／包含:文件 :: 文本）并机械核对。跑命令在临时影子沙箱执行（不碰真项目、.env 与密钥不进沙箱、命令安检门拦串联符/删除动词/绝对路径/嵌套壳）。纯机械条目全过→自动落已交付；混有人话句→机械部分跑完停主控审；有败或无法机械判→输出结构化结果留 owner。结果作为派生数据落卡正文，不改卡协议字段。worker 不得调用（owner/驱动器侧专用）。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref",
+              "operator"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录（任务工作区的 卡/ 目录，绝对路径）；已配置默认卡目录时可省略"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "卡号（数字或 卡#N）"
+              },
+              "operator": {
+                "type": "string",
+                "description": "调用者身份（owner 名）；机械全过时以该身份自动落已交付"
+              },
+              "sandbox_root": {
+                "type": "string",
+                "description": "影子沙箱根目录；缺省 <系统临时目录>/pao-验收沙箱"
+              },
+              "command_timeout_seconds": {
+                "type": "number",
+                "description": "单条跑命令超时秒，缺省 120"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_deliver_card",
+          "description": "交卷自动化（§13，owner/驱动器侧专用，worker 永不跑 git）：对已交付卡机械生成提交信息（卡NNNN 目标 · 状态 · 验收结果）并提交。stage 范围＝认领基线比对本卡差异清单，逐路径 add、禁 git add -A，清单外改动不碰。机械验收未过或状态非已交付会拒绝交卷；无改动则幂等跳过。只 commit 不 push，推送由用户手动。支持单卡或卡号数组批量，串行执行。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "card_ref"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录（任务工作区的 卡/ 目录，绝对路径）；已配置默认卡目录时可省略"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "卡号（数字或 卡#N）"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "卡号（数字或 卡#N）"
+                    }
+                  }
+                ],
+                "description": "单卡或批量：卡号（数字/卡#N）或其数组"
+              },
+              "author_name": {
+                "type": "string",
+                "description": "commit 作者名，缺省 pao"
+              },
+              "author_email": {
+                "type": "string",
+                "description": "commit 作者邮箱，缺省 pao@pao.local"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_integrate_delivery",
+          "description": "在已绑定的受管整合工作树中接纳一张卡的受控交付；使用稳定 request_id 幂等回查，目标 HEAD/tree 外部变化时拒绝覆盖，文本冲突保留现场，集成检查独立执行。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "request_id",
+              "cards_dir",
+              "card_ref",
+              "attempt",
+              "target_cards_dir",
+              "target_card_ref",
+              "target_attempt",
+              "expected_target_head"
+            ],
+            "properties": {
+              "request_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "稳定的整合请求标识；重复调用按它查回，不重复应用。"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "源卡目录绝对路径"
+              },
+              "card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "源卡号"
+              },
+              "attempt": {
+                "type": "number",
+                "minimum": 1,
+                "description": "源卡实际执行 attempt"
+              },
+              "target_cards_dir": {
+                "type": "string",
+                "description": "整合工作树对应的卡目录绝对路径"
+              },
+              "target_card_ref": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "整合工作树卡号"
+              },
+              "target_attempt": {
+                "type": "number",
+                "minimum": 1,
+                "description": "整合工作树当前 attempt"
+              },
+              "expected_target_head": {
+                "type": "string",
+                "minLength": 1,
+                "description": "整合目标预期的当前 HEAD"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "独立集成检查命令"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_create",
+          "description": "主控创建临时工作流计划（只落定义，不启动、不落卡）：步骤＝要做什么/哪个部门/什么要求，依赖用步骤序号（第 1 步＝1）。落 <项目根>/.pao/临时工作流/<计划ID>/计划.md，返回计划 ID 与定义版本。同一 request_id 重试是回放，不会落第二份；同 request_id 换参数会被拒。创建成功只代表定义已落盘——要开工还须用户确认后用 pao_plan_start 启动。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "request_id",
+              "display_name",
+              "steps"
+            ],
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "request_id": {
+                "type": "string",
+                "description": "本次创建逻辑请求 ID（同一操作重试沿用原 ID）"
+              },
+              "display_name": {
+                "type": "string",
+                "description": "显示名（可重名、可含空格；不用于拼磁盘路径）"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "dept",
+                    "requirement"
+                  ],
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "步骤标题（人看的显示名；改标题不影响步骤 ID）"
+                    },
+                    "dept": {
+                      "type": "string",
+                      "description": "执行部门（必须已在 PAO_HOME 注册表里）"
+                    },
+                    "requirement": {
+                      "type": "string",
+                      "description": "要求：这一步要做什么、交付到什么程度"
+                    },
+                    "expected_artifacts": {
+                      "type": "string",
+                      "description": "预期成果（验收要求）：期望产出的文件或结果；缺省用要求"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "上游成果或资料（进卡面「输入」：这一步拿什么干）"
+                    },
+                    "depends_on": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "description": "依赖的步骤序号（第 1 步＝1）"
+                    },
+                    "execution_mode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "direct"
+                        },
+                        {
+                          "type": "string",
+                          "const": "decompose"
+                        }
+                      ],
+                      "description": "明确的小任务选 direct；需要拆解或独立审核选 decompose，缺省保留旧拆解行为"
+                    },
+                    "human_gate": {
+                      "type": "boolean",
+                      "description": "人工门：交付后停流等用户点头"
+                    },
+                    "read_only": {
+                      "type": "boolean",
+                      "description": "只读步骤；独立审核必须同时把这一步设为 read_only=true"
+                    },
+                    "audit": {
+                      "type": "boolean",
+                      "description": "独立审核步骤（须同时 read_only=true 并给 dept_standard）"
+                    },
+                    "dept_standard": {
+                      "type": "string",
+                      "description": "部门标准（审核步骤必填，可写标准文本或路径）"
+                    },
+                    "constraints": {
+                      "type": "string",
+                      "description": "约束（不许做什么）"
+                    },
+                    "tier": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "fast"
+                        },
+                        {
+                          "type": "string",
+                          "const": "primary"
+                        }
+                      ],
+                      "description": "档位"
+                    },
+                    "priority": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "high"
+                        },
+                        {
+                          "type": "string",
+                          "const": "medium"
+                        },
+                        {
+                          "type": "string",
+                          "const": "low"
+                        }
+                      ],
+                      "description": "优先级"
+                    },
+                    "budget_turns": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "这一步的轮次预算"
+                    },
+                    "budget_tool_calls": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "这一步的工具调用次数预算"
+                    },
+                    "budget_cost": {
+                      "type": "number",
+                      "description": "这一步的费用预算"
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "需要的技能名"
+                    },
+                    "back_edges": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "target",
+                          "max_rounds"
+                        ],
+                        "properties": {
+                          "target": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "description": "回边目标（1 起序号或步骤 ID）"
+                          },
+                          "max_rounds": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "回边次数上限"
+                          },
+                          "over_limit_action": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": "停滞"
+                              },
+                              {
+                                "type": "string",
+                                "const": "修完这轮放行"
+                              }
+                            ],
+                            "description": "超限动作；缺省停滞"
+                          }
+                        }
+                      },
+                      "description": "审核回边（仅审核步骤可声明）"
+                    }
+                  }
+                },
+                "description": "步骤表（按顺序；第 1 步序号为 1）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_update",
+          "description": "修改、撤销最近一次修改，或撤回整份临时计划（都是带版本检查的写操作）：action=modify 传新的 steps（整份替换）。步骤有稳定 ID（s1/s2…）与显示顺序两件事：改标题/要求时带上原来那一步的 step_id，ID 就不动，已投递的意见与文件关联不会断；重排只是改提交顺序，step_id 照旧；新增步骤不要传 step_id（内核发新 ID）；删掉的步骤若还挂着意见会被拒。不传 step_id 时，只有「步骤数不变」才按位置沿用原 ID。action=revert 是「撤销最近一次修改」：把内容回到上一版、整份计划仍有效可执行，回到的那版会成为**新的定义版本**（版本号继续往前走，不改历史）；可用 target_version 指定回到哪一版，缺省＝最近一版。action=undo 是「撤回整份计划」：把计划标为已撤销、不再启动，与 revert 是两件事，不混同。三者都须带 expected_version（当前定义版本）与 request_id；盘上版本与之不一致即拒（说明有人在中间改过，请重读）。已启动（含已受理未落实例）的定义被冻结，不能改、不能撤、不能恢复。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "plan_id",
+              "request_id",
+              "expected_version",
+              "action"
+            ],
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "plan_id": {
+                "type": "string"
+              },
+              "request_id": {
+                "type": "string",
+                "description": "本次修改逻辑请求 ID（同一操作重试沿用原 ID）"
+              },
+              "expected_version": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "请求基于的定义版本；与盘上不一致就拒"
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "modify"
+                  },
+                  {
+                    "type": "string",
+                    "const": "revert"
+                  },
+                  {
+                    "type": "string",
+                    "const": "undo"
+                  }
+                ]
+              },
+              "target_version": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "action=revert 用：要回到的历史版本号；不传＝最近一个历史版本"
+              },
+              "display_name": {
+                "type": "string",
+                "description": "新显示名（不改就不传）"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "dept",
+                    "requirement"
+                  ],
+                  "properties": {
+                    "step_id": {
+                      "type": "string",
+                      "description": "已有步骤的稳定 ID（如 s1）；改这一步或重排时带上它，标题可随意改。新增步骤留空"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "dept": {
+                      "type": "string"
+                    },
+                    "requirement": {
+                      "type": "string"
+                    },
+                    "expected_artifacts": {
+                      "type": "string"
+                    },
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "depends_on": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    "execution_mode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "direct"
+                        },
+                        {
+                          "type": "string",
+                          "const": "decompose"
+                        }
+                      ]
+                    },
+                    "human_gate": {
+                      "type": "boolean"
+                    },
+                    "read_only": {
+                      "type": "boolean",
+                      "description": "只读步骤；独立审核必须同时把这一步设为 read_only=true"
+                    },
+                    "audit": {
+                      "type": "boolean",
+                      "description": "独立审核步骤（须同时 read_only=true 并给 dept_standard）"
+                    },
+                    "dept_standard": {
+                      "type": "string",
+                      "description": "部门标准（审核步骤必填，可写标准文本或路径）"
+                    },
+                    "constraints": {
+                      "type": "string"
+                    },
+                    "tier": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "fast"
+                        },
+                        {
+                          "type": "string",
+                          "const": "primary"
+                        }
+                      ]
+                    },
+                    "priority": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "high"
+                        },
+                        {
+                          "type": "string",
+                          "const": "medium"
+                        },
+                        {
+                          "type": "string",
+                          "const": "low"
+                        }
+                      ]
+                    },
+                    "budget_turns": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "budget_tool_calls": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "budget_cost": {
+                      "type": "number"
+                    },
+                    "skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "back_edges": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "target",
+                          "max_rounds"
+                        ],
+                        "properties": {
+                          "target": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "max_rounds": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "over_limit_action": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": "停滞"
+                              },
+                              {
+                                "type": "string",
+                                "const": "修完这轮放行"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": "action=modify 时的新步骤表（整份替换；省略则只改显示名）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_query",
+          "description": "查临时计划（只读、不要求先加入模板库）：列全部或指定 plan_id 的一份。plan_id 留空＝简短列表（显示名、定义版本、步数、是否已启动）；给了 plan_id＝完整详情（逐步给出要求/输入/预期成果/依赖/人工门/审核/部门标准/约束/档位/预算/优先级/技能/回边，以及来源主控、创建与更新时刻、运行关联、历史版本与读不出的定义或坏关联，逐条点名不当没有）。详情里长正文按 around_step 只取某一步，用 step_detail 一项一项读。空对话里要找回「当初要求、约束、验收、预算、技能、身份」就用这个详情面。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "plan_id": {
+                "type": "string",
+                "description": "留空列该项目全部临时计划；给了它返回这份计划的完整详情"
+              },
+              "around_step": {
+                "type": "string",
+                "description": "只要某一步的详情（步骤 ID 如 s2）；不传＝列全部步骤"
+              },
+              "step_detail": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "要求"
+                  },
+                  {
+                    "type": "string",
+                    "const": "输入"
+                  },
+                  {
+                    "type": "string",
+                    "const": "预期成果"
+                  },
+                  {
+                    "type": "string",
+                    "const": "依赖"
+                  },
+                  {
+                    "type": "string",
+                    "const": "审核"
+                  },
+                  {
+                    "type": "string",
+                    "const": "预算"
+                  },
+                  {
+                    "type": "string",
+                    "const": "技能"
+                  },
+                  {
+                    "type": "string",
+                    "const": "人工门"
+                  },
+                  {
+                    "type": "string",
+                    "const": "身份"
+                  }
+                ],
+                "description": "只读某一项（长内容按对象读取，避免一次灌满上下文）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_start",
+          "description": "用户确认后启动临时计划：走既有 v2 启流核心（预检→owner→冻结配方→控制正本→自动链），执行目录按启动请求 ID 先定死，返回真实实例号与执行目录。必须带 plan_id、definition_version（确认的是哪一版）与 start_request_id；确认事实只认宿主确认回调，模型自己写 confirmed 或转述「用户已同意」都不算。同一 start_request_id 重试是找回原实例，不会起第二份；只有控制正本已形成而关联丢失时报出可恢复原因，不下「未受理」结论。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "plan_id",
+              "definition_version",
+              "start_request_id"
+            ],
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "plan_id": {
+                "type": "string"
+              },
+              "definition_version": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "要启动的定义版本（确认时给用户看的那一版）"
+              },
+              "start_request_id": {
+                "type": "string",
+                "description": "本次启动逻辑请求 ID（重试沿用原 ID，落在同一执行目录）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_save_template",
+          "description": "把临时计划里可复用的部分（步骤/部门/依赖/约束/技能/预算/验收/人工门/审核，按字段白名单）存成 <PAO_HOME>/工作流/<模板名>.md：不含会话、卡号、实例状态与本次成果路径。定义版本要一致；同名模板不覆盖（要覆盖请在模板库里改名或删旧版）。参数化：用 params 把本次特有的字面量（绝对路径、项目名等）点名换成 {占位符}，模板 frontmatter 的「参数」表会声明它们，于是换一个项目填了参数就能再跑一份新计划；params 的键是参数名、值是**本次的字面量**，内核只替换你点名的文本，不猜哪段该参数化。计划里还有本次特有路径且没被 params 换掉时默认拒存并列出路径（或显式 allow_project_specific_paths 原样保存并在结果里点名）。保存模板不改变当前执行，也不影响已冻结的实例。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "plan_id",
+              "definition_version",
+              "template_name"
+            ],
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "plan_id": {
+                "type": "string"
+              },
+              "definition_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "template_name": {
+                "type": "string",
+                "description": "模板名（＝模板库文件名）"
+              },
+              "params": {
+                "type": "object",
+                "patternProperties": {
+                  "^.*$": {
+                    "type": "string"
+                  }
+                },
+                "description": "要参数化的本次字面量：{参数名: 本次的文本}；模板里替换成 {参数名} 并在参数表声明"
+              },
+              "allow_project_specific_paths": {
+                "type": "boolean",
+                "description": "为 true 时允许本次特有路径原样进模板（结果里会点名）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_plan_feedback",
+          "description": "把用户对整份计划的目标、某一步或某个文件说的话记到临时计划上，并如实报投递状态。绑定提交时正在看的定义版本与阅读版本，之后计划被改或出现新稿都不改绑（只提示有新版本）。target_kind：流程＝针对整份计划目标的整体意见（不要给 step_id）；步骤＝针对某一步（缺省，给 step_id）；文件＝针对某一轮次的某个文件（还要给 round/file_path/version_basis）。action：record＝新建（给 deliver_request_id 才算「待送达」，同一 ID 重试是回放）；delivery＝写真实投递回执（delivered=true 才算「已送达」，false 记「投递失败」并给失败原因，没回执不许说送到了；请求 ID 与实例对不上不结算）；apply＝按业务依据标「已应用」（依据必须是哪张卡/哪次修订真的照它改了，空白不算）；list＝按提交顺序列出。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "plan_id",
+              "action"
+            ],
+            "properties": {
+              "project_root": {
+                "type": "string",
+                "description": "项目根绝对路径（临时计划定义落点 <项目根>/.pao/临时工作流/）；留空用宿主注入的项目根"
+              },
+              "plan_id": {
+                "type": "string"
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "record"
+                  },
+                  {
+                    "type": "string",
+                    "const": "delivery"
+                  },
+                  {
+                    "type": "string",
+                    "const": "apply"
+                  },
+                  {
+                    "type": "string",
+                    "const": "list"
+                  }
+                ]
+              },
+              "feedback_id": {
+                "type": "string",
+                "description": "delivery/apply 必填：要结算的那条意见"
+              },
+              "definition_version": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "record 用：提交时用户正在看的那一版定义"
+              },
+              "target_kind": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "流程"
+                  },
+                  {
+                    "type": "string",
+                    "const": "步骤"
+                  },
+                  {
+                    "type": "string",
+                    "const": "文件"
+                  }
+                ],
+                "description": "缺省＝步骤；「流程」＝针对整份计划的目标/整体评价（此时不要给 step_id）"
+              },
+              "step_id": {
+                "type": "string",
+                "description": "讨论对象所在的步骤 ID（如 s1）"
+              },
+              "round": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "文件意见：第几轮次的稿子"
+              },
+              "file_path": {
+                "type": "string",
+                "description": "文件意见：已确认的成果路径"
+              },
+              "version_basis": {
+                "type": "string",
+                "description": "文件意见：版本依据（用户读的是哪一版，如轮次＋文件时间戳）"
+              },
+              "text": {
+                "type": "string",
+                "description": "record 用：用户的原话/意见正文"
+              },
+              "deliver_request_id": {
+                "type": "string",
+                "description": "投递逻辑请求 ID（重试沿用原 ID；给了才是「待送达」）"
+              },
+              "delivered": {
+                "type": "boolean",
+                "description": "delivery 用：部长那边是否真的受理了"
+              },
+              "result": {
+                "type": "string",
+                "description": "delivery 用：真实结果原文（送达回执或失败原因）"
+              },
+              "instance_id": {
+                "type": "string",
+                "description": "delivery 用：回执来自哪个执行实例；与已登记实例对不上就不结算这条意见"
+              },
+              "evidence": {
+                "type": "string",
+                "description": "apply 用：业务处理依据"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_control_node",
+          "description": "主控的 v2 节点确认、暂停、人工恢复、当前节点重开（reopen）或审核回边返工（rework）。重开须原实例/owner/节点/轮次及核查理由；常规质量返工只走已声明回边，保留轮次历史和人工门。拆卡和判定由真实部长提交。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name",
+              "action"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "confirm"
+                  },
+                  {
+                    "type": "string",
+                    "const": "pause"
+                  },
+                  {
+                    "type": "string",
+                    "const": "resume"
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen"
+                  },
+                  {
+                    "type": "string",
+                    "const": "rework"
+                  },
+                  {
+                    "type": "string",
+                    "const": "rule"
+                  }
+                ]
+              },
+              "node": {
+                "type": "string"
+              },
+              "instance": {
+                "type": "string"
+              },
+              "round": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "reason": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "pass"
+                  },
+                  {
+                    "type": "string",
+                    "const": "change"
+                  },
+                  {
+                    "type": "string",
+                    "const": "reject"
+                  }
+                ]
+              },
+              "failure_axis": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "card"
+                  },
+                  {
+                    "type": "string",
+                    "const": "dept_standard"
+                  },
+                  {
+                    "type": "string",
+                    "const": "both"
+                  }
+                ]
+              },
+              "references": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "target": {
+                "type": "string"
+              },
+              "prev_owner": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_start_flow",
+          "description": "一键启动工作流：按配方名从 <PAO_HOME>/工作流/<名字>.md 加载并校验（有向无环、参数占位符全有值才放行），写实例清单 工作流实例-<名字>.md，落首批卡（depends_on 全完成的节点）。同一流已有实例清单时拒绝重复启动。配方标 自动执行: true 时首批卡进后台自动链（派发→回执→越界核查→机械验收→交卷→解锁下游）——受理即返不等 worker，停下/失败/完成以 pao 后台通知 注入下一轮；缺省只落卡。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              },
+              "params": {
+                "type": "object",
+                "patternProperties": {
+                  "^.*$": {
+                    "type": "string"
+                  }
+                },
+                "description": "配方参数占位符的取值，键值对"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_decision_pack",
+          "description": "读取冻结基线 diff、卡面、双轴标准、派单理由与验收证据，生成自足单文件；缺证据如实标明。回执宣称不能替代运行证据。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name",
+              "instance",
+              "node",
+              "round",
+              "minister_session"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              },
+              "instance": {
+                "type": "string"
+              },
+              "node": {
+                "type": "string"
+              },
+              "round": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minister_session": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_push_flow",
+          "description": "推进工作流一个驱动循环：从卡现读各节点状态，把 depends_on 全部已交付（人工门已确认）的未跑节点落卡。挂起补齐后、回执交付后调用它续跑；失败即停不硬闯。配方标 自动执行: true 时进后台自动链（派发→回执→越界核查→机械验收→交卷→解锁下游循环）——受理即返不等 worker（在途重复推流不双跑），停下/失败/完成以 pao 后台通知 注入下一轮；缺省只落卡。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_query_flow",
+          "description": "查工作流进度（只读）：当前跑到哪个节点、各节点卡号与卡状态、人工门与挂起原因。真相在卡上，实例清单只提供映射；清单缺失时自动从卡正文标记重建视图。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_confirm_flow",
+          "description": "人工门点头：对标记人工确认且卡已交付的节点记录确认并立即续跑（放行下游）。未交付、未标人工门的节点会被拒绝。配方标 自动执行: true 时点头后进后台自动链——受理即返不等 worker，停下/完成以 pao 后台通知 注入下一轮。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name",
+              "node"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              },
+              "node": {
+                "type": "string",
+                "description": "要确认的节点名"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_save_flow",
+          "description": "从已完任务的卡目录蒸馏工作流配方草稿（逐字提取,不落盘）:每张卡→一个节点（目标/部门/验收/约束/输入/档位/预算/优先级原样进节点,依赖卡号映射为节点名）;人工确认一律 false（手动跑的任务没有确认留痕,审草稿时人工标）;参数表留空。草稿过全量校验（依赖成环拒绝出稿）后返回 markdown——先审改（建议把项目名/路径换成 {参数} 占位符并在参数表声明）,再用 pao_write_recipe 落盘。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "cards_dir",
+              "recipe_name"
+            ],
+            "properties": {
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              },
+              "recipe_name": {
+                "type": "string",
+                "description": "草稿 frontmatter「名字」（落盘时的文件名,蒸馏只写进草稿不落盘）"
+              },
+              "source_workflow": {
+                "type": "string",
+                "description": "v2 实例名；从冻结图蒸馏，保留并发、判定、回边及模型设置"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_write_recipe",
+          "description": "把配方内容（蒸馏草稿或对话起草）校验后写入 <PAO_HOME>/工作流/<名字>.md:frontmatter 可解析、文件名与「名字」一致、依赖无环、占位符全部已在参数表声明,全过才原子落盘。同名已存在默认拒绝;overwrite:true 时先把旧文件备份为 .bak-时间戳 再写。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name",
+              "content"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "配方名（文件名,非空、≤64、无路径分隔符等非法字符）"
+              },
+              "content": {
+                "type": "string",
+                "description": "完整配方 markdown（--- frontmatter --- ＋说明正文）"
+              },
+              "overwrite": {
+                "type": "boolean",
+                "description": "同名配方已存在时是否覆盖（默认 false;覆盖前自动备份旧版）"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_review_flow",
+          "description": "工作流复盘机械报告（跑完检查实施用）:从卡与回执现读,每节点一行——卡号/状态/尝试与重试/派发次数/打回与失败类型/末次成功摘要/产物/人工门确认/预算 vs 实耗,末尾总账与孤儿卡点名。只做机械汇总不给建议;改进意见由你（主控）基于报告给,用户逐条拍板后用 pao_write_recipe 回写配方。不建第二套真相。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "工作流配方名（<PAO_HOME>/工作流/<名字>.md）"
+              },
+              "cards_dir": {
+                "type": "string",
+                "description": "卡目录绝对路径（任务工作区的 卡/ 目录）；留空用扩展配置注入的默认卡目录"
+              }
+            }
+          }
+        },
+        {
+          "name": "pao_create_dept",
+          "description": "创建部门(部门创建唯一正门):一次落齐 ①配方(部门/<名字>/配方.md:名字/人设/工具/技能/默认档位/记忆目录;工具=派发 worker 的内置工具白名单,技能=pao配置/skills 下真实目录名,人设只是文字) ②知识库骨架(索引.md 门面 + 待验证/归档/教训/导览/做法/评测 六目录,四类型区各带子索引) ③注册表行(部门/注册表.md:名字/能力标签/库路径/建部日期,建部日期由代码取当天写入)。幂等:对同名部门重跑只补缺,不覆盖已有文件与自定义内容。",
+          "parameters": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "部门名字,同时也是 部门/<名字>/ 目录名"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "能力标签(如 api、数据库),主控派卡与协作路由的匹配依据"
+              },
+              "default_tier": {
+                "type": "string",
+                "description": "写进配方的默认档位名(档位定义见 pao配置/档位.json),缺省「主力」"
+              },
+              "preset": {
+                "type": "string",
+                "const": "operations",
+                "description": "显式选用运维/清理配方与默认能力标签；不填沿用普通骨架，已有配方不覆盖。"
+              }
+            }
+          }
+        }
+      ],
+      "timestamp": 1792774235265
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "仅测量上下文组成。请返回一句固定说明，不调用工具。"
+        }
+      ],
+      "timestamp": 1792774235264
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "离线固定回复；未执行任务。"
+        }
+      ],
+      "api": "faux:1792774235212:9nl6lyvnel9",
+      "provider": "faux",
+      "model": "faux-1",
+      "usage": {
+        "input": 14691,
+        "output": 4,
+        "cacheRead": 0,
+        "cacheWrite": 14691,
+        "totalTokens": 29386,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1792774235274,
+      "thinkingLevel": "off"
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "第二轮仍只返回固定说明，不调用工具。"
+        }
+      ],
+      "timestamp": 1792774235285
+    }
+  ]
+}

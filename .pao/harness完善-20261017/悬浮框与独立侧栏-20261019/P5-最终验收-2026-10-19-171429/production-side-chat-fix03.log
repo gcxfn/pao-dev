@@ -1,0 +1,50 @@
+
+Running 2 tests using 1 worker
+
+
+
+[1A[2K(node:31488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:31488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[1/2] apps\desktop\tests\production\packaged-side-chat.spec.ts:791:5 › 最终发行物 V08/V13：辅助问答与主控并行、连续记录和来源隔离
+[1A[2K[2/2] apps\desktop\tests\production\packaged-side-chat.spec.ts:1015:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录
+[1A[2K  1) apps\desktop\tests\production\packaged-side-chat.spec.ts:1015:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('side-chat-panel')
+    Expected: [32m"[7mtru[27me"[39m
+    Received: [31m"[7mfals[27me"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('side-chat-panel')[22m
+    [2m    9 × locator resolved to <section class="side-chat" data-busy="false" aria-busy="false" aria-label="辅助对话" data-testid="side-chat-panel" data-source-session="01a1538b-44db-744c-a7cb-5b7583ced828">…</section>[22m
+    [2m      - unexpected value "false"[22m
+
+
+      1090 |       panel = await openSideChat(window, { waitUntilLoaded: false });
+      1091 |       await expect(panel).toHaveAttribute("data-source-session", sourceB.sessionId);
+    > 1092 |       await expect(panel).toHaveAttribute("aria-busy", "true");
+           |                           ^
+      1093 |       await expect(panel.getByText("正在读取独立问答记录…", { exact: true })).toBeVisible();
+      1094 |       await window.clock.runFor(30_100);
+      1095 |       await expect(panel).toHaveAttribute("aria-busy", "true");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:1092:27
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:1015:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+  1 passed (1.8m)

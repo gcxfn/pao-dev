@@ -1,0 +1,1885 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "id": "I06",
+    "path": "D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\fixtures\\memory\\scenarios\\I06.json",
+    "input": {
+      "id": "I06",
+      "description": "同名项目和worktree相近词语",
+      "sessions": [
+        {
+          "sessionId": "sess-g",
+          "messages": [
+            {
+              "role": "user",
+              "content": "pao 项目的记忆存储定了吗？",
+              "timestamp": "2026-11-08T17:00:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。",
+              "timestamp": "2026-11-08T17:00:05Z"
+            },
+            {
+              "role": "user",
+              "content": "确认，pao-dev 用 SQLite。",
+              "timestamp": "2026-11-08T17:01:00Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement",
+              "scope": {
+                "projectId": "pao-dev"
+              }
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "pao 记忆存储",
+              "mustContain": [
+                "mem-pao-dev-sqlite"
+              ],
+              "mustNotContain": [
+                "mem-pao-home-sqlite"
+              ]
+            }
+          ]
+        },
+        {
+          "sessionId": "sess-g-worktree",
+          "messages": [
+            {
+              "role": "user",
+              "content": "worktree 分支也要用 SQLite 吗？",
+              "timestamp": "2026-11-08T17:05:00Z"
+            },
+            {
+              "role": "assistant",
+              "content": "worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。",
+              "timestamp": "2026-11-08T17:05:05Z"
+            }
+          ],
+          "expectedMemories": [
+            {
+              "kind": "decision",
+              "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+              "confirmation": "confirmed",
+              "evidenceKind": "user_statement",
+              "scope": {
+                "projectId": "pao-dev",
+                "branch": "worktree-feature"
+              }
+            }
+          ],
+          "expectedSearchResults": [
+            {
+              "query": "记忆存储",
+              "mustContain": [
+                "mem-pao-dev-sqlite"
+              ],
+              "mustNotContain": []
+            }
+          ]
+        }
+      ],
+      "expectedFinalState": {
+        "memories": [
+          {
+            "id": "mem-pao-dev-sqlite",
+            "kind": "decision",
+            "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+            "confirmation": "confirmed",
+            "usageState": "active",
+            "scope": {
+              "projectId": "pao-dev"
+            }
+          }
+        ],
+        "sources": [
+          {
+            "sourceId": "src-sess-g-001",
+            "sessionId": "sess-g",
+            "entryId": "entry-003"
+          }
+        ]
+      }
+    }
+  },
+  "mode": "real",
+  "status": "real_evidence_collected",
+  "acceptance": {
+    "realAcceptanceClaimed": false,
+    "eligibleForS4Review": true,
+    "reason": "本轮收集真实入口证据；是否通过由 S4-17 主对话判定"
+  },
+  "runRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110",
+  "workRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA",
+  "inputs": {
+    "authPath": "C:\\Users\\ASUS\\.pi\\agent\\auth.json",
+    "modelsPath": "C:\\Users\\ASUS\\.pi\\agent\\models.json",
+    "tierConfigSource": "options.tierConfig",
+    "executeReal": true,
+    "offlineProvider": false,
+    "processEnvIsolation": {
+      "embeddingEnv": "disabled_for_run",
+      "envFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\embedding-disabled.env",
+      "outboundConfig": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\outbound-disabled.json",
+      "restoredAfterRun": true
+    }
+  },
+  "network": {
+    "modelRequests": 3,
+    "provider": "configured_model",
+    "cloudEmbeddingRequests": 0,
+    "localFailureEndpointRequests": 0,
+    "cloudEmbeddingBasis": "EMBED_* 与 .env 在 adapter 运行期间隔离"
+  },
+  "scenarioEvidence": {
+    "roots": {
+      "main": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+      "worktree": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature",
+      "other": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+      "otherHome": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-home\\pao"
+    },
+    "git": {
+      "main": [
+        {
+          "args": [
+            "init",
+            "-b",
+            "main"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+          "stdout": "Initialized empty Git repository in D:/AI/workspace/pao-dev/.pao/内置记忆与受控自进化-2026-11-08/S4/real-validation/runs/real-I06-20261110/I06-1794241904642-ntzmMA/projects/pao-dev/.git/",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "user.name",
+            "PAO Boundary Acceptance"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "user.email",
+            "pao-boundary-acceptance@local.invalid"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "add",
+            "README.md"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+          "stdout": "",
+          "stderr": "warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it"
+        },
+        {
+          "args": [
+            "commit",
+            "-m",
+            "boundary fixture"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+          "stdout": "[main (root-commit) 6b27835] boundary fixture\n 1 file changed, 1 insertion(+)\n create mode 100644 README.md",
+          "stderr": ""
+        }
+      ],
+      "worktree": {
+        "args": [
+          "worktree",
+          "add",
+          "-b",
+          "worktree-feature",
+          "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature",
+          "HEAD"
+        ],
+        "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev",
+        "stdout": "HEAD is now at 6b27835 boundary fixture",
+        "stderr": "Preparing worktree (new branch 'worktree-feature')"
+      },
+      "other": [
+        {
+          "args": [
+            "init",
+            "-b",
+            "main"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+          "stdout": "Initialized empty Git repository in D:/AI/workspace/pao-dev/.pao/内置记忆与受控自进化-2026-11-08/S4/real-validation/runs/real-I06-20261110/I06-1794241904642-ntzmMA/other-project/pao-dev/.git/",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "user.name",
+            "PAO Boundary Acceptance"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "user.email",
+            "pao-boundary-acceptance@local.invalid"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "add",
+            "README.md"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+          "stdout": "",
+          "stderr": "warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it"
+        },
+        {
+          "args": [
+            "commit",
+            "-m",
+            "boundary fixture"
+          ],
+          "cwd": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev",
+          "stdout": "[main (root-commit) 48a38fc] boundary fixture\n 1 file changed, 1 insertion(+)\n create mode 100644 README.md",
+          "stderr": ""
+        }
+      ]
+    },
+    "aliases": {
+      "project": {
+        "expected": "pao-dev",
+        "actual": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev"
+      },
+      "memory": {
+        "expected": "mem-pao-dev-sqlite",
+        "actual": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+        "revision": 1
+      },
+      "otherMemory": {
+        "expected": "mem-pao-home-sqlite",
+        "actual": "mem-acdbfc8b-2acd-41c4-95a9-975a5ec77ed5",
+        "revision": 1,
+        "logicalRole": "same-name-independent-project"
+      },
+      "writtenToDatabase": false
+    },
+    "identity": {
+      "main": {
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+          "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+        },
+        "actualSessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+        "sessionFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\sessions\\2026-11-09T16-31-46-399Z_01a1c126-c6df-750a-9a30-23f8f1910c75.jsonl"
+      },
+      "worktree": {
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+          "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+          "branch": "worktree-feature",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature"
+        },
+        "actualSessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+        "sessionFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\sessions\\2026-11-09T16-31-46-441Z_01a1c126-c709-750a-9a30-23fa58b0181d.jsonl"
+      },
+      "other": {
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+          "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+        },
+        "memoryScope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+          "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+        },
+        "actualSessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+        "sessionFile": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\sessions\\2026-11-09T16-31-46-468Z_01a1c126-c724-750a-9a30-23fd83d2c2d9.jsonl"
+      }
+    },
+    "extractions": [
+      {
+        "job": {
+          "created": {
+            "jobId": "job-136e512c-8300-4133-8562-f1ee15aec8f4",
+            "sourceScope": "{\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"sourceIds\":[\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user\",\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\"]}",
+            "scopeKey": "session:01a1c126-c6df-750a-9a30-23f8f1910c75",
+            "status": "pending",
+            "attemptCount": 0,
+            "createdAt": "2026-11-09T16:31:46.501Z",
+            "updatedAt": "2026-11-09T16:31:46.501Z"
+          },
+          "claim": {
+            "job": {
+              "jobId": "job-136e512c-8300-4133-8562-f1ee15aec8f4",
+              "sourceScope": "{\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"sourceIds\":[\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user\",\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\"]}",
+              "scopeKey": "session:01a1c126-c6df-750a-9a30-23f8f1910c75",
+              "status": "running",
+              "attemptCount": 1,
+              "ownerProcess": "boundary-adapter:34024",
+              "createdAt": "2026-11-09T16:31:46.501Z",
+              "updatedAt": "2026-11-09T16:31:46.503Z"
+            },
+            "attemptId": "att-627b6b7e-b888-464a-bc1b-bae09d2eb731"
+          }
+        },
+        "request": {
+          "input": {
+            "jobId": "job-136e512c-8300-4133-8562-f1ee15aec8f4",
+            "sourceSessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+            "entries": [
+              {
+                "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user",
+                "entryId": "c9a07e11",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c9a07e11\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.408Z\",\"capturedAt\":\"2026-11-09T16:31:46.418Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              },
+              {
+                "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                "entryId": "66c0130b",
+                "eventType": "assistant",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              },
+              {
+                "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+                "entryId": "c3db7233",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              }
+            ],
+            "signal": {}
+          },
+          "output": {
+            "ok": true,
+            "requestId": "job-136e512c-8300-4133-8562-f1ee15aec8f4:extract:e47d5bf1-3950-497b-acf6-28d3596fe8cb",
+            "candidates": [
+              {
+                "kind": "decision",
+                "conclusion": "pao-dev 开发仓的记忆存储确定为使用 SQLite。",
+                "conditions": "适用于 pao-dev 开发仓项目",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed",
+                "sourceIds": [
+                  "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+                  "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+                    "text": "确认，pao-dev 用 SQLite。"
+                  },
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                    "text": "pao-dev 开发仓已定用 SQLite"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+                    "match": "exact",
+                    "offset": 235
+                  },
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                    "match": "exact",
+                    "offset": 268
+                  }
+                ]
+              },
+              {
+                "kind": "experience",
+                "conclusion": "另一个名为 pao 的目录是 PAO_HOME 运行现场，与 pao-dev 开发仓不属于同一项目，排查时应区分两者。",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative",
+                "sourceIds": [
+                  "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                    "text": "另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                    "match": "exact",
+                    "offset": 290
+                  }
+                ]
+              }
+            ],
+            "rejected": [],
+            "usage": {
+              "input": 1215,
+              "output": 751,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 275,
+              "totalTokens": 2350,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            }
+          },
+          "modelRequests": [
+            {
+              "requestIndex": 1,
+              "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+              "callerSessionId": "unknown",
+              "startedAt": "2026-11-09T16:31:46.512Z",
+              "observerLatencyMs": 9569.1628,
+              "model": {
+                "provider": "magpie",
+                "id": "group/deepseek"
+              },
+              "requestContext": {
+                "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user entryId=c9a07e11 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c9a07e11\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.408Z\",\"capturedAt\":\"2026-11-09T16:31:46.418Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant entryId=66c0130b eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user entryId=c3db7233 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n\n请输出候选 JSON 数组。",
+                    "timestamp": 1794241906511
+                  }
+                ]
+              },
+              "payload": {
+                "status": "observed",
+                "raw": {
+                  "model": "group/deepseek",
+                  "messages": [
+                    {
+                      "role": "developer",
+                      "content": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。"
+                    },
+                    {
+                      "role": "user",
+                      "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user entryId=c9a07e11 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c9a07e11\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.408Z\",\"capturedAt\":\"2026-11-09T16:31:46.418Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant entryId=66c0130b eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user entryId=c3db7233 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n\n请输出候选 JSON 数组。"
+                    }
+                  ],
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "store": false,
+                  "max_completion_tokens": 4096,
+                  "reasoning_effort": "low"
+                },
+                "error": "unknown"
+              },
+              "response": {
+                "status": 200,
+                "raw": {
+                  "status": 200,
+                  "headers": {
+                    "cache-control": "no-cache",
+                    "content-type": "text/event-stream",
+                    "date": "Mon, 09 Nov 2026 16:31:51 GMT",
+                    "transfer-encoding": "chunked",
+                    "x-accel-buffering": "no",
+                    "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                    "x-magpie-provider": "workbuddy",
+                    "x-request-id": "d1ee8b4900bcc996be71b44dfec7ef2d"
+                  }
+                },
+                "headers": {
+                  "cache-control": "no-cache",
+                  "content-type": "text/event-stream",
+                  "date": "Mon, 09 Nov 2026 16:31:51 GMT",
+                  "transfer-encoding": "chunked",
+                  "x-accel-buffering": "no",
+                  "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                  "x-magpie-provider": "workbuddy",
+                  "x-request-id": "d1ee8b4900bcc996be71b44dfec7ef2d"
+                },
+                "requestId": "d1ee8b4900bcc996be71b44dfec7ef2d",
+                "rawHTTPBody": "unavailable_public_surface",
+                "error": "unknown"
+              },
+              "output": {
+                "status": "observed",
+                "rawAssistantMessage": {
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "thinking",
+                      "thinking": "We need extract candidates. Key facts: pao-dev dev repo memory storage decided SQLite, confirmed by user. Also distinction: another directory named pao is PAO_HOME runtime, not same project — likely experience/lesson. Let's craft.\n\nSources: src for assistant entry and user entry. Use quoted spans exact.\n\nDecision: conclusion \"pao-dev 开发仓的记忆存储确定为 SQLite\" evidence user_statement confirmed. sourceIds include user src and assistant src. quotedSpans user \"确认，pao-dev 用 SQLite。\" and assistant \"pao-dev 开发仓已定用 SQLite\".\n\nExperience: \"名为 pao 的另一个目录是 PAO_HOME 运行现场，与 pao-dev 开发仓不属于同一项目\" evidence model? Assistant statement; user didn't confirm. It's stated by assistant but probably factual; evidenceKind=execution? Not execution. Could be model_inference tentative? Hmm. It's an assistant statement, not user confirmation. We have only user_statement for user; assistant statement maybe model_inference tentative. But maybe skip? Worth long-term to avoid confusion. Kind experience, evidenceKind=model_inference, confirmation=tentative.\n\nCould also be decision that storage set. Need rationale? Assistant didn't say why. No rationale.\n\nLet's output JSON array.",
+                      "thinkingSignature": "reasoning_content"
+                    },
+                    {
+                      "type": "text",
+                      "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"pao-dev 开发仓的记忆存储确定为使用 SQLite。\",\n    \"conditions\": \"适用于 pao-dev 开发仓项目\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\",\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\",\n        \"text\": \"确认，pao-dev 用 SQLite。\"\n      },\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\n        \"text\": \"pao-dev 开发仓已定用 SQLite\"\n      }\n    ]\n  },\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"另一个名为 pao 的目录是 PAO_HOME 运行现场，与 pao-dev 开发仓不属于同一项目，排查时应区分两者。\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\n        \"text\": \"另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"\n      }\n    ]\n  }\n]\n```"
+                    }
+                  ],
+                  "api": "openai-completions",
+                  "provider": "magpie",
+                  "model": "group/deepseek",
+                  "usage": {
+                    "input": 1215,
+                    "output": 751,
+                    "cacheRead": 384,
+                    "cacheWrite": 0,
+                    "reasoning": 275,
+                    "totalTokens": 2350,
+                    "cost": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "total": 0
+                    }
+                  },
+                  "stopReason": "stop",
+                  "timestamp": 1794241907163,
+                  "responseId": "d1ee8b4900bcc996be71b44dfec7ef2d",
+                  "rawStopReason": "stop"
+                },
+                "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"pao-dev 开发仓的记忆存储确定为使用 SQLite。\",\n    \"conditions\": \"适用于 pao-dev 开发仓项目\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\",\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user\",\n        \"text\": \"确认，pao-dev 用 SQLite。\"\n      },\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\n        \"text\": \"pao-dev 开发仓已定用 SQLite\"\n      }\n    ]\n  },\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"另一个名为 pao 的目录是 PAO_HOME 运行现场，与 pao-dev 开发仓不属于同一项目，排查时应区分两者。\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\n      \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant\",\n        \"text\": \"另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"\n      }\n    ]\n  }\n]\n```",
+                "provider": "magpie",
+                "model": "group/deepseek",
+                "responseModel": "unknown",
+                "responseId": "d1ee8b4900bcc996be71b44dfec7ef2d",
+                "stopReason": "stop",
+                "errorMessage": "unknown",
+                "usage": {
+                  "input": 1215,
+                  "output": 751,
+                  "cacheRead": 384,
+                  "cacheWrite": 0,
+                  "cacheWrite1h": "unknown",
+                  "reasoning": 275,
+                  "totalTokens": 2350,
+                  "cost": {
+                    "input": "unknown",
+                    "output": "unknown",
+                    "cacheRead": "unknown",
+                    "cacheWrite": "unknown",
+                    "total": "unknown"
+                  },
+                  "costBasis": "unknown",
+                  "costSource": "unknown"
+                }
+              },
+              "iteratorEvents": [],
+              "failure": "unknown"
+            }
+          ],
+          "mockModelRecords": [],
+          "ledgerEntries": [
+            {
+              "type": "custom",
+              "customType": "pao-memory-extraction-attempt",
+              "data": {
+                "requestId": "job-136e512c-8300-4133-8562-f1ee15aec8f4:extract:e47d5bf1-3950-497b-acf6-28d3596fe8cb",
+                "jobId": "job-136e512c-8300-4133-8562-f1ee15aec8f4",
+                "sourceSessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+                "entryCount": 3
+              },
+              "id": "d3a92e1d",
+              "parentId": null,
+              "timestamp": "2026-11-09T16:31:46.507Z"
+            },
+            {
+              "type": "usage",
+              "id": "da34c254",
+              "parentId": "d3a92e1d",
+              "timestamp": "2026-11-09T16:31:56.081Z",
+              "kind": "memory_extraction",
+              "provider": "magpie",
+              "model": "group/deepseek",
+              "usage": {
+                "input": 1215,
+                "output": 751,
+                "cacheRead": 384,
+                "cacheWrite": 0,
+                "reasoning": 275,
+                "totalTokens": 2350,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "note": "jobId=job-136e512c-8300-4133-8562-f1ee15aec8f4 sourceSessionId=01a1c126-c6df-750a-9a30-23f8f1910c75 requestId=job-136e512c-8300-4133-8562-f1ee15aec8f4:extract:e47d5bf1-3950-497b-acf6-28d3596fe8cb"
+            }
+          ],
+          "usage": {
+            "mode": "real_model_request",
+            "raw": {
+              "input": 1215,
+              "output": 751,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 275,
+              "totalTokens": 2350,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "normalized": {
+              "input": 1215,
+              "output": 751,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "cacheWrite1h": "unknown",
+              "reasoning": 275,
+              "totalTokens": 2350,
+              "cost": {
+                "input": "unknown",
+                "output": "unknown",
+                "cacheRead": "unknown",
+                "cacheWrite": "unknown",
+                "total": "unknown"
+              },
+              "costBasis": "unknown",
+              "costSource": "unknown"
+            },
+            "costBasis": "unknown",
+            "costSource": "unknown",
+            "zeroIsRealCost": false
+          },
+          "latencyMs": 9580.683
+        },
+        "commit": {
+          "output": {
+            "outcomes": [
+              {
+                "status": "submitted",
+                "candidateIndex": 0,
+                "memoryId": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+                "revision": 1
+              },
+              {
+                "status": "submitted",
+                "candidateIndex": 1,
+                "memoryId": "mem-6eb98ea4-47fd-4218-bb13-9f65bba41b98",
+                "revision": 1
+              }
+            ],
+            "submitted": 2,
+            "duplicates": 0,
+            "flagged": 0,
+            "skipped": 0,
+            "rejected": 0
+          },
+          "latencyMs": 11.96
+        },
+        "entries": {
+          "entries": [
+            {
+              "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c9a07e11-user",
+              "entryId": "c9a07e11",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c9a07e11\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.408Z\",\"capturedAt\":\"2026-11-09T16:31:46.418Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            },
+            {
+              "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+              "entryId": "66c0130b",
+              "eventType": "assistant",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"66c0130b\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.411Z\",\"capturedAt\":\"2026-11-09T16:31:46.431Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            },
+            {
+              "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+              "entryId": "c3db7233",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c6df-750a-9a30-23f8f1910c75\",\"entryId\":\"c3db7233\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.414Z\",\"capturedAt\":\"2026-11-09T16:31:46.437Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            }
+          ],
+          "skipped": []
+        },
+        "actualMemoryId": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+        "memory": {
+          "ok": true,
+          "memory": {
+            "id": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+            "kind": "decision",
+            "scope": {
+              "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+              "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+              "branch": "main",
+              "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+            },
+            "currentRevision": 1,
+            "content": {
+              "conclusion": "pao-dev 开发仓的记忆存储确定为使用 SQLite。",
+              "conditions": "适用于 pao-dev 开发仓项目",
+              "evidenceKind": "user_statement",
+              "confirmation": "confirmed"
+            },
+            "usageState": "active",
+            "createdAt": "2026-11-09T16:31:56.087Z",
+            "updatedAt": "2026-11-09T16:31:56.087Z"
+          },
+          "revisions": [
+            {
+              "revision": 1,
+              "content": {
+                "conclusion": "pao-dev 开发仓的记忆存储确定为使用 SQLite。",
+                "conditions": "适用于 pao-dev 开发仓项目",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "sourceIds": [
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user"
+              ],
+              "createdAt": "2026-11-09T16:31:56.087Z",
+              "createdBy": "model"
+            }
+          ],
+          "sourceSummaries": [
+            {
+              "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+              "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+              "entryId": "66c0130b",
+              "eventType": "assistant",
+              "capturedAt": "2026-11-09T16:31:46.431Z",
+              "readable": true
+            },
+            {
+              "sourceId": "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user",
+              "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+              "entryId": "c3db7233",
+              "eventType": "user",
+              "capturedAt": "2026-11-09T16:31:46.437Z",
+              "readable": true
+            }
+          ],
+          "supersessionChain": [
+            {
+              "revision": 1
+            }
+          ]
+        },
+        "status": "committed",
+        "latencyMs": 9609.735
+      },
+      {
+        "job": {
+          "created": {
+            "jobId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25",
+            "sourceScope": "{\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"sourceIds\":[\"src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user\",\"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\"]}",
+            "scopeKey": "session:01a1c126-c709-750a-9a30-23fa58b0181d",
+            "status": "pending",
+            "attemptCount": 0,
+            "createdAt": "2026-11-09T16:31:56.107Z",
+            "updatedAt": "2026-11-09T16:31:56.107Z"
+          },
+          "claim": {
+            "job": {
+              "jobId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25",
+              "sourceScope": "{\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"sourceIds\":[\"src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user\",\"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\"]}",
+              "scopeKey": "session:01a1c126-c709-750a-9a30-23fa58b0181d",
+              "status": "running",
+              "attemptCount": 1,
+              "ownerProcess": "boundary-adapter:34024",
+              "createdAt": "2026-11-09T16:31:56.107Z",
+              "updatedAt": "2026-11-09T16:31:56.110Z"
+            },
+            "attemptId": "att-8f1218a4-0bdf-4092-8685-7d8219e675fa"
+          }
+        },
+        "request": {
+          "input": {
+            "jobId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25",
+            "sourceSessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+            "entries": [
+              {
+                "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user",
+                "entryId": "13b1713a",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"13b1713a\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.448Z\",\"capturedAt\":\"2026-11-09T16:31:46.453Z\",\"content\":{\"role\":\"user\",\"content\":\"worktree 分支也要用 SQLite 吗？\",\"timestamp\":1794157500000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}"
+              },
+              {
+                "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant",
+                "entryId": "b7806a69",
+                "eventType": "assistant",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}"
+              }
+            ],
+            "signal": {}
+          },
+          "output": {
+            "ok": true,
+            "requestId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25:extract:8fc3de8b-4fa5-4565-899f-951d9a7d09dc",
+            "candidates": [
+              {
+                "kind": "experience",
+                "conclusion": "worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。",
+                "conditions": "适用于同一项目的多个 git worktree/分支之间",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative",
+                "sourceIds": [
+                  "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant",
+                    "text": "worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant",
+                    "match": "exact",
+                    "offset": 268
+                  }
+                ]
+              }
+            ],
+            "rejected": [],
+            "usage": {
+              "input": 778,
+              "output": 338,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 147,
+              "totalTokens": 1500,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            }
+          },
+          "modelRequests": [
+            {
+              "requestIndex": 2,
+              "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+              "callerSessionId": "unknown",
+              "startedAt": "2026-11-09T16:31:56.114Z",
+              "observerLatencyMs": 4898.6896,
+              "model": {
+                "provider": "magpie",
+                "id": "group/deepseek"
+              },
+              "requestContext": {
+                "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user entryId=13b1713a eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"13b1713a\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.448Z\",\"capturedAt\":\"2026-11-09T16:31:46.453Z\",\"content\":{\"role\":\"user\",\"content\":\"worktree 分支也要用 SQLite 吗？\",\"timestamp\":1794157500000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}\n--- 条目 sourceId=src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant entryId=b7806a69 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}\n\n请输出候选 JSON 数组。",
+                    "timestamp": 1794241916114
+                  }
+                ]
+              },
+              "payload": {
+                "status": "observed",
+                "raw": {
+                  "model": "group/deepseek",
+                  "messages": [
+                    {
+                      "role": "developer",
+                      "content": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。"
+                    },
+                    {
+                      "role": "user",
+                      "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user entryId=13b1713a eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"13b1713a\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.448Z\",\"capturedAt\":\"2026-11-09T16:31:46.453Z\",\"content\":{\"role\":\"user\",\"content\":\"worktree 分支也要用 SQLite 吗？\",\"timestamp\":1794157500000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}\n--- 条目 sourceId=src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant entryId=b7806a69 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}\n\n请输出候选 JSON 数组。"
+                    }
+                  ],
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "store": false,
+                  "max_completion_tokens": 4096,
+                  "reasoning_effort": "low"
+                },
+                "error": "unknown"
+              },
+              "response": {
+                "status": 200,
+                "raw": {
+                  "status": 200,
+                  "headers": {
+                    "cache-control": "no-cache",
+                    "content-type": "text/event-stream",
+                    "date": "Mon, 09 Nov 2026 16:31:59 GMT",
+                    "transfer-encoding": "chunked",
+                    "x-accel-buffering": "no",
+                    "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                    "x-magpie-provider": "workbuddy",
+                    "x-request-id": "4ab47de5e788630fdc542df55a80f4cf"
+                  }
+                },
+                "headers": {
+                  "cache-control": "no-cache",
+                  "content-type": "text/event-stream",
+                  "date": "Mon, 09 Nov 2026 16:31:59 GMT",
+                  "transfer-encoding": "chunked",
+                  "x-accel-buffering": "no",
+                  "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                  "x-magpie-provider": "workbuddy",
+                  "x-request-id": "4ab47de5e788630fdc542df55a80f4cf"
+                },
+                "requestId": "4ab47de5e788630fdc542df55a80f4cf",
+                "rawHTTPBody": "unavailable_public_surface",
+                "error": "unknown"
+              },
+              "output": {
+                "status": "observed",
+                "rawAssistantMessage": {
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "thinking",
+                      "thinking": "The user asks a question; assistant explains worktree shares memory scope per project. Is this a candidate fact? It's a model inference about memory scoping—could be an experience/decision. But it's assistant statement, not user confirmed. Probably tentative model_inference. Actually the question implies there's a decision about SQLite for memory storage, but no explicit statement here. I could extract: \"worktree 分支的记忆范围按项目共享\" as tentative experience/essence with evidenceKind=model_inference, confirmation=tentative.\n\nMaybe safest output that one. Source ids: the assistant entry and user entry. Quote \"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"",
+                      "thinkingSignature": "reasoning_content"
+                    },
+                    {
+                      "type": "text",
+                      "text": "```json\n[\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。\",\n    \"conditions\": \"适用于同一项目的多个 git worktree/分支之间\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\", \"text\": \"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}\n    ]\n  }\n]\n```"
+                    }
+                  ],
+                  "api": "openai-completions",
+                  "provider": "magpie",
+                  "model": "group/deepseek",
+                  "usage": {
+                    "input": 778,
+                    "output": 338,
+                    "cacheRead": 384,
+                    "cacheWrite": 0,
+                    "reasoning": 147,
+                    "totalTokens": 1500,
+                    "cost": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "total": 0
+                    }
+                  },
+                  "stopReason": "stop",
+                  "timestamp": 1794241916116,
+                  "responseId": "4ab47de5e788630fdc542df55a80f4cf",
+                  "rawStopReason": "stop"
+                },
+                "text": "```json\n[\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。\",\n    \"conditions\": \"适用于同一项目的多个 git worktree/分支之间\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\"],\n    \"quotedSpans\": [\n      {\"sourceId\": \"src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant\", \"text\": \"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}\n    ]\n  }\n]\n```",
+                "provider": "magpie",
+                "model": "group/deepseek",
+                "responseModel": "unknown",
+                "responseId": "4ab47de5e788630fdc542df55a80f4cf",
+                "stopReason": "stop",
+                "errorMessage": "unknown",
+                "usage": {
+                  "input": 778,
+                  "output": 338,
+                  "cacheRead": 384,
+                  "cacheWrite": 0,
+                  "cacheWrite1h": "unknown",
+                  "reasoning": 147,
+                  "totalTokens": 1500,
+                  "cost": {
+                    "input": "unknown",
+                    "output": "unknown",
+                    "cacheRead": "unknown",
+                    "cacheWrite": "unknown",
+                    "total": "unknown"
+                  },
+                  "costBasis": "unknown",
+                  "costSource": "unknown"
+                }
+              },
+              "iteratorEvents": [],
+              "failure": "unknown"
+            }
+          ],
+          "mockModelRecords": [],
+          "ledgerEntries": [
+            {
+              "type": "custom",
+              "customType": "pao-memory-extraction-attempt",
+              "data": {
+                "requestId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25:extract:8fc3de8b-4fa5-4565-899f-951d9a7d09dc",
+                "jobId": "job-9b82c21e-9a56-40bb-9677-f574338a9e25",
+                "sourceSessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+                "entryCount": 2
+              },
+              "id": "731c66fd",
+              "parentId": "da34c254",
+              "timestamp": "2026-11-09T16:31:56.112Z"
+            },
+            {
+              "type": "usage",
+              "id": "b78094e7",
+              "parentId": "731c66fd",
+              "timestamp": "2026-11-09T16:32:01.013Z",
+              "kind": "memory_extraction",
+              "provider": "magpie",
+              "model": "group/deepseek",
+              "usage": {
+                "input": 778,
+                "output": 338,
+                "cacheRead": 384,
+                "cacheWrite": 0,
+                "reasoning": 147,
+                "totalTokens": 1500,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "note": "jobId=job-9b82c21e-9a56-40bb-9677-f574338a9e25 sourceSessionId=01a1c126-c709-750a-9a30-23fa58b0181d requestId=job-9b82c21e-9a56-40bb-9677-f574338a9e25:extract:8fc3de8b-4fa5-4565-899f-951d9a7d09dc"
+            }
+          ],
+          "usage": {
+            "mode": "real_model_request",
+            "raw": {
+              "input": 778,
+              "output": 338,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 147,
+              "totalTokens": 1500,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "normalized": {
+              "input": 778,
+              "output": 338,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "cacheWrite1h": "unknown",
+              "reasoning": 147,
+              "totalTokens": 1500,
+              "cost": {
+                "input": "unknown",
+                "output": "unknown",
+                "cacheRead": "unknown",
+                "cacheWrite": "unknown",
+                "total": "unknown"
+              },
+              "costBasis": "unknown",
+              "costSource": "unknown"
+            },
+            "costBasis": "unknown",
+            "costSource": "unknown",
+            "zeroIsRealCost": false
+          },
+          "latencyMs": 4903.124
+        },
+        "commit": {
+          "output": {
+            "outcomes": [
+              {
+                "status": "submitted",
+                "candidateIndex": 0,
+                "memoryId": "mem-64312507-f002-4c22-9a9a-c91f0002bd63",
+                "revision": 1
+              }
+            ],
+            "submitted": 1,
+            "duplicates": 0,
+            "flagged": 0,
+            "skipped": 0,
+            "rejected": 0
+          },
+          "latencyMs": 7.425
+        },
+        "entries": {
+          "entries": [
+            {
+              "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-13b1713a-user",
+              "entryId": "13b1713a",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"13b1713a\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.448Z\",\"capturedAt\":\"2026-11-09T16:31:46.453Z\",\"content\":{\"role\":\"user\",\"content\":\"worktree 分支也要用 SQLite 吗？\",\"timestamp\":1794157500000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}"
+            },
+            {
+              "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant",
+              "entryId": "b7806a69",
+              "eventType": "assistant",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c709-750a-9a30-23fa58b0181d\",\"entryId\":\"b7806a69\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.450Z\",\"capturedAt\":\"2026-11-09T16:31:46.461Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157505000}}"
+            }
+          ],
+          "skipped": []
+        },
+        "actualMemoryId": "mem-64312507-f002-4c22-9a9a-c91f0002bd63",
+        "memory": {
+          "ok": true,
+          "memory": {
+            "id": "mem-64312507-f002-4c22-9a9a-c91f0002bd63",
+            "kind": "experience",
+            "scope": {
+              "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+              "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+              "branch": "worktree-feature",
+              "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature"
+            },
+            "currentRevision": 1,
+            "content": {
+              "conclusion": "worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。",
+              "conditions": "适用于同一项目的多个 git worktree/分支之间",
+              "evidenceKind": "model_inference",
+              "confirmation": "tentative"
+            },
+            "usageState": "active",
+            "createdAt": "2026-11-09T16:32:01.015Z",
+            "updatedAt": "2026-11-09T16:32:01.015Z"
+          },
+          "revisions": [
+            {
+              "revision": 1,
+              "content": {
+                "conclusion": "worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。",
+                "conditions": "适用于同一项目的多个 git worktree/分支之间",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative"
+              },
+              "sourceIds": [
+                "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant"
+              ],
+              "createdAt": "2026-11-09T16:32:01.015Z",
+              "createdBy": "model"
+            }
+          ],
+          "sourceSummaries": [
+            {
+              "sourceId": "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant",
+              "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+              "entryId": "b7806a69",
+              "eventType": "assistant",
+              "capturedAt": "2026-11-09T16:31:46.461Z",
+              "readable": true
+            }
+          ],
+          "supersessionChain": [
+            {
+              "revision": 1
+            }
+          ]
+        },
+        "status": "committed",
+        "latencyMs": 4920.532
+      },
+      {
+        "job": {
+          "created": {
+            "jobId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6",
+            "sourceScope": "{\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"sourceIds\":[\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user\",\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\"]}",
+            "scopeKey": "session:01a1c126-c724-750a-9a30-23fd83d2c2d9",
+            "status": "pending",
+            "attemptCount": 0,
+            "createdAt": "2026-11-09T16:32:01.029Z",
+            "updatedAt": "2026-11-09T16:32:01.029Z"
+          },
+          "claim": {
+            "job": {
+              "jobId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6",
+              "sourceScope": "{\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"sourceIds\":[\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user\",\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\"]}",
+              "scopeKey": "session:01a1c126-c724-750a-9a30-23fd83d2c2d9",
+              "status": "running",
+              "attemptCount": 1,
+              "ownerProcess": "boundary-adapter:34024",
+              "createdAt": "2026-11-09T16:32:01.029Z",
+              "updatedAt": "2026-11-09T16:32:01.031Z"
+            },
+            "attemptId": "att-7cda4456-c0bc-4382-b964-8a9b7d9f2161"
+          }
+        },
+        "request": {
+          "input": {
+            "jobId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6",
+            "sourceSessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+            "entries": [
+              {
+                "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user",
+                "entryId": "f7b3e929",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"f7b3e929\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.472Z\",\"capturedAt\":\"2026-11-09T16:31:46.478Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              },
+              {
+                "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                "entryId": "02b96250",
+                "eventType": "assistant",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              },
+              {
+                "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+                "entryId": "c28aacc5",
+                "eventType": "user",
+                "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+              }
+            ],
+            "signal": {}
+          },
+          "output": {
+            "ok": true,
+            "requestId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6:extract:6ecd74c8-9187-45d6-9ca0-e6f78b461027",
+            "candidates": [
+              {
+                "kind": "decision",
+                "conclusion": "pao-dev 开发仓的记忆存储方案确定为使用 SQLite。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed",
+                "sourceIds": [
+                  "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+                  "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+                    "text": "确认，pao-dev 用 SQLite。"
+                  },
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                    "text": "pao-dev 开发仓已定用 SQLite"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+                    "match": "exact",
+                    "offset": 235
+                  },
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                    "match": "exact",
+                    "offset": 268
+                  }
+                ]
+              },
+              {
+                "kind": "experience",
+                "conclusion": "存在两个同名 pao 目录：pao-dev 是开发仓，另一个是 PAO_HOME 运行现场，二者不属于同一项目，讨论项目决策时需区分。",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative",
+                "sourceIds": [
+                  "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant"
+                ],
+                "quotedSpans": [
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                    "text": "另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。"
+                  }
+                ],
+                "spanLocations": [
+                  {
+                    "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                    "match": "exact",
+                    "offset": 290
+                  }
+                ]
+              }
+            ],
+            "rejected": [],
+            "usage": {
+              "input": 1211,
+              "output": 557,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 92,
+              "totalTokens": 2152,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            }
+          },
+          "modelRequests": [
+            {
+              "requestIndex": 3,
+              "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+              "callerSessionId": "unknown",
+              "startedAt": "2026-11-09T16:32:01.036Z",
+              "observerLatencyMs": 5196.4151999999995,
+              "model": {
+                "provider": "magpie",
+                "id": "group/deepseek"
+              },
+              "requestContext": {
+                "systemPrompt": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user entryId=f7b3e929 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"f7b3e929\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.472Z\",\"capturedAt\":\"2026-11-09T16:31:46.478Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant entryId=02b96250 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user entryId=c28aacc5 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n\n请输出候选 JSON 数组。",
+                    "timestamp": 1794241921036
+                  }
+                ]
+              },
+              "payload": {
+                "status": "observed",
+                "raw": {
+                  "model": "group/deepseek",
+                  "messages": [
+                    {
+                      "role": "developer",
+                      "content": "你是记忆提炼器。从给定的会话条目（已脱敏）中提炼值得长期记住的候选事实。\n\n# 候选类型（kind）\n- decision：正式决定——已确认的方案选择、架构取舍、用户契约。\n- experience：经验——可复用的做法、踩坑记录、验证结论。\n- lesson：教训——失败原因、反模式、已知边界。\n- commitment：承诺/待办——明确承诺但未完成的任务（只记录，不产生执行）。\n\n# 证据类别（evidenceKind）与确认状态（confirmation）的区分\n- 用户明确说「就用 X」「不要 Y」「决定是 Z」→ evidenceKind=user_statement、confirmation=confirmed（confirmed 必须有 user_statement 或 execution 证据）。\n- 用户说「可以考虑 X」「也许用 Y」「X 可能更好」→ confirmation=tentative。\n- 用户明确否决某方案 → confirmation=rejected，conclusion 记被否决的内容，rationale 记否决理由。\n- 工具执行/测试结果证明某事实 → evidenceKind=execution；执行失败不产生 confirmed。\n- 你从上下文推断但未经用户确认 → evidenceKind=model_inference、confirmation=tentative。\n- 条件变化让已有决定需要重议时，照常提炼成候选，由下游核对（你不用判断是否已有决定）。\n\n# 输出要求\n只输出一个 JSON 数组（可以包在 ```json 代码块里），不要输出其他解释文字。数组每个元素：\n{\n  \"kind\": \"decision|experience|lesson|commitment\",\n  \"conclusion\": \"结论正文，一句话\",\n  \"conditions\": \"适用条件（可选）\",\n  \"rationale\": \"理由（可选；原文没说理由就省略，不要编造）\",\n  \"evidenceKind\": \"user_statement|execution|model_inference\",\n  \"confirmation\": \"confirmed|tentative|rejected\",\n  \"sourceIds\": [\"引用来源的 sourceId，必须来自下方条目列表\"],\n  \"quotedSpans\": [{\"sourceId\": \"来源ID\", \"text\": \"该来源正文中的原文子串，照抄不改写\"}]\n}\n没有可提炼内容时输出空数组 []。sourceIds 和 quotedSpans 至少一条，且只能引用下方列出的 sourceId。"
+                    },
+                    {
+                      "role": "user",
+                      "content": "# 增量条目（本次提炼范围）\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user entryId=f7b3e929 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"f7b3e929\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.472Z\",\"capturedAt\":\"2026-11-09T16:31:46.478Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant entryId=02b96250 eventType=assistant ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n--- 条目 sourceId=src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user entryId=c28aacc5 eventType=user ---\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}\n\n请输出候选 JSON 数组。"
+                    }
+                  ],
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "store": false,
+                  "max_completion_tokens": 4096,
+                  "reasoning_effort": "low"
+                },
+                "error": "unknown"
+              },
+              "response": {
+                "status": 200,
+                "raw": {
+                  "status": 200,
+                  "headers": {
+                    "cache-control": "no-cache",
+                    "content-type": "text/event-stream",
+                    "date": "Mon, 09 Nov 2026 16:32:03 GMT",
+                    "transfer-encoding": "chunked",
+                    "x-accel-buffering": "no",
+                    "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                    "x-magpie-provider": "workbuddy",
+                    "x-request-id": "ad63a5f7fee9000d57b3a790c7106b3a"
+                  }
+                },
+                "headers": {
+                  "cache-control": "no-cache",
+                  "content-type": "text/event-stream",
+                  "date": "Mon, 09 Nov 2026 16:32:03 GMT",
+                  "transfer-encoding": "chunked",
+                  "x-accel-buffering": "no",
+                  "x-magpie-model": "workbuddy/deepseek-v4.1-flash",
+                  "x-magpie-provider": "workbuddy",
+                  "x-request-id": "ad63a5f7fee9000d57b3a790c7106b3a"
+                },
+                "requestId": "ad63a5f7fee9000d57b3a790c7106b3a",
+                "rawHTTPBody": "unavailable_public_surface",
+                "error": "unknown"
+              },
+              "output": {
+                "status": "observed",
+                "rawAssistantMessage": {
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "thinking",
+                      "thinking": "提炼：用户确认 pao-dev 用 SQLite。还有区分 pao-dev 与 pao（PAO_HOME 运行现场）不是同一项目——这是信息，可能算 experience 或 decision 的附带。可以做一条 decision（SQLite confirmed，user_statement），一条 model_inference? 关于目录区分来自 assistant，是事实性说明，不算用户确认，可作 tentative 的 experience。简单点：两条。",
+                      "thinkingSignature": "reasoning_content"
+                    },
+                    {
+                      "type": "text",
+                      "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"pao-dev 开发仓的记忆存储方案确定为使用 SQLite。\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\",\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\",\n        \"text\": \"确认，pao-dev 用 SQLite。\"\n      },\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\n        \"text\": \"pao-dev 开发仓已定用 SQLite\"\n      }\n    ]\n  },\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"存在两个同名 pao 目录：pao-dev 是开发仓，另一个是 PAO_HOME 运行现场，二者不属于同一项目，讨论项目决策时需区分。\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\n        \"text\": \"另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"\n      }\n    ]\n  }\n]\n```"
+                    }
+                  ],
+                  "api": "openai-completions",
+                  "provider": "magpie",
+                  "model": "group/deepseek",
+                  "usage": {
+                    "input": 1211,
+                    "output": 557,
+                    "cacheRead": 384,
+                    "cacheWrite": 0,
+                    "reasoning": 92,
+                    "totalTokens": 2152,
+                    "cost": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "total": 0
+                    }
+                  },
+                  "stopReason": "stop",
+                  "timestamp": 1794241921037,
+                  "responseId": "ad63a5f7fee9000d57b3a790c7106b3a",
+                  "rawStopReason": "stop"
+                },
+                "text": "```json\n[\n  {\n    \"kind\": \"decision\",\n    \"conclusion\": \"pao-dev 开发仓的记忆存储方案确定为使用 SQLite。\",\n    \"evidenceKind\": \"user_statement\",\n    \"confirmation\": \"confirmed\",\n    \"sourceIds\": [\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\",\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user\",\n        \"text\": \"确认，pao-dev 用 SQLite。\"\n      },\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\n        \"text\": \"pao-dev 开发仓已定用 SQLite\"\n      }\n    ]\n  },\n  {\n    \"kind\": \"experience\",\n    \"conclusion\": \"存在两个同名 pao 目录：pao-dev 是开发仓，另一个是 PAO_HOME 运行现场，二者不属于同一项目，讨论项目决策时需区分。\",\n    \"evidenceKind\": \"model_inference\",\n    \"confirmation\": \"tentative\",\n    \"sourceIds\": [\n      \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\"\n    ],\n    \"quotedSpans\": [\n      {\n        \"sourceId\": \"src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant\",\n        \"text\": \"另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"\n      }\n    ]\n  }\n]\n```",
+                "provider": "magpie",
+                "model": "group/deepseek",
+                "responseModel": "unknown",
+                "responseId": "ad63a5f7fee9000d57b3a790c7106b3a",
+                "stopReason": "stop",
+                "errorMessage": "unknown",
+                "usage": {
+                  "input": 1211,
+                  "output": 557,
+                  "cacheRead": 384,
+                  "cacheWrite": 0,
+                  "cacheWrite1h": "unknown",
+                  "reasoning": 92,
+                  "totalTokens": 2152,
+                  "cost": {
+                    "input": "unknown",
+                    "output": "unknown",
+                    "cacheRead": "unknown",
+                    "cacheWrite": "unknown",
+                    "total": "unknown"
+                  },
+                  "costBasis": "unknown",
+                  "costSource": "unknown"
+                }
+              },
+              "iteratorEvents": [],
+              "failure": "unknown"
+            }
+          ],
+          "mockModelRecords": [],
+          "ledgerEntries": [
+            {
+              "type": "custom",
+              "customType": "pao-memory-extraction-attempt",
+              "data": {
+                "requestId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6:extract:6ecd74c8-9187-45d6-9ca0-e6f78b461027",
+                "jobId": "job-50816c3e-c4f9-4021-a647-4b7feac341c6",
+                "sourceSessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+                "entryCount": 3
+              },
+              "id": "92931bb5",
+              "parentId": "b78094e7",
+              "timestamp": "2026-11-09T16:32:01.033Z"
+            },
+            {
+              "type": "usage",
+              "id": "56ab7d76",
+              "parentId": "92931bb5",
+              "timestamp": "2026-11-09T16:32:06.232Z",
+              "kind": "memory_extraction",
+              "provider": "magpie",
+              "model": "group/deepseek",
+              "usage": {
+                "input": 1211,
+                "output": 557,
+                "cacheRead": 384,
+                "cacheWrite": 0,
+                "reasoning": 92,
+                "totalTokens": 2152,
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "total": 0
+                }
+              },
+              "note": "jobId=job-50816c3e-c4f9-4021-a647-4b7feac341c6 sourceSessionId=01a1c126-c724-750a-9a30-23fd83d2c2d9 requestId=job-50816c3e-c4f9-4021-a647-4b7feac341c6:extract:6ecd74c8-9187-45d6-9ca0-e6f78b461027"
+            }
+          ],
+          "usage": {
+            "mode": "real_model_request",
+            "raw": {
+              "input": 1211,
+              "output": 557,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "reasoning": 92,
+              "totalTokens": 2152,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "normalized": {
+              "input": 1211,
+              "output": 557,
+              "cacheRead": 384,
+              "cacheWrite": 0,
+              "cacheWrite1h": "unknown",
+              "reasoning": 92,
+              "totalTokens": 2152,
+              "cost": {
+                "input": "unknown",
+                "output": "unknown",
+                "cacheRead": "unknown",
+                "cacheWrite": "unknown",
+                "total": "unknown"
+              },
+              "costBasis": "unknown",
+              "costSource": "unknown"
+            },
+            "costBasis": "unknown",
+            "costSource": "unknown",
+            "zeroIsRealCost": false
+          },
+          "latencyMs": 5201.896
+        },
+        "commit": {
+          "output": {
+            "outcomes": [
+              {
+                "status": "submitted",
+                "candidateIndex": 0,
+                "memoryId": "mem-acdbfc8b-2acd-41c4-95a9-975a5ec77ed5",
+                "revision": 1
+              },
+              {
+                "status": "submitted",
+                "candidateIndex": 1,
+                "memoryId": "mem-419df990-136c-4813-9146-400bf47c945c",
+                "revision": 1
+              }
+            ],
+            "submitted": 2,
+            "duplicates": 0,
+            "flagged": 0,
+            "skipped": 0,
+            "rejected": 0
+          },
+          "latencyMs": 13.356
+        },
+        "entries": {
+          "entries": [
+            {
+              "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-f7b3e929-user",
+              "entryId": "f7b3e929",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"f7b3e929\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.472Z\",\"capturedAt\":\"2026-11-09T16:31:46.478Z\",\"content\":{\"role\":\"user\",\"content\":\"pao 项目的记忆存储定了吗？\",\"timestamp\":1794157200000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            },
+            {
+              "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+              "entryId": "02b96250",
+              "eventType": "assistant",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"02b96250\",\"entryType\":\"message\",\"eventType\":\"assistant\",\"timestamp\":\"2026-11-09T16:31:46.474Z\",\"capturedAt\":\"2026-11-09T16:31:46.485Z\",\"content\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。\"}],\"api\":\"fixture\",\"provider\":\"fixture\",\"model\":\"fixture\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1794157205000}}\n{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            },
+            {
+              "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+              "entryId": "c28aacc5",
+              "eventType": "user",
+              "content": "{\"v\":1,\"sessionId\":\"01a1c126-c724-750a-9a30-23fd83d2c2d9\",\"entryId\":\"c28aacc5\",\"entryType\":\"message\",\"eventType\":\"user\",\"timestamp\":\"2026-11-09T16:31:46.476Z\",\"capturedAt\":\"2026-11-09T16:31:46.489Z\",\"content\":{\"role\":\"user\",\"content\":\"确认，pao-dev 用 SQLite。\",\"timestamp\":1794157260000}}"
+            }
+          ],
+          "skipped": []
+        },
+        "actualMemoryId": "mem-acdbfc8b-2acd-41c4-95a9-975a5ec77ed5",
+        "memory": {
+          "ok": true,
+          "memory": {
+            "id": "mem-acdbfc8b-2acd-41c4-95a9-975a5ec77ed5",
+            "kind": "decision",
+            "scope": {
+              "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+              "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+              "branch": "main",
+              "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+            },
+            "currentRevision": 1,
+            "content": {
+              "conclusion": "pao-dev 开发仓的记忆存储方案确定为使用 SQLite。",
+              "evidenceKind": "user_statement",
+              "confirmation": "confirmed"
+            },
+            "usageState": "active",
+            "createdAt": "2026-11-09T16:32:06.235Z",
+            "updatedAt": "2026-11-09T16:32:06.235Z"
+          },
+          "revisions": [
+            {
+              "revision": 1,
+              "content": {
+                "conclusion": "pao-dev 开发仓的记忆存储方案确定为使用 SQLite。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "sourceIds": [
+                "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user"
+              ],
+              "createdAt": "2026-11-09T16:32:06.235Z",
+              "createdBy": "model"
+            }
+          ],
+          "sourceSummaries": [
+            {
+              "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+              "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+              "entryId": "02b96250",
+              "eventType": "assistant",
+              "capturedAt": "2026-11-09T16:31:46.485Z",
+              "readable": true
+            },
+            {
+              "sourceId": "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user",
+              "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+              "entryId": "c28aacc5",
+              "eventType": "user",
+              "capturedAt": "2026-11-09T16:31:46.489Z",
+              "readable": true
+            }
+          ],
+          "supersessionChain": [
+            {
+              "revision": 1
+            }
+          ]
+        },
+        "status": "committed",
+        "latencyMs": 5225.96
+      }
+    ],
+    "searches": {
+      "main": {
+        "query": "pao 记忆存储",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+          "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+                "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "pao-dev 开发仓的记忆存储确定为使用 SQLite。",
+                "conditions": "适用于 pao-dev 开发仓项目",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user"
+              ]
+            },
+            {
+              "memoryId": "mem-6eb98ea4-47fd-4218-bb13-9f65bba41b98",
+              "revision": 1,
+              "kind": "experience",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+                "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "另一个名为 pao 的目录是 PAO_HOME 运行现场，与 pao-dev 开发仓不属于同一项目，排查时应区分两者。",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative"
+              },
+              "usageState": "active",
+              "relevance": 0.4919354838709677,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant"
+              ]
+            },
+            {
+              "memoryId": "mem-64312507-f002-4c22-9a9a-c91f0002bd63",
+              "revision": 1,
+              "kind": "experience",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+                "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+                "branch": "worktree-feature",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature"
+              },
+              "content": {
+                "conclusion": "worktree 分支与主仓库属于同一项目 pao-dev，记忆范围按项目共享。",
+                "conditions": "适用于同一项目的多个 git worktree/分支之间",
+                "evidenceKind": "model_inference",
+                "confirmation": "tentative"
+              },
+              "usageState": "active",
+              "relevance": 0.4841269841269841,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c126-c709-750a-9a30-23fa58b0181d-b7806a69-assistant"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 23.035
+      },
+      "worktree": {
+        "query": "记忆存储",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+          "sessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+          "branch": "worktree-feature",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\worktrees\\pao-dev-feature"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-2d3bf920-b3e4-472a-91e9-6f6d2fc9c597",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\projects\\pao-dev",
+                "sessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\projects\\pao-dev"
+              },
+              "content": {
+                "conclusion": "pao-dev 开发仓的记忆存储确定为使用 SQLite。",
+                "conditions": "适用于 pao-dev 开发仓项目",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-66c0130b-assistant",
+                "src-01a1c126-c6df-750a-9a30-23f8f1910c75-c3db7233-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 14.829
+      },
+      "other": {
+        "query": "记忆存储",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+          "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [
+            {
+              "memoryId": "mem-acdbfc8b-2acd-41c4-95a9-975a5ec77ed5",
+              "revision": 1,
+              "kind": "decision",
+              "scope": {
+                "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+                "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+                "branch": "main",
+                "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+              },
+              "content": {
+                "conclusion": "pao-dev 开发仓的记忆存储方案确定为使用 SQLite。",
+                "evidenceKind": "user_statement",
+                "confirmation": "confirmed"
+              },
+              "usageState": "active",
+              "relevance": 0.5,
+              "matchKind": "lexical",
+              "sourceIds": [
+                "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-02b96250-assistant",
+                "src-01a1c126-c724-750a-9a30-23fd83d2c2d9-c28aacc5-user"
+              ]
+            }
+          ],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入"
+        },
+        "latencyMs": 12.317
+      },
+      "otherHome": {
+        "query": "记忆存储",
+        "scope": {
+          "projectId": "d:\\ai\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\s4\\real-validation\\runs\\real-i06-20261110\\i06-1794241904642-ntzmma\\other-project\\pao-dev",
+          "sessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+          "branch": "main",
+          "executionRoot": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\other-project\\pao-dev"
+        },
+        "result": {
+          "ok": true,
+          "hits": [],
+          "degraded": true,
+          "degradeReason": "禁外发：项目 pao-dev 未授权云端嵌入",
+          "emptyReason": "无命中：词法路无匹配，语义路因降级未参与"
+        },
+        "latencyMs": 5.795
+      }
+    },
+    "observations": {
+      "projectShared": true,
+      "worktreeBranchReal": true,
+      "otherRootIsolated": true,
+      "sameMemoryAcrossRoots": true,
+      "worktreeExtractionDistinct": true,
+      "mainSearchShared": true,
+      "worktreeSearchShared": true,
+      "mainSearchOtherIsolated": true,
+      "worktreeSearchOtherIsolated": true,
+      "otherSearchOwn": true,
+      "otherSearchIsolated": true,
+      "otherHomeIsolated": true
+    }
+  },
+  "cleanup": {
+    "sessions": [
+      {
+        "actualSessionId": "01a1c126-c6df-750a-9a30-23f8f1910c75",
+        "status": "flushed"
+      },
+      {
+        "actualSessionId": "01a1c126-c709-750a-9a30-23fa58b0181d",
+        "status": "flushed"
+      },
+      {
+        "actualSessionId": "01a1c126-c724-750a-9a30-23fd83d2c2d9",
+        "status": "flushed"
+      }
+    ],
+    "service": "closed",
+    "store": "closed",
+    "modelRuntime": {
+      "status": "unavailable_public_surface",
+      "error": "unknown"
+    },
+    "ledger": "flushed"
+  },
+  "error": "unknown",
+  "evidencePath": "D:\\AI\\workspace\\pao-dev\\.pao\\内置记忆与受控自进化-2026-11-08\\S4\\real-validation\\runs\\real-I06-20261110\\I06-1794241904642-ntzmMA\\boundary-result.json"
+}

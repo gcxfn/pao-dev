@@ -1,0 +1,63 @@
+{
+    "job_name": "pao-first-refactor-20261024-install-only-cached",
+    "jobs_dir": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared/jobs",
+    "n_concurrent_trials": 1,
+    "quiet": true,
+    "environment": {
+        "type": "docker",
+        "force_build": true,
+        "delete": false,
+        "env": {
+            "PAO_HOME": "/tmp/harbor-pao-home",
+            "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PI_SKIP_VERSION_CHECK": "1",
+            "TMP": "/tmp",
+            "TEMP": "/tmp",
+            "TMPDIR": "/tmp"
+        },
+        "kwargs": {
+            "keep_containers": true
+        }
+    },
+    "verifier": {
+        "disable": true
+    },
+    "agents": [
+        {
+            "import_path": "preparation_agent:PreparationOnlyAgent",
+            "model_name": "openai/group/deepseek",
+            "model_base_url": "http://127.0.0.1:1/v1",
+            "model_api_key_name": "PAO_BENCH_API_KEY",
+            "model_api_format": "openai_chat_completions",
+            "kwargs": {
+                "profile": "post-pao",
+                "source_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261024-prepared/source.zip",
+                "source_sha256": "9342f1acaac905cdde2bbf183ec292958648f9b569134533aaf35e8450975471",
+                "archive_format": "zip",
+                "thinking": "high",
+                "tools": "read,bash,edit,write",
+                "no_extensions": false,
+                "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+                "model_data_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/build-data-freeze-20261021/model-data.zip",
+                "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a",
+                "organization_manifest_sha256": "fe0338900ef275284be93d588e27c880832b0f75c807b8356217a250dc37b64e"
+            },
+            "env": {
+                "PAO_HOME": "/tmp/harbor-pao-home",
+                "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "TMP": "/tmp",
+                "TEMP": "/tmp",
+                "TMPDIR": "/tmp"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "name": "terminal-bench/html-js-filter",
+            "ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3"
+        }
+    ]
+}

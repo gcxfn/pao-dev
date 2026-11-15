@@ -1,0 +1,2 @@
+import base from "../../../../PAO/packages/coding-agent/vitest.config.ts";
+export default { ...base, root: "D:/AI/workspace/pao-dev/PAO/packages/coding-agent", cacheDir: "D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/final-audit/final-memory-7c2a-scheduler-runtime/cache", test: { ...base.test, include: ["test/pao/memory-extraction-scheduler.test.ts"], maxWorkers: 1, env: { ...base.test.env, PAO_HOME: "D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/final-audit/final-memory-7c2a-scheduler-runtime/home", PI_NO_LOCAL_LLM: "1" } } };

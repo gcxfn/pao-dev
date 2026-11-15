@@ -1,0 +1,73 @@
+{
+    "job_name": "pao-audit-first-20261030-04-preflight",
+    "jobs_dir": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/jobs",
+    "n_concurrent_trials": 1,
+    "quiet": true,
+    "environment": {
+        "type": "docker",
+        "force_build": true,
+        "delete": false,
+        "env": {
+            "PAO_HOME": "/tmp/harbor-pao-home",
+            "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PI_SKIP_VERSION_CHECK": "1",
+            "TMP": "/tmp",
+            "TEMP": "/tmp",
+            "TMPDIR": "/tmp"
+        },
+        "kwargs": {
+            "keep_containers": true,
+            "extra_docker_compose": [
+                "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/network-override.yaml"
+            ]
+        }
+    },
+    "verifier": {
+        "disable": true
+    },
+    "agents": [
+        {
+            "import_path": "preparation_agent:PreparationOnlyAgent",
+            "model_name": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+            "model_base_url": "http://host.docker.internal:3425",
+            "model_api_key_name": "PAO_BENCH_API_KEY",
+            "model_api_format": "anthropic_messages",
+            "kwargs": {
+                "profile": "post-pao",
+                "source_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/source.zip",
+                "source_sha256": "d4def6f909a0ee35c093769007230b2f61e6c0021bd979a2f43707b74898f179",
+                "archive_format": "zip",
+                "thinking": "high",
+                "tools": "read,bash,edit,write",
+                "no_extensions": false,
+                "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+                "model_data_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/model-data.zip",
+                "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a",
+                "organization_manifest_sha256": "fb40b0a9db2477b45736e280ad9541ab5f2d7010202beed8d7e86d86b2b4cda2",
+                "node_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/node-v24.18.0-linux-x64.tar.xz",
+                "node_sha256": "55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742",
+                "system_dependencies_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/git-system-dependencies.zip",
+                "system_dependencies_sha256": "c744583041598f7b80c9cd2c904f8352024b356f3a2e7314d54c0dfd30125b21",
+                "configuration_root": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04",
+                "model_metadata_path": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/深度审核重整-20261028/真实运行/first-20261030-04/model-metadata.json",
+                "model_metadata_sha256": "c552a3c51bda1a8cdd7c6f3bce735e7cac8f3f5b72881630e642f931121f30e4"
+            },
+            "env": {
+                "PAO_HOME": "/tmp/harbor-pao-home",
+                "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "TMP": "/tmp",
+                "TEMP": "/tmp",
+                "TMPDIR": "/tmp"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "name": "terminal-bench/html-js-filter",
+            "ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3"
+        }
+    ]
+}

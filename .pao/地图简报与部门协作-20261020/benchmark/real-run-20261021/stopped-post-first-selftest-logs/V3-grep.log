@@ -1,0 +1,43 @@
+# V3 grep double-check (FINAL)
+# filter.py md5: 33f20be60951ad990baab551f56d5885  /app/filter.py
+## dangerous patterns (expect 0)
+cat v3/*.html | grep -oiE '<script' | wc -l -> 0
+cat v3/*.html | grep -oiE '</script' | wc -l -> 0
+cat v3/*.html | grep -oiE 'javascript:' | wc -l -> 0
+cat v3/*.html | grep -oiE 'vbscript:' | wc -l -> 0
+cat v3/*.html | grep -oiE 'livescript:' | wc -l -> 0
+cat v3/*.html | grep -oiE 'mocha:' | wc -l -> 0
+cat v3/*.html | grep -oiE 'srcdoc' | wc -l -> 0
+cat v3/*.html | grep -oiE 'http-equiv="refresh"' | wc -l -> 0
+cat v3/*.html | grep -oiE '<base' | wc -l -> 0
+event attrs [[:space:]]on[a-zA-Z0-9_:.-]*= -> 0
+note: loose on[a-z0-9_:.-]*= matches 'ontent=' inside content= (see V3-grep-onattr.log)
+
+## structure counts input vs output
+<table>: input=1 output=1 SAME
+<thead>: input=1 output=1 SAME
+<tbody>: input=1 output=1 SAME
+<tr>: input=3 output=3 SAME
+<td>: input=4 output=4 SAME
+<th>: input=2 output=2 SAME
+<h1>: input=1 output=1 SAME
+<h2>: input=1 output=1 SAME
+<h3>: input=1 output=1 SAME
+<ul>: input=1 output=1 SAME
+<li>: input=2 output=2 SAME
+<p>: input=12 output=12 SAME
+
+## benign attributes preserved (expect >= 1)
+src=x -> 1
+alt="pic" -> 1
+title="t" -> 1
+title="frame" -> 1
+attributeName="x" -> 1
+style="color:red" -> 1
+method="post" -> 1
+charset="utf-8" -> 1
+class="t" border="1" -> 1
+class="last" data-k="v" -> 1
+body{color:#333} -> 1
+cx="5" -> 1
+DOCTYPE html -> 1

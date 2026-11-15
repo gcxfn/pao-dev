@@ -1,0 +1,1433 @@
+diff --git a/.pao/pi升级评估-20261024/PI-Desktop宿主评估.md b/.pao/pi升级评估-20261024/PI-Desktop宿主评估.md
+index 0a3b57a7..f0630bd6 100644
+--- a/.pao/pi升级评估-20261024/PI-Desktop宿主评估.md
++++ b/.pao/pi升级评估-20261024/PI-Desktop宿主评估.md
+@@ -4,6 +4,29 @@
+ 
+ ## 结论
+ 
++### 本次子代理评估后的主控复核
++
++2026-10-25，用户要求“完全通过插件，不修改任何宿主源码”，并补充桌面机制和UI复用。两位子代理均为group/deepseek high，报告分别见[插件公开能力](子代理评估-插件公开能力.md)与[PAO行为映射](子代理评估-PAO行为映射.md)。主控实际复核了两份结论之间的分歧及底层调用链。远端HEAD仍与下述固定提交一致。
++
++**结论：存在不修改PI-Desktop/pi源码、且复用宿主模型与会话执行的完整接入设计路线；静态评估为条件可行，尚未经过真实插件闭环验证。无需先假定修改宿主，也不必把整套旧执行宿主塞进插件。** PAO本体仍需重构接入，不能原样加载现有扩展。
++
++推荐一个插件：内部保留PAO部门、任务卡、验收和返修规则；一个常驻服务通过公开pi.desktop.invoke调用session/create、agent/prompt、agent/getStatus、session/get、agent/abort；监听session:turnEnded并核对真实回合与业务回执，再机械推进下一步。PAO继续负责现有的任务身份、attempt和验收证据，宿主负责模型执行和会话历史。业务状态归PAO并不是第二个模型执行宿主。
++
++这修正了先前只看专用collaboration接口时的过窄判断：它的spawn/send确实要求活动工具身份，但普通公开会话接口没有同样限制。完成消息也确实可以启动来源会话的一轮，而不只是静静落入队列；不能据此宣称所有模型后续行为都确定执行。确定性的流程判断仍应由PAO代码执行。
++
++主控复核证据：apps/desktop/electron/main/plugin-runtime.ts:5611起提供受权限保护的公开desktop.invoke，对普通操作不要求存在工具调用；mcp-control.ts:189起注册普通会话/Agent操作，createMcpControlController转交已有IPC；ipc/session-ipc.ts:228起转交session.create；services/plugin-services.ts:585起广播回合结束事件；runtime/plans.ts:272发布该事件。文档对应03-plugin-api.md:1135起的desktop control及:1352起的回合结束契约。子代理个别文档行号有偏移，以本段复核位置和实际符号为准。
++
++仍需验证四项，不能把静态可达当成运行成功：
++
++1. **事件与恢复**：回合结束事件无确认/重放，且文档明确可能仍有迟到工具结果。事件只用于唤醒，必须核对持久状态、回执和写入停止；重开后对账，不能直接当作可安全验收。文档关于“0.14.8尚未发布事件”的字样陈旧，不能据此断言本次0.21源码没有事件；具体安装发行物另行核对。
++2. **工作树**：不能只凭MCP便捷工具的字段表断言无隔离能力。通用desktop.invoke没有按该便捷工具schema删字段；sessionCreate IPC透传参数，Rust rpc/mod.rs:2636起实际读取isolated:true并创建隔离工作树。这是可达源码路线，但插件说明未完整承诺参数和后续合并/清理操作，需验证并确认公开契约稳定性。也可以由PAO使用现有Git工作树实现，将目录作为projectPath交给宿主；这保留工作树管理，不等于保留第二模型执行宿主。该替代同样尚未运行。
++3. **取消与退出**：agentAbort支持sessionId加turnId校验，插件应按实际回合取消，避免中止后来任务；不能只看便捷工具schema推断没有turnId。宿主退出限时仍成立，需在工作中持续保存状态，退出时取消并标中断，重开显式恢复；本次不承诺退出后后台继续作业或等待所有任务成功完成。
++4. **UI与权限**：插件内PAO页面及聊天扩展有真实公开接口，整套宿主布局和交互没有任意替换契约；权限审批、配置和实际Windows运行均未集成验证。详情见下方UI表。
++
++能复用：项目与持久会话、模型配置与凭证执行、回合历史与用量记录、Agent侧执行、常驻服务生命周期、事件通道、插件安装/启停/设置、命令入口、工作面板、主题及聊天插槽。仍由PAO维护：部门职责、任务书、卡和attempt、机械验收、返修历史、流程控制、业务去重与恢复映射。宿主Token记录可以复用，不代表自动得到了完整费用统计或P5降负担结论。
++
++推荐后续最小验证采用“常驻服务＋普通会话接口＋PAO自有工作台”，验证派发、机械验收、原卡返修、迟到事件、精确取消与关闭重开。此次没有开始实现、安装、付费试跑、合并或迁移。下文保留较早评估的背景和调查记录，涉及后台调度与工作树的保留判断以本段复核为准。
++
+ 值得先做最小接入验证。长期把 PAO 的部门、卡、配方、验收和经验维护为独立业务包，由成熟桌面宿主提供会话、模型、界面、后台与安装更新，方向合理。当前证据不足以认定现有 PAO 可以直接作为插件装入 PI-Desktop，或不再需要任何宿主改动。
+ 
+ 推荐结构为一个 PAO 业务包、一个 PI-Desktop 插件及其薄宿主适配；业务包内部按现有模块组织，不为每个部门另建插件。是否继续提供 CLI 由既有产品需求决定；桌面插件本身不能证明现有无界面基准运行入口仍可用。
+@@ -76,7 +99,30 @@
+ 
+ 初步判断：迁移总成本明显高于单纯升级 pi 1.4.0，主要成本在执行接线、持久身份、恢复及界面迁移，业务模块有复用潜力。尚不具备可靠工期和节省费用估算；最小验证结果出来后再估计。
+ 
+-## 官方来源
++## 2026-10-25补充：UI能否只靠插件实现
++
++以下为主控对同一固定提交的实现复核，未安装或运行。插件可以新增完整PAO工作界面、在聊天中增加入口，并改变整体外观；公开契约不等于允许任意替换宿主所有界面和交互。
++
++| 需求 | 可采用的插件机制 | 边界 |
++|---|---|---|
++| 部门、任务卡、流程、验收记录的专属工作台 | contributes.views，插件自带HTML/JS/CSS，在宿主工作面板打开 | 可自行设计内部布局；不是替换主窗口或宿主导航。宿主缓存视图上限4，不要将每个部门做成独立常驻视图 |
++| 独立设置页、复杂编辑表单、弹出窗口 | ui.panel或自己的view；简单设置用contributes.settings | 简单设置由宿主表单生成；复杂部门配置放自己的页面，不能据此改写宿主所有设置页 |
++| 聊天里的“交给部门”按钮、快捷选择部门 | composerControl、composerTrigger及composerTransforms | 在现有输入区域增加入口；不替换整个编辑器或其提交语义 |
++| 每条回复下显示任务状态、回执链接、人工操作 | entryExtra、userAction、assistantAction | 是附加内容，不改写宿主既有消息正文或原按钮行为；实际操作仍须走业务权限和回执规则 |
++| PAO派发和验收工具显示成专属卡片 | toolCard | 只能注册本插件自己的agentTools，不据此替换其他插件或宿主工具卡 |
++| 在回复里渲染PAO流程图或结构化内容 | blockRenderer | 使用本插件命名空间的代码块标签；不是接管全部Markdown渲染 |
++| 自己的确认框、详情弹层 | pi.ui.openLayer | 宿主权限/审批等需要用户决定时会隐藏插件层，不可覆盖宿主决策界面 |
++| 色彩、字体、背景、间距等外观 | contributes.themes、运行时themes接口及windowAppearance | 主题CSS会作用于宿主样式，可做比换颜色更广的外观调整；依赖内部class的布局覆盖较脆弱，不等于稳定的布局/交互替换接口 |
++
++与此不同，renderer的pi.ui.injectStyle会把普通样式规则限制在本插件挂载区域；不能把它误认为任意全局改样式接口。可信renderer确实与宿主处于同一网页环境，但直接操作宿主DOM、调用内部store或抓内部IPC不计入本次公开接口方案，也不作为长期兼容保证。
++
++建议保留宿主项目列表、会话列表、聊天主体、模型设置和通用文件/工具展示，在一个PAO工作面板内集中部门、任务卡和验收；聊天输入区加派发按钮，回复旁显示状态与跳转。这样可以只交付一个插件，且不要求复刻现有PAO桌面的每一处布局。现有React纯展示组件可能迁移，但当前组件对自有IPC和状态的依赖需逐一拆开，不能直接宣称整套界面可搬入。
++
++源码证据（均为上文固定提交）：packages/plugin-sdk/src/renderer.ts:50列出7种插槽，:282定义样式与弹层，:454限制自有工具卡；apps/desktop/src/plugins/renderer-slots/registry.ts负责附加注册和重复键；style-injection.ts:46实现作用域；apps/desktop/src/components/workpanel/PluginViewTab.tsx:19实现工作面板视图；apps/desktop/electron/main/plugin-view-host.ts:52为视图缓存上限、:432为隔离页面配置；packages/plugin-sdk/src/index.ts:1240起为主题、设置、面板和revealView；packages/plugin-sdk/src/theme-css.ts:321及apps/desktop/src/features/app/useAppShellRuntime.tsx:574共同实现主题校验和全局样式注入。examples/plugins/ui-slots-lab/renderer/index.mjs:31起有真实各插槽示例；不只依据路线图判断。
++
++主控同时确认实际plugin-runtime.ts:660、:662在应用退出时分别限制插件关闭钩子1.5秒和总体收尾3秒。不能把存在onUnload回调等同于宿主允许等待所有PAO在途工作完成。纯插件接入必须明确持久取消/恢复的语义，并验证退出后确实无遗留写入；若要求退出前无限等待模型工作完成，则与此宿主退出契约冲突。本轮没有实际启动验证。
++
++## 官方来源（固定提交）
+ 
+ - [项目说明](https://github.com/vastsa/PI-Desktop)
+ - [架构](https://github.com/vastsa/PI-Desktop/blob/d2c9fc44087f24260521c66530c4f92c04790105/docs/spec/02-architecture/01-architecture.md)
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
+index 5ee127ec..d6dae845 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
+@@ -2,18 +2,20 @@
+ 
+ from __future__ import annotations
+ 
++import hashlib
+ import json
+ import shlex
+ from pathlib import Path
+ from typing import Literal, override
+ 
+-from pydantic import Field, model_validator
++import yaml
++from pydantic import Field, SecretStr, model_validator
+ 
+ from harbor.agents.installed.base import with_prompt_template
+ from harbor.agents.installed.pi import Pi, PiOptions
+ from harbor.environments.base import BaseEnvironment
+ from harbor.models.agent.context import AgentContext, ModelUsage
+-from .usage import aggregate_session_usage
++from .usage import aggregate_session_usage, classify_session_file
+ 
+ 
+ class PAOOptions(PiOptions):
+@@ -32,6 +34,10 @@ class PAOOptions(PiOptions):
+     archive_format: Literal["zip", "tar.gz"] = "tar.gz"
+     model_data_archive: str | None = None
+     model_data_sha256: str | None = Field(default=None, pattern=r'^[0-9a-f]{64}$')
++    node_archive: str = Field(description="宿主本地的 Node Linux x64 归档绝对路径。")
++    node_sha256: str = Field(pattern=r"^[0-9a-f]{64}$", description="Node 归档 SHA-256。")
++    system_dependencies_archive: str | None = None
++    system_dependencies_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+     no_extensions: bool = Field(
+         default=False,
+         description="三组均为 false；single 在 SDK 中只不注册 PAO 工厂。",
+@@ -45,6 +51,19 @@ class PAOOptions(PiOptions):
+         min_length=1,
+         description="容器内的固定源码构建命令。",
+     )
++    configuration_root: str | None = Field(
++        default=None,
++        description="冻结运行目录的容器路径；只用于读取同目录的角色模型绑定。",
++    )
++    model_metadata_path: str | None = Field(
++        default=None,
++        description="可信模型元数据文件的本机绝对路径。",
++    )
++    model_metadata_sha256: str | None = Field(
++        default=None,
++        pattern=r"^[0-9a-f]{64}$",
++        description="可信模型元数据文件的 SHA-256。",
++    )
+ 
+     @model_validator(mode="after")
+     def validate_profile_boundary(self):
+@@ -54,6 +73,10 @@ class PAOOptions(PiOptions):
+             raise ValueError("overlay 路径和摘要必须同时提供。")
+         if bool(self.model_data_archive) != bool(self.model_data_sha256):
+             raise ValueError('模型构建数据路径和摘要必须同时提供。')
++        if bool(self.system_dependencies_archive) != bool(self.system_dependencies_sha256):
++            raise ValueError('离线系统依赖归档路径和摘要必须同时提供。')
++        if bool(self.model_metadata_path) != bool(self.model_metadata_sha256):
++            raise ValueError("模型元数据路径和摘要必须同时提供。")
+         if self.profile == "pre-pao" and (self.archive_format != "zip" or not self.source_overlay_archive):
+             raise ValueError("pre-pao 必须使用主验的 tracked+untracked 两份 ZIP。")
+         if not self.tools:
+@@ -86,6 +109,41 @@ class PAOAgent(Pi):
+     def name() -> str:
+         return "pao"
+ 
++    def _configured_model_binding(self) -> tuple[str, dict[str, str]]:
++        """区分外部选定模型与本次自定义端点的实际运行别名。"""
++        if not self.options.configuration_root:
++            selected_model_name = self.model_name
++            provider, model_id = self._parse_model_name(selected_model_name)
++            runtime_model_name = selected_model_name
++        else:
++            binding_path = (
++                Path(self.options.configuration_root) / "role-model-binding.json"
++            )
++            if not binding_path.is_file():
++                raise FileNotFoundError("缺少角色模型绑定：" + str(binding_path))
++            binding = json.loads(binding_path.read_text(encoding="utf-8"))
++            selected_model_name = binding.get("selected_model_name")
++            provider = binding.get("provider")
++            model_id = binding.get("model")
++            if not isinstance(selected_model_name, str) or not isinstance(provider, str) or not isinstance(model_id, str):
++                raise ValueError("角色模型绑定缺少完整模型身份")
++            runtime_model_name = provider + "/" + model_id
++        expected = {
++            "model_name": runtime_model_name,
++            "selected_model_name": selected_model_name,
++            "provider": provider,
++            "model": model_id,
++            "thinking": self.options.thinking,
++        }
++        if self.options.configuration_root:
++            if binding != expected:
++                raise ValueError("角色模型绑定与选定模型不一致")
++            if self.model_name != runtime_model_name:
++                raise ValueError("运行模型别名与角色模型绑定不一致")
++        if self._parse_model_name(selected_model_name)[1] != model_id:
++            raise ValueError("外部选定模型与运行 model id 不一致")
++        return selected_model_name, expected
++
+     @override
+     async def install(self, environment: BaseEnvironment) -> None:
+         if self.options.source_sha256 == "pending":
+@@ -93,10 +151,33 @@ class PAOAgent(Pi):
+         archive = Path(self.options.source_archive).expanduser().resolve()
+         if not archive.is_file():
+             raise FileNotFoundError(f"PAO 源码归档不存在：{archive}")
++        node_archive = Path(self.options.node_archive).expanduser().resolve()
++        if not node_archive.is_file():
++            raise FileNotFoundError(f"Node 归档不存在：{node_archive}")
++        if hashlib.sha256(node_archive.read_bytes()).hexdigest() != self.options.node_sha256:
++            raise ValueError("Node 归档摘要与本机冻结值不符")
+ 
+-        await self.ensure_system_dependencies(
+-            environment, ("bash", "coreutils", "curl", "tar", "unzip", "xz")
+-        )
++        await self.exec_as_agent(environment, command="python3 -c 'import zipfile, tarfile, lzma'")
++        if self.options.system_dependencies_archive:
++            dependencies = Path(self.options.system_dependencies_archive).expanduser().resolve()
++            if hashlib.sha256(dependencies.read_bytes()).hexdigest() != self.options.system_dependencies_sha256:
++                raise ValueError('离线系统依赖归档摘要不符')
++            await environment.upload_file(dependencies, '/tmp/pao-system-dependencies.zip')
++            await self.exec_as_root(environment, command=(
++                'set -euo pipefail; '
++                f"printf '%s  %s\\n' {self.options.system_dependencies_sha256} /tmp/pao-system-dependencies.zip | sha256sum -c -; "
++                'python3 -m zipfile -e /tmp/pao-system-dependencies.zip /tmp/pao-system-dependencies; '
++                'dpkg --install /tmp/pao-system-dependencies/*.deb'
++            ))
++        await self.ensure_system_dependencies(environment, ("bash", "coreutils", "tar", "python3", "git"))
++        await self.exec_as_agent(environment, command=(
++            'python3 -c ' + shlex.quote(
++                "import json,pathlib,subprocess; "
++                "data={name:subprocess.check_output([name,'--version'],text=True).strip() "
++                "for name in ('git','python3')}; "
++                "pathlib.Path('/tmp/benchmark-prerequisites.json').write_text(json.dumps(data))"
++            )
++        ))
+         await environment.upload_file(archive, self._REMOTE_SOURCE_ARCHIVE)
+         await self.exec_as_agent(
+             environment,
+@@ -105,7 +186,7 @@ class PAOAgent(Pi):
+                 f"printf '%s  %s\\n' {shlex.quote(self.options.source_sha256)} "
+                 f"{shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} | sha256sum -c -; "
+                 f"mkdir -p {shlex.quote(self._REMOTE_SOURCE_DIR)}; "
+-                + (f"unzip -q {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} -d {shlex.quote(self._REMOTE_SOURCE_DIR)}"
++                + (f"python3 -m zipfile -e {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} {shlex.quote(self._REMOTE_SOURCE_DIR)}"
+                    if self.options.archive_format == "zip" else
+                    f"tar -xzf {shlex.quote(self._REMOTE_SOURCE_ARCHIVE)} -C {shlex.quote(self._REMOTE_SOURCE_DIR)} --strip-components=1")
+             ),
+@@ -119,7 +200,7 @@ class PAOAgent(Pi):
+             await self.exec_as_agent(environment, command=(
+                 "set -euo pipefail; "
+                 f"printf '%s  %s\\n' {shlex.quote(self.options.source_overlay_sha256)} {remote_overlay} | sha256sum -c -; "
+-                f"unzip -qo {remote_overlay} -d {self._REMOTE_SOURCE_DIR}"
++                f"python3 -m zipfile -e {remote_overlay} {self._REMOTE_SOURCE_DIR}"
+             ))
+         if not self.options.model_data_archive:
+             raise ValueError('缺少冻结的离线模型构建数据，禁止联网重新生成源码。')
+@@ -130,25 +211,10 @@ class PAOAgent(Pi):
+         await self.exec_as_agent(environment, command=(
+             'set -euo pipefail; '
+             f"printf '%s  %s\\n' {self.options.model_data_sha256} /tmp/harbor-model-data.zip | sha256sum -c -; "
+-            f'unzip -qo /tmp/harbor-model-data.zip -d {self._REMOTE_SOURCE_DIR}'
++            f'python3 -m zipfile -e /tmp/harbor-model-data.zip {self._REMOTE_SOURCE_DIR}'
+         ))
+-        node_install = (
+-            "set -euo pipefail; "
+-            "NODE_VERSION=v24.18.0; "
+-            "NODE_SHA256=55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742; "
+-            "NODE_DIR=$HOME/.local/pao-node; "
+-            "if [ ! -x \"$NODE_DIR/bin/node\" ]; then "
+-            "mkdir -p \"$HOME/.local\"; "
+-            "curl -fsSLo /tmp/pao-node.tar.xz "
+-            "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz; "
+-            "printf '%s  %s\\n' \"$NODE_SHA256\" /tmp/pao-node.tar.xz | sha256sum -c -; "
+-            "mkdir -p \"$NODE_DIR\"; "
+-            "tar -xJf /tmp/pao-node.tar.xz --strip-components=1 -C \"$NODE_DIR\"; "
+-            "fi; "
+-            'export PATH="$NODE_DIR/bin:$PATH"; '
+-            "\"$NODE_DIR/bin/node\" --version; \"$NODE_DIR/bin/npm\" --version"
+-        )
+-        await self.exec_as_agent(environment, command=node_install)
++        await environment.upload_file(node_archive, "/tmp/pao-node.tar.xz")
++        await self.exec_as_agent(environment, command=self._node_install_command(self.options.node_sha256))
+         await self.exec_as_agent(
+             environment,
+             command=(
+@@ -184,6 +250,22 @@ class PAOAgent(Pi):
+                 f"chmod 755 {self._REMOTE_LAUNCHER}"
+             ),
+         )
++        if self.options.model_metadata_path and self.options.model_metadata_sha256:
++            metadata_path = Path(self.options.model_metadata_path).expanduser().resolve()
++            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
++                raise ValueError("可信模型元数据摘要不符")
++            selected_model_name, binding = self._configured_model_binding()
++            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))["models"].get(selected_model_name)
++            if not isinstance(metadata, dict):
++                raise ValueError("可信模型元数据没有完整选定模型：" + selected_model_name)
++            if metadata.get("id") != binding["model"]:
++                raise ValueError("可信模型元数据的 id 与选定模型不一致")
++            await self._upload_config_text(
++                environment,
++                content=json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n",
++                remote_path="/tmp/benchmark-model-binding.json",
++                filename="benchmark-model-binding.json",
++            )
+ 
+     @override
+     @with_prompt_template
+@@ -197,20 +279,33 @@ class PAOAgent(Pi):
+             raise ValueError("尚未固定实际模型；禁止运行占位符。")
+         if self._resume or self.mcp_servers or self.options.max_turns is not None:
+             raise ValueError("本次固定单题配置不支持 resume/MCP/max_turns 扩展。")
+-        provider, model_id = self._parse_model_name(self.model_name)
++        selected_model_name, binding = self._configured_model_binding()
++        provider, model_id = self._parse_model_name(selected_model_name)
+         access = self.model_connection
+         provider = access.provider or provider
+         models_json = self._build_custom_models_json(access, model_id)
+         if models_json is not None:
+-            # 本机已登记的 DeepSeek 组元数据；避免 Harbor 的通用默认窗口截短同一模型。
+             custom = models_json['providers']['harbor-endpoint']
+             custom['compat'] = {'sendSessionAffinityHeaders': True}
+-            custom['models'][0].update(contextWindow=1048576, maxTokens=384000,
+-                                        input=['text', 'image'], thinkingLevelMap={'high': 'high'})
++            metadata_path = Path(self.options.model_metadata_path or "").expanduser().resolve()
++            if not self.options.model_metadata_sha256:
++                raise ValueError("自定义端点缺少可信模型元数据")
++            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
++                raise ValueError("可信模型元数据摘要不符")
++            metadata_root = json.loads(metadata_path.read_text(encoding="utf-8"))
++            metadata = metadata_root["models"][selected_model_name]
++            if metadata["id"] != binding["model"]:
++                raise ValueError("可信模型元数据的 id 与选定模型不一致")
++            custom['models'][0].update(
++                contextWindow=metadata["contextWindow"],
++                maxTokens=metadata["maxTokens"],
++                input=metadata["input"],
++                thinkingLevelMap=metadata["thinkingLevelMap"],
++            )
+             await self._write_custom_models_json(environment, models_json)
+             provider = "harbor-endpoint"
+-        # 主控、部长、worker 的默认档位都指向同一已授权模型；不读取正式 PAO_HOME。
+         await self.exec_as_agent(environment, command='mkdir -p /tmp/harbor-pao-home/pao配置 /tmp/harbor-pi-agent')
++        # 主控、部长和 worker 使用同一已选模型；setup.mjs 读取该绑定文件配置角色。
+         tiers = {'provider': 'pao', '档位': [
+             {'名': name, 'provider': provider, 'model': model_id, 'thinkingLevel': self.options.thinking}
+             for name in ('fast', 'primary')
+@@ -223,6 +318,9 @@ class PAOAgent(Pi):
+         await self._upload_config_text(environment, content=json.dumps(settings),
+             remote_path='/tmp/harbor-pi-agent/settings.json', filename='benchmark-settings.json')
+         env = dict(access.env)
++        secret = access.api_key
++        if secret is not None:
++            env["PAO_BENCH_API_KEY"] = secret.get_secret_value() if isinstance(secret, SecretStr) else str(secret)
+         env.update({"PAO_HOME": "/tmp/harbor-pao-home", "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                     "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent", "PI_SKIP_VERSION_CHECK": "1"})
+         skills_command = self._build_register_skills_command()
+@@ -270,19 +368,162 @@ class PAOAgent(Pi):
+         # 隔离配置不设置 defaultTools，四项共同基础工具沿 pi 原生默认值。
+         return flags
+ 
+-    @override
+-    def populate_context_post_run(self, context: AgentContext) -> None:
+-        # 父轨迹仍由固定提交中的 Pi 逻辑生成，worker 会话放在独立目录。
+-        super().populate_context_post_run(context)
++    @staticmethod
++    def _node_install_command(node_sha256: str) -> str:
++        """安装命令只接受已上传归档；不含下载入口或隐式重试。"""
++        return (
++            "set -euo pipefail; "
++            "NODE_DIR=$HOME/.local/pao-node; "
++            "if [ ! -x \"$NODE_DIR/bin/node\" ]; then "
++            "mkdir -p \"$HOME/.local\"; "
++            f"printf '%s  %s\\n' {shlex.quote(node_sha256)} /tmp/pao-node.tar.xz | sha256sum -c -; "
++            'NODE_STAGE=$(mktemp -d "$HOME/.local/pao-node-unpack.XXXXXX"); '
++            'python3 -m tarfile -e /tmp/pao-node.tar.xz "$NODE_STAGE"; '
++            'mv "$NODE_STAGE"/node-*-linux-x64 "$NODE_DIR"; rmdir "$NODE_STAGE"; '
++            "fi; "
++            'export PATH="$NODE_DIR/bin:$PATH"; '
++            "\"$NODE_DIR/bin/node\" --version; \"$NODE_DIR/bin/npm\" --version"
++        )
++
++    def _usage_candidates(self) -> tuple[list[Path], list[str], list[str]]:
++        """只读取有原生会话契约的目录；候选分类结果全部留证。"""
++        if not self.logs_dir.is_dir():
++            return [], [], [f"日志目录不存在或不可读：{self.logs_dir}"]
+         main_dir = self.logs_dir / self._SESSIONS_DIRECTORY
+         worker_dir = self.logs_dir / self._WORKER_SESSIONS_DIRECTORY
+-        session_files = sorted(
+-            [
+-                *(main_dir.glob("*.jsonl") if main_dir.is_dir() else []),
+-                *(worker_dir.rglob("*.jsonl") if worker_dir.is_dir() else []),
++        project_state = worker_dir / "project-state"
++        non_session_paths = {
++            *(project_state / "执行映射").glob("*.jsonl"),
++            project_state / "派发日志.jsonl",
++        }
++        candidates = sorted(path for path in {
++            *main_dir.glob("*.jsonl"),
++            *worker_dir.glob("*.jsonl"),
++            *(project_state / "worker会话").glob("*.jsonl"),
++            *(project_state / "benchmark/部长会话").glob("*/*.jsonl"),
++            *(project_state / "archive").glob("**/部长会话/*/*.jsonl"),
++            *(project_state / "archive").glob("**/worker会话/*.jsonl"),
++            *(project_state / "benchmark/worker-evidence").glob("*.live.jsonl"),
++            *(worker_dir / "native-default-sessions").glob("**/*.jsonl"),
++            *non_session_paths,
++        } if path.is_file())
++        session_files = []
++        ignored = []
++        errors = []
++        for path in candidates:
++            if path in non_session_paths:
++                ignored.append(str(path.relative_to(self.logs_dir)))
++                continue
++            kind, reason = classify_session_file(path)
++            if kind == "session":
++                session_files.append(path)
++            elif kind == "non_session":
++                ignored.append(str(path.relative_to(self.logs_dir)))
++            else:
++                errors.append(f"{path}: {reason}")
++        return session_files, ignored, errors
++
++    def _usage_evidence_counts(self) -> tuple[int | None, int | None, int, int, list[str]]:
++        """按清单与执行快照中的真实身份去重，证据文件另计。"""
++        if not self.logs_dir.is_dir():
++            return None, None, 0, 0, [f"日志目录不存在或不可读：{self.logs_dir}"]
++        project_state = self.logs_dir / self._WORKER_SESSIONS_DIRECTORY / "project-state"
++        instance_paths = sorted(project_state.glob("**/工作流实例-*.md"))
++        instance_ids: set[str] = set()
++        instance_dirs: dict[Path, str] = {}
++        errors: list[str] = []
++        for path in instance_paths:
++            try:
++                lines = path.read_text(encoding="utf-8").splitlines()
++            except (OSError, UnicodeError) as exc:
++                errors.append(f"{path}: 工作流实例清单不可读：{type(exc).__name__}: {exc}")
++                continue
++            if not lines or lines[0].strip() != "---":
++                errors.append(f"{path}: 工作流实例清单缺少 frontmatter")
++                continue
++            try:
++                end = lines.index("---", 1)
++                frontmatter = yaml.safe_load("\n".join(lines[1:end]))
++            except (ValueError, yaml.YAMLError) as exc:
++                errors.append(f"{path}: 工作流实例 frontmatter 无法解析：{type(exc).__name__}: {exc}")
++                continue
++            instance_id = frontmatter.get("实例") if isinstance(frontmatter, dict) else None
++            if not isinstance(instance_id, str) or not instance_id.strip():
++                errors.append(f"{path}: 工作流实例 frontmatter 缺少实例身份")
++                continue
++            instance_id = instance_id.strip()
++            instance_ids.add(instance_id)
++            instance_dirs[path.parent.resolve()] = instance_id
++
++        attempt_paths = sorted(project_state.glob("**/execution-contexts/card-*-attempt-*.json"))
++        attempt_ids: set[tuple[str, str, int, int]] = set()
++        for path in attempt_paths:
++            try:
++                record = json.loads(path.read_text(encoding="utf-8"))
++                key = record["key"]
++                cards_dir = key["cardsDir"]
++                card_no = key["cardNo"]
++                attempt = key["attempt"]
++                if not (
++                    isinstance(record, dict)
++                    and isinstance(cards_dir, str)
++                    and cards_dir
++                    and isinstance(card_no, int)
++                    and not isinstance(card_no, bool)
++                    and isinstance(attempt, int)
++                    and not isinstance(attempt, bool)
++                ):
++                    raise ValueError("执行身份字段无效")
++            except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
++                errors.append(f"{path}: 执行上下文身份不可读：{type(exc).__name__}: {exc}")
++                continue
++            ancestor_instances = [
++                (len(directory.parts), candidate)
++                for directory, candidate in instance_dirs.items()
++                if path.parent.resolve().is_relative_to(directory)
+             ]
++            if not ancestor_instances:
++                errors.append(f"{path}: 执行上下文无法绑定工作流实例")
++                continue
++            nearest_depth = max(depth for depth, _ in ancestor_instances)
++            instance_id, *conflicts = {
++                candidate
++                for depth, candidate in ancestor_instances
++                if depth == nearest_depth
++            }
++            if conflicts:
++                errors.append(f"{path}: 执行上下文绑定多个工作流实例")
++                continue
++            normalized_cards_dir = cards_dir.replace("\\", "/").rstrip("/")
++            attempt_ids.add((instance_id, normalized_cards_dir, card_no, attempt))
++        return (
++            len(instance_ids) if not errors else None,
++            len(attempt_ids) if not errors else None,
++            len(instance_paths),
++            len(attempt_paths),
++            errors,
+         )
++
++    @override
++    def populate_context_post_run(self, context: AgentContext) -> None:
++        # 父轨迹仍由固定提交中的 Pi 逻辑生成，worker 会话放在独立目录。
++        super().populate_context_post_run(context)
++        session_files, ignored_non_session, classification_errors = self._usage_candidates()
+         totals = self._aggregate_session_usage(session_files)
++        if classification_errors:
++            # 原生会话候选损坏必须使覆盖结论失败，不能因分类过滤而无痕消失。
++            totals["errors"] = [*classification_errors, *totals["errors"]]
++            totals["complete"] = False
++        (
++            internal_instance_count,
++            worker_attempt_count,
++            instance_evidence_file_count,
++            attempt_evidence_file_count,
++            evidence_errors,
++        ) = self._usage_evidence_counts()
++        if evidence_errors:
++            totals["errors"] = [*totals["errors"], *evidence_errors]
++            totals["complete"] = False
+         context.n_input_tokens = totals["input"] if not totals["unknown_tokens"] and not totals["errors"] else None
+         context.n_output_tokens = totals["output"] if not totals["unknown_tokens"] and not totals["errors"] else None
+         context.n_cache_tokens = totals["cache"] if not totals["unknown_tokens"] and not totals["errors"] else None
+@@ -301,12 +542,35 @@ class PAOAgent(Pi):
+             **(context.metadata or {}),
+             "pao_profile": self.options.profile,
+             "pao_source_sha256": self.options.source_sha256,
++            "pao_node_sha256": self.options.node_sha256,
++            "pao_node_archive": str(Path(self.options.node_archive).expanduser().resolve()),
+             "pao_session_file_count": len(session_files),
+-            "pao_usage_event_count": totals["events"],
+-            "pao_usage_unknown_events": totals["unknown_cost"],
+-            "pao_usage_known_cost_lower_bound_usd": totals["cost"],
++            "pao_observed_usage_event_count": totals["events"],
++            "pao_harbor_trials_observed": 1,
++            "pao_internal_instance_count": internal_instance_count,
++            "pao_internal_instance_count_status":
++                "observed" if internal_instance_count is not None else "unknown",
++            "pao_internal_instance_evidence_file_count": instance_evidence_file_count,
++            "pao_worker_attempt_count": worker_attempt_count,
++            "pao_worker_attempt_count_status":
++                "observed" if worker_attempt_count is not None else "unknown",
++            "pao_worker_attempt_evidence_file_count": attempt_evidence_file_count,
++            "pao_model_request_count": None,
++            "pao_model_requests_status": "unknown",
++            "pao_model_requests_reason": "用量事件身份不是请求身份；同一请求可能有多条回执，工具用量或转录也可能重复",
++            "pao_role_session_counts": totals["role_session_counts"],
++            "pao_usage_coverage_status": "unknown",
++            "pao_usage_coverage_reason": "只统计已发现的受管会话和辅助请求信号，未证明所有部门、RPC、辅助调用和内部实例均已归档",
++            "pao_role_coverage_status": {
++                role: "observed" if count else "not_observed"
++                for role, count in totals["role_session_counts"].items()
++            },
++            "pao_cost_status": totals["cost_status"],
++            "pao_cost_source": totals["cost_source"],
++            "pao_usage_candidate_count": len(session_files) + len(ignored_non_session) + len(classification_errors),
++            "pao_usage_ignored_non_session": ignored_non_session,
+             "pao_usage_scope": "父会话与已同步 worker 会话按 session+event 去重",
+-            "pao_observed_usage_complete": totals["complete"],
++            "pao_discovered_usage_complete": totals["complete"],
+             "pao_nested_usage_complete": totals["complete"] and self.options.profile == "single",
+             "pao_usage_errors": totals["errors"],
+             "pao_unknown_token_events": totals["unknown_tokens"],
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/usage.py b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/usage.py
+index 7a4ae250..1b7431fa 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/usage.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/usage.py
+@@ -1,16 +1,54 @@
+-"""原生会话用量汇总；标准库实现，独立于 Harbor，回执内的汇总数字不重复入账。"""
++"""原生会话识别和可观察用量汇总；不把执行映射、派发日志或默认零价当模型会话。"""
+ from __future__ import annotations
+ 
+ import json
+-import math
+ from pathlib import Path
+ 
+ 
++def session_role(path: Path) -> str:
++    """按原生会话的受管路径归属角色；未知布局单独计数，不猜成已覆盖角色。"""
++    parts = Path(path).parts
++    if "部长会话" in parts:
++        return "minister"
++    if "worker会话" in parts:
++        return "worker"
++    if "native-default-sessions" in parts:
++        return "main"
++    if "worker-sessions" in parts:
++        return "worker"
++    if "sessions" in parts:
++        return "main"
++    return "other"
++
++
++def classify_session_file(path: Path) -> tuple[str, str | None]:
++    """按原生会话头分类；损坏候选由调用方依据路径暴露，不能静默过滤。"""
++    try:
++        lines = Path(path).read_text(encoding="utf-8").splitlines()
++    except (OSError, UnicodeError) as exc:
++        return "corrupt", f"{type(exc).__name__}: {exc}"
++    for line_number, line in enumerate(lines, 1):
++        if not line.strip():
++            continue
++        try:
++            first = json.loads(line)
++        except json.JSONDecodeError as exc:
++            return "corrupt", f"第 {line_number} 行无法解析：{exc}"
++        if not isinstance(first, dict):
++            return "non_session", None
++        identity = first.get("id")
++        if first.get("type") == "session" and isinstance(identity, str) and identity:
++            return "session", None
++        return "non_session", None
++    return "corrupt", "空 JSONL 没有原生会话头"
++
++
+ def aggregate_session_usage(session_files: list[Path]) -> dict:
+     seen: dict[tuple, str] = {}
+-    totals = dict(input=0, output=0, cache=0, cache_write=0, cost=0.0)
++    session_roles: dict[str, str] = {}
++    totals = dict(input=0, output=0, cache=0, cache_write=0)
+     models: dict[str, dict] = {}
+-    unknown_cost = unknown_tokens = events_count = 0
++    unknown_tokens = events_count = 0
+     errors: list[str] = []
+     if not session_files:
+         errors.append("没有原生会话文件，不能按零用量处理")
+@@ -24,6 +62,13 @@ def aggregate_session_usage(session_files: list[Path]) -> dict:
+         if not isinstance(session_id, str) or not session_id:
+             errors.append(f"{path}: 缺少 session id，无法可靠去重")
+             session_id = str(path.resolve())
++        else:
++            role = session_role(path)
++            previous_role = session_roles.setdefault(session_id, role)
++            if previous_role != role:
++                errors.append(
++                    f"{path}: 同一会话出现在多个角色路径：{previous_role}/{role}"
++                )
+         current_model = "unknown"
+         for position, event in enumerate(events, 1):
+             if not isinstance(event, dict):
+@@ -69,22 +114,31 @@ def aggregate_session_usage(session_files: list[Path]) -> dict:
+                 token_unknown |= not valid
+             uncertain_failure = is_assistant and message.get("stopReason") in {"error", "aborted"} and sum(values.values()) == 0
+             unknown_tokens += int(token_unknown or uncertain_failure)
+-            cost = raw.get("cost")
+-            if isinstance(cost, dict):
+-                cost = cost.get("total")
+-            cost_known = isinstance(cost, (int, float)) and not isinstance(cost, bool) and math.isfinite(cost) and cost >= 0 and not uncertain_failure
+-            unknown_cost += int(not cost_known)
+             model_source = message if is_assistant or is_tool else event
+             model_id = model_source.get("model") or model_source.get("responseModel")
+             provider = model_source.get("provider")
+             model_name = f"{provider}/{model_id}" if isinstance(provider, str) and isinstance(model_id, str) else current_model
+-            bucket = models.setdefault(model_name, dict(input=0, output=0, cache=0, cache_write=0, cost=0.0, unknown_cost=0))
++            bucket = models.setdefault(model_name, dict(input=0, output=0, cache=0, cache_write=0))
+             additions = dict(input=values["input"] + values["cacheRead"] + values["cacheWrite"], output=values["output"],
+-                             cache=values["cacheRead"], cache_write=values["cacheWrite"], cost=float(cost) if cost_known else 0.0)
++                             cache=values["cacheRead"], cache_write=values["cacheWrite"])
+             for name, value in additions.items():
+                 totals[name] += value
+                 bucket[name] += value
+-            bucket["unknown_cost"] += int(not cost_known)
+-    return {**totals, "models": models, "events": events_count, "unknown_cost": unknown_cost,
+-            "unknown_tokens": unknown_tokens, "errors": errors,
+-            "complete": not errors and unknown_cost == 0 and unknown_tokens == 0}
++    role_session_counts = {role: 0 for role in ("main", "minister", "worker", "other")}
++    for role in session_roles.values():
++        role_session_counts[role] += 1
++    return {
++        **totals,
++        "models": models,
++        "events": events_count,
++        "role_session_counts": role_session_counts,
++        "unknown_tokens": unknown_tokens,
++        "errors": errors,
++        "cost_status": "unknown",
++        "cost_source": "未提供经核实的单价来源；原始 usage.cost.total=0 不视为免费",
++        "complete": (
++            bool(session_files)
++            and not errors
++            and unknown_tokens == 0
++        ),
++    }
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao_organized.py b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao_organized.py
+index 24599cc8..f8b1d739 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao_organized.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao_organized.py
+@@ -36,7 +36,8 @@ class OrganizedPAOAgent(PAOAgent):
+         result = await self.exec_as_agent(environment, command=(
+             '"$HOME/.local/pao-node/bin/node" /tmp/benchmark-organization/setup.mjs '
+             + shlex.quote(self._REMOTE_SOURCE_DIR)
+-            + ' /tmp/benchmark-organization/kit.json /tmp/harbor-pao-home /tmp/harbor-pi-agent /logs/agent/organization'))
++            + ' /tmp/benchmark-organization/kit.json /tmp/harbor-pao-home /tmp/harbor-pi-agent '
++            + '/logs/agent/organization /app /tmp/benchmark-model-binding.json'))
+         if result.return_code != 0:
+             raise RuntimeError('组织初始化失败，不启动模型：' + str(result.return_code))
+ 
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/activate-tools.mjs b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/activate-tools.mjs
+index 1888bb15..addda8f4 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/activate-tools.mjs
++++ b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/activate-tools.mjs
+@@ -5,6 +5,7 @@ const minister = [
+   'pao_minister_save_node_map',
+   'pao_minister_submit_cards',
+   'pao_minister_review_worker',
++  'pao_minister_rework_cards',
+   'pao_breakdown_done',
+   'pao_submit_decision',
+   'pao_request_ruling',
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/kit.json b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/kit.json
+index bb7de9ee..621fde1b 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/kit.json
++++ b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/kit.json
+@@ -6,7 +6,7 @@
+         "代码调查",
+         "依赖与接口"
+       ],
+-      "recipe": "# 配方:侦察\n\n- 名字:侦察\n- 人设:只读调查需求对应的入口、相关文件、依赖、接口和可用本地验证入口。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/侦察/知识库\n\n## 干法\n\n只读取完成任务所需材料。把精确路径、接口要点、限制和未知项通过 pao_minister_save_node_map 保存为结构化侦察地图，交给宿主注入后继部门；地图只记录业务内容并排除 .git 与当前编排目录 .pao。zero_cards_reason 只解释为何不需要工人卡，不承载地图或业务结论。不得修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。\n"
++      "recipe": "# 配方:侦察\n\n- 名字:侦察\n- 人设:只读调查需求对应的入口、相关文件、依赖、接口和可用本地验证入口。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/侦察/知识库\n\n## 干法\n\n只读取完成任务所需材料。把精确路径、接口要点、限制和未知项通过 pao_minister_save_node_map 保存为结构化侦察地图，交给宿主注入后继部门；地图只记录业务内容并排除 .git 与当前编排目录 .pao。zero_cards_reason 只解释为何不需要工人卡，不承载地图或业务结论。不得修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。\n"
+     },
+     {
+       "name": "规划",
+@@ -14,7 +14,7 @@
+         "方案",
+         "任务拆分"
+       ],
+-      "recipe": "# 配方:规划\n\n- 名字:规划\n- 人设:根据侦察地图制定范围明确、可验证的实施计划。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/规划/知识库\n\n## 干法\n\n先读宿主注入的侦察地图。说明修改边界、具体步骤、验证方法与风险，避免重复全仓调查；通过 pao_minister_save_node_map 保存结构化规划地图交给后继部门。zero_cards_reason 只解释为何不需要工人卡，不承载地图、计划或业务结论。不修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。\n"
++      "recipe": "# 配方:规划\n\n- 名字:规划\n- 人设:根据侦察地图制定范围明确、可验证的实施计划。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/规划/知识库\n\n## 干法\n\n先读宿主注入的侦察地图。说明修改边界、具体步骤、验证方法与风险，避免重复全仓调查；通过 pao_minister_save_node_map 保存结构化规划地图交给后继部门。zero_cards_reason 只解释为何不需要工人卡，不承载地图、计划或业务结论。不修改项目或交工人卡。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。\n"
+     },
+     {
+       "name": "实施",
+@@ -22,7 +22,7 @@
+         "代码实施",
+         "整合与验证"
+       ],
+-      "recipe": "# 配方:实施\n\n- 名字:实施\n- 人设:依据计划拆解实施卡并由工人完成修改、自测与整合。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/实施/知识库\n\n## 干法\n\n先读宿主注入的侦察和规划地图。实际编码必须交工人卡；卡中明确真实业务路径、目标、约束、验收方法和交付物，不把流程实例、卡目录或其他编排控制文件列为业务输入、成果或机械验收。必要时使用任务简报，避免工人重新全景调查。单根目录写入串行，不伪称独立工作树并行。提交工作卡后显式结束拆解并结束本轮，不自行编码或等待工人。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。\n"
++      "recipe": "# 配方:实施\n\n- 名字:实施\n- 人设:依据计划拆解实施卡并由工人完成修改、自测与整合。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/实施/知识库\n\n## 干法\n\n先读宿主注入的侦察和规划地图。实际编码必须交工人卡；卡中明确真实业务路径、目标、约束、验收方法和交付物，不把流程实例、卡目录或其他编排控制文件列为业务输入、成果或机械验收。必要时使用任务简报，避免工人重新全景调查。单根目录写入串行，不伪称独立工作树并行。提交工作卡后显式结束拆解并结束本轮，不自行编码或等待工人。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。\n"
+     },
+     {
+       "name": "审核",
+@@ -30,7 +30,7 @@
+         "独立审查",
+         "验收"
+       ],
+-      "recipe": "# 配方:审核\n\n- 名字:审核\n- 人设:独立核对实际改动、执行记录和公开任务要求。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/审核/知识库\n\n## 干法\n\n只读检查源码差异与真实验证证据，不能只相信实施总结。能安全执行的本地检查应执行；未验证项明示。提交拆解结束与双轴审核判定；不读取官方隐藏测试，不修改实现，不虚构通过。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。\n\n## 验收标准\n\n需求各项有对应实际改动和证据；错误与边界有明确处理；区分本地检查与官方验收；费用和用量未知时如实说明；独立引用真实文件与行号。\n"
++      "recipe": "# 配方:审核\n\n- 名字:审核\n- 人设:独立核对实际改动、执行记录和公开任务要求。\n- 工具:read,grep,find,ls,bash,write,edit\n- 默认档位:primary\n- 记忆目录:部门/审核/知识库\n\n## 干法\n\n只读检查源码差异与真实验证证据，不能只相信实施总结。能安全执行的本地检查应执行；未验证项明示。提交拆解结束与双轴审核判定；不读取官方隐藏测试，不修改实现，不虚构通过。\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。\n\n## 验收标准\n\n需求各项有对应实际改动和证据；错误与边界有明确处理；区分本地检查与官方验收；费用和用量未知时如实说明；独立引用真实文件与行号。\n"
+     }
+   ],
+   "workflow": {
+@@ -47,12 +47,12 @@
+         "目标": "只读侦察下面的公开任务，给出相关入口、路径、接口、可用验证和限制；通过 pao_minister_save_node_map 保存结构化侦察地图，zero_cards_reason 只解释零卡。原始任务：{任务}",
+         "验收": "保存只含公开任务业务内容的结构化侦察地图，给出可核对的真实证据与未验证项",
+         "输入": [],
+-        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。",
++        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。",
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
+         "档位": "primary",
+-        "模型": "harbor-endpoint/group/deepseek",
++        "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+         "depends_on": []
+       },
+@@ -62,12 +62,12 @@
+         "目标": "读取宿主注入的侦察地图与节点上下文，为下面任务制定具体实施与验收计划；保存结构化规划地图，不重复全仓调查。原始任务：{任务}",
+         "验收": "保存只含公开任务业务内容的结构化规划地图，给出可核对的真实证据与未验证项",
+         "输入": [],
+-        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。",
++        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。",
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
+         "档位": "primary",
+-        "模型": "harbor-endpoint/group/deepseek",
++        "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+         "depends_on": [
+           "侦察"
+@@ -79,12 +79,12 @@
+         "目标": "读取宿主注入的侦察与规划地图，提交范围明确的工人卡，由工人修改和自测；你只拆解和整合，不直接编码。原始任务：{任务}",
+         "验收": "工人卡只以业务文件作为输入、成果和机械验收，给出可核对的真实证据与未验证项",
+         "输入": [],
+-        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。",
++        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。",
+         "只读": false,
+         "工人数量": 1,
+         "人工确认": false,
+         "档位": "primary",
+-        "模型": "harbor-endpoint/group/deepseek",
++        "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+         "depends_on": [
+           "规划"
+@@ -96,12 +96,12 @@
+         "目标": "独立读取实施实际改动、判定包及真实本地检查证据，对任务要求逐项核查，提交有 file:line 引用的判定，不把自测当官方验收；节点地图只记录公开任务的业务内容。原始任务：{任务}",
+         "验收": "独立核对业务改动与证据，不把流程控制文件当质量成果；给出可核对的真实证据与未验证项",
+         "输入": [],
+-        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high。",
++        "约束": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色使用本轮选定模型与 high。",
+         "只读": true,
+         "工人数量": 1,
+         "人工确认": false,
+         "档位": "primary",
+-        "模型": "harbor-endpoint/group/deepseek",
++        "模型": "harbor-endpoint/minimax-code/MiniMax-M3.1-Flash",
+         "思考强度": "high",
+         "depends_on": [
+           "实施"
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/manifest.json b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/manifest.json
+index 8146f9e8..a7d0f499 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/manifest.json
++++ b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/manifest.json
+@@ -6,23 +6,23 @@
+   "files": [
+     {
+       "path": "organized-post/kit.json",
+-      "sha256": "5c0d9006d3a8f6990858d7d15c7048d182e3f6ba1637049fbfd44171bba8eec6"
++      "sha256": "df9cbc6dbb5a57fa5a0eb573acb3ef80ab776a1e376761a499bc64da8de6b056"
+     },
+     {
+       "path": "organized-post/setup.mjs",
+-      "sha256": "6af09f812947e46a642742e3124e67347d8175c06d69a0561cceea33d7e4559c"
++      "sha256": "2b406295cabe21daae4fcfdd85833e71dc3b1d56fb6dede62608aa10895a546a"
+     },
+     {
+       "path": "organized-post/activate-tools.mjs",
+-      "sha256": "dd33ae2c18b8cf279e7db18de121f15579d7d9e50c868bdd6ba4043db9b53362"
++      "sha256": "732908451a1fe7f2054a541be5549882a22396da946c7effa164956d69b5ea81"
+     },
+     {
+       "path": "organized-post/probe-tools.mjs",
+-      "sha256": "a11d573341dd590055e1c2cd844ea512a8be7e64941749f66f6e1e85c4c69028"
++      "sha256": "bb4535126e0646d1a2d017eff1c5f7e81e8e61efd524fb2a7b99b34525df8bdf"
+     },
+     {
+       "path": "map_bench_pao_organized.py",
+-      "sha256": "4ff9124b8ce3478ab53c6ea493973161bbe58e33a4e2d822f506eff6d1df1fd3"
++      "sha256": "da2b9bfd5e25fe629845c456906ab8d2addbcbcb518402ae265e5499ee3b4071"
+     }
+   ]
+ }
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/probe-tools.mjs b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/probe-tools.mjs
+index 2b1d5b1a..ec523a6d 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/probe-tools.mjs
++++ b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/probe-tools.mjs
+@@ -34,7 +34,8 @@ const runtime = await createAgentSessionRuntime(async ({ sessionManager, session
+ try {
+   await runtime.session.bindExtensions({ mode: 'json', onError: (error) => { throw new Error(JSON.stringify(error)); } });
+   const active = runtime.session.getActiveToolNames();
+-  const required = role === 'minister' ? ['pao_minister_submit_cards', 'pao_breakdown_done', 'pao_submit_decision']
++  const required = role === 'minister'
++    ? ['pao_minister_submit_cards', 'pao_minister_rework_cards', 'pao_breakdown_done', 'pao_submit_decision']
+     : role === 'worker' ? ['read', 'bash', 'edit', 'write'] : ['pao_start_flow', 'pao_query_flow', 'pao_push_flow'];
+   assert(required.every((name) => active.includes(name)), JSON.stringify({ role, active, required }));
+   if (role === 'worker') assert(!active.includes('pao_start_flow') && !active.includes('pao_minister_submit_cards'));
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/setup.mjs b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/setup.mjs
+index 5475f157..1ec3967c 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/organized-post/setup.mjs
++++ b/.pao/地图简报与部门协作-20261020/benchmark/organized-post/setup.mjs
+@@ -1,13 +1,54 @@
+-// 用途：在隔离 PAO_HOME 内通过现有建部/配方接口建立测试组织；无模型调用。
+-// 输入：冻结源码根、组织配置、隔离 home/agentDir、证据目录；输出：四部门、流水线与预检证据。
++// 用途：先建立真实 Git 输入基线，再在隔离 PAO_HOME 内建部与流程；无模型调用。
++// 输入：冻结源码根、组织配置、模型绑定、隔离 home/agentDir、证据目录、正式题卡根；输出：Git 与组织预检证据。
+ import assert from 'node:assert/strict';
+-import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
++import { execFileSync } from 'node:child_process';
++import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+ import { join, resolve } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+ import { createRequire } from 'node:module';
+ 
+-const [source, kitPath, paoHome, agentDir, evidence] = process.argv.slice(2).map((path) => resolve(path));
++const [source, kitPath, paoHome, agentDir, evidence, project, explicitBindingPath] =
++  process.argv.slice(2).map((path) => resolve(path));
++// SDK 宿主沿用既有参数个数；父适配器已把同一绑定上传到固定位置。
++const bindingPath = explicitBindingPath || '/tmp/benchmark-model-binding.json';
+ const kit = JSON.parse(readFileSync(kitPath, 'utf8'));
++const binding = JSON.parse(readFileSync(bindingPath, 'utf8'));
++assert(binding.model_name && binding.selected_model_name && binding.provider && binding.model && binding.thinking);
++assert.equal(binding.provider, 'harbor-endpoint', '运行态必须使用已注册的 Harbor 路由');
++assert.equal(binding.model_name, binding.provider + '/' + binding.model, '运行模型别名与绑定不一致');
++const selectedProviderSeparator = binding.selected_model_name.indexOf('/');
++assert(selectedProviderSeparator > 0, '外部选定模型名必须包含 provider/model');
++assert.equal(binding.selected_model_name.slice(selectedProviderSeparator + 1), binding.model,
++  '外部选定模型与运行 model id 不一致');
++
++mkdirSync(evidence, { recursive: true });
++function git(cwd, ...args) {
++  return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
++}
++
++const baselineCreated = !existsSync(join(project, '.git'));
++if (baselineCreated) {
++  git(project, 'init');
++  git(project, 'config', 'user.email', 'benchmark@local');
++  git(project, 'config', 'user.name', 'PAO-benchmark');
++  git(project, 'add', '-A');
++  git(project, 'commit', '--allow-empty', '--no-gpg-sign', '-qm', 'benchmark input baseline');
++}
++const head = git(project, 'rev-parse', 'HEAD').trim();
++assert.match(head, /^[0-9a-f]{40}$/);
++const statusAfterBaseline = git(project, 'status', '--porcelain', '--untracked-files=all');
++assert.equal(statusAfterBaseline, '', 'Git 输入基线建立后工作区必须干净');
++const baseline = {
++  ok: true,
++  official_task_root: project,
++  baseline_created: baselineCreated,
++  head,
++  commit_message: 'benchmark input baseline',
++  status_after_baseline: statusAfterBaseline,
++  scope: '正式题目环境准备；未读取隐藏测试或答案',
++};
++writeFileSync(join(evidence, 'git-baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
++
+ const load = (file) => import(pathToFileURL(join(source, 'packages/coding-agent/dist/pao', file)).href);
+ const { createDept } = await load('dept/scaffold.js');
+ const { readDeptCatalog, validateDeptCatalog } = await load('dept/catalog.js');
+@@ -18,9 +59,28 @@ const { stringify } = createRequire(join(source, 'package.json'))('yaml');
+ mkdirSync(paoHome, { recursive: true });
+ mkdirSync(join(paoHome, 'pao配置'), { recursive: true });
+ mkdirSync(join(agentDir, 'extensions'), { recursive: true });
+-mkdirSync(evidence, { recursive: true });
+-writeFileSync(join(paoHome, 'pao配置/档位.json'), JSON.stringify({ provider: 'pao', 档位:
+-  ['fast', 'primary'].map((名) => ({ 名, provider: 'harbor-endpoint', model: 'group/deepseek', thinkingLevel: 'high' })) }));
++const tiers = ['fast', 'primary'].map((名) => ({
++  名, provider: binding.provider, model: binding.model, thinkingLevel: binding.thinking,
++}));
++writeFileSync(join(paoHome, 'pao配置/档位.json'), JSON.stringify({ provider: 'pao', 档位: tiers }));
++const supervisionPath = join(paoHome, 'pao配置', '保温.json');
++const supervision = existsSync(supervisionPath)
++  ? JSON.parse(readFileSync(supervisionPath, 'utf8'))
++  : {};
++writeFileSync(supervisionPath, JSON.stringify({
++  ...supervision, 工人监督分钟: 15, 部门监督分钟: 30,
++}, null, 2) + '\n');
++const tierModels = tiers.map((tier) => tier.provider + '/' + tier.model);
++assert(tierModels.every((model) => model === binding.model_name), '主控与工人档位模型必须使用运行别名');
++for (const node of kit.workflow.节点) {
++  assert.equal(node.模型, binding.provider + '/' + binding.model, '流水线节点模型与选定模型不一致');
++  assert.equal(node.思考强度, binding.thinking, '流水线节点思考强度与选定模型不一致');
++  assert.equal(node.档位, 'primary');
++}
++const workflowModels = kit.workflow.节点.map((node) => node.模型);
++assert(workflowModels.length > 0, '流水线必须至少有一个部长节点');
++assert([...tierModels, ...workflowModels].every((model) => model === binding.model_name),
++  '主控、部长和工人必须使用同一已注册 Harbor 运行别名');
+ for (const department of kit.departments) {
+   const created = await createDept({ paoHome, 名字: department.name, 标签: department.tags, 默认档位: 'primary' });
+   assert.equal(created.注册表, 'created', '只允许在本题新建的隔离组织中初始化');
+@@ -36,12 +96,21 @@ assert.deepEqual(recipe.拓扑序, ['侦察', '规划', '实施', '审核']);
+ const catalog = readDeptCatalog(paoHome);
+ const issues = validateDeptCatalog(catalog);
+ assert(!issues.some((issue) => issue.级别 === '阻止启动'), JSON.stringify(issues));
+-const preflight = checkPreflight({ project: process.cwd(), paoHome,
++const preflight = checkPreflight({ project, paoHome,
+   departments: kit.departments.map((d) => d.name), parameters: { 任务: '仅做组织装载预检，不执行题目' },
+   requiredParameters: recipe.参数 });
+ assert(preflight.canStart, JSON.stringify(preflight));
+-const result = { ok: true, kind: '真实建部与配方 API，未调用模型、未启动题目',
++const result = { ok: true, kind: '真实 Git 基线、建部与配方 API；未调用模型、未启动题目',
++  baseline, supervision: { 工人监督分钟: 15, 部门监督分钟: 30 },
+   departments: catalog.部门.map((d) => d.名字), workflow: recipe.名字, nodes: recipe.拓扑序,
+-  version: recipe.版本, auto: recipe.自动执行, issues, preflight };
++  version: recipe.版本, auto: recipe.自动执行, issues, preflight,
++  model_binding: binding,
++  role_model_check: {
++    主控: tierModels[1],
++    部长: workflowModels[0],
++    工人: tierModels[0],
++    thinking: binding.thinking,
++    consistent: true,
++  } };
+ writeFileSync(join(evidence, 'organization-setup.json'), JSON.stringify(result, null, 2));
+ console.log(JSON.stringify(result));
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/test_pao_agent.py b/.pao/地图简报与部门协作-20261020/benchmark/test_pao_agent.py
+index 1c420b9c..4cfbbaf6 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/test_pao_agent.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/test_pao_agent.py
+@@ -2,10 +2,55 @@
+ 
+ from __future__ import annotations
+ 
++import importlib
++import sys
+ import tempfile
++import types
+ import unittest
+ from pathlib import Path
+ 
++# 本机未安装 Harbor；测试只装配配置类所需的抽象接口，不加载真实 Harbor 或模型。
++class PiOptions(__import__("pydantic").BaseModel):
++    profile: str = "single"
++
++
++class Pi:
++    options_model = PiOptions
++    _SESSIONS_DIRECTORY = Path("sessions")
++
++    def __init__(self, **kwargs):
++        self.__dict__.update(kwargs)
++        self.options = self.options_model(**kwargs)
++
++    def build_cli_flags(self):
++        return "--thinking off"
++
++    def populate_context_post_run(self, context):
++        return None
++
++
++modules = {
++    "harbor": {},
++    "harbor.agents": {},
++    "harbor.agents.installed": {},
++    "harbor.agents.installed.base": {"with_prompt_template": lambda function: function},
++    "harbor.agents.installed.pi": {"Pi": Pi, "PiOptions": PiOptions},
++    "harbor.environments": {},
++    "harbor.environments.base": {"BaseEnvironment": object},
++    "harbor.models": {},
++    "harbor.models.agent": {},
++    "harbor.models.agent.context": {
++        "AgentContext": type("AgentContext", (), {}),
++        "ModelUsage": type("ModelUsage", (), {"__init__": lambda self, **kwargs: self.__dict__.update(kwargs)}),
++    },
++}
++for name, attrs in modules.items():
++    module = sys.modules.get(name) or types.ModuleType(name)
++    for attribute, value in attrs.items():
++        setattr(module, attribute, value)
++    sys.modules[name] = module
++importlib.invalidate_caches()
++
+ from map_bench_pao.pao_agent import PAOAgent, PAOOptions
+ 
+ 
+@@ -14,6 +59,8 @@ class PAOOptionsTest(unittest.TestCase):
+         return {
+             "source_archive": "source.tar.gz",
+             "source_sha256": "0" * 64,
++            "node_archive": "node.tar.xz",
++            "node_sha256": "1" * 64,
+             "thinking": "off",
+             "tools": "read,bash,edit,write",
+         }
+@@ -41,6 +88,16 @@ class PAOOptionsTest(unittest.TestCase):
+         with self.assertRaises(ValueError):
+             PAOOptions(profile="post-pao", **kwargs)
+ 
++    def test_node_path_and_digest_are_both_required(self) -> None:
++        kwargs = self.base_kwargs()
++        kwargs.pop("node_archive")
++        with self.assertRaises(ValueError):
++            PAOOptions(profile="post-pao", **kwargs)
++        kwargs = self.base_kwargs()
++        kwargs.pop("node_sha256")
++        with self.assertRaises(ValueError):
++            PAOOptions(profile="post-pao", **kwargs)
++
+     def test_framework_fields_do_not_become_cli_flags(self) -> None:
+         with tempfile.TemporaryDirectory() as temp:
+             agent = PAOAgent(
+@@ -50,6 +107,8 @@ class PAOOptionsTest(unittest.TestCase):
+                 version="local",
+                 source_archive="source.tar.gz",
+                 source_sha256="0" * 64,
++                node_archive="node.tar.xz",
++                node_sha256="1" * 64,
+                 thinking="off",
+                 tools="read,bash,edit,write",
+                 profile="post-pao",
+@@ -70,6 +129,8 @@ class PAOOptionsTest(unittest.TestCase):
+                 version="local",
+                 source_archive="source.tar.gz",
+                 source_sha256="0" * 64,
++                node_archive="node.tar.xz",
++                node_sha256="1" * 64,
+                 thinking="off",
+                 tools="read,bash,edit,write",
+                 profile="single",
+@@ -80,6 +141,218 @@ class PAOOptionsTest(unittest.TestCase):
+             self.assertNotIn("--exclude-tools", flags)
+             self.assertIn("--tools read,bash,edit,write", flags)
+ 
++    def test_node_install_has_no_download_or_implicit_retry(self) -> None:
++        command = PAOAgent._node_install_command("2" * 64)
++        self.assertNotIn("curl", command)
++        self.assertNotIn("wget", command)
++        self.assertNotIn("http://", command)
++        self.assertNotIn("https://", command)
++        self.assertIn("2" * 64, command)
++        self.assertIn("/tmp/pao-node.tar.xz", command)
++
++    def test_session_candidates_ignore_execution_maps_and_dispatch_logs(self) -> None:
++        with tempfile.TemporaryDirectory() as temp:
++            logs = Path(temp)
++            worker = logs / "pao/worker-sessions"
++            native = worker / "project-state/worker会话/session.jsonl"
++            native.parent.mkdir(parents=True)
++            native.write_text('{"type":"session","id":"session"}\n', encoding="utf-8")
++            for path in (
++                worker / "project-state/执行映射/one.jsonl",
++                worker / "project-state/派发日志.jsonl",
++            ):
++                path.parent.mkdir(parents=True, exist_ok=True)
++                path.write_text('{bad mapping data\n', encoding="utf-8")
++            agent = PAOAgent(
++                logs_dir=logs,
++                model_name="dummy/model",
++                skip_model_parsing=True,
++                version="local",
++                **self.base_kwargs(),
++                profile="post-pao",
++            )
++            files, ignored, errors = agent._usage_candidates()
++            self.assertEqual(files, [native])
++            self.assertEqual(
++                {Path(item) for item in ignored},
++                {
++                    Path("pao/worker-sessions/project-state/派发日志.jsonl"),
++                    Path("pao/worker-sessions/project-state/执行映射/one.jsonl"),
++                },
++            )
++            self.assertEqual(errors, [])
++
++    def test_usage_report_separates_roles_instances_attempts_and_keeps_coverage_unknown(self) -> None:
++        with tempfile.TemporaryDirectory() as temp:
++            logs = Path(temp)
++            state = logs / "pao/worker-sessions/project-state"
++
++            def write(relative: str, lines: list[dict]) -> Path:
++                path = logs / relative
++                path.parent.mkdir(parents=True, exist_ok=True)
++                path.write_text("".join(f"{__import__('json').dumps(line)}\n" for line in lines),
++                                encoding="utf-8")
++                return path
++
++            session = lambda identity: {"type": "session", "id": identity}
++            assistant = lambda identity: {
++                "type": "message", "id": identity,
++                "message": {
++                    "role": "assistant", "provider": "fake", "model": "simulated",
++                    "usage": {"input": 10, "output": 3, "cacheRead": 2, "cacheWrite": 1},
++                },
++            }
++            write("sessions/main.jsonl", [session("main"), assistant("main-event")])
++            write("pao/worker-sessions/project-state/benchmark/部长会话/one/minister.jsonl",
++                  [session("minister"), assistant("minister-event")])
++            write("pao/worker-sessions/project-state/worker会话/worker.jsonl",
++                  [session("worker"), assistant("worker-event")])
++            write("pao/worker-sessions/worker.jsonl",
++                  [session("worker"), assistant("worker-event")])
++            manifest_a = """---
++版本: 2
++实例: "instance-a"
++正文: 无关字段
++---
++实例: body-only
++"""
++            manifest_b = """---
++版本: 2
++实例: instance-b
++---
++"""
++            context = {
++                "key": {"cardsDir": "/app/.pao/benchmark/卡", "cardNo": 1, "attempt": 1},
++                "bindingDigest": "sha256:a",
++            }
++            context_copy = {**context, "bindingDigest": "sha256:copy"}
++            for relative, content in {
++                "pao/worker-sessions/project-state/benchmark/工作流实例-a.md": manifest_a,
++                "pao/worker-sessions/project-state/archive/run1/工作流实例-a.md": manifest_a,
++                "pao/worker-sessions/project-state/archive/run2/工作流实例-b.md": manifest_b,
++                "pao/worker-sessions/project-state/benchmark/execution-contexts/card-0001-attempt-1.json":
++                    __import__("json").dumps(context),
++                "pao/worker-sessions/project-state/archive/run1/execution-contexts/card-0001-attempt-1.json":
++                    __import__("json").dumps(context_copy),
++                "pao/worker-sessions/project-state/archive/run2/execution-contexts/card-0001-attempt-1.json":
++                    __import__("json").dumps(context),
++            }.items():
++                path = logs / relative
++                path.parent.mkdir(parents=True, exist_ok=True)
++                path.write_text(content, encoding="utf-8")
++            write("pao/worker-sessions/project-state/执行映射/one.jsonl", [{"状态": "启动"}])
++            write("pao/worker-sessions/project-state/派发日志.jsonl", [{"type": "pao_dispatch_lock"}])
++
++            agent = PAOAgent(
++                logs_dir=logs,
++                model_name="dummy/model",
++                skip_model_parsing=True,
++                version="local",
++                **self.base_kwargs(),
++                profile="post-pao",
++            )
++            context = types.SimpleNamespace(metadata={"existing": "kept"})
++            agent.populate_context_post_run(context)
++
++            self.assertIsNone(context.n_input_tokens)
++            self.assertIsNone(context.n_output_tokens)
++            self.assertIsNone(context.n_cache_tokens)
++            self.assertIsNone(context.model_usage)
++            self.assertIsNone(context.cost_usd)
++            self.assertEqual(context.metadata["existing"], "kept")
++            self.assertEqual(context.metadata["pao_role_session_counts"],
++                             {"main": 1, "minister": 1, "worker": 1, "other": 0})
++            self.assertEqual(context.metadata["pao_role_coverage_status"]["worker"], "observed")
++            self.assertEqual(context.metadata["pao_harbor_trials_observed"], 1)
++            self.assertEqual(context.metadata["pao_internal_instance_count"], 2)
++            self.assertEqual(context.metadata["pao_internal_instance_count_status"], "observed")
++            self.assertEqual(context.metadata["pao_internal_instance_evidence_file_count"], 3)
++            self.assertEqual(context.metadata["pao_worker_attempt_count"], 2)
++            self.assertEqual(context.metadata["pao_worker_attempt_count_status"], "observed")
++            self.assertEqual(context.metadata["pao_worker_attempt_evidence_file_count"], 3)
++            self.assertEqual(context.metadata["pao_observed_usage_event_count"], 3)
++            self.assertIsNone(context.metadata["pao_model_request_count"])
++            self.assertEqual(context.metadata["pao_model_requests_status"], "unknown")
++            self.assertEqual(context.metadata["pao_known_input_tokens_lower_bound"], 39)
++            self.assertEqual(context.metadata["pao_usage_coverage_status"], "unknown")
++            self.assertEqual(context.metadata["pao_cost_status"], "unknown")
++            self.assertEqual(len(context.metadata["pao_usage_ignored_non_session"]), 2)
++
++    def test_accuracy_is_unknown_when_attempt_cannot_bind_to_instance(self) -> None:
++        with tempfile.TemporaryDirectory() as temp:
++            logs = Path(temp)
++            state = logs / "pao/worker-sessions/project-state"
++            manifest = state / "benchmark/工作流实例-a.md"
++            manifest.parent.mkdir(parents=True)
++            manifest.write_text("---\n版本: 2\n实例: instance-a\n---\n", encoding="utf-8")
++            broken = state / "archive/run1/execution-contexts/card-0001-attempt-1.json"
++            broken.parent.mkdir(parents=True)
++            broken.write_text("{bad", encoding="utf-8")
++            agent = PAOAgent(
++                logs_dir=logs,
++                model_name="dummy/model",
++                skip_model_parsing=True,
++                version="local",
++                **self.base_kwargs(),
++                profile="post-pao",
++            )
++            instance_count, attempt_count, instance_files, attempt_files, errors = (
++                agent._usage_evidence_counts()
++            )
++            self.assertIsNone(instance_count)
++            self.assertIsNone(attempt_count)
++            self.assertEqual(instance_files, 1)
++            self.assertEqual(attempt_files, 1)
++            self.assertIn("执行上下文身份不可读", errors[0])
++
++    def test_single_profile_keeps_observed_tokens_and_unknown_cost(self) -> None:
++        with tempfile.TemporaryDirectory() as temp:
++            logs = Path(temp)
++            session = logs / "sessions/main.jsonl"
++            session.parent.mkdir(parents=True)
++            session.write_text(
++                '{"type":"session","id":"main"}\n'
++                '{"type":"message","id":"event","message":{"role":"assistant",'
++                '"provider":"fake","model":"simulated","usage":'
++                '{"input":10,"output":3,"cacheRead":2,"cacheWrite":1}}}\n',
++                encoding="utf-8",
++            )
++            agent = PAOAgent(
++                logs_dir=logs,
++                model_name="dummy/model",
++                skip_model_parsing=True,
++                version="local",
++                **self.base_kwargs(),
++                profile="single",
++            )
++            context = types.SimpleNamespace(metadata={})
++            agent.populate_context_post_run(context)
++            self.assertEqual(context.n_input_tokens, 13)
++            self.assertEqual(context.n_output_tokens, 3)
++            self.assertEqual(context.n_cache_tokens, 2)
++            self.assertIsNone(context.cost_usd)
++            self.assertIsNone(context.model_usage["fake/simulated"].cost_usd)
++
++    def test_corrupt_native_candidate_stays_visible(self) -> None:
++        with tempfile.TemporaryDirectory() as temp:
++            logs = Path(temp)
++            corrupt = logs / "pao/worker-sessions/project-state/worker会话/broken.jsonl"
++            corrupt.parent.mkdir(parents=True)
++            corrupt.write_text("{bad\n", encoding="utf-8")
++            agent = PAOAgent(
++                logs_dir=logs,
++                model_name="dummy/model",
++                skip_model_parsing=True,
++                version="local",
++                **self.base_kwargs(),
++                profile="post-pao",
++            )
++            files, ignored, errors = agent._usage_candidates()
++            self.assertEqual(files, [])
++            self.assertEqual(ignored, [])
++            self.assertIn(str(corrupt), errors[0])
++            self.assertIn("无法解析", errors[0])
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/test_usage.py b/.pao/地图简报与部门协作-20261020/benchmark/test_usage.py
+index 75caf6f9..8e02451a 100644
+--- a/.pao/地图简报与部门协作-20261020/benchmark/test_usage.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/test_usage.py
+@@ -26,20 +26,69 @@ class UsageTest(unittest.TestCase):
+ 
+     def file(self, name, session, events):
+         path = Path(self.temp.name) / name
++        path.parent.mkdir(parents=True, exist_ok=True)
+         path.write_text('\n'.join(json.dumps(e) for e in [{'type': 'session', 'id': session}, *events]), encoding='utf-8')
+         return path
+ 
+     def test_all_roles_and_copied_files_deduplicate(self):
+-        roles = ['主控', '侦察', '规划', '部门', 'worker', '审核', '重试']
+-        files = [self.file(f'{i}.jsonl', role, [assistant('same-entry-id')]) for i, role in enumerate(roles)]
+-        files.append(self.file('renamed-copy.jsonl', 'worker', [assistant('same-entry-id')]))
++        files = [
++            self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-entry')]),
++            self.file('worker-sessions/部长会话/one/minister.jsonl', 'minister',
++                      [assistant('minister-entry')]),
++            self.file('worker-sessions/worker会话/worker.jsonl', 'worker', [assistant('worker-entry')]),
++            self.file('worker-sessions/worker会话/worker-copy.jsonl', 'worker',
++                      [assistant('worker-entry')]),
++        ]
+         result = aggregate(files)
+-        self.assertEqual(result['events'], len(roles))
+-        self.assertEqual(result['input'], 13 * len(roles))
+-        self.assertEqual(result['cache_write'], len(roles))
+-        self.assertAlmostEqual(result['cost'], .7)
++        self.assertEqual(result['events'], 3)
++        self.assertEqual(result['input'], 13 * 3)
++        self.assertEqual(result['cache_write'], 3)
++        self.assertEqual(result['cost_status'], 'unknown')
++        self.assertEqual(result['role_session_counts'], {'main': 1, 'minister': 1, 'worker': 1, 'other': 0})
+         self.assertTrue(result['complete'])
+ 
++    def test_same_session_in_incompatible_role_paths_is_an_error(self):
++        result = aggregate([
++            self.file('worker-sessions/部长会话/one/session.jsonl', 'shared', [assistant('event')]),
++            self.file('worker-sessions/worker会话/session.jsonl', 'shared', [assistant('event')]),
++        ])
++        self.assertTrue(any('多个角色路径' in error for error in result['errors']))
++        self.assertFalse(result['complete'])
++
++    def test_paths_separate_roles_and_archive_copy_does_not_count_as_new_session(self):
++        current = self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-event')])
++        minister = self.file('worker-sessions/部长会话/minister/minister.jsonl', 'minister',
++                              [assistant('minister-event')])
++        worker = self.file('worker-sessions/worker会话/worker.jsonl', 'worker',
++                           [assistant('worker-event')])
++        copied = self.file('worker-sessions/worker.jsonl', 'worker', [assistant('worker-event')])
++        result = aggregate([current, minister, worker, copied])
++        self.assertEqual(result['role_session_counts'], {'main': 1, 'minister': 1, 'worker': 1, 'other': 0})
++        self.assertEqual(result['events'], 3)
++        self.assertEqual(result['input'], 39)
++
++    def test_explicit_missing_usage_status_is_observed_usage_event(self):
++        events = [
++            {'type': 'custom', 'id': 'same', 'customType': 'pao-native-usage-status',
++             'data': {'usageReported': False}},
++            {'type': 'custom', 'id': 'different', 'customType': 'pao-native-usage-status',
++             'data': {'usageReported': False}},
++        ]
++        result = aggregate([self.file('status.jsonl', 'status', events)])
++        self.assertEqual(result['events'], 2)
++        self.assertNotIn('request_events', result)
++        self.assertFalse(result['complete'])
++
++    def test_unknown_role_uses_its_own_session_identity(self):
++        result = aggregate([
++            self.file('native-default-sessions/main.jsonl', 'main', [assistant('main-event')]),
++            self.file('unknown-layout/other.jsonl', 'other', [assistant('other-event')]),
++        ])
++        self.assertEqual(
++            result['role_session_counts'],
++            {'main': 1, 'minister': 0, 'worker': 0, 'other': 1},
++        )
++
+     def test_parent_receipt_is_not_added_to_child_again(self):
+         receipt = {'type': 'message', 'id': 'receipt', 'message': {'role': 'toolResult', 'content': [{'text': '模拟 worker 汇总', 'usage': usage()}]}}
+         files = [self.file('parent.jsonl', 'parent', [assistant('p'), receipt]), self.file('child.jsonl', 'child', [assistant('c')])]
+@@ -59,7 +108,6 @@ class UsageTest(unittest.TestCase):
+         ]
+         result = aggregate([self.file('summary-without-usage.jsonl', 's', events)])
+         self.assertEqual(result['events'], 1)
+-        self.assertEqual(result['unknown_cost'], 0)
+         self.assertEqual(result['unknown_tokens'], 0)
+         self.assertTrue(result['complete'])
+ 
+@@ -67,7 +115,6 @@ class UsageTest(unittest.TestCase):
+         events = [{'type': 'usage', 'id': 'independent-usage', 'kind': 'cache_warm'}]
+         result = aggregate([self.file('usage-without-usage.jsonl', 's', events)])
+         self.assertEqual(result['events'], 0)
+-        self.assertEqual(result['unknown_cost'], 0)
+         self.assertEqual(result['unknown_tokens'], 0)
+         self.assertTrue(result['complete'])
+ 
+@@ -75,15 +122,16 @@ class UsageTest(unittest.TestCase):
+         events = [assistant('missing', {}), {'type': 'custom', 'id': 'unknown', 'customType': 'pao-native-usage-status', 'data': {'usageReported': False}},
+                   {'type': 'custom', 'id': 'unknown-pre', 'customType': 'pao-precompaction-usage-status', 'data': {'status': '请求未返回用量'}}]
+         result = aggregate([self.file('missing.jsonl', 's', events)])
+-        self.assertEqual(result['unknown_cost'], 3)
+         self.assertEqual(result['unknown_tokens'], 3)
+         self.assertFalse(result['complete'])
+ 
+-    def test_missing_cost_boolean_and_nan_are_not_free(self):
+-        events = [assistant(str(i), {**usage(), 'cost': value}) for i, value in enumerate([None, True, float('nan')])]
++    def test_zero_or_missing_cost_never_claims_cost_known(self):
++        events = [assistant(str(i), {**usage(), 'cost': value}) for i, value in enumerate(
++            [{'total': 0}, None, True, float('nan')])]
+         result = aggregate([self.file('cost.jsonl', 's', events)])
+-        self.assertEqual(result['unknown_cost'], 3)
+-        self.assertFalse(result['complete'])
++        self.assertEqual(result['cost_status'], 'unknown')
++        self.assertIn('不视为免费', result['cost_source'])
++        self.assertTrue(result['complete'])
+ 
+     def test_conflicting_duplicate_cannot_claim_complete(self):
+         a = self.file('a.jsonl', 's', [assistant('same')])
+diff --git a/README.md b/README.md
+index 95d4ecac..6cab2c75 100644
+--- a/README.md
++++ b/README.md
+@@ -84,6 +84,7 @@ PAO 的隔离测试环境变量（防止污染正式现场）：`PAO_HOME=<临
+ 
+ - 运维、删除预演与人工交付：[操作说明](PAO/packages/coding-agent/docs/pao-operations.md)。
+ - 主控与部长后台交接、15/30分钟监督配置：[分层监督说明](PAO/docs/pao-supervision.md)。
++- 部门简介与结构化便捷派发：[架构说明 §28.4](plans/v2-ARCHITECTURE.md#284-结构化任务书与便捷派发2026-10-24)、[工程审核记录](.pao/协作机制重构-20261023/提示词派发优化-20261024/主控整合审核.md)。
+ - 执行约束：`AGENTS.md`（本仓）、`PAO/AGENTS.md`、`desktop/AGENTS.md`。
+ - 架构与需求正本：`plans/v2-ARCHITECTURE.md`（含 §27 模块边界、§28 部门目录与唯一受理入口、§29 上下文恢复与总预算门禁）、`plans/v2-REQUIREMENTS.md`。
+ - 整体重构（2026-10-06 完成）：计划归档 `plans/已完成/2026-10-05-整体模块化重构总计划.md`，执行留档与交付结论在 `.pao/整体重构-20261005/`。
+diff --git a/plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md b/plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md
+index 5ab88504..f5e074a8 100644
+--- a/plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md
++++ b/plans/未完成/2026-10-17-Harness完善与工作台迭代执行计划.md
+@@ -546,6 +546,8 @@ Windows core 其余失败按影响上述主流程的程度定向处理；未定
+ 
+ ### 10.21 2026-10-23 多部门协作与主控减负重构
+ 
++2026-10-25集中治理：三位group/deepseek high子代理及主控已完成回执/返修、关闭失败传播、公共装配、可取消锁等待、工作树原始字节一致性及共享运行器修复。主控按code-simplicity审核实际代码；内核本地提交 `4d5877a62`、`000647340`，desktop `fdeaa98f`，未推送，pi合并与PI-Desktop迁移继续暂停。生产源码类型及桌面构建通过，四部门四条固定回应下真实文件/Git/RPC路径分别通过，运行器最终24项通过；不把模拟、跳过或中断项算真实整链。r14凭证环境接线失败无模型/评分，已修并有真实子进程通过证据；r15进入真实容器安装，随后Windows虚拟内存不足事件与DockerVM重启同一时段出现，两只本轮容器退出255。新版观察器已实际收取controller_crash终局，保留原preflight/writers_stopped=false和未知评分，实际全部停写与采样退出、资源汇总已确认；采样有缺口。本轮网络及pao-r14/pao-r15自动化均已删除，未动历史冻结输入及正式PAO_HOME。用户已批准WSL4GB调整及Ubuntu中断；原配置已备份、实际WSL关闭与Docker重启成功，Linux MemTotal4006576kB确认生效，主机提交内存暂降至78%。2026-10-25 r16已在13:46预检失败：SDK最终入口把kit目录传给要求JSON文件的共享setup，触发EISDIR；未进入模型作答，官方评分未知。主控已核实本轮容器和后台进程全部停止、采样汇总6项，本轮网络及pao-r16自动化已删除。SDK文件参数已修；共享setup原有Git输入基线及监督配置已恢复，显式project进入预检。主控审核实际实现，真实Node与真实PAO API在隔离目录建立四部门通过、零模型；代理SDK install及Git正反例夹具通过，部门API桩不算整链。r17于16:08在真实无模型子角色RPC预检失败：共享激活器对worker合法不注册回调，旧探针仍要求session_start。未进入模型作答、无评分，缺失不填0。已实际核实两只本轮容器exited/Pid0且OOMKilled=false，观察器18528和采样器44188退出，6项采样已汇总；本轮空网络已删除。RPC探针与SDK激活器最终来源装配已修复，26离线检查及实际prepare→setup→三角色CLI/RPC/IPC无模型链通过。主控code-simplicity审核实际代码，未以桩替代最终装配。16:39独立r18已启动，控制器实际running；仅第一题全角色MiniMax high，尚无模型/评分结论。16:45实际Docker及会话核查：预检已通过、正式主控已调用pao_start_flow并建立真实实例，此前推进到规划交接地图；16:54监督因docker ps非零停止模型链，原模型子容器已exited137且OOMKilled=false。异常保留CancelledError及收证cp Cannot allocate memory，Docker另报snapshotter.Usage路径缺失，具体底层根因待诊断。16:57官方结果实际落盘，reward=0.0；17:00主控另行核查包含独立verifier在内的本轮4只容器均exited/Pid0、OOMKilled=false，watch42536及采样14380退出，37项资源采样汇总，本轮空网络和自动化pao-r17已删除。本次按真实0分结束，不刷分或另开r19。可观察用量仅下界input10739/output530/cacheRead5213，部门工人归档不完整、总费用未知；完整组织交付及工作树终局证据缺失。Docker监督stderr遗漏、取消与归档异常分离、verifier身份发现等诊断建议留待后续代码修复，本题未构成正常完整流程或整批验收通过。本轮新私有网络192.168.64.0/24，旧r14/r15原件和历史对象不改。完整模型/官方评分、在途真实宿主故障及原P5、OS隔离、机器重启仍未验，本批不能封板。详细证据见[主控审核记录](../../.pao/协作机制重构-20261023/系统稳定性治理-20261025/主控实施与审核.md)。
++
+ 2026-10-25最新：r12流程修复经主控实际代码审核和整合，内核本地提交 `0236147ed`，未推送。相关5文件153项本地验证、生产源码类型及依赖检查通过；全仓类型仍有其他测试和桌面模块错误，未宣称全仓通过。详细边界见[主控代码审核](../../.pao/协作机制重构-20261023/r12流程修复-20261024/主控代码审核.md)。未重跑真实模型链，原中断成果官方补评0及P5、OS隔离、系统重启等未验项保持。用户要求暂停实际 pi 合并，提交后仅评估[PI-Desktop 插件化接入](../../.pao/pi升级评估-20261024/PI-Desktop宿主评估.md)，未实施迁移。
+ 
+ 2026-10-24 23:18，r12原试次因评分Compose网络地址池耗尽而execution_error，原verifier_result保持null；用户随后要求先评分再派修复。主控对已停止、未修改的现有成果使用冻结原版官方测试独立补评，实际reward=0，良性HTML保持不变通过、阻止XSS失败，模型调用0，评分容器退出。补评不改写原试次为成功。已按group/deepseek high派两个子代理分别修返修/裁决衔接、重复唤醒/未来配方，主控负责实际代码审核；当前未验收。r12自动化已删除。证据与任务书见[评分与派发记录](../../.pao/协作机制重构-20261023/r12流程修复-20261024/评分与派发记录.md)。
+@@ -612,6 +614,8 @@ r6随后因新增监督器把YAML未加引号的时间读取为datetime，写JSO
+ 
+ 2026-10-24 晚间，用户批准[提示词与结构化派发优化](../已完成/2026-10-24-提示词与结构化派发优化计划.md)，明确暂不新增权限边界与违规终止措施。部门简介动态注入、三个入口的结构化便捷派发与角色提示已完成工程实施和主控实际代码审核；整合后生产类型检查及差异检查通过，真实模型行为和P5整体收益未验，证据归[主控整合审核](../../.pao/协作机制重构-20261023/提示词派发优化-20261024/主控整合审核.md)。r11 在19:39后出现会话上下文失效与轮次记录异常，部门流程关闭而外层仍等待。20:13经原生暂停收尾，三个本轮容器exited/Pid=0，watch/sampler退出，139次采样汇总与真实组织会话成果已收取，冻结输入未变；本轮无官方评分，奖励未知，不填0。原生会话用量观察下界input8049799（含cacheRead7582873）、output229078，费用未知。自动化删除接口返回已不存在，不另建永久轮询。生命周期首版代码审核发现主动停止取消语义及slash输入计数窗口，返修后经主控实际源码复核通过；正常print收齐已受理活动，主动dispose保留取消和清理，普通及skill输入在首次异步等待前计数，替换命令不自等。子代理本地模拟19项事件/print和3项替换回归通过，主控整合后生产类型与差异检查退出0。未重启真实题，r11具体关闭触发及修复后的真实整链效果仍未证实，见[报告](../../.pao/协作机制重构-20261023/r11停链调查-20261024.md)。
+ 
++2026-10-25 r18结束后，按用户“继续审核，然后生成完整修复计划书”要求，主控使用code-simplicity继续审查PAO受理、公共状态写入、工作流/角色装配、桌面适配及构建检查，原子代理只读调查共享基准入口，关键结论由主控核对实际源码和运行时间。已扩展原计划为[整体审核与稳定性修复计划书](2026-10-25-PAO协作稳定性集中治理计划.md)，包含W0—W9的文件边界、实施步骤、依赖和S01—S22验收矩阵；证据与审读深度见[整体审核发现](../../.pao/协作机制重构-20261023/系统稳定性治理-20261025/整体审核发现.md)。新增确认批量受理占位异常逃逸、关键正本普通复制回退、首错覆盖、构建来源与导入探针缺口，以及运行器verifier公式和坏奖励判定问题；尚未实施本轮修复，不表示全库逐行或整体验收完成。本轮仅修改审核与计划文档，未重跑测试、Docker或模型；r18官方0及原未验项保持，真实跑题、pi升级与pi-desktop迁移不恢复。
++
+ 本项是本轮实施状态的唯一维护处。基线、任务边界、具体检查和审核证据见[实施与主控验收记录](../../.pao/协作机制重构-20261023/实施与主控验收记录.md)。不得用此前批次通过的结论替代本轮验证。
+ 
+ ## 11. 验收设计

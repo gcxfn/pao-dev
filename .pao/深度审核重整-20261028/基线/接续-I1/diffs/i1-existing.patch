@@ -1,0 +1,1340 @@
+diff --git a/packages/coding-agent/src/pao/cards/verifier.ts b/packages/coding-agent/src/pao/cards/verifier.ts
+index 7539c3e54..063b27319 100644
+--- a/packages/coding-agent/src/pao/cards/verifier.ts
++++ b/packages/coding-agent/src/pao/cards/verifier.ts
+@@ -16,6 +16,7 @@ import {
+ } from "node:fs";
+ import { tmpdir } from "node:os";
+ import * as path from "node:path";
++import { parse as parseShellCommand, type ParseEntry as ShellParseEntry } from "shell-quote";
+ import { type Static, Type } from "typebox";
+ import type { ExtensionAPI } from "../../core/extensions/types.ts";
+ import { writeFileAtomic } from "../shared/atomic.ts";
+@@ -234,39 +235,87 @@ export interface SecurityVerdict {
+ 	违规: string[];
+ }
+ 
+-/** 分词：按空白切，去引号包裹（安检按整串分词扫描，非仅命令头）。 */
+-function tokenize(command: string): string[] {
+-	return command
+-		.replace(/["']/g, "")
+-		.split(/\s+/)
+-		.filter((t) => t.length > 0);
++const shellEnvExpansionMarker = { paoShellEnvExpansion: true } as const;
++
++interface ShellSyntaxInspection {
++	/** 仅供 shell-quote 切词的规范化文本；绝不交给执行器。 */
++	normalizedCommand: string;
++	violations: string[];
+ }
+ 
+ /**
+- * 执行用分词：引号感知——双引号段作为单个参数整体保留（内层引号原样），
+- * 使 `node -e "require('fs').writeFileSync(…)"` 这类带字符串字面量的参数不被拆散剥皮。
+- * 安检仍用分词的剥引号视图（两视图叠加：安检拦形状，执行保语义）。
++ * 一次遍历完成两件事：拒绝 shell-quote 会宽松接受的未支持语法，并把 Windows
++ * 相对路径的反斜杠保护成字面分隔符。这里不解释命令、不产生执行 argv；执行只消费
++ * shell-quote 对规范化文本解析出的同一份 argv。
+  */
+-function tokenizeForExec(command: string): string[] {
+-	const tokens: string[] = [];
+-	let current = "";
+-	let quote: '"' | "'" | undefined;
+-	for (const ch of command) {
+-		if (quote) {
+-			if (ch === quote) {
+-				if (current.length > 0) tokens.push(current);
+-				current = "";
++function inspectShellSyntax(command: string): ShellSyntaxInspection {
++	const violations = new Set<string>();
++	let normalized = "";
++	if (command.trim().length === 0) return { normalizedCommand: normalized, violations: ["空命令"] };
++	let quote: "'" | '"' | undefined;
++	for (let index = 0; index < command.length; index++) {
++		const char = command[index];
++		if (quote === "'") {
++			normalized += char;
++			if (char === "'") quote = undefined;
++			continue;
++		}
++		if (quote === '"') {
++			normalized += char;
++			if (char === "\\") {
++				if (index + 1 >= command.length) {
++					violations.add("命令以单个反斜杠结尾，转义不完整");
++					break;
++				}
++				normalized += command[++index];
++			} else if (char === '"') {
+ 				quote = undefined;
+-			} else current += ch;
+-		} else if (ch === '"' || ch === "'") {
+-			quote = ch;
+-		} else if (/\s/.test(ch)) {
+-			if (current.length > 0) tokens.push(current);
+-			current = "";
+-		} else current += ch;
++			} else if (char === "$") {
++				violations.add("禁环境变量/参数展开");
++			}
++			continue;
++		}
++		if (char === "'" || char === '"') {
++			quote = char;
++			normalized += char;
++			continue;
++		}
++		if (char === "\\") {
++			if (index + 1 >= command.length) {
++				violations.add("命令以单个反斜杠结尾，转义不完整");
++				break;
++			}
++			const next = command[index + 1];
++			if (/[A-Za-z0-9._-]/.test(next)) {
++				// 保留 Windows 相对路径中的一个字面反斜杠，不让 shell-quote 当作 POSIX 转义。
++				normalized += "\\\\";
++			} else {
++				normalized += char;
++				normalized += command[++index];
++			}
++			continue;
++		}
++		normalized += char;
++		if (char === "$" && command[index + 1] === "'") {
++			violations.add("禁 ANSI-C 引号（$'…'）");
++			continue;
++		}
++		if (char === "$") {
++			violations.add("禁环境变量/参数展开");
++			continue;
++		}
++		if (char === "*" || char === "?" || char === "[" || char === "]") {
++			violations.add("禁未引用的通配符或方括号模式");
++		}
+ 	}
+-	if (current.length > 0) tokens.push(current);
+-	return tokens;
++	if (quote === "'") violations.add("单引号未闭合");
++	if (quote === '"') violations.add("双引号未闭合");
++	return { normalizedCommand: normalized, violations: [...violations] };
++}
++
++interface InspectedCommand {
++	argv: string[];
++	verdict: SecurityVerdict;
+ }
+ 
+ function isAbsolutePath(token: string): boolean {
+@@ -279,6 +328,27 @@ function isAbsolutePath(token: string): boolean {
+ 	);
+ }
+ 
++/**
++ * 旧安检的保守词视图：去掉全部引号后按空白切词。它只用于删除词和绝对路径检查，
++ * 不参与执行，也不与 shell-quote 争抢参数语义；执行 argv 仍只有一个来源。
++ */
++function tokenizeSafetyWords(command: string): string[] {
++	return command
++		.replace(/["']/g, "")
++		.split(/\s+/)
++		.filter((token) => token.length > 0);
++}
++
++function addWordSafetyViolations(tokens: readonly string[], violations: Set<string>): void {
++	for (const token of tokens) {
++		const lower = token.toLowerCase().replace(/\.exe$/, "");
++		if (deleteVerb.has(lower)) violations.add(`禁删除类动词（${token}）`);
++	}
++	for (const token of tokens) {
++		if (isAbsolutePath(token)) violations.add(`禁绝对路径（${token}，只收相对沙箱的相对路径）`);
++	}
++}
++
+ /**
+  * 跑命令句式安检（§12.2，执行前拦「形状不对」的命令）：
+  * - 禁 shell 串联符（& ; | > < ` 与换行/$()——要跑两步就写两条目；
+@@ -286,32 +356,60 @@ function isAbsolutePath(token: string): boolean {
+  * - 禁绝对路径：盘符、~/、/ 开头（含 git-bash 式盘符路径）一律拒，只收相对沙箱的相对路径；
+  * - 禁嵌套壳调用：cmd/powershell/pwsh/bash/sh/wsl/zsh 作命令头即拒（拦不含串联符的绕过）；
+  * - 禁 node_modules 路径：联接指回真目录，写它＝写真项目（R16 知情声明）。
++ *
++ * shell-quote 的解析结果就是最终 argv；预检与执行只调用本函数，避免两套分词
++ * 对同一字符串给出不同含义。对象 token（环境展开、operator、comment、glob）
++ * 一律不进入执行器。保守词视图只补充删除词和绝对路径检查，绝不用于执行。
+  */
+-export function checkCommandSafety(command: string): SecurityVerdict {
+-	const violation: string[] = [];
+-	if (/[\r\n]/.test(command)) violation.push("禁换行（多步拆多条目）");
+-	if (concatSymbol.test(command)) violation.push("禁 shell 串联符（& ; | > < `）");
+-	if (/\$\(/.test(command)) violation.push("禁命令替换 $(…)");
+-	const tokens = tokenize(command);
+-	if (tokens.length > 0) {
+-		const head = tokens[0].toLowerCase();
+-		if (shellCommandHead.has(head)) violation.push(`禁嵌套壳调用（命令头 ${tokens[0]}）`);
+-		if (/^npx(?:\.cmd|\.exe)?$/.test(head) && !tokens.includes("--no-install"))
+-			violation.push("npx 验收须显式加 --no-install；缺少本地工具应报告环境问题，不能临时联网安装同名包");
++function inspectCommand(command: string): InspectedCommand {
++	const violation = new Set<string>();
++	if (/[\r\n]/.test(command)) violation.add("禁换行（多步拆多条目）");
++	if (concatSymbol.test(command)) violation.add("禁 shell 串联符（& ; | > < `）");
++	if (/\$\(/.test(command)) violation.add("禁命令替换 $(…)");
++	const syntax = inspectShellSyntax(command);
++	for (const item of syntax.violations) violation.add(item);
++
++	let parsed: (ShellParseEntry | typeof shellEnvExpansionMarker)[] = [];
++	try {
++		parsed = parseShellCommand(syntax.normalizedCommand, () => shellEnvExpansionMarker);
++	} catch (error) {
++		violation.add(`命令解析失败：${String((error as Error).message ?? error).slice(0, 200)}`);
+ 	}
+-	for (const token of tokens) {
+-		const lower = token.toLowerCase().replace(/\.exe$/, "");
+-		if (deleteVerb.has(lower)) violation.push(`禁删除类动词（${token}）`);
++	for (const token of parsed) {
++		if (typeof token === "string") continue;
++		if (token === shellEnvExpansionMarker) {
++			violation.add("禁环境变量/参数展开");
++		} else if ("comment" in token) {
++			violation.add("禁 shell 注释");
++		} else if ("op" in token) {
++			if (token.op === "glob") violation.add("禁 shell 通配符");
++			else violation.add(`禁 shell 操作符（${token.op}）`);
++		} else {
++			violation.add("禁非 string 的 shell 解析 token");
++		}
+ 	}
+-	for (const token of tokens) {
+-		if (isAbsolutePath(token)) violation.push(`禁绝对路径（${token}，只收相对沙箱的相对路径）`);
++	const argv = parsed.filter((token): token is string => typeof token === "string");
++	if (argv.length === 0) violation.add("空命令");
++	else if (argv[0].trim().length === 0) violation.add("命令头不能为空或纯空白");
++	if (argv.length > 0) {
++		const head = argv[0].toLowerCase();
++		if (shellCommandHead.has(head)) violation.add(`禁嵌套壳调用（命令头 ${argv[0]}）`);
++		if (/^npx(?:\.cmd|\.exe)?$/.test(head) && !argv.includes("--no-install"))
++			violation.add("npx 验收须显式加 --no-install；缺少本地工具应报告环境问题，不能临时联网安装同名包");
+ 	}
++	// 安全视图与执行 argv 各扫一遍，保留旧视图的保守命中面；两者都不用于执行。
++	addWordSafetyViolations(tokenizeSafetyWords(command), violation);
++	addWordSafetyViolations(argv, violation);
+ 	// 内联脚本/--key=value 中的字面量同样属于显式路径；这不是解释器隔离。
+ 	if (/(?:^|[\s'"=(:,[])(?:[a-zA-Z]:[/\\]|~[/\\]|\\\\|\/(?!\/)[\w.])/.test(command))
+-		violation.push("禁参数或内联脚本中的绝对路径字面量（只收相对沙箱的相对路径）");
++		violation.add("禁参数或内联脚本中的绝对路径字面量（只收相对沙箱的相对路径）");
+ 	if (/node_modules/.test(command.toLowerCase()))
+-		violation.push("禁 node_modules 路径（联接指回真目录，写它＝写真项目）");
+-	return { 过: violation.length === 0, 违规: violation };
++		violation.add("禁 node_modules 路径（联接指回真目录，写它＝写真项目）");
++	return { argv, verdict: { 过: violation.size === 0, 违规: [...violation] } };
++}
++
++export function checkCommandSafety(command: string): SecurityVerdict {
++	return inspectCommand(command).verdict;
+ }
+ 
+ // ============================================================================
+@@ -855,19 +953,20 @@ async function runCommandEntries(
+ 	options?: SandboxOptions,
+ ): Promise<{ 结果: EntryResult[]; 沙箱保留路径?: string }> {
+ 	const results: EntryResult[] = [];
+-	const securityVerdict = new Map(
+-		entry.map((e) => {
+-			const check = checkCommandSafety(e.主体);
+-			return [e.序号, check] as const;
+-		}),
+-	);
++	const inspected = new Map(entry.map((e) => [e.序号, inspectCommand(e.主体)] as const));
+ 	for (const e of entry) {
+-		const check = securityVerdict.get(e.序号)!;
+-		if (!check.过) {
+-			results.push({ 序号: e.序号, 类型: e.类型, 摘要: e.主体, 结果: "安检拦截", 说明: check.违规.join("；") });
++		const check = inspected.get(e.序号)!;
++		if (!check.verdict.过) {
++			results.push({
++				序号: e.序号,
++				类型: e.类型,
++				摘要: e.主体,
++				结果: "安检拦截",
++				说明: check.verdict.违规.join("；"),
++			});
+ 		}
+ 	}
+-	const executable = entry.filter((e) => securityVerdict.get(e.序号)!.过);
++	const executable = entry.filter((e) => inspected.get(e.序号)!.verdict.过);
+ 	if (executable.length === 0) {
+ 		return { 结果: results };
+ 	}
+@@ -885,9 +984,8 @@ async function runCommandEntries(
+ 	pythonEnv.GIT_CEILING_DIRECTORIES = path.dirname(workDir);
+ 	for (const e of executable) {
+ 		options?.signal?.throwIfAborted();
+-		const tokens = tokenizeForExec(e.主体);
+-		const head = tokens[0];
+-		const args = tokens.slice(1);
++		const argv = inspected.get(e.序号)!.argv;
++		const [head, ...args] = argv;
+ 		let out: CardProcessResult;
+ 		try {
+ 			out = await (options?.verificationCommandRunner ?? runProc)(
+@@ -1054,14 +1152,16 @@ export async function verifyCard(
+ 	let contentEvidence: AcceptanceResult["代码内容"];
+ 	let acceptanceDiff: BaselineDiff | undefined;
+ 	let afterDiff: BaselineDiff | undefined;
++	// 受管执行有机械条目，或有当前 attempt 的人工复核回执时，都必须固定本次成果内容；
++	// 后者由 owner 逐项接受后交卷时继续比较，防止人工验收后代码被修改。
++	if (execution && (mechanicalEntry.length > 0 || (latestReceipt?.verification?.length ?? 0) > 0)) {
++		acceptanceDiff = await diffAgainstBaseline(
++			baselineSnapshotPath(cardsDir, card.card_no, execution.key.attempt),
++			options.signal,
++		);
++		contentEvidence = acceptanceEvidenceFromDiff(card.card_no, execution, acceptanceDiff);
++	}
+ 	if (mechanicalEntry.length > 0) {
+-		if (execution) {
+-			acceptanceDiff = await diffAgainstBaseline(
+-				baselineSnapshotPath(cardsDir, card.card_no, execution.key.attempt),
+-				options.signal,
+-			);
+-			contentEvidence = acceptanceEvidenceFromDiff(card.card_no, execution, acceptanceDiff);
+-		}
+ 		const projectRoot = execution?.canonicalExecutionRoot ?? (await resolveProjectRoot(cardsDir, options.signal));
+ 		const containsExist = mechanicalEntry.filter((e) => e.类型 !== "跑");
+ 		const runEntries = mechanicalEntry.filter((e) => e.类型 === "跑");
+diff --git a/packages/coding-agent/src/pao/worker/post-dispatch.ts b/packages/coding-agent/src/pao/worker/post-dispatch.ts
+index a8229cde0..feae0f7fe 100644
+--- a/packages/coding-agent/src/pao/worker/post-dispatch.ts
++++ b/packages/coding-agent/src/pao/worker/post-dispatch.ts
+@@ -1,9 +1,9 @@
+ /** 派发结束并释放执行锁后的共同完成链；直接任务与工作流共用核查、验收及交付。 */
+ import {
+ 	baselineSnapshotPath,
+-	captureContentTree,
+ 	checkBoundaryWrite,
+ 	diffAgainstBaseline,
++	verifyReviewEvidenceVersion,
+ } from "../cards/baseline.ts";
+ import { deliverCard } from "../cards/delivery.ts";
+ import { changeCardStatus, parseCardRef, projectRootForCards } from "../cards/index.ts";
+@@ -150,28 +150,46 @@ export async function completeDispatchedTask(options: PostDispatchOptions): Prom
+ 	options.signal?.throwIfAborted();
+ 	const boundaryChange = changedCardReason(options);
+ 	if (boundaryChange) return boundaryChange;
+-	if (reviewSourceTree !== undefined) {
+-		const current = await captureContentTree(projectRootForCards(cardsDir), options.signal);
+-		const reviewChange = changedCardReason(options);
+-		if (reviewChange) return reviewChange;
+-		if (current.tree !== reviewSourceTree || diff.worker改动.length > 0) {
+-			await failCard(
+-				cardsDir,
++	const declarations = receipt.changes?.map((change) => change.路径) ?? receipt.artifact_path ?? [];
++	let reviewBoundary: ReturnType<typeof checkBoundaryWrite> | undefined;
++	if (independentReview) {
++		if (reviewSourceTree === undefined) return `${label}独立审核缺少派发前原成果版本，拒绝把副本内容冒充原成果`;
++		try {
++			const reviewVersion = await verifyReviewEvidenceVersion({
++				diff,
++				declarations,
++				expectedCopyTree: diff.当前Tree ?? "",
++				expectedSourceTree: reviewSourceTree,
++				projectRoot: projectRootForCards(cardsDir),
++				signal: options.signal,
++			});
++			if (options.runner.isStopped()) return `${label}执行器已全停，保留审核证据和原项目现状，不再验收或交卷`;
++			options.signal?.throwIfAborted();
++			const reviewChange = changedCardReason(options);
++			if (reviewChange) return reviewChange;
++			reviewBoundary = reviewVersion.boundary;
++			steps.push({
+ 				cardRef,
+-				operator,
+-				"unknown_outcome",
+-				"验证期间业务内容发生变化；验证卡只能提交证据，不得修改业务成果",
+-			);
+-			steps.push({ cardRef, stage: "失败", note: "验证卡修改了业务内容或原项目版本已变化" });
+-			return `卡${cardRef} 审核验证成果版本不一致，拒绝放行；副本与证据保留供核查`;
++				stage: "越界",
++				note: `原成果 ${reviewVersion.sourceTree}；审核副本 ${reviewVersion.copyTree}；${reviewVersion.boundary.汇总}`,
++			});
++		} catch (error) {
++			if (options.runner.isStopped()) return `${label}执行器已全停，保留审核证据和原项目现状，不再验收或交卷`;
++			options.signal?.throwIfAborted();
++			const reviewChange = changedCardReason(options);
++			if (reviewChange) return reviewChange;
++			const reason = error instanceof Error ? error.message : String(error);
++			await failCard(cardsDir, cardRef, operator, "unknown_outcome", reason);
++			steps.push({ cardRef, stage: "失败", note: reason });
++			return `${label}审核验证成果版本不一致，拒绝放行；副本与证据保留供核查`;
+ 		}
+ 	}
+-	const check = checkBoundaryWrite(
+-		diff,
+-		receipt.changes?.map((change) => change.路径) ?? receipt.artifact_path ?? [],
+-		{ 项目根: diff.项目根 },
+-	);
+-	steps.push({ cardRef, stage: "越界", note: check.汇总 });
++	const check =
++		reviewBoundary ??
++		checkBoundaryWrite(diff, declarations, {
++			项目根: diff.项目根,
++		});
++	if (!reviewBoundary) steps.push({ cardRef, stage: "越界", note: check.汇总 });
+ 	if (check.结论 === "虚报" || check.结论 === "越界" || check.结论 === "虚报+越界") {
+ 		const basis = `越界核查 ${check.结论}：${check.汇总}（改动与声明对不上，结果不可信）`;
+ 		await failCard(cardsDir, cardRef, operator, "unknown_outcome", basis);
+@@ -220,6 +238,11 @@ export async function completeDispatchedTask(options: PostDispatchOptions): Prom
+ 		return `${label}验收未过，卡状态或尝试已变化，保留现状并停链`;
+ 	}
+ 	if (verification.结论 !== "全过自动交付") {
++		if ((verification.自报未达项?.length ?? 0) > 0) {
++			const reason = `${label}存在自报未达项，未创建部长审核请求，链停留 owner 逐项裁决；请用 pao_verify_card 核对当前 attempt 的索引与条件，再由主控经 pao_change_status、basis 与 accepted_deviations 逐项处理，不能猜 request_id 或由部长代放行`;
++			steps.push({ cardRef, stage: "停审", note: reason });
++			return reason;
++		}
+ 		if (verification.结论 === "全过停人工审" && options.onReviewRequired && !options.runner.isStopped()) {
+ 			const executionRoot = verification.执行上下文?.executionRoot ?? diff.项目根 ?? projectRootForCards(cardsDir);
+ 			const event: PostDispatchReviewEvent = {
+diff --git a/packages/coding-agent/src/pao/workflow/auto.ts b/packages/coding-agent/src/pao/workflow/auto.ts
+index b6ce3e3dc..01914c008 100644
+--- a/packages/coding-agent/src/pao/workflow/auto.ts
++++ b/packages/coding-agent/src/pao/workflow/auto.ts
+@@ -32,6 +32,7 @@ import { buildDispatchBudgetGate } from "../usage/dispatch-gate.ts";
+ import {
+ 	appendDispatchReceipt,
+ 	checkDispatchPermission,
++	type DispatchClaimResult,
+ 	executeDispatch,
+ 	locateDispatchCard,
+ } from "../worker/dispatch-core.ts";
+@@ -59,6 +60,7 @@ import {
+ 	readControl,
+ 	readControlReport,
+ 	recordControlStopReason,
++	reserveControlDispatch,
+ } from "./control.ts";
+ import { resolveWorkflowDispatch } from "./dispatch-context.ts";
+ import {
+@@ -80,10 +82,13 @@ import type { RecipeNode, WorkflowRecipe } from "./recipe.ts";
+  * 旧实例（控制正本版本缺失或未知）在 readControl 处明确拒绝自动恢复并保留原件。
+  */
+ interface V2CardDispatch {
++	instance: string;
+ 	/** 冻结配方里的节点定义（模型/思考档按它代参；每批派发前轮次一致性已重核） */
+ 	nodeDefinition: RecipeNode;
+ 	/** 当前轮次（重做两次后升主力模型的判据） */
+ 	round: number;
++	/** 本次调用上限，用于停因文案 */
++	perCall: number;
+ }
+ 
+ export interface AutoChainOptions extends DriverOptions {
+@@ -112,6 +117,8 @@ export interface AutoChainOptions extends DriverOptions {
+ 	maxCards?: number;
+ 	/** 回执和该步基础事实落定后回调；异常只记录为投递失败，不回滚已落盘事实。 */
+ 	onReceipt?: (event: AutoChainReceiptEvent) => void | Promise<void>;
++	/** 越界、验收与交付处理落定后回调；接收原回执事实和完成链的真实停因。 */
++	onPostDispatchResult?: (event: AutoChainPostDispatchResultEvent) => void | Promise<void>;
+ 	/**
+ 	 * 越界核查和机械项全部通过后，验收仍有需人工判断的内容时，请求负责部长给出判定。
+ 	 * 仅用于「全过停人工审」；机械失败、安检拦截、无法核对不会进入本回调。
+@@ -168,6 +175,10 @@ export interface AutoChainReceiptEvent extends PostDispatchReceiptEvent {
+ 	round?: number;
+ }
+ 
++export interface AutoChainPostDispatchResultEvent extends AutoChainReceiptEvent {
++	stopReason?: string;
++}
++
+ export interface AutoChainReviewEvent extends PostDispatchReviewEvent {
+ 	workflow: string;
+ 	instance?: string;
+@@ -189,7 +200,11 @@ export interface AutoChainReport {
+ }
+ 
+ /** 事件投递是链外副作用：投递失败要可见，但不得把已落卡的步骤重新判成未完成。 */
+-async function reportCallbackError(kind: "回执", event: AutoChainReceiptEvent, error: unknown) {
++async function reportCallbackError(
++	kind: "回执" | "后处理结果",
++	event: Pick<AutoChainReceiptEvent, "workflow" | "node" | "cardRef">,
++	error: unknown,
++) {
+ 	const reason = error instanceof Error ? error.message : String(error);
+ 	logWarn(`[pao] 自动链${kind}回调失败（${event.workflow}/${event.node}/${event.cardRef}）:${reason}`);
+ }
+@@ -203,6 +218,18 @@ async function emitReceipt(options: AutoChainOptions, event: AutoChainReceiptEve
+ 	}
+ }
+ 
++async function emitPostDispatchResult(
++	options: AutoChainOptions,
++	event: AutoChainPostDispatchResultEvent,
++): Promise<void> {
++	if (!options.onPostDispatchResult || options.运行器.isStopped() || options.signal?.aborted) return;
++	try {
++		await options.onPostDispatchResult(event);
++	} catch (error) {
++		await reportCallbackError("后处理结果", event, error);
++	}
++}
++
+ /** 单次自动推进：tick → 对就绪卡逐张跑链 → 交付后再 tick 解锁下游，直到无进展或停。 */
+ export async function runAutoChain(
+ 	recipe: WorkflowRecipe,
+@@ -211,13 +238,13 @@ export async function runAutoChain(
+ ): Promise<AutoChainReport> {
+ 	if (recipe.版本 === 2) {
+ 		try {
+-			return await withFileLock(`${controlPath(recipe, options)}.dispatch`, async () => {
++			return await (async () => {
+ 				const steps: ChainStep[] = [];
+ 				const flow = readControl(recipe, options);
+ 				if (flow.owner !== options.ownerSessionId) throw new Error("工作流 owner 不匹配");
+ 				if (flow.暂停) return { report: controlReport(flow), steps, stopReason: flow.暂停 };
+ 				// S6-K2 实例级累计：累计读控制正本「已派卡」，本次上限与实例余量取较严者
+-				// （mergeCardLimit）；每批派卡随记（bumpControlDispatched 走主锁并重核 owner）。
++				// （mergeCardLimit）；真正认领时再在 .dispatch 内原子预留。
+ 				const limit = mergeCardLimit(options.maxCards, flow.已派卡 ?? 0);
+ 				let count = 0;
+ 				for (const name of flow.冻结配方.拓扑序) {
+@@ -263,15 +290,8 @@ export async function runAutoChain(
+ 										: "本次卡数上限；未派卡保留排队",
+ 							};
+ 						count += batch.length;
+-						// 先记账后派发：进程中断也不丢已认领卡数的账（已派＝已认领进链）。
+-						await bumpControlDispatched(recipe, options, batch.length);
+ 						// 每张卡独立收集过程，全部结算后按输入卡序汇总，避免并行完成先后打乱报告。
+ 						const batchSteps = batch.map((): ChainStep[] => []);
+-						// 审查第 11 项：确定未获受理的卡（权限拒绝/名额或状态不放行）把预留额度还回来——
+-						// 预留本身要保留（并发上限靠它），只在确定没派出去时归还。已受理后失败不当未运行退账。
+-						const onUnaccepted = async (): Promise<void> => {
+-							await bumpControlDispatched(recipe, options, -1);
+-						};
+ 						// primary 目标的同批卡本来就受同一执行根写锁串行。先串行准备再派下一张，
+ 						// 让上一张交卷后的当前输入版本成为下一张的派发依据；锁后版本保护仍原样生效。
+ 						// 独立工作树没有这个先后依赖，继续按批并行。
+@@ -282,15 +302,12 @@ export async function runAutoChain(
+ 										for (const [index, ref] of batch.entries()) {
+ 											options.signal?.throwIfAborted();
+ 											results.push(
+-												await runChainForCard(
+-													flow.冻结配方,
+-													node.名字,
+-													ref,
+-													options,
+-													batchSteps[index],
+-													{ nodeDefinition: def, round: node.轮次 },
+-													onUnaccepted,
+-												)
++												await runChainForCard(flow.冻结配方, node.名字, ref, options, batchSteps[index], {
++													instance: flow.实例,
++													nodeDefinition: def,
++													round: node.轮次,
++													perCall: limit.perCall,
++												})
+ 													.then((value) => ({ status: "fulfilled" as const, value }))
+ 													.catch((reason: unknown) => ({ status: "rejected" as const, reason })),
+ 											);
+@@ -299,18 +316,12 @@ export async function runAutoChain(
+ 									})()
+ 								: await Promise.allSettled(
+ 										batch.map((ref, index) =>
+-											runChainForCard(
+-												flow.冻结配方,
+-												node.名字,
+-												ref,
+-												options,
+-												batchSteps[index],
+-												{
+-													nodeDefinition: def,
+-													round: node.轮次,
+-												},
+-												onUnaccepted,
+-											),
++											runChainForCard(flow.冻结配方, node.名字, ref, options, batchSteps[index], {
++												instance: flow.实例,
++												nodeDefinition: def,
++												round: node.轮次,
++												perCall: limit.perCall,
++											}),
+ 										),
+ 									);
+ 						steps.push(...batchSteps.flat());
+@@ -345,7 +356,7 @@ export async function runAutoChain(
+ 						? { waitingForEvent: true }
+ 						: {}),
+ 				};
+-			});
++			})();
+ 		} catch (error) {
+ 			if (options.signal?.aborted && options.运行器.isStopped()) {
+ 				const stopReason = "执行器已全停，自动链停止；当前实例、卡面和原始回执保留，不自动恢复";
+@@ -541,6 +552,50 @@ async function runChainForCard(
+ 				...(v2Dispatch
+ 					? {
+ 							等待名额: true,
++							claimTransaction: async (claim) =>
++								withFileLock(`${controlPath(recipe, options)}.dispatch`, async () => {
++									const reserved = await reserveControlDispatch(recipe, options, {
++										instance: v2Dispatch.instance,
++										node: nodeName,
++										round: v2Dispatch.round,
++										cardRef,
++										limit: Math.max(AUTO_CHAIN_CARD_LIMIT, v2Dispatch.perCall),
++									});
++									if (!reserved) {
++										return {
++											可派: false as const,
++											原因: instanceLimitStopReason(
++												v2Dispatch.perCall,
++												readControl(recipe, options).已派卡 ?? 0,
++											),
++										};
++									}
++									let result: DispatchClaimResult;
++									try {
++										result = await claim();
++									} catch (error) {
++										try {
++											await bumpControlDispatched(recipe, options, -1);
++										} catch (refundError) {
++											throw new AggregateError(
++												[error, refundError],
++												`认领失败：${String(error)}；派卡额度退款失败：${String(refundError)}`,
++												{ cause: error },
++											);
++										}
++										throw error;
++									}
++									if (!result.可派) {
++										try {
++											await bumpControlDispatched(recipe, options, -1);
++										} catch (refundError) {
++											throw new Error(`认领被拒：${result.原因}；派卡额度退款失败：${String(refundError)}`, {
++												cause: refundError,
++											});
++										}
++									}
++									return result;
++								}),
+ 							公共参数: {
+ 								...(v2Dispatch.nodeDefinition.模型 && v2Dispatch.round <= 3
+ 									? { 模型: v2Dispatch.nodeDefinition.模型 }
+@@ -596,7 +651,20 @@ async function runChainForCard(
+ 		});
+ 		return `卡${cardRef} 派发异常：${error instanceof Error ? error.message : String(error)}，自动链停`;
+ 	}
+-	return completeDispatchedTask({
++	const eventIdentity = {
++		workflow: recipe.名字,
++		node: nodeName,
++		...(v2Dispatch ? { instance: v2Dispatch.instance, round: v2Dispatch.round } : {}),
++	};
++	const eventBase = {
++		cardRef,
++		attempt: chainReceipt.receipt.attempt,
++		result: chainReceipt.receipt.status,
++		receipt: chainReceipt.receipt,
++		recorded: chainReceipt.receiptWriteError === undefined,
++		...eventIdentity,
++	};
++	const stopReason = await completeDispatchedTask({
+ 		cardsDir,
+ 		cardRef,
+ 		operator,
+@@ -618,25 +686,22 @@ async function runChainForCard(
+ 				}
+ 			: {}),
+ 		onStep: (step) => steps.push({ ...step, node: nodeName }),
+-		onReceipt: (event) =>
+-			emitReceipt(options, {
+-				...event,
+-				workflow: recipe.名字,
+-				node: nodeName,
+-				...(v2Dispatch ? { instance: readControl(recipe, options).实例, round: v2Dispatch.round } : {}),
+-			}),
++		onReceipt: (event) => emitReceipt(options, { ...event, ...eventIdentity }),
+ 		...(options.onReviewRequired
+ 			? {
+ 					onReviewRequired: (event: PostDispatchReviewEvent) =>
+ 						options.onReviewRequired!({
+ 							...event,
+-							workflow: recipe.名字,
+-							node: nodeName,
+-							...(v2Dispatch ? { instance: readControl(recipe, options).实例, round: v2Dispatch.round } : {}),
++							...eventIdentity,
+ 						}),
+ 				}
+ 			: {}),
+ 	});
++	await emitPostDispatchResult(options, {
++		...eventBase,
++		...(stopReason ? { stopReason } : {}),
++	});
++	return stopReason;
+ }
+ 
+ /** 自动链结果 → 面向主控的中文文本（驱动器报告＋逐步记录＋停因；二批逐步行加状态符号前缀）。 */
+diff --git a/packages/coding-agent/src/pao/workflow/control.ts b/packages/coding-agent/src/pao/workflow/control.ts
+index ade2b3924..23c4c07e7 100644
+--- a/packages/coding-agent/src/pao/workflow/control.ts
++++ b/packages/coding-agent/src/pao/workflow/control.ts
+@@ -6,8 +6,14 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
+ import { dirname, join, resolve } from "node:path";
+ import { stringify } from "yaml";
+ import { parseFrontmatter } from "../../utils/frontmatter.ts";
+-import { baselineSnapshotPath, captureContentTree, PROJECT_CONTENT_PATHSPECS } from "../cards/baseline.ts";
+-import { executionContextPath, readExecutionBinding } from "../cards/execution-context.ts";
++import {
++	baselineSnapshotPath,
++	captureContentTree,
++	diffAgainstBaseline,
++	PROJECT_CONTENT_PATHSPECS,
++	verifyReviewEvidenceVersion,
++} from "../cards/baseline.ts";
++import { executionContextPath, readExecutionBinding, resolveExecutionContext } from "../cards/execution-context.ts";
+ import {
+ 	checkTransition,
+ 	createCard,
+@@ -24,6 +30,7 @@ import { reopenForReview, reopenOriginalCard } from "../cards/rework.ts";
+ import type { CardFrontmatter, CardStatus, ParsedCard } from "../cards/types.ts";
+ import { readLatestVerdict, validateAcceptance } from "../cards/verifier.ts";
+ import { loadDispatchMapArtifact } from "../dispatch-brief/artifacts.ts";
++import { validateLegacyInputReferences } from "../dispatch-brief/brief.ts";
+ import { parseDispatchUri } from "../dispatch-brief/uri.ts";
+ import { assertDispatchMapHandoff } from "../dispatch-brief/workspace.ts";
+ import { writeFileAtomic } from "../shared/atomic.ts";
+@@ -226,12 +233,25 @@ function reviewVersionHold(flow: FlowControl, node: NodeControl, contentTree?: s
+ 		return "审核判定失效：判定属于其他项目根，须在当前成果上重新独立验证";
+ 	return "审核判定失效：成果内容已变化，须重新独立验证";
+ }
+-type ReviewEvidence = { kind: "verified"; tree: string } | { kind: "unverified" } | { kind: "blocked"; reason: string };
+-function reviewEvidence(card: ParsedCard, cardsDir: string, currentTree?: string): ReviewEvidence {
++type ReviewEvidence =
++	| { kind: "verified"; sourceTree: string; copyTree: string }
++	| { kind: "unverified" }
++	| { kind: "blocked"; reason: string };
++async function reviewEvidence(
++	card: ParsedCard,
++	cardsDir: string,
++	currentTree?: string,
++	independentReview?: boolean,
++): Promise<ReviewEvidence> {
+ 	const hasCurrentExecutionEvidence = (attempt: number): boolean =>
+ 		existsSync(executionContextPath({ cardsDir, cardNo: card.card_no, attempt })) ||
+ 		existsSync(baselineSnapshotPath(cardsDir, card.card_no, attempt));
+ 	const verdict = readLatestVerdict(card.body);
++	if (independentReview !== true) {
++		return verdict
++			? { kind: "blocked", reason: "普通实施节点不能冒充独立审核的只读证据版本" }
++			: { kind: "unverified" };
++	}
+ 	const hasReceiptEvidence = card.receipts.some(
+ 		(receipt) => receipt.archive_flag === undefined && (receipt.evidence?.length ?? 0) > 0,
+ 	);
+@@ -261,7 +281,6 @@ function reviewEvidence(card: ParsedCard, cardsDir: string, currentTree?: string
+ 	}
+ 	if (beforeTree !== afterTree) return { kind: "blocked", reason: "最近验收检查前后成果不一致" };
+ 	if (currentTree === undefined) return { kind: "blocked", reason: "当前成果版本不可确认" };
+-	if (afterTree !== currentTree) return { kind: "blocked", reason: "检查后 tree 已过期，当前成果须重新独立验证" };
+ 	const executionRoot = field("执行根");
+ 	const bindingDigest = field("关联摘要");
+ 	if (!executionRoot && !bindingDigest)
+@@ -274,10 +293,14 @@ function reviewEvidence(card: ParsedCard, cardsDir: string, currentTree?: string
+ 	if (!executionRoot || !bindingDigest || !field("仓库根") || !field("工作树摘要") || !field("输入快照"))
+ 		return { kind: "blocked", reason: "最近验收的执行绑定字段不完整" };
+ 	try {
+-		const binding = readExecutionBinding({
++		const key = {
+ 			cardsDir,
+ 			cardNo: card.card_no,
+ 			attempt,
++		};
++		const binding = await resolveExecutionContext(key, {
++			expectedCurrentAttempt: card.frontmatter.attempt,
++			requireLiveExecutionRoot: true,
+ 		});
+ 		if (
+ 			pathKey(resolve(binding.projectRoot)) !== pathKey(resolve(projectRootForCards(cardsDir))) ||
+@@ -288,7 +311,8 @@ function reviewEvidence(card: ParsedCard, cardsDir: string, currentTree?: string
+ 			field("输入快照") !== binding.snapshotDigest
+ 		)
+ 			return { kind: "blocked", reason: "最近验收与 execution-context 执行绑定不一致" };
+-		const baseline = JSON.parse(readFileSync(baselineSnapshotPath(cardsDir, card.card_no, attempt), "utf8")) as {
++		const baselinePath = baselineSnapshotPath(cardsDir, card.card_no, attempt);
++		const baseline = JSON.parse(readFileSync(baselinePath, "utf8")) as {
+ 			projectRoot?: unknown;
+ 			executionRoot?: unknown;
+ 			repositoryRoot?: unknown;
+@@ -310,33 +334,46 @@ function reviewEvidence(card: ParsedCard, cardsDir: string, currentTree?: string
+ 			baseline.snapshotDigest !== binding.snapshotDigest
+ 		)
+ 			return { kind: "blocked", reason: "最近验收的基线证据与 execution-context 不一致" };
++		const receipt = currentAttemptReceipt(card);
++		if (!receipt) return { kind: "blocked", reason: "独立审核缺少当前尝试回执" };
++		const version = await verifyReviewEvidenceVersion({
++			diff: await diffAgainstBaseline(baselinePath),
++			declarations: receipt.changes?.map((change) => change.路径) ?? receipt.artifact_path ?? [],
++			expectedCopyTree: afterTree,
++			expectedCopyRoot: binding.canonicalExecutionRoot,
++			expectedSourceTree: currentTree,
++			projectRoot: binding.projectRoot,
++		});
++		return { kind: "verified", sourceTree: version.sourceTree, copyTree: version.copyTree };
+ 	} catch (error) {
+ 		return {
+ 			kind: "blocked",
+ 			reason: `最近验收的执行绑定不可核对（${error instanceof Error ? error.message : String(error)}）`,
+ 		};
+ 	}
+-	return { kind: "verified", tree: afterTree };
+ }
+-function reviewEvidenceHold(
++async function reviewEvidenceHold(
+ 	flow: FlowControl,
+ 	node: NodeControl,
+ 	decision: Decision,
+ 	contentTree?: string,
+-): string | undefined {
++	independentReview?: boolean,
++): Promise<string | undefined> {
+ 	if (decision.结果 !== "pass") return undefined;
+ 	try {
+-		const states = cardStates(flow, node).map((card) => reviewEvidence(card, flow.卡目录, contentTree));
++		const states = await Promise.all(
++			cardStates(flow, node).map((card) => reviewEvidence(card, flow.卡目录, contentTree, independentReview)),
++		);
+ 		if (!states.length && !decision.理由.includes("未验证运行"))
+ 			return "零卡审核未运行验证；放行理由须明确未验证运行";
+ 		const blocked = states.find((state) => state.kind === "blocked");
+ 		if (blocked?.kind === "blocked") return `审核证据不可放行：${blocked.reason}`;
+ 		if (states.some((state) => state.kind === "unverified") && !decision.理由.includes("未验证运行"))
+ 			return "审核证据含未验证运行的卡；放行理由须明确未验证运行";
+-		const seen = new Set(states.filter((state) => state.kind === "verified").map((state) => state.tree));
+-		if (seen.size > 1) return "审核证据不可放行：验证卡覆盖了多个成果版本";
+-		if (seen.size === 1 && contentTree !== [...seen][0])
+-			return "审核证据不可放行：验证卡检查后 tree 与当前成果不一致";
++		const sources = new Set(states.filter((state) => state.kind === "verified").map((state) => state.sourceTree));
++		if (sources.size > 1) return "审核证据不可放行：验证卡覆盖了多个原成果版本";
++		if (sources.size === 1 && contentTree !== [...sources][0])
++			return "审核证据不可放行：审核所依据的原成果与当前原项目不一致";
+ 		return undefined;
+ 	} catch (error) {
+ 		return `审核证据不可核对（${error instanceof Error ? error.message : String(error)}）`;
+@@ -838,28 +875,38 @@ async function createNodeCards(
+ 		);
+ 	// 整批先核最终文本，任一条非法时不发号、不留下半批正式卡。
+ 	const projectRoot = projectRootForCards(options.cardsDir);
+-	for (const input of inputs) validateAcceptance(substituteParams(input.acceptance, flow.参数), projectRoot);
++	const prepared = inputs.map((input) => ({
++		input,
++		goal: substituteParams(input.goal, flow.参数),
++		acceptance: substituteParams(input.acceptance, flow.参数),
++		inputs: [
++			...(def.输入 ?? []),
++			...(input.inputs ?? []),
++			...(node.重做理由 ? [`本轮重做理由:${node.重做理由}`] : []),
++		].map((value) => substituteParams(value, flow.参数)),
++		constraints: [def.约束, input.constraints]
++			.filter((value): value is string => Boolean(value))
++			.map((value) => substituteParams(value, flow.参数))
++			.join("\n"),
++	}));
++	for (const card of prepared) {
++		validateAcceptance(card.acceptance, projectRoot);
++		validateLegacyInputReferences(projectRoot, card.inputs);
++	}
+ 	const added: string[] = [];
+-	for (const input of inputs) {
++	for (const card of prepared) {
+ 		options.signal?.throwIfAborted();
+-		const card = await createCard(
++		const created = await createCard(
+ 			options.cardsDir,
+ 			{
+-				...input,
++				...card.input,
+ 				部门: def.部门,
+-				目标: substituteParams(input.goal, flow.参数),
+-				验收: substituteParams(input.acceptance, flow.参数),
+-				输入: [
+-					...(def.输入 ?? []),
+-					...(input.inputs ?? []),
+-					...(node.重做理由 ? [`本轮重做理由:${node.重做理由}`] : []),
+-				].map((s) => substituteParams(s, flow.参数)),
+-				约束: [def.约束, input.constraints]
+-					.filter(Boolean)
+-					.map((s) => substituteParams(s!, flow.参数))
+-					.join("\n"),
++				目标: card.goal,
++				验收: card.acceptance,
++				输入: card.inputs,
++				约束: card.constraints,
+ 				档位: node.轮次 > 3 ? "primary" : def.档位,
+-				预算: input.budget ?? def.预算,
++				预算: card.input.budget ?? def.预算,
+ 				depends_on: def.depends_on.flatMap((name) => flow.节点.find((n) => n.名字 === name)!.卡),
+ 				创建: options.now?.() ?? nowString(),
+ 			},
+@@ -869,7 +916,7 @@ async function createNodeCards(
+ 				模板正文: `<!-- pao-workflow:流=${recipe.名字}/节点=${node.名字} -->\n<!-- pao-workflow-v2:实例=${flow.实例}/轮次=${node.轮次} -->`,
+ 			},
+ 		);
+-		const ref = formatCardNumber(card.card_no);
++		const ref = formatCardNumber(created.card_no);
+ 		node.卡.push(ref);
+ 		// 卡及完整归属已原子写入，再保存控制映射；失败留下的孤儿卡仍受工作流派发检查保护。
+ 		saveControl(recipe, options, flow);
+@@ -997,22 +1044,10 @@ export async function decideNode(
+ 			if (flow.暂停 !== `等待${requestedRuling}裁定:${flow.裁定.理由}`)
+ 				fail(`当前暂停不是等待${requestedRuling}裁定；不能借裁定绕过人工门`);
+ 			if (!def.审核) {
+-				const affected = descendantNodeNames(flow, node.名字);
+ 				if (
+ 					!node.拆解结束 ||
+ 					!cardStates(flow, node).every((card) => card.frontmatter.status === "delivered") ||
+-					(affected.size > 1 &&
+-						flow.节点.some(
+-							(candidate) =>
+-								candidate !== node &&
+-								affected.has(candidate.名字) &&
+-								(candidate.部长会话 ||
+-									candidate.卡.length ||
+-									candidate.历史.length ||
+-									candidate.拆解结束 ||
+-									candidate.判定 ||
+-									candidate.确认),
+-						))
++					hasStartedDescendant(flow, node)
+ 				)
+ 					fail("普通执行节点裁定须在拆解结束、全部卡机械交付且下游尚未启动后记录");
+ 				if (!ready(flow, node, projectRootForCards(flow.卡目录), contentTree))
+@@ -1085,7 +1120,13 @@ export async function decideNode(
+ 			(!Array.isArray(decision.建议) || decision.建议.some((item) => typeof item !== "string" || !item.trim()))
+ 		)
+ 			fail("改进建议须为非空文本列表；不自动扩大原任务验收范围");
+-		const evidenceHold = reviewEvidenceHold(flow, node, { ...decision, 时间: new Date().toISOString() }, contentTree);
++		const evidenceHold = await reviewEvidenceHold(
++			flow,
++			node,
++			{ ...decision, 时间: new Date().toISOString() },
++			contentTree,
++			def.只读 === true && def.审核 === true,
++		);
+ 		if (evidenceHold) fail(evidenceHold);
+ 		const stamp = new Date().toISOString();
+ 		node.判定 = {
+@@ -1178,6 +1219,23 @@ function descendantNodeNames(flow: FlowControl, name: string): Set<string> {
+ 	return affected;
+ }
+ 
++function hasStartedDescendant(flow: FlowControl, node: NodeControl): boolean {
++	const affected = descendantNodeNames(flow, node.名字);
++	return flow.节点.some(
++		(candidate) =>
++			candidate !== node &&
++			affected.has(candidate.名字) &&
++			Boolean(
++				candidate.部长会话 ||
++					candidate.卡.length ||
++					candidate.历史.length ||
++					candidate.拆解结束 ||
++					candidate.判定 ||
++					candidate.确认,
++			),
++	);
++}
++
+ function receiptConflict(card: ParsedCard): boolean {
+ 	const receipts = card.receipts.filter(
+ 		(receipt) => !receipt.archive_flag && receipt.attempt >= card.frontmatter.attempt,
+@@ -1401,6 +1459,10 @@ export async function reworkOriginalCards(
+ 				if (!card.frontmatter.owner?.trim()) fail(`卡${formatCardNumber(cardNo)}没有 owner；无法确认返修写者`);
+ 				const reviewPending = card.frontmatter.status === "in_progress";
+ 				if (reviewPending) reviewPendingOriginalInput(flow, node, card);
++				if (card.frontmatter.status === "unclaimed")
++					fail(
++						`卡${formatCardNumber(cardNo)}当前状态为 unclaimed，已排队等待主控推进；无需重复返修或新增卡，旧尝试回执不代表待执行尝试失败`,
++					);
+ 				if (!["delivered", "failed", "in_progress"].includes(card.frontmatter.status))
+ 					fail(`卡${formatCardNumber(cardNo)}当前状态为 ${card.frontmatter.status}，不能返修`);
+ 				checkTransition({
+@@ -1501,12 +1563,35 @@ export async function confirmControl(
+ 		return controlReport(flow, undefined, contentTree);
+ 	});
+ }
+-export async function pauseControl(recipe: WorkflowRecipe, options: DriverOptions, reason: string): Promise<void> {
+-	await mutate(recipe, options, (flow) => {
++async function setPause(
++	recipe: WorkflowRecipe,
++	options: DriverOptions,
++	reason: string,
++	preserveExisting: boolean,
++): Promise<boolean> {
++	return withFileLock(controlPath(recipe, options), async () => {
++		options.signal?.throwIfAborted();
++		const flow = readControl(recipe, options);
++		assertOwner(flow, options);
+ 		if (!reason.trim()) fail("暂停理由不能为空");
++		if (preserveExisting && flow.暂停 !== undefined) return false;
+ 		flow.暂停 = reason;
++		flow.状态 = persistedStatus(controlReport(flow, undefined, undefined).status);
++		saveControl(recipe, options, flow);
++		return true;
+ 	});
+ }
++export async function pauseControl(recipe: WorkflowRecipe, options: DriverOptions, reason: string): Promise<void> {
++	await setPause(recipe, options, reason, false);
++}
++/** 关闭与执行异常共用的保守入口：控制锁内重读，已有停因优先。 */
++export async function pauseControlIfUnpaused(
++	recipe: WorkflowRecipe,
++	options: DriverOptions,
++	reason: string,
++): Promise<boolean> {
++	return setPause(recipe, options, reason, true);
++}
+ 
+ /**
+  * 自动链停因追加到控制正本已有审计记录。只在实例未完成时写；内容不变则幂等，
+@@ -1540,9 +1625,8 @@ export async function recordControlStopReason(
+ }
+ 
+ /**
+- * S6-K2 自动链实例级累计（v2）：已派卡 +delta 落控制正本。经 mutate 走主锁并重核 owner——
+- * 自动链调用方持有 .dispatch 锁（与主锁不同文件），锁序 .dispatch→主控锁与链内 tick 同序。
+- * delta 可为负（审查第 11 项：未获受理的预留额度归还），结算结果不低于 0。
++ * S6-K2 自动链实例级累计（v2）：已派卡 +delta 落控制正本。经 mutate 走主锁并重核 owner。
++ * 自动链在 .dispatch 内原子预留和退款，锁序 .dispatch→主控锁；结算结果不低于 0。
+  */
+ export function bumpControlDispatched(recipe: WorkflowRecipe, options: DriverOptions, delta: number): Promise<void> {
+ 	return mutate(recipe, options, (flow) => {
+@@ -1550,6 +1634,30 @@ export function bumpControlDispatched(recipe: WorkflowRecipe, options: DriverOpt
+ 	});
+ }
+ 
++/** 在控制锁内重核节点身份并按实例剩余额度预留一张。 */
++export function reserveControlDispatch(
++	recipe: WorkflowRecipe,
++	options: DriverOptions,
++	input: { instance: string; node: string; round: number; cardRef: string; limit: number },
++): Promise<boolean> {
++	return mutate(recipe, options, (flow) => {
++		const node = flow.节点.find((candidate) => candidate.名字 === input.node);
++		if (
++			flow.实例 !== input.instance ||
++			flow.暂停 ||
++			flow.裁定 ||
++			flow.状态 === "已完成" ||
++			!node ||
++			node.轮次 !== input.round ||
++			!node.卡.some((ref) => parseCardRef(ref) === parseCardRef(input.cardRef))
++		)
++			fail("实例已改变、暂停、待裁定、已完成或节点/轮次/卡身份已改变，拒绝认领");
++		if ((flow.已派卡 ?? 0) >= input.limit) return false;
++		flow.已派卡 = (flow.已派卡 ?? 0) + 1;
++		return true;
++	});
++}
++
+ // ── S6-K3 v2 叫人去重落盘（K1 留白）：控制正本「叫人」字段，盘上去重跨重启 ──────
+ 
+ /** 查控制正本「叫人」记录：键一致＝该停链现场已叫过。正本缺失/损坏按未叫过（尽力而为路径不放大错误）。 */
+@@ -1586,6 +1694,15 @@ export async function requestRuling(
+ 		const node = identify(flow, identity, tree);
+ 		const def = flow.冻结配方.节点.find((n) => n.名字 === node.名字)!;
+ 		if (!reason.trim()) fail("裁定理由不能为空");
++		if (flow.状态 === "已完成") fail("实例已完成，不能再请求裁定");
++		// 只读部长可被宿主召回复核地图；普通执行/审核节点移交下游后不再接受迟到裁定。
++		if ((!def.只读 || def.审核) && hasStartedDescendant(flow, node))
++			fail("下游已经启动或产生结果，不能从已移交节点请求裁定；请由当前审核节点处理并使用审核回边");
++		if (
++			def.审核 &&
++			(!node.拆解结束 || !cardStates(flow, node).every((card) => card.frontmatter.status === "delivered"))
++		)
++			fail("审核裁定须先由 owner 完成逐项处理和机械交付，并结束拆解");
+ 		const channel = def.允许请求主控裁定 && ownerPresent ? "主控" : "人工";
+ 		flow.裁定 = { 节点: node.名字, 轮次: node.轮次, 理由: reason, 通道: channel };
+ 		flow.暂停 = `等待${channel}裁定:${reason}`;
+diff --git a/packages/coding-agent/src/pao/workflow/host-bridge.ts b/packages/coding-agent/src/pao/workflow/host-bridge.ts
+index 99f7c4cac..debbd0e41 100644
+--- a/packages/coding-agent/src/pao/workflow/host-bridge.ts
++++ b/packages/coding-agent/src/pao/workflow/host-bridge.ts
+@@ -13,6 +13,7 @@ import { pathKey } from "../shared/path-key.ts";
+ import { locateDispatchCard } from "../worker/dispatch-core.ts";
+ import {
+ 	type AutoChainOptions,
++	type AutoChainPostDispatchResultEvent,
+ 	type AutoChainReceiptEvent,
+ 	type AutoChainReport,
+ 	type AutoChainReviewDecision,
+@@ -23,7 +24,7 @@ import {
+ 	bindMinister,
+ 	buildDecisionPackage,
+ 	type FlowControl,
+-	pauseControl,
++	pauseControlIfUnpaused,
+ 	prepareDirectNode,
+ 	readControl,
+ 	readControlReport,
+@@ -73,6 +74,13 @@ function resolveMinisterModel(
+ 	}
+ }
+ 
++/** 引用用于校验，文件路径供部长现有 read 工具读取同一产物，不再猜存储位置。 */
++function describeNodeMapInput(ref: string, cardsDir: string): string {
++	const map = loadDispatchMapArtifact(ref, { cardsDir });
++	const path = join(dispatchArtifactsRoot({ cardsDir }), "map", `${map.id}.json`);
++	return `地图引用: ${ref}\n地图文件: ${path}`;
++}
++
+ /** 主控拥有的桥；真实 RPC 会话返回身份之后才绑定和投递任务书。 */
+ export class WorkflowHostBridge {
+ 	#host: MinisterHost;
+@@ -123,7 +131,7 @@ export class WorkflowHostBridge {
+ 		].filter(Boolean);
+ 		return lines.join("\n");
+ 	}
+-	async #receiptMaterial(recipe: WorkflowRecipe, options: AutoChainOptions, event: AutoChainReceiptEvent) {
++	#receiptMaterial(recipe: WorkflowRecipe, options: AutoChainOptions, event: AutoChainReceiptEvent) {
+ 		const flow = readControl(recipe, options);
+ 		const target = this.#receiptTarget(flow, event.cardRef);
+ 		const node = flow.节点.find((candidate) => candidate.名字 === target.node)!;
+@@ -131,7 +139,14 @@ export class WorkflowHostBridge {
+ 		if (!node?.部长会话 || !def) throw new Error(`卡${event.cardRef}回执缺少绑定部长或冻结节点，拒绝静默丢弃`);
+ 		if (event.node !== target.node)
+ 			throw new Error(`卡${event.cardRef}回执节点身份不符：卡属于 ${target.node}，事件声称 ${event.node}`);
++		if (
++			(event.instance !== undefined && event.instance !== flow.实例) ||
++			(event.round !== undefined && event.round !== node.轮次)
++		)
++			throw new Error(`卡${event.cardRef}回执实例、轮次或尝试已变化，拒绝把旧结果投递给当前节点`);
+ 		const card = locateDispatchCard(options.cardsDir, event.cardRef);
++		if (card.frontmatter.attempt !== event.attempt)
++			throw new Error(`卡${event.cardRef}回执实例、轮次或尝试已变化，拒绝把旧结果投递给当前节点`);
+ 		const recon = readAttemptReconHandoff({
+ 			cardsDir: options.cardsDir,
+ 			cardNo: card.card_no,
+@@ -151,15 +166,60 @@ export class WorkflowHostBridge {
+ 			text: this.#receiptMessage(event, card.path, reconLines),
+ 		};
+ 	}
+-	async #deliverReceipt(recipe: WorkflowRecipe, options: AutoChainOptions, event: AutoChainReceiptEvent) {
+-		if (readControl(recipe, options).冻结配方.节点.find((node) => node.名字 === event.node)?.执行方式 === "直接")
+-			return;
+-		const material = await this.#receiptMaterial(recipe, options, event);
+-		const lines = [
+-			material.text,
+-			"请作为该节点部长审阅此回执：结合卡面、机械验收和真实证据判断补卡、重试、请求裁定或结束本轮；回执与自报不等于独立验收，缺失证据须明确写出。",
+-		];
+-		await this.#injectMinister(material.flow, material.node, material.def, options, lines.join("\n"));
++	async #deliverPostDispatchResult(
++		recipe: WorkflowRecipe,
++		options: AutoChainOptions,
++		event: AutoChainPostDispatchResultEvent,
++	) {
++		const flow = readControl(recipe, options);
++		if (flow.冻结配方.节点.find((node) => node.名字 === event.node)?.执行方式 === "直接") return;
++		const material = this.#receiptMaterial(recipe, options, event);
++		const report = await readControlReport(material.flow, options);
++		const nodeReport = report.nodes.find((candidate) => candidate.name === material.node.名字);
++		if (!nodeReport) throw new Error(`卡${event.cardRef}后处理结果找不到当前节点状态，拒绝投递`);
++		const reviewNode = material.flow.冻结配方.节点.find(
++			(candidate) => candidate.审核 && candidate.回边?.some((edge) => edge.目标 === material.node.名字),
++		);
++		const hasReview = material.flow.冻结配方.节点.some((candidate) => candidate.审核);
++		const cardStatus = material.card.frontmatter.status;
++		const cardDelivered = cardStatus === "delivered";
++		const cardFailed = cardStatus === "failed" || cardStatus === "canceled";
++		const postDispatchOK = event.stopReason === undefined;
++		let verdict: string;
++		if (cardDelivered && postDispatchOK && nodeReport.status === "delivered") {
++			if (reviewNode) {
++				verdict = `该节点已完成；回执与自报不等于独立验收，后续质量缺陷交审核节点 ${reviewNode.名字} 的既有审核回边处理。`;
++			} else if (hasReview) {
++				verdict =
++					"该节点已完成；回执与自报不等于独立验收，配方虽有审核职责，但未声明针对该节点的审核回边，后续按现有流程控制或人工恢复路径处理。";
++			} else {
++				verdict =
++					"该节点已完成；回执与自报不等于独立验收，本配方未配置独立审核节点，后续质量缺陷按现有流程控制或人工恢复路径处理。";
++			}
++		} else if (cardDelivered && postDispatchOK) {
++			verdict = nodeReport.hold
++				? `该卡已交付，但节点仍在流程门：${nodeReport.hold}。后续质量缺陷${hasReview ? "按配方既有审核职责" : "按现有流程控制或人工恢复路径"}处理。`
++				: "该卡已交付，但整个节点尚未完成；请以当前节点状态和依赖门为准，不把单卡交付当成节点完成。";
++		} else if (cardFailed) {
++			verdict = `该卡当前已失败：${event.stopReason ?? "卡面为失败/取消，完成链未提供补充停因"}。执行失败由主控安排重试，本通知只供部长核对事实。先读当前卡面：unclaimed 已排队、in_progress 已认领，勿按旧失败重复返修或请求裁定。确需修改卡面任务再用原卡返修；真正需要用户决定的事项仍可请求裁定。`;
++		} else if (cardDelivered) {
++			verdict = `该卡已交付，但后续处理停住：${event.stopReason ?? "交卷或流程门未完成"}。请按卡面和真实证据继续现有处理。`;
++		} else {
++			verdict = `该卡当前处理未完成（卡面 ${cardStatus}）：${event.stopReason ?? "等待当前流程门"}。请按卡面实际状态和现有流程门核对，不把待审或待验收结果当作已交付。`;
++		}
++		const lines = [material.text, `后续职责：${verdict}`, "本次通知只表示已投递，不表示部长已完成复核。"];
++		// 报告准备可能让出执行权；投递前重读正本，不唤醒已停止或已换轮的部长。
++		if (this.#closing || options.signal?.aborted || options.运行器.isStopped()) return;
++		const latest = this.#receiptMaterial(recipe, options, event);
++		if (latest.flow.暂停 || latest.flow.裁定) return;
++		if (
++			latest.flow.实例 !== material.flow.实例 ||
++			latest.node.轮次 !== material.node.轮次 ||
++			latest.node.部长会话 !== material.node.部长会话 ||
++			latest.card.frontmatter.status !== material.card.frontmatter.status
++		)
++			throw new Error(`卡${event.cardRef}通知准备期间实例、节点或卡状态已变化，拒绝投递过期结果`);
++		await this.#injectMinister(latest.flow, latest.node, latest.def, options, lines.join("\n"));
+ 	}
+ 	async #injectMinister(
+ 		flow: FlowControl,
+@@ -179,11 +239,6 @@ export class WorkflowHostBridge {
+ 			throw new Error(`结果投递绑定部长失败：${delivered.原因 ?? `${delivered.模式 ?? "followUp"}未受理`}`);
+ 	}
+ 	async #reviewRequired(recipe: WorkflowRecipe, options: AutoChainOptions, event: AutoChainReviewEvent) {
+-		if (event.unmetReports.length > 0)
+-			return {
+-				result: "hold" as const,
+-				basis: `当前尝试有 ${event.unmetReports.length} 条自报未达项，未唤醒部长自动放行；留 owner 逐项裁决`,
+-			};
+ 		if (!event.instance || !event.round) throw new Error("工作流人工审核事件缺少实例或轮次");
+ 		const flow = readControl(recipe, options);
+ 		if (flow.冻结配方.节点.find((node) => node.名字 === event.node)?.执行方式 === "直接")
+@@ -401,7 +456,7 @@ export class WorkflowHostBridge {
+ 		const refreshedMaps = new Set<string>();
+ 		try {
+ 			// 预算控制仍在每个实际请求；本工具至多推进 50 次状态转换，余下保留给下一次推流。
+-			for (let turn = 0; turn < 50; turn++) {
++			advance: for (let turn = 0; turn < 50; turn++) {
+ 				options.signal?.throwIfAborted();
+ 				if (this.#closing) throw new Error("主会话正在关闭");
+ 				flow = readControl(recipe, options);
+@@ -417,7 +472,7 @@ export class WorkflowHostBridge {
+ 				const chainOptions: AutoChainOptions = {
+ 					...options,
+ 					driveDepartments: undefined,
+-					onReceipt: (event) => this.#deliverReceipt(recipe, options, event),
++					onPostDispatchResult: (event) => this.#deliverPostDispatchResult(recipe, options, event),
+ 					onReviewRequired: (event) => this.#reviewRequired(recipe, options, event),
+ 				};
+ 				const queued = await runAutoChain(recipe, chainOptions);
+@@ -477,12 +532,23 @@ export class WorkflowHostBridge {
+ 						}
+ 					}
+ 					for (const member of batch) visited.add(member);
+-					const dependencyMaps = Object.fromEntries(
+-						batch.map((member) => {
+-							const memberDef = flow.冻结配方.节点.find((candidate) => candidate.名字 === member)!;
+-							return [member, this.#dependencyMaps(flow, memberDef, options.cardsDir)];
+-						}),
+-					);
++					let dependencyMaps: Record<string, string[]>;
++					try {
++						dependencyMaps = Object.fromEntries(
++							batch.map((member) => {
++								const memberDef = flow.冻结配方.节点.find((candidate) => candidate.名字 === member)!;
++								return [member, this.#dependencyMaps(flow, memberDef, options.cardsDir)];
++							}),
++						);
++					} catch (error) {
++						if (
++							isMapHandoffError(error, "stale_map") &&
++							typeof error.details.ref === "string" &&
++							(await this.#refreshStaleMap(undefined, recipe, options, refreshedMaps, error.details.ref))
++						)
++							continue advance;
++						throw error;
++					}
+ 					// 已启动的只读分支全部结算后才返回，异常也不能留下后台分支继续推进。
+ 					const settled = await Promise.allSettled(
+ 						batch.map(async (member) => {
+@@ -515,8 +581,7 @@ export class WorkflowHostBridge {
+ 						: { report: await readControlReport(afterBatch, options), steps: [] };
+ 					steps.push(...chain.steps);
+ 					if (await this.#refreshStaleMap(chain, recipe, options, refreshedMaps)) {
+-						progressed = true;
+-						break;
++						continue advance;
+ 					}
+ 					if (
+ 						chain.report.status === "hold" ||
+@@ -591,10 +656,12 @@ export class WorkflowHostBridge {
+ 			}
+ 			abnormalStop = true;
+ 			try {
+-				await pauseControl(
++				await pauseControlIfUnpaused(
+ 					recipe,
+ 					{ ...options, signal: undefined },
+-					`宿主停止或异常:${error instanceof Error ? error.message : String(error)}`,
++					this.#closing
++						? "主会话关闭，须显式人工恢复"
++						: `宿主停止或异常:${error instanceof Error ? error.message : String(error)}`,
+ 				);
+ 			} catch (pauseError) {
+ 				logWarn(
+@@ -764,7 +831,7 @@ export class WorkflowHostBridge {
+ 		const sheet = await bindMinister(recipe, options, name, raised.handle.会话标识);
+ 		const beforeTask = JSON.stringify(readControl(recipe, options).节点.find((n) => n.名字 === name));
+ 		const mapNote = dependencyMaps.length
+-			? `\n前置节点结构化地图（作为本轮输入，不是 worker 回执）：\n${dependencyMaps.join("\n")}`
++			? `\n前置节点结构化地图（作为本轮输入，不是 worker 回执）：使用 read 读取下列地图文件，引用用于校验，不是文件路径。\n${dependencyMaps.map((ref) => describeNodeMapInput(ref, options.cardsDir)).join("\n\n")}`
+ 			: "";
+ 		let prompt = def.只读
+ 			? `${sheet}${mapNote}\n${
+@@ -783,9 +850,7 @@ export class WorkflowHostBridge {
+ 			prompt = `${sheet}\n全部卡已经执行，现在读取判定包 ${packagePath}，按两轴独立判断并调用 pao_submit_decision。缺运行证据必须明示，不能伪造通过。需要裁定时调用 pao_request_ruling。`;
+ 		}
+ 		if (refreshMapRef) {
+-			const previous = loadDispatchMapArtifact(refreshMapRef, { cardsDir: options.cardsDir });
+-			const path = join(dispatchArtifactsRoot({ cardsDir: options.cardsDir }), "map", `${previous.id}.json`);
+-			prompt = `${sheet}\n你保存的节点地图 ${refreshMapRef}（文件 ${path}）覆盖内容已变化，当前派发在启动工人前停止。请独立读取实际变更，复核事实、范围和未知项，再调用 pao_minister_save_node_map，以 previous_ref=${refreshMapRef} 和 supersession_reason 说明本次复核并保存新地图。不能只重新采摘要、不读代码就沿用旧结论。不要改卡、流程控制或认领基线，不重做已完成任务；不能确认就如实报告，本轮只复核这一张地图。`;
++			prompt = `${sheet}\n你保存的节点地图：\n${describeNodeMapInput(refreshMapRef, options.cardsDir)}\n覆盖内容已变化，当前派发在启动工人前停止。使用 read 读取地图文件，并独立读取实际变更，复核事实、范围和未知项，再调用 pao_minister_save_node_map，以 previous_ref=${refreshMapRef} 和 supersession_reason 说明本次复核并保存新地图。不能只重新采摘要、不读代码就沿用旧结论。不要改卡、流程控制或认领基线，不重做已完成任务；不能确认就如实报告，本轮只复核这一张地图。`;
+ 		}
+ 		await this.#host.executeTask({
+ 			部门: def.部门,
+@@ -822,8 +887,8 @@ export class WorkflowHostBridge {
+ 		for (const { recipe, options } of this.#owned.values()) {
+ 			try {
+ 				const flow = readControl(recipe, options);
+-				if ((await readControlReport(flow, options)).status !== "completed")
+-					await pauseControl(recipe, options, "主会话关闭，须显式人工恢复");
++				if ((await readControlReport(flow, options)).status !== "completed" && !flow.暂停)
++					await pauseControlIfUnpaused(recipe, options, "主会话关闭，须显式人工恢复");
+ 			} catch (error) {
+ 				failures.push(error);
+ 			}
+diff --git a/packages/coding-agent/src/pao/workflow/minister.ts b/packages/coding-agent/src/pao/workflow/minister.ts
+index 044aa789b..30ae988c9 100644
+--- a/packages/coding-agent/src/pao/workflow/minister.ts
++++ b/packages/coding-agent/src/pao/workflow/minister.ts
+@@ -503,13 +503,13 @@ export function registerWorkflowMinisterTools(pi: ExtensionAPI, assigned: Workfl
+ 		name: "pao_minister_submit_cards",
+ 		label: "交本节点卡片",
+ 		description:
+-			"按真实工作边界提交本节点卡；只入队，由保护链派发。小任务交一张，只有独立风险、接口边界或可分别验收的成果才拆多张。独立审核节点的验证卡会派到受管副本，检查业务只读，临时生成物只可写副本；普通只读规划节点不能交卡。已有测试或证据能覆盖的检查不重复交卡，也不得借机增加需求外的功能。acceptance 的机械条件逐行使用「跑: 命令」「存在: 文件」「包含: 文件::文本」；质量、风格和需判断的条件写清人工审核责任，不能伪装成自动通过。最后必须显式结束拆解。身份来自当前真实部长会话。",
++			"按真实工作边界提交本节点卡；只入队，由保护链派发。小任务交一张，只有独立风险、接口边界或可分别验收的成果才拆多张。inputs 的文件项填写真实存在路径，路径与解释分开，不填写待创建产物；普通说明及受控 URI 按现有契约保留。独立审核节点的验证卡会派到受管副本，检查业务只读，临时生成物只可写副本；普通只读规划节点不能交卡。已有测试或证据能覆盖的检查不重复交卡，也不得借机增加需求外的功能。acceptance 的机械条件逐行使用「跑: 命令」「存在: 文件」「包含: 文件::文本」；质量、风格和需判断的条件写清人工审核责任，不能伪装成自动通过。最后必须显式结束拆解。身份来自当前真实部长会话。",
+ 		parameters: Type.Object({
+ 			cards: Type.Array(
+ 				Type.Object({
+ 					task: Type.Optional(TaskBookSchema),
+ 					goal: Type.Optional(Type.String()),
+-					acceptance: Type.Optional(Type.String()),
++					acceptance: Type.Optional(TaskBookSchema.properties.acceptance),
+ 					inputs: Type.Optional(Type.Array(Type.String())),
+ 					constraints: Type.Optional(Type.String()),
+ 				}),
+@@ -531,8 +531,7 @@ export function registerWorkflowMinisterTools(pi: ExtensionAPI, assigned: Workfl
+ 			ctx,
+ 		) => {
+ 			const { recipe, id } = identity(ctx);
+-			// 入队前仍核对交接产物完整性；引用只从控制正本读取，不复制到卡面。
+-			currentDependencyMaps(readControl(recipe, options), id.节点, options.cardsDir);
++			// 这里只入队；消费地图时才核对覆盖状态，过期由宿主交原部长复核。
+ 			// 工作流依赖地图在派发时由控制正本注入，不在卡上复制第二份可过期指针。
+ 			const cards = params.cards.map((card) => {
+ 				const legacy = {
+@@ -559,7 +558,7 @@ export function registerWorkflowMinisterTools(pi: ExtensionAPI, assigned: Workfl
+ 		name: "pao_minister_rework_cards",
+ 		label: "返修本节点原卡",
+ 		description:
+-			"拆解结束后只返修本节点当前轮已有卡。用于审核或现场核对确认卡面任务本身需要重做；不得借此新增任务、改派其他节点或绕过暂停与裁定。只接受已有卡号和理由，保留原实例、轮次、owner、尝试历史与预算。",
++			"拆解结束后只返修本节点当前轮已有卡。用于审核或现场核对确认卡面任务本身需要重做；普通执行失败的重试由主控负责，失败结果通知不是并行返修指令。先核对当前卡面，unclaimed 表示原卡已排队，不需要再次返修或新增卡；不得把旧尝试失败误当成当前尝试失败。不得借此新增任务、改派其他节点或绕过暂停与裁定。只接受已有卡号和理由，保留原实例、轮次、owner、尝试历史与预算。",
+ 		parameters: Type.Object({
+ 			cards: Type.Array(Type.String()),
+ 			reason: Type.String(),

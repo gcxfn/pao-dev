@@ -1,0 +1,149 @@
+
+> pi-monorepo@0.0.3 check
+> biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:install-lock:coding-agent && tsc --noEmit && npm run check:browser-smoke
+
+packages\coding-agent\test\pao\desktop-read-model.test.ts:244:3 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    242 │ 	writeFileSync(
+    243 │ 		join(directory, "20261018_minister-test.jsonl"),
+  > 244 │ 		JSON.stringify({
+        │ 		^^^^^^^^^^^^^^^^
+  > 245 │ 			type: "message",
+  > 246 │ 			message: { role: "assistant", content: [{ type: "text", text: "部长真实会话记录" }] },
+  > 247 │ 		}) + "\n",
+        │ 		^^^^^^^^^
+    248 │ 	);
+    249 │ 	expect(readDesktopWorkflowMinister(f.root, flow.实例, "审查", 1).行[0].内容).toEqual([
+  
+  i Unsafe fix: Use a template literal.
+  
+    242 242 │   	writeFileSync(
+    243 243 │   		join(directory, "20261018_minister-test.jsonl"),
+    244     │ - → → JSON.stringify({
+        244 │ + → → `${JSON.stringify({
+    245 245 │   			type: "message",
+    246 246 │   			message: { role: "assistant", content: [{ type: "text", text: "部长真实会话记录" }] },
+    247     │ - → → })·+·"\n",
+        247 │ + → → })}\n`,
+    248 248 │   	);
+    249 249 │   	expect(readDesktopWorkflowMinister(f.root, flow.实例, "审查", 1).行[0].内容).toEqual([
+  
+
+packages\coding-agent\test\pao\dispatch-brief-artifacts.test.ts:961:5 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    959 │ 				"goal: 消费旧尝试简报",
+    960 │ 				"dept: 测试",
+  > 961 │ 				'inputs: ["src/caller.ts", "' + oldSnapshot.brief.ref + '"]',
+        │ 				^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    962 │ 				"acceptance: 旧简报所绑定的旧契约升级仍能命中",
+    963 │ 				"attempt: 0",
+  
+  i Unsafe fix: Use a template literal.
+  
+     959  959 │   				"goal: 消费旧尝试简报",
+     960  960 │   				"dept: 测试",
+     961      │ - → → → → 'inputs:·["src/caller.ts",·"'·+·oldSnapshot.brief.ref·+·'"]',
+          961 │ + → → → → `inputs:·["src/caller.ts",·"${oldSnapshot.brief.ref}"]`,
+     962  962 │   				"acceptance: 旧简报所绑定的旧契约升级仍能命中",
+     963  963 │   				"attempt: 0",
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:40:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │ 	},
+    39 │ };
+  > 40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+    42 │ 
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │   	},
+     39  39 │   };
+     40     │ - const·stdoutBody·=·`${JSON.stringify(update)}\n`.repeat(4000)·+·`${JSON.stringify(finalEvent)}\n`;
+         40 │ + const·stdoutBody·=·`${`${JSON.stringify(update)}\n`.repeat(4000)}${JSON.stringify(finalEvent)}\n`;
+     41  41 │   const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+     42  42 │   
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:41:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    39 │ };
+    40 │ const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+  > 41 │ const stderrBody = "诊断🙂\r\n".repeat(30000) + "STDERR_DONE\n";
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    42 │ 
+    43 │ function fixture(exitCode = 0) {
+  
+  i Unsafe fix: Use a template literal.
+  
+     39  39 │   };
+     40  40 │   const stdoutBody = `${JSON.stringify(update)}\n`.repeat(4000) + `${JSON.stringify(finalEvent)}\n`;
+     41     │ - const·stderrBody·=·"诊断🙂\r\n".repeat(30000)·+·"STDERR_DONE\n";
+         41 │ + const·stderrBody·=·`${"诊断🙂\r\n".repeat(30000)}STDERR_DONE\n`;
+     42  42 │   
+     43  43 │   function fixture(exitCode = 0) {
+  
+
+packages\coding-agent\test\pao\worker-evidence-archive.test.ts:103:12 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    101 │ 				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 │ 				const lines = restored.toString("utf8").trimEnd().split("\n");
+  > 103 │ 				expect(lines.slice(1, -1).join("\n") + "\n").toBe(stdoutBody);
+        │ 				       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    104 │ 				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 │ 				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+  i Unsafe fix: Use a template literal.
+  
+    101 101 │   				expect(restored.subarray(0, live.stdout.length).equals(live.stdout)).toBe(true);
+    102 102 │   				const lines = restored.toString("utf8").trimEnd().split("\n");
+    103     │ - → → → → expect(lines.slice(1,·-1).join("\n")·+·"\n").toBe(stdoutBody);
+        103 │ + → → → → expect(`${lines.slice(1,·-1).join("\n")}\n`).toBe(stdoutBody);
+    104 104 │   				expect(JSON.parse(lines.at(-1)!).type).toBe("pao_worker_evidence");
+    105 105 │   				expect((await readWorkerEvidenceFile(live.stdoutPath)).equals(restored)).toBe(true);
+  
+
+Skipped 5 suggested fixes.
+If you wish to apply the suggested (unsafe) fixes, use the command biome check --write --unsafe
+
+Checked 1929 files in 15s. No fixes applied.
+Found 5 infos.
+
+> pi-monorepo@0.0.3 check:pinned-deps
+> node scripts/check-pinned-deps.mjs
+
+
+> pi-monorepo@0.0.3 check:runtime-deps
+> node scripts/check-runtime-deps.mjs
+
+Public package runtime imports have declared dependencies.
+
+> pi-monorepo@0.0.3 check:ts-imports
+> node scripts/check-ts-relative-imports.mjs
+
+
+> pi-monorepo@0.0.3 check:entry-graphs
+> node scripts/check-entry-graphs.mjs
+
+Entry point graphs are within budget.
+
+> pi-monorepo@0.0.3 check:install-lock:coding-agent
+> node scripts/generate-coding-agent-install-lock.mjs --check
+
+packages/coding-agent/install-lock is up to date.
+
+> pi-monorepo@0.0.3 check:browser-smoke
+> node scripts/check-browser-smoke.mjs
+

@@ -1,0 +1,315 @@
+# S5 包3包4 红灯首跑（TDD 机械纪律留档）
+# 时间：2026-10-07 23:00:28 前后（log 内 Start at 23:00:28，Duration 2.03s）
+# 命令：cd PAO/packages/coding-agent && PI_OFFLINE=1 PI_NO_LOCAL_LLM=1 npx vitest run test/pao/s5p3-lease-retry.test.ts test/pao/s5p4-roles-supervision.test.ts --maxWorkers=1
+# 退出码：1（19 failed | 2 passed，共 21）
+# 失败签名：s5p3 全部因 dispatch-core 新导出（claimRefusalDetail/buildClaimLease/接管参数/租约字段）与
+#   registry/owners/read-model 租约四字段缺失而红；s5p4 因 dispatch-core 新导出
+#   （taskStateRoutingLine/OWNER_DISPATCH_DISCIPLINES/配方干法切分）模块级导入失败全红。
+# 通过的 2 条＝既有行为钉子：
+#   - s5p3「进行中无接管：可派 false，原因含查现场」（既有拒因文案已含『查现场』，钉住）
+#   - s5p4「派单工具即时回执声明不等 worker、回执经通知唤醒」（派完即停既有写法，钉住）
+# 以下为原始输出（逐字未改）：
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[32m·[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 19 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m同号重试去重（claimRefusalDetail）[2m > [22m进行中卡当前尝试已有回执：拒因带既有结果与同号不重派
+[31m[1mTypeError[22m: claimRefusalDetail is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m118:18[22m[39m
+    [90m116|[39m    任务态[33m:[39m [32m"completed_with_deviations"[39m[33m,[39m
+    [90m117|[39m   })[33m;[39m
+    [90m118|[39m   [35mconst[39m detail [33m=[39m [34mclaimRefusalDetail[39m([34mreadCard[39m(card[33m.[39m路径))[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m119|[39m   [34mexpect[39m(detail)[33m.[39m[34mtoContain[39m([32m"不双跑"[39m)[33m;[39m
+    [90m120|[39m   [34mexpect[39m(detail)[33m.[39m[34mtoContain[39m([32m"已有回执"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m同号重试去重（claimRefusalDetail）[2m > [22m进行中卡当前尝试无回执：拒因带结果未知与查现场指引（重启不盲重放）
+[31m[1mTypeError[22m: claimRefusalDetail is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m128:18[22m[39m
+    [90m126|[39m   [35mconst[39m cardsDir [33m=[39m [34mmakeCardsDir[39m([32m"unknown"[39m)[33m;[39m
+    [90m127|[39m   [35mconst[39m card [33m=[39m [35mawait[39m [34mmakeRunningCard[39m(cardsDir)[33m;[39m
+    [90m128|[39m   [35mconst[39m detail [33m=[39m [34mclaimRefusalDetail[39m([34mreadCard[39m(card[33m.[39m路径))[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m129|[39m   [34mexpect[39m(detail)[33m.[39m[34mtoContain[39m([32m"结果未知"[39m)[33m;[39m
+    [90m130|[39m   [34mexpect[39m(detail)[33m.[39m[34mtoContain[39m([32m"查现场"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m同号重试去重（claimRefusalDetail）[2m > [22m钉子：终态卡拒因与可认领状态原样（旧文案不改）
+[31m[1mTypeError[22m: claimRefusalDetail is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m137:10[22m[39m
+    [90m135|[39m   [35mconst[39m cardsDir [33m=[39m [34mmakeCardsDir[39m([32m"pin"[39m)[33m;[39m
+    [90m136|[39m   [35mconst[39m card [33m=[39m [35mawait[39m [34mmakeCard[39m(cardsDir)[33m;[39m
+    [90m137|[39m   [34mexpect[39m([34mclaimRefusalDetail[39m(card))[33m.[39m[34mtoBeUndefined[39m()[33m;[39m [90m// 待认领可派[39m
+    [90m   |[39m          [31m^[39m
+    [90m138|[39m   const cancelled = changeCardStatus(card, { 操作者: "主控", to: "取消", 时间: …
+    [90m139|[39m   [34mexpect[39m([34mclaimRefusalDetail[39m(cancelled))[33m.[39m[34mtoContain[39m([32m"已终态"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m认领租约[2m > [22mbuildClaimLease 受控时钟：认领时间/到期差＝租约时长，代数透传
+[31m[1mTypeError[22m: buildClaimLease is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m160:17[22m[39m
+    [90m158|[39m [34mdescribe[39m([32m"认领租约"[39m[33m,[39m () [33m=>[39m {
+    [90m159|[39m  [34mtest[39m([32m"buildClaimLease 受控时钟：认领时间/到期差＝租约时长，代数透传"[39m[33m,[39m () [33m=>[39m {
+    [90m160|[39m   const lease = buildClaimLease(new Date("2026-10-07T10:00:00.000Z"), …
+    [90m   |[39m                 [31m^[39m
+    [90m161|[39m   [34mexpect[39m(lease[33m.[39m认领时间)[33m.[39m[34mtoBe[39m([32m"2026-10-07T10:00:00.000Z"[39m)[33m;[39m
+    [90m162|[39m   [34mexpect[39m(lease[33m.[39m租约到期)[33m.[39m[34mtoBe[39m([32m"2026-10-07T10:30:00.000Z"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m认领租约[2m > [22m派发后登记条目带认领时间/租约到期/认领代数（缺省 24h 时长）
+[31m[1mTypeError[22m: buildClaimLease is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m175:8[22m[39m
+    [90m173|[39m    尝试号[33m:[39m [34m1[39m[33m,[39m
+    [90m174|[39m    提示词[33m:[39m [32m"x"[39m[33m,[39m
+    [90m175|[39m    租约: buildClaimLease(new Date("2026-10-07T10:00:00.000Z"), 24 * 60 *…
+    [90m   |[39m        [31m^[39m
+    [90m176|[39m   })[33m;[39m
+    [90m177|[39m   const entry = runner.registry.list().find((item) => item.卡路径 === car…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m认领租约[2m > [22mexecuteDispatch 派发即落租约三字段进登记条目
+[31m[1mAssertionError[22m: expected undefined to be defined[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m188:30[22m[39m
+    [90m186|[39m   [35mconst[39m runner [33m=[39m [35mnew[39m [33mStubRunner[39m()[33m;[39m
+    [90m187|[39m   [35mawait[39m [34mdispatch[39m(cardsDir[33m,[39m card[33m.[39m卡号[33m,[39m runner)[33m;[39m
+    [90m188|[39m   [34mexpect[39m(runner[33m.[39mruns[[34m0[39m][33m?.[39m租约)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m189|[39m   [34mexpect[39m(runner[33m.[39mruns[[34m0[39m][33m?.[39m租约[33m?.[39m认领时间)[33m.[39m[34mtoMatch[39m([36m/^\d{4}-\d{2}-\d{2}T/[39m)[33m;[39m
+    [90m190|[39m   [35mconst[39m lease [33m=[39m runner[33m.[39mruns[[34m0[39m][33m?.[39m租约[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m认领租约[2m > [22m钉子：租约到期不自动放权——无到期回调改卡面或登记
+[31m[1mTypeError[22m: buildClaimLease is not a function[39m
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m198:17[22m[39m
+    [90m196|[39m   [35mconst[39m cardsDir [33m=[39m [34mmakeCardsDir[39m([32m"expiry"[39m)[33m;[39m
+    [90m197|[39m   [35mconst[39m card [33m=[39m [35mawait[39m [34mmakeRunningCard[39m(cardsDir)[33m;[39m
+    [90m198|[39m   const lease = buildClaimLease(new Date("2026-10-07T10:00:00.000Z"), …
+    [90m   |[39m                 [31m^[39m
+    [90m199|[39m   [90m// 受控时钟：到期时刻已过（now > 租约到期）[39m
+    [90m200|[39m   [34mexpect[39m([33mDate[39m[33m.[39m[34mparse[39m(lease[33m.[39m租约到期) [33m<[39m [33mDate[39m[33m.[39m[34mnow[39m())[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m孤儿显式接管（推进代际）[2m > [22m进行中＋登记表无活条目＋接管：代数+1、旧条目被接管、卡重开新尝试
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m215:22[22m[39m
+    [90m213|[39m   [34mregisterOldEntry[39m(runner[33m,[39m card)[33m;[39m [90m// 旧 worker 已退出（孤儿现场）[39m
+    [90m214|[39m   const outcome = await dispatch(cardsDir, card.卡号, runner, { 接管: true…
+    [90m215|[39m   [34mexpect[39m(outcome[33m.[39m可派)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                      [31m^[39m
+    [90m216|[39m   [34mexpect[39m(runner[33m.[39mruns)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m217|[39m   [34mexpect[39m(runner[33m.[39mregistry[33m.[39m[34mclaimGeneration[39m(card[33m.[39m路径))[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m孤儿显式接管（推进代际）[2m > [22m登记表有活进程：接管被拒（先终止再接管），卡不变
+[31m[1mAssertionError[22m: expected '卡在先前的尝试手中(进行中),不双跑;先由 owner 查现场并落终态(失…' to contain '接管被拒'[39m
+
+Expected: [32m"接管被拒"[39m
+Received: [31m"卡在先前的尝试手中(进行中),不双跑;先由 owner 查现场并落终态(失败/取消)再重派(架构 §2.1)"[39m
+
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m236:23[22m[39m
+    [90m234|[39m   [34mexpect[39m(outcome[33m.[39m可派)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m235|[39m   [35mif[39m ([33m![39moutcome[33m.[39m可派) {
+    [90m236|[39m    [34mexpect[39m(outcome[33m.[39m原因)[33m.[39m[34mtoContain[39m([32m"接管被拒"[39m)[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m237|[39m    [34mexpect[39m(outcome[33m.[39m原因)[33m.[39m[34mtoContain[39m([32m"pao_终止卡"[39m)[33m;[39m
+    [90m238|[39m   }
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m孤儿显式接管（推进代际）[2m > [22m当前尝试已有回执：同号去重优先于接管，拒因带既有结果
+[31m[1mAssertionError[22m: expected '卡在先前的尝试手中(进行中),不双跑;先由 owner 查现场并落终态(失…' to contain '同号不重派'[39m
+
+Expected: [32m"同号不重派"[39m
+Received: [31m"卡在先前的尝试手中(进行中),不双跑;先由 owner 查现场并落终态(失败/取消)再重派(架构 §2.1)"[39m
+
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m260:23[22m[39m
+    [90m258|[39m   [34mexpect[39m(outcome[33m.[39m可派)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m259|[39m   [35mif[39m ([33m![39moutcome[33m.[39m可派) {
+    [90m260|[39m    [34mexpect[39m(outcome[33m.[39m原因)[33m.[39m[34mtoContain[39m([32m"同号不重派"[39m)[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m261|[39m    [34mexpect[39m(outcome[33m.[39m原因)[33m.[39m[34mtoContain[39m([32m"completed"[39m)[33m;[39m
+    [90m262|[39m   }
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m孤儿显式接管（推进代际）[2m > [22m钉子：接管后旧尝试回执只留档，不推进新尝试（复用尝试号分流）
+[31m[1mAssertionError[22m: expected '已记录' to be '旧尝试留档' // Object.is equality[39m
+
+Expected: [32m"旧尝试留档"[39m
+Received: [31m"已记录"[39m
+
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m280:24[22m[39m
+    [90m278|[39m    摘要[33m:[39m [32m"旧 worker 迟到回执"[39m[33m,[39m
+    [90m279|[39m   })[33m;[39m
+    [90m280|[39m   [34mexpect[39m(outcome[33m.[39mkind)[33m.[39m[34mtoBe[39m([32m"旧尝试留档"[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m281|[39m   [35mconst[39m fresh [33m=[39m [34mreadCard[39m(card[33m.[39m路径)[33m;[39m
+    [90m282|[39m   [34mexpect[39m(fresh[33m.[39mfrontmatter[33m.[39m尝试)[33m.[39m[34mtoBe[39m([34m2[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p3-lease-retry.test.ts[2m > [22m租约四字段透出（registry→owners→read-model）[2m > [22m活性行带 认领时间/租约到期/认领代数/被接管
+[31m[1mAssertionError[22m: expected undefined to be '2026-10-07T10:00:00.000Z' // Object.is equality[39m
+
+[32m- Expected:[39m
+"2026-10-07T10:00:00.000Z"
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m test/pao/s5p3-lease-retry.test.ts:[2m334:25[22m[39m
+    [90m332|[39m   handlers[33m.[39m[35mget[39m([32m"session_start"[39m)[33m![39m(undefined[33m,[39m ctx)[33m;[39m
+    [90m333|[39m   [35mconst[39m rows [33m=[39m [34mreadDesktopWorkerActivity[39m(root)[33m;[39m
+    [90m334|[39m   [34mexpect[39m(rows[[34m0[39m][33m?.[39m认领时间)[33m.[39m[34mtoBe[39m([32m"2026-10-07T10:00:00.000Z"[39m)[33m;[39m
+    [90m   |[39m                         [31m^[39m
+    [90m335|[39m   [34mexpect[39m(rows[[34m0[39m][33m?.[39m租约到期)[33m.[39m[34mtoBe[39m([32m"2026-10-08T10:00:00.000Z"[39m)[33m;[39m
+    [90m336|[39m   [34mexpect[39m(rows[[34m0[39m][33m?.[39m认领代数)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m配方双层（概要常驻/干法按需）[2m > [22m带「## 干法」段的配方：只注入概要＋按需指针，干法正文不常驻
+[31m[1mError[22m: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pao-s5p4-recipe-ijtq2P\部门\核心机制\配方.md'[39m
+[36m [2m❯[22m recipeFixture test/pao/s5p4-roles-supervision.test.ts:[2m132:3[22m[39m
+    [90m130|[39m   [35mconst[39m cardsDir [33m=[39m [34mjoin[39m(home[33m,[39m [32m".pao"[39m[33m,[39m [32m"任务"[39m[33m,[39m [32m"卡"[39m)[33m;[39m
+    [90m131|[39m   [34mmkdirSync[39m(cardsDir[33m,[39m { recursive[33m:[39m [35mtrue[39m })[33m;[39m
+    [90m132|[39m   [34mwriteFileSync[39m([34mjoin[39m(home[33m,[39m [32m"部门"[39m[33m,[39m [32m"核心机制"[39m[33m,[39m [32m"配方.md"[39m)[33m,[39m recipe[33m,[39m [32m"utf8"[39m)[33m;[39m
+    [90m   |[39m   [31m^[39m
+    [90m133|[39m   [35mconst[39m card [33m=[39m [35mawait[39m [34mcreateCard[39m(cardsDir[33m,[39m {
+    [90m134|[39m    目标[33m:[39m [32m"双层配方卡"[39m[33m,[39m
+[90m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m154:40[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m配方双层（概要常驻/干法按需）[2m > [22m钉子：无干法段的配方整文件路径注入（旧配方零行为变化）
+[31m[1mError[22m: ENOENT: no such file or directory, open 'C:\Users\ASUS\AppData\Local\Temp\pao-s5p4-recipe-LH5H26\部门\核心机制\配方.md'[39m
+[36m [2m❯[22m recipeFixture test/pao/s5p4-roles-supervision.test.ts:[2m132:3[22m[39m
+    [90m130|[39m   [35mconst[39m cardsDir [33m=[39m [34mjoin[39m(home[33m,[39m [32m".pao"[39m[33m,[39m [32m"任务"[39m[33m,[39m [32m"卡"[39m)[33m;[39m
+    [90m131|[39m   [34mmkdirSync[39m(cardsDir[33m,[39m { recursive[33m:[39m [35mtrue[39m })[33m;[39m
+    [90m132|[39m   [34mwriteFileSync[39m([34mjoin[39m(home[33m,[39m [32m"部门"[39m[33m,[39m [32m"核心机制"[39m[33m,[39m [32m"配方.md"[39m)[33m,[39m recipe[33m,[39m [32m"utf8"[39m)[33m;[39m
+    [90m   |[39m   [31m^[39m
+    [90m133|[39m   [35mconst[39m card [33m=[39m [35mawait[39m [34mcreateCard[39m(cardsDir[33m,[39m {
+    [90m134|[39m    目标[33m:[39m [32m"双层配方卡"[39m[33m,[39m
+[90m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m166:40[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m回执标签路由（taskStateRoutingLine 单源）[2m > [22m四标签各有处理动作，均不含忙等/轮询语义
+[31m[1mTypeError[22m: taskStateRoutingLine is not a function[39m
+[36m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m177:10[22m[39m
+    [90m175|[39m [34mdescribe[39m([32m"回执标签路由（taskStateRoutingLine 单源）"[39m[33m,[39m () [33m=>[39m {
+    [90m176|[39m  [34mtest[39m([32m"四标签各有处理动作，均不含忙等/轮询语义"[39m[33m,[39m () [33m=>[39m {
+    [90m177|[39m   [34mexpect[39m([34mtaskStateRoutingLine[39m([32m"completed"[39m))[33m.[39m[34mtoContain[39m([32m"机械验收"[39m)[33m;[39m
+    [90m   |[39m          [31m^[39m
+    [90m178|[39m   [34mexpect[39m([34mtaskStateRoutingLine[39m([32m"completed"[39m))[33m.[39m[34mtoContain[39m([32m"办完即停"[39m)[33m;[39m
+    [90m179|[39m   expect(taskStateRoutingLine("completed_with_deviations")).toContain(…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m回执标签路由（taskStateRoutingLine 单源）[2m > [22m派单完成通知带任务态路由行（标签到达再进，不忙等）
+[31m[1mAssertionError[22m: expected '[pao 派卡通知] 以下为后台派卡的完成/被拒/失败/静默提醒(运行态,…' to contain '任务态 completed_with_deviations'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 任务态 completed_with_deviations[39m
+[31m+ [pao 派卡通知] 以下为后台派卡的完成/被拒/失败/静默提醒(运行态,重启归零;卡文件状态与回执是真相,R25):[39m
+[31m+ [派卡完成] 卡0001(成功)[39m
+[31m+ 派单完成:卡0001〔成功〕尝试 1(部门 测试)[39m
+[31m+ 派单理由:路由测试[39m
+[31m+ owner:主控(认领走状态机:无主卡由派单者认领,有主卡须 owner 本人)[39m
+[31m+ 摘要:假回执:做完了[39m
+[31m+ 证据:C:\Users\ASUS\AppData\Local\Temp\pao-s5p4-证据-92lR9Z\卡0001.jsonl[39m
+[31m+ 认领基线:不可用——fatal: not a git repository (or any of the parent directories): .git(越界比对无基线,边界如实标注)[39m
+
+[36m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m203:18[22m[39m
+    [90m201|[39m   [34mexpect[39m(result[33m.[39misError)[33m.[39m[34mtoBeUndefined[39m()[33m;[39m
+    [90m202|[39m   [35mconst[39m notice [33m=[39m [35mawait[39m [34msettle[39m(face[33m,[39m captured)[33m;[39m
+    [90m203|[39m   [34mexpect[39m(notice)[33m.[39m[34mtoContain[39m([32m"任务态 completed_with_deviations"[39m)[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m204|[39m   expect(notice).toContain(taskStateRoutingLine("completed_with_deviat…
+    [90m205|[39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m回执标签路由（taskStateRoutingLine 单源）[2m > [22m扇出摘要每卡带任务态路由行
+[31m[1mAssertionError[22m: expected '扇出完成:1 张卡(并发上限 2)——成功 1,失败 0,结果未知 0,取…' to contain '任务态 checkpoint'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 任务态 checkpoint[39m
+[31m+ 扇出完成:1 张卡(并发上限 2)——成功 1,失败 0,结果未知 0,取消 0,未拉起 0[39m
+[31m+ - 卡0001〔成功〕 尝试1:扇出卡[39m
+
+[36m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m223:16[22m[39m
+    [90m221|[39m   }[33m;[39m
+    [90m222|[39m   [35mconst[39m text [33m=[39m [34mformatFanoutSummary[39m(summary)[33m;[39m
+    [90m223|[39m   [34mexpect[39m(text)[33m.[39m[34mtoContain[39m([32m"任务态 checkpoint"[39m)[33m;[39m
+    [90m   |[39m                [31m^[39m
+    [90m224|[39m   [34mexpect[39m(text)[33m.[39m[34mtoContain[39m([34mtaskStateRoutingLine[39m([32m"checkpoint"[39m))[33m;[39m
+    [90m225|[39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m只许/禁止清单（白纸黑字进提示词）[2m > [22mworker 提示词：只许行＋禁止清单（不得再派发/不得谎报）
+[31m[1mAssertionError[22m: expected '你是 pao worker,执行卡0017(尝试 1)。\n先读卡文件:D…' to contain '只许'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 只许[39m
+[31m+ 你是 pao worker,执行卡0017(尝试 1)。[39m
+[31m+ 先读卡文件:D:/x/卡0017-y.md[39m
+[31m+ 卡上的目标/输入/约束/验收是唯一任务定义;按输入指针自取材料,不把目录翻一遍。[39m
+[31m+ 最后一条助手消息必须只输出 JSON 回执：{"结果":"成功","产物路径":[],"摘要":"不超过 3 行"}。没有文件产物时明确写 []；文件产物写相对项目根的真实路径。失败/未知须加 "失败类型"（瞬时故障/缺输入/能力不足/结果未知）。不要用退出码、普通说明或虚构路径代替回执。[39m
+[31m+ 另须自报（键名逐字一致）：任务态∈{"completed"|"completed_with_deviations"|"blocked"|"checkpoint"}——验收全达标=completed；有未达项但可交付=completed_with_deviations；无法继续须用户输入=blocked；到决策点须指引=checkpoint。verification=[{"条件":"…","结论":"pass"|"fail"|"not_run","证据":"…"}] 逐条对卡上验收自核（没跑的写 not_run，不谎报 pass）。changes=[{"路径":"…","类型":"created"|"modified"|"deleted"|"moved"|"untouched","说明":"…"}] 声明本次全部文件改动（含源码修改，不只产物）。自报只拦不放行：谎报 pass 不会免检，漏报改动会被 git 真值比对拦下。[39m
+[31m+ 约束:一次性任务,完成即退;不得再派发子任务;只写任务工作区与目标项目,不动其他区域。[39m
+
+[36m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m242:18[22m[39m
+    [90m240|[39m    [34m1[39m[33m,[39m
+    [90m241|[39m   )[33m;[39m
+    [90m242|[39m   [34mexpect[39m(prompt)[33m.[39m[34mtoContain[39m([32m"只许"[39m)[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m243|[39m   [34mexpect[39m(prompt)[33m.[39m[34mtoContain[39m([32m"禁止"[39m)[33m;[39m
+    [90m244|[39m   [34mexpect[39m(prompt)[33m.[39m[34mtoContain[39m([32m"不得再派发子任务"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/s5p4-roles-supervision.test.ts[2m > [22m只许/禁止清单（白纸黑字进提示词）[2m > [22m主控/部长面（pao_派单 描述）：单写者/不读产物正文/不亲自动手/派完即停
+[31m[1mAssertionError[22m: expected '单卡派发(非阻塞,B 档):把一张卡派给一次性 worker,受理即返回—…' to include undefined[39m
+[36m [2m❯[22m test/pao/s5p4-roles-supervision.test.ts:[2m255:23[22m[39m
+    [90m253|[39m   [35mif[39m ([33m![39mtool) [35mthrow[39m [35mnew[39m [33mError[39m([32m"未注册 pao_派单"[39m)[33m;[39m
+    [90m254|[39m   [35mconst[39m description [33m=[39m tool[33m.[39mdescription [33m??[39m [32m""[39m[33m;[39m
+    [90m255|[39m   [34mexpect[39m(description)[33m.[39m[34mtoContain[39m([33mOWNER_DISPATCH_DISCIPLINES[39m)[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m256|[39m   [34mexpect[39m(description)[33m.[39m[34mtoContain[39m([32m"单写者"[39m)[33m;[39m
+    [90m257|[39m   [34mexpect[39m(description)[33m.[39m[34mtoContain[39m([32m"不读产物正文"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m19 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (21)[39m
+[2m   Start at [22m 23:00:28
+[2m   Duration [22m 2.03s[2m (transform 548ms, setup 0ms, import 1.06s, tests 381ms, environment 0ms)[22m
+

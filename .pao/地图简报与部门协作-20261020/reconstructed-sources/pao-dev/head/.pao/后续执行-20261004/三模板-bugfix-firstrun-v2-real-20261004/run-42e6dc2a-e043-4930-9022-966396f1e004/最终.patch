@@ -1,0 +1,285 @@
+diff --git a/packages/coding-agent/src/pao/status/firstrun.ts b/packages/coding-agent/src/pao/status/firstrun.ts
+index 3056018cf..025bdb9bd 100644
+--- a/packages/coding-agent/src/pao/status/firstrun.ts
++++ b/packages/coding-agent/src/pao/status/firstrun.ts
+@@ -6,7 +6,8 @@
+  * - 未完卡（进行中/失败,失败点名）＝listProjects＋listCards（/队列 同源）;
+  * - 就绪未派（§19 通道③兜底）＝wakeup.ts 就绪扫描（/队列 [就绪] 同源）;
+  * - 待认领巡库卡＝patrol/draft isPatrolGoal 口径（巡卡判定同源）;
+- * - 挂起工作流＝工作流实例清单状态行（driver parseManifest 同源,平布局＋任务工作区两层都扫）;
++ * - 挂起工作流＝工作流实例清单状态行（v2 正本按控制口径判挂起、旧格式走 parseManifest 历史展示,
++ *   平布局＋任务工作区两层都扫;坏实例出 ⚠ 行不静默吞——单个坏文件曾让 v2 挂起正本整批漏报）;
+  * - 部门积压（待验证＋⚠️）＝dept/panels deptBacklogSnapshot（面板同源）。
+  *
+  * 机械维护带（§16.1 同刻顺带）v1 如实口径：待验证积压检查已并入本清单;
+@@ -18,6 +19,7 @@ import { readdirSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
+ 
+ import type { ExtensionAPI } from "../../core/extensions/types.ts";
++import { parseFrontmatter } from "../../utils/frontmatter.ts";
+ import { listCards } from "../cards/cardfile.ts";
+ import { formatCardNumber } from "../cards/counter.ts";
+ import type { ParsedCard } from "../cards/types.ts";
+@@ -27,9 +29,22 @@ import { listProjects } from "../dept/projects.ts";
+ import { isPatrolGoal } from "../patrol/draft.ts";
+ import { parseManifest } from "../workflow/driver.ts";
+ 
+-/** 扫项目工作区（.pao 顶层＋一层子目录,平布局与任务工作区两层都覆盖）里状态为挂起的工作流实例。 */
+-function findSuspendedWorkflows(paoHome: string): string[] {
+-	const names: string[] = [];
++/** 挂起扫描结果：挂起显示行＋损坏实例提示行（坏文件不静默吞,也不挤掉其他有效实例）。 */
++interface SuspendedScan {
++	挂起: string[];
++	损坏: string[];
++}
++
++/**
++ * 扫项目工作区（.pao 顶层＋一层子目录,平布局与任务工作区两层都覆盖）里状态为挂起的工作流实例。
++ * 先 parseFrontmatter 读原始 frontmatter 分流：版本===2 是 v2 控制正本——readControl 要配方名匹配＋
++ * 卡目录 canonical 归属校验,扫描场景只有文件名不满足调用前提,故按正本口径只读判挂起（挂起才列,
++ * 运行中/已完成不列,状态或工作流名坏＝损坏实例）;无版本字段走 parseManifest 旧格式路径不变
++ * （历史展示,不自动恢复）。两路径读取/解析异常一律收进「损坏」——此前空 catch 曾把 v2 挂起正本
++ * 整批静默跳过,用户重开主控发现不了需恢复的流程。
++ */
++function findSuspendedWorkflows(paoHome: string): SuspendedScan {
++	const scan: SuspendedScan = { 挂起: [], 损坏: [] };
+ 	for (const row of listProjects(paoHome)) {
+ 		const paoDir = join(row.项目根, ".pao");
+ 		const candidates: string[] = [paoDir];
+@@ -49,16 +64,29 @@ function findSuspendedWorkflows(paoHome: string): string[] {
+ 			}
+ 			for (const file of files) {
+ 				if (!file.startsWith("工作流实例-") || !file.endsWith(".md")) continue;
+-				try {
+-					const manifest = parseManifest(readFileSync(join(dir, file), "utf8"));
+-					if (manifest.状态 === "挂起") names.push(`${manifest.工作流}（${row.项目名}）`);
+-				} catch {
+-					// 单个实例文件读失败跳过——清单不因坏文件炸
++			try {
++				const content = readFileSync(join(dir, file), "utf8");
++				const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
++				if (frontmatter.版本 === 2) {
++					// v2 控制正本口径：状态三值之外/挂起缺工作流名＝损坏（readControl 同判）,运行中/已完成不列。
++					if (frontmatter.状态 === "运行中" || frontmatter.状态 === "已完成") continue;
++					if (frontmatter.状态 !== "挂起") throw new Error("v2 实例状态字段非法");
++					if (typeof frontmatter.工作流 !== "string" || !frontmatter.工作流.trim())
++						throw new Error("v2 挂起实例缺少工作流名");
++					scan.挂起.push(`${frontmatter.工作流}（${row.项目名}）`);
++					continue;
+ 				}
++				const manifest = parseManifest(content);
++				if (manifest.状态 === "挂起") scan.挂起.push(`${manifest.工作流}（${row.项目名}）`);
++			} catch (error) {
++				// 收集为损坏实例提示行（错误压成单行）——清单不因坏文件炸,也不再静默吞。
++				const message = (error instanceof Error ? error.message : String(error)).replace(/\s+/g, " ").trim();
++				scan.损坏.push(`${file}（${row.项目名}）:${message}`);
++			}
+ 			}
+ 		}
+ 	}
+-	return names;
++	return scan;
+ }
+ 
+ /** §16.1 首跑清单（纯读,不落盘）：四类待办各有料才出行,全空＝如实空闲一句。 */
+@@ -96,7 +124,8 @@ export function buildFirstRunList(paoHome: string): string {
+ 		}
+ 	}
+ 	const suspended = findSuspendedWorkflows(paoHome);
+-	if (suspended.length > 0) lines.push(`⏸ - 挂起工作流 ${suspended.length}:${suspended.join("、")}`);
++	if (suspended.挂起.length > 0) lines.push(`⏸ - 挂起工作流 ${suspended.挂起.length}:${suspended.挂起.join("、")}`);
++	if (suspended.损坏.length > 0) lines.push(`⚠ - 损坏实例 ${suspended.损坏.length}:${suspended.损坏.join("、")}`);
+ 	const backlog = deptBacklogSnapshot(paoHome);
+ 	const pendingDepts = backlog.filter((b) => b.待验证 > 0);
+ 	const flagged = backlog.flatMap((b) => b.警示);
+diff --git a/packages/coding-agent/test/pao/firstrun.test.ts b/packages/coding-agent/test/pao/firstrun.test.ts
+index 5db4a87b1..f3fa93793 100644
+--- a/packages/coding-agent/test/pao/firstrun.test.ts
++++ b/packages/coding-agent/test/pao/firstrun.test.ts
+@@ -1,21 +1,37 @@
+ /**
+  * §16.1 首跑清单单测：四类待办各有料才出行（未完卡失败点名/就绪未派 §19 通道③/
+- * 挂起工作流两层布局/部门积压同源计数）、全空如实空闲、session_start 显示一次
+- * 不进每轮提示、渲染失败不炸会话启动。数据源全部同源件,本套只钉聚合与呈现。
++ * 挂起工作流两层布局＋v2 正本分流/部门积压同源计数）、全空如实空闲、损坏实例不静默吞、
++ * session_start 显示一次不进每轮提示、渲染失败不炸会话启动。数据源全部同源件,本套只钉聚合与呈现。
+  */
+-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import * as childProcess from "node:child_process";
++import { createHash } from "node:crypto";
++import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+-import { join } from "node:path";
+-import { afterEach, describe, expect, it } from "vitest";
++import { dirname, join } from "node:path";
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { stringify } from "yaml";
+ 
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+-import { createCard } from "../../src/pao/cards/index.ts";
++import { createCard, loadCard, parseCardRef, serializeCard } from "../../src/pao/cards/index.ts";
+ import type { CardStatus } from "../../src/pao/cards/types.ts";
+ import { formatRegistry } from "../../src/pao/dept/registry.ts";
+ import { buildFirstRunList, registerFirstRun } from "../../src/pao/status/firstrun.ts";
++import {
++	addNodeCards,
++	bindMinister,
++	endDecomposition,
++	pauseControl,
++	readControl,
++	startControl,
++	tickControl,
++} from "../../src/pao/workflow/control.ts";
++import { parseRecipe } from "../../src/pao/workflow/recipe.ts";
++
++vi.mock("node:child_process", { spy: true });
+ 
+ const tempDirs: string[] = [];
+ afterEach(() => {
++	vi.restoreAllMocks();
+ 	for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+ });
+ 
+@@ -61,6 +77,55 @@ function writeManifest(paoHome: string, 项目名: string, 工作流名: string,
+ 	);
+ }
+ 
++/** 造 v2 配方＋实例选项：sub 省略＝实例落 .pao 顶层,给出＝落 .pao/<sub> 任务工作区（两层布局各造一份用）。 */
++function v2Setup(项目根: string, sub: string | undefined, 名字: string) {
++	const workspace = sub === undefined ? join(项目根, ".pao") : join(项目根, ".pao", sub);
++	const recipe = parseRecipe(
++		`---\n${stringify({
++			版本: 2,
++			名字,
++			参数: [],
++			节点: [{ 名字: "开发", 部门: "开发", 目标: "改代码", 验收: "文件存在" }],
++		})}---\n`,
++		join(项目根, `${名字}.md`),
++	);
++	const options = {
++		cardsDir: join(workspace, "卡"),
++		ownerSessionId: "firstrun-owner",
++		counterPath: join(workspace, "卡号.txt"),
++	};
++	return { recipe, options };
++}
++
++/** 绑定部长并返回生产身份（实例/轮次从盘上正本现读）。 */
++async function bind开发(
++	recipe: ReturnType<typeof v2Setup>["recipe"],
++	options: ReturnType<typeof v2Setup>["options"],
++) {
++	await bindMinister(recipe, options, "开发", "firstrun-部长");
++	const flow = readControl(recipe, options);
++	return {
++		实例: flow.实例,
++		节点: "开发",
++		轮次: flow.节点.find((node) => node.名字 === "开发")!.轮次,
++		部长会话: "firstrun-部长",
++	};
++}
++
++/** 改卡状态（模拟机械交付/失败,同 workflow-control.test.ts 的 deliver 写法）。 */
++function setCardStatus(cardsDir: string, ref: string, 状态: CardStatus): void {
++	const card = loadCard(cardsDir, parseCardRef(ref));
++	writeFileSync(card.路径, serializeCard({ ...card.frontmatter, 状态 }, card.正文));
++}
++
++/** 前后文件树＋内容哈希快照（preflight.test.ts 同款纯读断言辅具）。 */
++function snapshot(root: string): string[] {
++	return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
++		const path = join(root, entry.name);
++		return entry.isDirectory() ? [path, ...snapshot(path)] : [`${path}:${createHash("sha256").update(readFileSync(path)).digest("hex")}`];
++	});
++}
++
+ describe("buildFirstRunList（§16.1 纯读聚合）", () => {
+ 	it("空 PAO_HOME：如实空闲一句,不冒充待办", () => {
+ 		const text = buildFirstRunList(tempDir());
+@@ -112,6 +177,86 @@ describe("buildFirstRunList（§16.1 纯读聚合）", () => {
+ 		expect(text).not.toContain("跑完的");
+ 	});
+ 
++	it("v2 正本挂起:暂停挂起与失败挂起生产路径落盘,两层布局都列出并带项目名;已完成不列", async () => {
++		const home = tempDir();
++		const cardsDir = setupProject(home, "项目E");
++		const 项目根 = dirname(dirname(cardsDir));
++		// .pao 顶层:startControl＋pauseControl 落「暂停挂起」
++		const top = v2Setup(项目根, undefined, "控顶流");
++		await startControl(top.recipe, {}, top.options);
++		await pauseControl(top.recipe, top.options, "等人工核对");
++		expect(readControl(top.recipe, top.options).状态).toBe("挂起");
++		// 任务工作区:startControl→bindMinister→addNodeCards→改卡失败→tickControl 由生产代码重算保存
++		const sub = v2Setup(项目根, "任务X", "控子流");
++		await startControl(sub.recipe, {}, sub.options);
++		const identity = await bind开发(sub.recipe, sub.options);
++		const refs = await addNodeCards(sub.recipe, sub.options, identity, [{ 目标: "任务", 验收: "文件存在" }]);
++		setCardStatus(sub.options.cardsDir, refs[0]!, "失败");
++		await tickControl(sub.recipe, sub.options);
++		expect(readControl(sub.recipe, sub.options).状态).toBe("挂起");
++		// v2 已完成实例（单节点拆解＋全部交付＋结束拆解）不列
++		const done = v2Setup(项目根, "任务Y", "控完流");
++		await startControl(done.recipe, {}, done.options);
++		const doneIdentity = await bind开发(done.recipe, done.options);
++		const doneRefs = await addNodeCards(done.recipe, done.options, doneIdentity, [
++			{ 目标: "任务", 验收: "文件存在" },
++		]);
++		setCardStatus(done.options.cardsDir, doneRefs[0]!, "已交付");
++		await endDecomposition(done.recipe, done.options, doneIdentity);
++		expect(readControl(done.recipe, done.options).状态).toBe("已完成");
++		const text = buildFirstRunList(home);
++		expect(text).toContain("⏸ - 挂起工作流 2:控顶流（项目E）、控子流（项目E）");
++		expect(text).not.toContain("控完流");
++	});
++
++	it("损坏实例不挤掉有效实例:⚠ 提示行点名文件与项目,header 不再宣称全空闲", async () => {
++		const home = tempDir();
++		const cardsDir = setupProject(home, "项目F");
++		const 项目根 = dirname(dirname(cardsDir));
++		const v2 = v2Setup(项目根, undefined, "控坏邻流");
++		await startControl(v2.recipe, {}, v2.options);
++		await pauseControl(v2.recipe, v2.options, "等人工核对"); // v2 挂起
++		writeManifest(home, "项目F", "旧挂链", "挂起"); // 旧格式挂起
++		writeFileSync(join(项目根, ".pao", "工作流实例-坏的.md"), "---\n工作流: [未闭合\n状态: 挂起\n---\n", "utf8");
++		const text = buildFirstRunList(home);
++		expect(text).toContain("⏸ - 挂起工作流 2:");
++		expect(text).toContain("控坏邻流（项目F）");
++		expect(text).toContain("旧挂链（项目F）");
++		expect(text).toContain("⚠ - 损坏实例 1:工作流实例-坏的.md（项目F）");
++		expect(text).not.toContain("今日待办:无");
++		expect(text).toContain("今日待办（");
++	});
++
++	it("扫描纯读:前后文件树＋内容哈希不变,不建进程、不发网络", async () => {
++		const root = mkdtempSync(join(tmpdir(), "pao-firstrun-ro-"));
++		tempDirs.push(root);
++		const home = join(root, "现场");
++		const 项目根 = join(root, "项目G");
++		mkdirSync(home, { recursive: true });
++		writeFileSync(
++			join(home, "项目清单.md"),
++			`| 项目名 | 项目根 | 首次服务 | 最近服务 |\n| --- | --- | --- | --- |\n| 项目G | ${项目根} | 2026-10-03 10:00 | 2026-10-03 10:00 |\n`,
++			"utf8",
++		);
++		const v2 = v2Setup(项目根, undefined, "只读流");
++		await startControl(v2.recipe, {}, v2.options);
++		await pauseControl(v2.recipe, v2.options, "只读核对");
++		writeManifest(home, "项目G", "旧链", "挂起");
++		const before = snapshot(root);
++		const spawn = vi.spyOn(childProcess, "spawn");
++		const exec = vi.spyOn(childProcess, "execFile");
++		const spawnSync = vi.spyOn(childProcess, "spawnSync");
++		const fetch = vi.spyOn(globalThis, "fetch");
++		const text = buildFirstRunList(home);
++		expect(text).toContain("只读流（项目G）");
++		expect(text).toContain("旧链（项目G）");
++		expect(snapshot(root)).toEqual(before);
++		expect(spawn).not.toHaveBeenCalled();
++		expect(exec).not.toHaveBeenCalled();
++		expect(spawnSync).not.toHaveBeenCalled();
++		expect(fetch).not.toHaveBeenCalled();
++	});
++
+ 	it("部门积压:同源计数（待验证条数＋⚠️ 行数）", () => {
+ 		const home = tempDir();
+ 		mkdirSync(join(home, "部门", "测试部", "知识库", "待验证"), { recursive: true });

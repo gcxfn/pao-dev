@@ -1,0 +1,99 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o04-independent.test.ts > A1：适用分支与来源分支不同，应按明确的适用条件筛选 145ms
+   → expected [] to include 'mem-643f5056-4a3d-4e6d-ac34-0a5ba9983…'
+ × o04-independent.test.ts > A2：分支受限的高分候选不能挤掉有效的项目共享结果 144ms
+   → expected [] to deeply equal [ Array(1) ]
+ × o04-independent.test.ts > A3：来源已排除的语义候选不能占满 lane 丢掉有效命中 269ms
+   → expected [] to deeply equal [ Array(1) ]
+ × o04-independent.test.ts > A4：准确 ID 在 superseded 模式也应返回该记忆的历史修订 148ms
+   → expected [] to deeply equal [ [ …(2) ] ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o04-independent.test.ts > A1：适用分支与来源分支不同，应按明确的适用条件筛选
+AssertionError: expected [] to include 'mem-643f5056-4a3d-4e6d-ac34-0a5ba9983…'
+ ❯ o04-independent.test.ts:49:44
+     47|   const origin = await search("feature-a"); const target = await searc…
+     48|   results.push({ id: "A1", memoryId: m.id, origin, target });
+     49|   expect(target.hits.map(h => h.memoryId)).toContain(m.id);
+       |                                            ^
+     50|   expect(origin.hits).toHaveLength(0);
+     51| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  o04-independent.test.ts > A2：分支受限的高分候选不能挤掉有效的项目共享结果
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "mem-69364679-4d51-46f7-baae-851fae64457f",
+- ]
++ []
+
+ ❯ o04-independent.test.ts:62:44
+     60|   results.push({ id: "A2", sharedId: shared.id, narrow, wide });
+     61|   expect(wide.hits.map(h => h.memoryId)).toContain(shared.id);
+     62|   expect(narrow.hits.map(h => h.memoryId)).toEqual([shared.id]);
+       |                                            ^
+     63| });
+     64| it("A3：来源已排除的语义候选不能占满 lane 丢掉有效命中", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  o04-independent.test.ts > A3：来源已排除的语义候选不能占满 lane 丢掉有效命中
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "mem-c88afb8b-4cec-4b9f-b024-02af8ba6f981",
+- ]
++ []
+
+ ❯ o04-independent.test.ts:77:44
+     75|   results.push({ id: "A3", validId: valid.id, narrow, wide });
+     76|   expect(wide.hits.map(h => h.memoryId)).toContain(valid.id);
+     77|   expect(narrow.hits.map(h => h.memoryId)).toEqual([valid.id]);
+       |                                            ^
+     78| });
+     79| it("A4：准确 ID 在 superseded 模式也应返回该记忆的历史修订", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  o04-independent.test.ts > A4：准确 ID 在 superseded 模式也应返回该记忆的历史修订
+AssertionError: expected [] to deeply equal [ [ …(2) ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "mem-487ee84f-b66d-4360-84f2-909f0d4258e7",
+-     1,
+-   ],
+- ]
++ []
+
+ ❯ o04-independent.test.ts:87:57
+     85|     { query: m.id, mode: "history", historyRevisions: "superseded", li…
+     86|   results.push({ id: "A4", memoryId: m.id, found });
+     87|   expect(found.hits.map(h => [h.memoryId, h.revision])).toEqual([[m.id…
+       |                                                         ^
+     88| });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  01:41:12
+   Duration  5.05s (transform 3.31s, setup 0ms, import 4.17s, tests 710ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o04-independent-vitest.json

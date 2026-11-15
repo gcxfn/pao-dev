@@ -1,0 +1,33 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] apps\desktop\tests\core\timeline-pinning.spec.ts:728:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom
+[1A[2K  1) apps\desktop\tests\core\timeline-pinning.spec.ts:728:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      832 |     await streamAssistantDeltas(harness, window, ["WIDTH_REFLOW_NEW_ACTIVITY"]);
+      833 |     await expect(window.getByTestId("timeline-jump")).toBeVisible();
+    > 834 |     await expect
+          |     ^
+      835 |       .poll(() =>
+      836 |         sentinelRow.evaluate(async (row, expectedY) => {
+      837 |           let maximumDrift = 0;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-pinning.spec.ts:834:5
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\core\timeline-pinning.spec.ts:728:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+REPRO 07-timeline-pinning-727 EXIT=1

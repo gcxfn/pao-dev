@@ -1,0 +1,43 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D1 同项目整理完成后，新变化仍能再次整理 90ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D2 两个正式决定条件互斥时，不自动合并并丢弃条件 59ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D3 合并待定与已确认决定时，不把已确认决定降成待定 53ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D4 settled 后异步登记的整理任务，无需另一次用户回合即可消费 62ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D5 rebuild 接受带空格的项目路径，不静默重建错误范围 101ms
+ ✓ o06-independent.test.ts > O06 独立完成审核 > D6 backup 接受带空格的目录参数，并登记真实维护队列 38ms
+ × o06-independent.test.ts > O06 独立完成审核 > D7 同项目作业运行期间登记新变化，当前批次结束后仍继续整理 1088ms
+   → expected 2 to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o06-independent.test.ts > O06 独立完成审核 > D7 同项目作业运行期间登记新变化，当前批次结束后仍继续整理
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ o06-independent.test.ts:150:86
+    148|     }
+    149|     try {
+    150|       await expect.poll(() => f.canonical().length, { timeout: 1000, i…
+       |                                                                                      ^
+    151|     } finally {
+    152|       results.D7 = { job: q.row(), calls: q.calls(), canonical: f.cano…
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ o06-independent.test.ts:150:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  21:46:09
+   Duration  4.59s (transform 2.20s, setup 0ms, import 2.92s, tests 1.50s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o06-recheck-vitest.json

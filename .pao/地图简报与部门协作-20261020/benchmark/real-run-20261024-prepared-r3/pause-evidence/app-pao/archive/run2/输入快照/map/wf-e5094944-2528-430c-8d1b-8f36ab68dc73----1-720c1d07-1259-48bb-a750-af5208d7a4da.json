@@ -1,0 +1,76 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-e5094944-2528-430c-8d1b-8f36ab68dc73----1-720c1d07-1259-48bb-a750-af5208d7a4da",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			"filter.py"
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao",
+			"oracle",
+			"在线基准答案"
+		]
+	},
+	"facts": [
+		"/app/filter.py 已存在，为完整可运行实现（约 900 行，非占位/桩）。同一目录下 README.md、requirements.txt、package.json、index.html、test.html 均不存在（read 返回 ENOENT）。",
+		"依赖面：filter.py 仅 import codecs/html/os/re/tempfile/sys（全部标准库）+ from __future__ import annotations；不依赖 bs4/lxml/bleach，满足「只用已安装包」约束。",
+		"CLI 契约：main(argv) 要求 len(argv)>=2，取 argv[1] 为路径；缺参→usage 到 stderr 返回 2；路径非文件→stderr 报错返回 2；OSError→1；成功→0。入口为 sys.exit(main(sys.argv))。",
+		"就地改写链路：process_file(path) 读原始 bytes → decode_bytes()（UTF-8+surrogateescape，保留 UTF-8/UTF-16LE/BE BOM 前缀）→ strip_js() → 文本未变则直接 return False（不写盘、不动 mtime，天然幂等）→ 否则 write_atomic()（同目录 tempfile.mkstemp + 复制原 st_mode + os.replace）。",
+		"核心策略：不做整篇重新序列化，而用容错分词定位危险片段后按原始偏移裁剪；注释/CDATA/doctype/PI/普通结束标签原样复制，非危险字节逐字保留。",
+		"移除面（_strip_js_once）：①<script>整元素（属性、大小写混写、svg:script、自闭合分支、未闭合到 EOF），并删除游离 </script>；②所有 on* 事件属性（按 ':' 后缀取 base 名判定，支持引号/无引号/多行值）；③URL 属性（href/src/action/formaction/xlink:href/background/poster/data/cite/longdesc/codebase/profile/usemap 等）经实体深解码+忽略字符折叠后判定 javascript:/vbscript:/危险 data:（media 含 html 或 svg）；④srcset/ping/archive/manifest/imagesrcset 等 URL 列表属性含脚本协议即整属性删除；⑤style 属性与 <style> 块中 expression(/javascript:/vbscript:/behavior:/-moz-binding（支持 CSS 反斜杠转义与注释混淆），只删危险声明并清空空规则；⑥iframe[srcdoc] 递归 strip_js 后重新转义写回；⑦<meta http-equiv=refresh content=...> 含脚本 URL；⑧SVG animate/set/animatetransform/animatemotion/discard 以 attributename 指向 on* 者整元素删除，其 from/to/values/by 含脚本 URL 则删该属性。",
+		"保留面：textarea/title/xmp/plaintext 作 raw-text 处理（仅剔除其中字面 <script> 段）；其余标签、属性顺序、引号风格、实体、缩进与换行全部原样。",
+		"幂等性：strip_js(text, max_passes=8) 迭代到不动点，宣称再跑一次不会比跑一次删更多。",
+		"可复用接口（后继卡可直接调用/测试）：strip_js(text, max_passes=8)、_strip_js_once、parse_start_tag(s, lt)、rebuild_start_tag(text, lt, info)、classify_attr(tag_l, info, attr)->None|'drop'|('set', new_value, needs_escape)、is_dangerous_url(value)、url_contains_script(value)、is_dangerous_css(text)、sanitize_css(css)、decode_bytes(data)->(text,prefix,encoding)、encode_text(text,prefix,encoding)、write_atomic(path,data)、process_file(path)->bool。",
+		"可用验证入口（需有 shell 的节点执行，本节点无法跑）：临时 HTML 放 /tmp 后 `python3 /app/filter.py /tmp/x.html` 再 diff 原文件；纯函数级 `python3 -c \"import sys;sys.path.insert(0,'/app');import filter;print(filter.strip_js(open(p,encoding='utf-8').read()))\"`；幂等性=同一文件连跑两次比对。",
+		"被阻断的侦察手段：bash 在本节点返回「工作流部长只读规划；请通过 pao_minister_submit_cards 交工人执行」，pao_dispatch_brief 同样被拦；因此无法 ls /app、无法执行 python、无法确认 python 版本与已装第三方包。"
+	],
+	"unknowns": [
+		"/app 目录完整清单未知（bash 被禁）：只能确认 filter.py 存在、若干常见文件不存在，无法枚举是否有 .html 样例或其他应交付产物。",
+		"python3 实际版本与本机已装第三方包（bs4/lxml/html5lib/bleach）未验证。",
+		"评测/校验入口未知：/tests 与 /solution 禁止读取，任务未给公开本地自测脚本，故「除有害子串外功能等价」的实际判定方式未知。",
+		"filter.py 是否已通过任何真实用例、是否为本轮前的遗留产物或需重写，未知。",
+		"非 UTF-8 且无 BOM 文件（GBK/latin-1）会被 surrogateescape 处理，行为未验证；symlink 目标、只读文件、目录参数等边界亦未验证。",
+		"评分是逐字比对还是解析后 DOM 比对未知，决定是否需把「最小改动」策略再收紧（影响 style 重排与游离 </script> 处理）。"
+	],
+	"relations": [],
+	"risks": [
+		"无运行时证据：本轮无法执行 python 或 ls，filter.py 的「可导入、可运行、真能清 JS」全部为读码推断，未跑通一次真实用例。",
+		"on* 判定过宽：classify_attr 用 base.startswith('on') and len(base)>2 直接 DROP，任何 on 开头的非事件属性（如自定义 one/onwards、Vue once 相关属性）会误删，可能损伤「保留非危险属性」。",
+		"自闭合 <script/> 分支：文档后存在任意 </script> 时 element_end 会吞到该结束标签，可能连带删掉本应保留的正常内容（XHTML 风格 <script src=x /> 正常应只删标签本身）。",
+		"<style>/style 清洗命中危险 CSS 时经 _render_css_items 重新拼接（必要时补 ';'），局部改变空白/分隔格式，与「不得改动格式」存在张力；仅危险文件受影响。",
+		"手写分词而非真实 HTML 解析器：属性值内未闭合引号、'<' 出现在异常位置等畸形标记行为未验证，可能误删或漏删。",
+		"主动删除游离 </script> 超出最小改动；若评分逐字比对「除有害子串外一致」，可能被判改动。",
+		"危险判定依赖 _fold 的忽略字符集与 4 轮实体深解码，是否覆盖全部混淆（UTF-7、其它控制字符变体）未验证。",
+		"环境未知：python3 版本与 bs4/lxml/html5lib/bleach 是否存在未确认，若后改写想换解析器需先实测。"
+	],
+	"integrationOwner": "侦察",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"原始公开任务：创建 /app/filter.py，CLI argv[1] 就地清除 JavaScript，尽量保留 HTML",
+		"本轮侦察只读约束：bash 与写工具被工作流拦截，仅 read 逐文件探测"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:85a11b4fde6a9ad5b66477f8847dc54039c248d3a31c72e3b6e66d5f23c55554"
+	},
+	"files": [
+		{
+			"path": "filter.py",
+			"workingDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"contentDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"size": 25144
+		}
+	],
+	"capturedAt": "2026-10-23T18:13:03.840Z",
+	"mapDigest": "sha256:e5b78fac7e12cb88e7d20259b8c0ebf107154199b73e4d4a7bd539af87087776"
+}

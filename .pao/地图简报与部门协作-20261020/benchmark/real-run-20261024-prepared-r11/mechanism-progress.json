@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-24T12:13:31.278059+00:00",
+  "instance": "c9114ca7-291e-42f5-80e1-d9c6ab04ab43",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "c9114ca7-291e-42f5-80e1-d9c6ab04ab43",
+      "owner": "01a16d99-53ea-729c-84a7-1b8045f0748d",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "f426ea5353496fc19b86ed21f9daa7982515f710d200e0e0b9d51a0aae32711c"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": "主会话关闭，须显式人工恢复",
+  "responsible_party": "01a16d99-53ea-729c-84a7-1b8045f0748d",
+  "latest_business_event": {
+    "时间": "2026-10-24T11:37:07.549Z",
+    "事件": "原卡返修",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "上次尝试(1)的交付物本身经代码审阅未见偏离：/app/filter.py（纯标准库源码切片保真，R1–R8 全落地）与 /app/selftest_filter.py 已在盘上且符合卡面；失败原因只在回执声明——changes 把项目根外的临时脚本（/tmp/probe/probe.py、/tmp/xcheck/*.py）也列成产物，越界核查按项目根内 git 真值比对，6 条被判「虚报（声明未写）」，卡因此落 failed，机械验收一条都没跑起来。本次按原卡面重做（需求与验收条目一字不改，不加功能）：\n1. 先读盘上已有的 filter.py 与 selftest_filter.py，逐条核对卡面 R1–R8 与验收条目；确有缺陷才改，改动最小；不要重写、不要另起实现、不要换写法。\n2. changes 只能列「项目根内 + 本次尝试真实创建或修改」的文件，用相对项目根的路径（如 filter.py）。项目根外的临时脚本（/tmp/…）不要写进 changes 与产物路径清单——它们不在 git 检测面，写进去必被判虚报；只在回执正文的验证证据/边界说明里提一句即可。\n3. 本次若没有改动任何项目文件，就在 changes 里明确写空数组 []，产物路径照实列出已存在的 filter.py 与 selftest_filter.py（这两项只供人工核对）。\n4. 重跑 python3 -m py_compile filter.py 与 python3 selftest_filter.py，把真实 stdout 摘要与退出码写进回执；自报未达项照实写，不得声称跑过没跑的检查。\n5. 把「changes 只列项目内相对路径、/tmp 临时脚本不写进 changes」这条纪律用一两行写进任务黑板 /app/.pao/benchmark/黑板.md（编排区文件，本身不要写进 changes 声明），供同节点后续工人（卡0002）看到。\n6. 交付面保持项目根只有 filter.py 与 selftest_filter.py：无样例文件、无 __pycache__、无日志。（卡：卡0001）"
+  },
+  "latest_business_event_at": "2026-10-24T11:37:07.549Z",
+  "business_event_key": "{\"事件\": \"原卡返修\", \"时间\": \"2026-10-24T11:37:07.549Z\", \"理由\": \"上次尝试(1)的交付物本身经代码审阅未见偏离：/app/filter.py（纯标准库源码切片保真，R1–R8 全落地）与 /app/selftest_filter.py 已在盘上且符合卡面；失败原因只在回执声明——changes 把项目根外的临时脚本（/tmp/probe/probe.py、/tmp/xcheck/*.py）也列成产物，越界核查按项目根内 git 真值比对，6 条被判「虚报（声明未写）」，卡因此落 failed，机械验收一条都没跑起来。本次按原卡面重做（需求与验收条目一字不改，不加功能）：\\n1. 先读盘上已有的 filter.py 与 selftest_filter.py，逐条核对卡面 R1–R8 与验收条目；确有缺陷才改，改动最小；不要重写、不要另起实现、不要换写法。\\n2. changes 只能列「项目根内 + 本次尝试真实创建或修改」的文件，用相对项目根的路径（如 filter.py）。项目根外的临时脚本（/tmp/…）不要写进 changes 与产物路径清单——它们不在 git 检测面，写进去必被判虚报；只在回执正文的验证证据/边界说明里提一句即可。\\n3. 本次若没有改动任何项目文件，就在 changes 里明确写空数组 []，产物路径照实列出已存在的 filter.py 与 selftest_filter.py（这两项只供人工核对）。\\n4. 重跑 python3 -m py_compile filter.py 与 python3 selftest_filter.py，把真实 stdout 摘要与退出码写进回执；自报未达项照实写，不得声称跑过没跑的检查。\\n5. 把「changes 只列项目内相对路径、/tmp 临时脚本不写进 changes」这条纪律用一两行写进任务黑板 /app/.pao/benchmark/黑板.md（编排区文件，本身不要写进 changes 声明），供同节点后续工人（卡0002）看到。\\n6. 交付面保持项目根只有 filter.py 与 selftest_filter.py：无样例文件、无 __pycache__、无日志。（卡：卡0001）\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-24T11:37:10.515206+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

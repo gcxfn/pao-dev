@@ -1,0 +1,79 @@
+
+> @earendil-works/pi-coding-agent@1.0.2 test
+> vitest --run test/pao/workflow-control-resolve-tool.test.ts
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+xxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/workflow-control-resolve-tool.test.ts > I1-3b-1 pao_control_node resolve_pending 工具接线 > 真实工具办理成功后仅推进一次，相同参数重放不增提交、后台推进或通知
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ test/pao/workflow-control-resolve-tool.test.ts:381:35
+    379|    expect(first).toContain("交卷：已提交");
+    380|    expect(readControl(f.recipe, f.options).待决).toBeUndefined();
+    381|    expect(allCommitCount(f.root)).toBe(commitsBefore + 1);
+       |                                   ^
+    382|    expect(driveDepartments).toHaveBeenCalledTimes(1);
+    383|    expect(notify).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/pao/workflow-control-resolve-tool.test.ts > I1-3b-1 pao_control_node resolve_pending 工具接线 > 首次缺项由真实工具拒绝且不推进，补齐同待决后可完成
+TypeError: tools.run is not a function
+ ❯ test/pao/workflow-control-resolve-tool.test.ts:427:11
+    425|    };
+    426|    await expect(
+    427|     tools.run("pao_control_node", { ...params, decisions: [f.decisions…
+       |           ^
+    428|    ).rejects.toThrow(/必须恰好覆盖|缺项/);
+    429|    expect(readControl(f.recipe, f.options).待决?.key).toBe(f.pendingKey);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/pao/workflow-control-resolve-tool.test.ts > I1-3b-1 pao_control_node resolve_pending 工具接线 > 有人值守、人工门和错误 owner 均不能经工具办理，模型夹带身份字段也会拒绝
+TypeError: attended.tools.run is not a function
+ ❯ test/pao/workflow-control-resolve-tool.test.ts:458:32
+    456|     decisions: f.decisions,
+    457|    };
+    458|    await expect(attended.tools.run("pao_control_node", base)).rejects.…
+       |                                ^
+    459|     /可信宿主未授权无人值守/,
+    460|    );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/pao/workflow-control-resolve-tool.test.ts > I1-3b-1 pao_control_node resolve_pending 工具接线 > 真实 AbortSignal 在等待控制锁后取消，不产生待决办理记录
+TypeError: tools.run is not a function
+ ❯ test/pao/workflow-control-resolve-tool.test.ts:526:22
+    524|   await acquired;
+    525|   const controller = new AbortController();
+    526|   const call = tools.run(
+       |                      ^
+    527|    "pao_control_node",
+    528|    {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  02:26:45
+   Duration  34.69s (transform 2.40s, setup 0ms, import 3.90s, tests 30.46s, environment 0ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+npm error workspace @earendil-works/pi-coding-agent@1.0.2
+npm error location D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c vitest --run test/pao/workflow-control-resolve-tool.test.ts

@@ -1,0 +1,184 @@
+
+Running 7 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:19:5 › bug5 复验：切普通会话再切回画布，主控面板恢复且会话回到标签主控 (19.5s)
+  x  2 apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:66:5 › bug5 复验：跨项目往返后，标签主控面板恢复且两会话不串 (21.8s)
+  x  3 apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） (41.9s)
+  x  4 apps\desktop\tests\core\workflow-single-view.spec.ts:91:5 › 画布内时间线处于 active：布局落定并接管滚动（S4-1⑥） (15.7s)
+  x  5 apps\desktop\tests\core\workflow-single-view.spec.ts:111:5 › sidebar 分流：已绑定进单工作流嵌入视图，未绑定进完整中心，可回中心（S4-2） (49.1s)
+  ok 6 apps\desktop\tests\core\workflow-tabs.spec.ts:7:5 › 工作流标签重开后保留独立主控，切换和关闭保护修改 (44.7s)
+  x  7 apps\desktop\tests\core\workflow-tabs.spec.ts:116:5 › 主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③） (16.6s)
+
+
+  1) apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:66:5 › bug5 复验：跨项目往返后，标签主控面板恢复且两会话不串 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-tabs').getByRole('button', { name: '甲流程', exact: true })
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-tabs').getByRole('button', { name: '甲流程', exact: true })[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      107 |     await expect(
+      108 |       page.getByTestId("workflow-tabs").getByRole("button", { name: "甲流程", exact: true }),
+    > 109 |     ).toHaveCount(0);
+          |       ^
+      110 |     await page.getByTestId("canvas-recipe-row").filter({ hasText: "甲流程" }).click();
+      111 |     await page.getByTestId("canvas-open-master-session").click();
+      112 |     await expect(page.getByTestId("embedded-chat")).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:109:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-bug5-reactiv-b0d49-g5-复验：跨项目往返后，标签主控面板恢复且两会话不串\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-bug5-reactiv-b0d49-g5-复验：跨项目往返后，标签主控面板恢复且两会话不串\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-bug5-reactiv-b0d49-g5-复验：跨项目往返后，标签主控面板恢复且两会话不串\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('recipe-row-context-menu').getByRole('button', { name: '在新标签中打开' })[22m
+
+
+      42 |       .getByTestId("recipe-row-context-menu")
+      43 |       .getByRole("button", { name: "在新标签中打开" })
+    > 44 |       .click();
+         |        ^
+      45 |     await expect
+      46 |       .poll(async () => (await page.evaluate(() => window.piApp!.getState())).workflowTabs.length)
+      47 |       .toBe(2);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-single-view.spec.ts:44:8
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view--f4bf1-右键入口开出第二标签，两标签各自独立主控（S4-1⑤）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view--f4bf1-右键入口开出第二标签，两标签各自独立主控（S4-1⑤）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-single-view--f4bf1-右键入口开出第二标签，两标签各自独立主控（S4-1⑤）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workflow-single-view.spec.ts:91:5 › 画布内时间线处于 active：布局落定并接管滚动（S4-1⑥） ──
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('timeline-pane')
+    Expected: [32m"settl[7med[27m"[39m
+    Received: [31m"settl[7ming[27m"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('timeline-pane')[22m
+    [2m    9 × locator resolved to <div tabindex="0" data-layout="settling" data-testid="timeline-pane" class="timeline-pane timeline-pane--thread">…</div>[22m
+    [2m      - unexpected value "settling"[22m
+
+
+      102 |     await expect(page.getByTestId("embedded-chat")).toBeVisible();
+      103 |     // active=false 时视口 hook 只标记 settling，永不落定；并入画布后布局提交为 settled。
+    > 104 |     await expect(page.getByTestId("timeline-pane")).toHaveAttribute("data-layout", "settled");
+          |                                                     ^
+      105 |     await page.screenshot({ path: test.info().outputPath("画布内时间线active.png") });
+      106 |   } finally {
+      107 |     await app.close();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-single-view.spec.ts:104:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view-画布内时间线处于-active：布局落定并接管滚动（S4-1⑥）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view-画布内时间线处于-active：布局落定并接管滚动（S4-1⑥）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-single-view-画布内时间线处于-active：布局落定并接管滚动（S4-1⑥）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\workflow-single-view.spec.ts:111:5 › sidebar 分流：已绑定进单工作流嵌入视图，未绑定进完整中心，可回中心（S4-2） 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-exit-single-view')[22m
+
+
+      146 |       "单工作流草稿",
+      147 |     );
+    > 148 |     await page.getByTestId("canvas-exit-single-view").click();
+          |                                                       ^
+      149 |     await expect(page.getByTestId("workflow-tabs")).toBeVisible();
+      150 |     await expect(page.getByTestId("canvas-list")).toBeVisible();
+      151 |     await expect(page.getByTestId("embedded-chat").getByTestId("composer")).toHaveValue(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-single-view.spec.ts:148:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view--2e810-工作流嵌入视图，未绑定进完整中心，可回中心（S4-2）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-single-view--2e810-工作流嵌入视图，未绑定进完整中心，可回中心（S4-2）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-single-view--2e810-工作流嵌入视图，未绑定进完整中心，可回中心（S4-2）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) apps\desktop\tests\core\workflow-tabs.spec.ts:116:5 › 主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③） ───────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('canvas-open-master-session')
+    Expected: enabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-open-master-session')[22m
+
+
+      175 |       .toBeUndefined();
+      176 |     const rebuildButton = page.getByTestId("canvas-open-master-session");
+    > 177 |     await expect(rebuildButton).toBeEnabled();
+          |                                 ^
+      178 |     await expect(rebuildButton).toContainText("建立主控会话");
+      179 |     await rebuildButton.click();
+      180 |     await expect(rebuildButton).toContainText("已建立");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-tabs.spec.ts:177:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-tabs-主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-tabs-主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-tabs-主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    apps\desktop\tests\core\workflow-bug5-reactivation.spec.ts:66:5 › bug5 复验：跨项目往返后，标签主控面板恢复且两会话不串 
+    apps\desktop\tests\core\workflow-single-view.spec.ts:24:5 › 同配方另开标签：右键入口开出第二标签，两标签各自独立主控（S4-1⑤） 
+    apps\desktop\tests\core\workflow-single-view.spec.ts:91:5 › 画布内时间线处于 active：布局落定并接管滚动（S4-1⑥） ───
+    apps\desktop\tests\core\workflow-single-view.spec.ts:111:5 › sidebar 分流：已绑定进单工作流嵌入视图，未绑定进完整中心，可回中心（S4-2） 
+    apps\desktop\tests\core\workflow-tabs.spec.ts:116:5 › 主控失效降级可重建，同一会话绑两个标签被拒（S4-1①③） ────────────
+  2 passed (3.6m)

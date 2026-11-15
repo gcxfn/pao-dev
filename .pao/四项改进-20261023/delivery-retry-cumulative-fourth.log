@@ -1,0 +1,57 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+·····xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 第一次尝试的删除与重命名按旧、新路径累计提交
+AssertionError: expected [ 'D\t将删除.txt', 'D\t已跟踪.txt', …(1) ] to include 'R100\t已跟踪.txt\t新名字.txt'
+ ❯ test/pao/delivery-retry-cumulative.test.ts:410:17
+    408|   const paths = git(root, ["diff-tree", "--no-commit-id", "--name-stat…
+    409|   expect(paths).toContain("D\t将删除.txt");
+    410|   expect(paths).toContain("R100\t已跟踪.txt\t新名字.txt");
+       |                 ^
+    411|  }, 60000);
+    412| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 重试卡缺少当前真实校验证据时拒绝
+AssertionError: expected '验收证据缺失' to be '验收证据不匹配' // Object.is equality
+
+Expected: "验收证据不匹配"
+Received: "验收证据缺失"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:426:21
+    424|   );
+    425|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    426|   expect(result.原因).toBe("验收证据不匹配");
+       |                     ^
+    427|   expect(result.消息).toContain("execution-context");
+    428|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 历史证据充足但当前回执漏报本次改动时仍拒绝
+AssertionError: expected '卡0001 拒绝交卷：累计成果归属不足——尝试 1 的历史回执没有可归属改…' to contain '尝试 2 的回执声明与相邻基线 tree 差不能逐项对应'
+
+Expected: "尝试 2 的回执声明与相邻基线 tree 差不能逐项对应"
+Received: "卡0001 拒绝交卷：累计成果归属不足——尝试 1 的历史回执没有可归属改动。保留原基线与回执，不猜中间改动属于本卡。"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:452:21
+    450|   const result = await deliverCard(fixture.cardsDir, 1, { executionKey…
+    451|   expect(result.原因).toBe("累计成果归属不足");
+    452|   expect(result.消息).toContain("尝试 2 的回执声明与相邻基线 tree 差不能逐项对应");
+       |                     ^
+    453|  }, 60000);
+    454| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  09:33:03
+   Duration  83.19s (transform 247ms, setup 0ms, import 459ms, tests 82.57s, environment 0ms)
+

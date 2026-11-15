@@ -1,0 +1,62 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ↓ o01-review.test.ts > O01-R1：同批真实重试不覆盖前一次费用
+ ↓ o01-review.test.ts > O01-R2：未产生候选的两次付费生成分别结算
+ ↓ o01-review.test.ts > O01-R3：没有外发许可时，候选生成不发模型请求
+ ↓ o01-review.test.ts > O01-R4：多批嵌入逐请求预留并结算未知费用，聚合不漏批
+ ↓ o01-review.test.ts > O01-R5：没有待嵌入记忆时不占预算
+ ↓ o01-review.test.ts > O01-R6：两个后台作业并行预留不能突破同一日上限
+ ↓ o01-review.test.ts > O01-R7：unlimited 的候选请求完成后正常返回，不结算不存在的预留
+ ↓ o01-review.test.ts > O01-R8：真实 SDK 的上下文快照可关联实际模型用量
+ ↓ o01-review.test.ts > O01-R9：标记用量未返回的默认零 usage 不按零费用结算
+ ↓ o01-review.test.ts > O01-R10：请求抛异常后，用量聚合保留一次未知请求
+ × o01-review.test.ts > O01-R11：嵌入作业失败后续作，每次实际请求有独立占额与聚合记录 77ms
+   → expected [ { …(8) } ] to have a length of 2 but got 1
+ × o01-review.test.ts > O01-R12：嵌入失败按 embed 用途聚合，保留已知的模型与任务归属 56ms
+   → expected 'extract' to be 'embed' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o01-review.test.ts > O01-R11：嵌入作业失败后续作，每次实际请求有独立占额与聚合记录
+AssertionError: expected [ { …(8) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ o01-review.test.ts:250:31
+    248|   expect(result.failure).toContain("connection lost");
+    249|   expect(result.requests).toBe(2);
+    250|   expect(result.reservations).toHaveLength(2);
+       |                               ^
+    251|   expect(result.aggregate.entries).toHaveLength(2);
+    252| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  o01-review.test.ts > O01-R12：嵌入失败按 embed 用途聚合，保留已知的模型与任务归属
+AssertionError: expected 'extract' to be 'embed' // Object.is equality
+
+Expected: "embed"
+Received: "extract"
+
+ ❯ o01-review.test.ts:260:44
+    258|   expect(result.requests).toBe(1);
+    259|   expect(result.aggregate.entries).toHaveLength(1);
+    260|   expect(result.aggregate.entries[0].kind).toBe("embed");
+       |                                            ^
+    261|   expect(result.aggregate.entries[0].model).toBe("audit-model");
+    262| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  22:53:17
+   Duration  6.08s (transform 4.58s, setup 0ms, import 5.81s, tests 134ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o01-rereview-embedding-vitest.json

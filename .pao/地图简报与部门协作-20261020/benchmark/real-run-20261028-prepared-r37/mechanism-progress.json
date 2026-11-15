@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-28T08:06:19.568504+00:00",
+  "instance": "69d1eb80-863e-49d5-b877-1824f316b4e4",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "69d1eb80-863e-49d5-b877-1824f316b4e4",
+      "owner": "01a1815d-5e2a-7475-b555-8095195c7c87",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "实施节点的两张卡均已实跑交付，卡0002 机械验收 5/5 全过（存在 filter.py / filter_selftest.py、包含 def test_、py_compile exit 0、selftest exit 0），但因工人自报 4 项 not_run，卡面被链停在 in_progress 等 owner 逐项裁决，且未生成部长审核请求，我不能代为放行或改状态。请主控按下列依据裁决 accepted_deviations 并处置卡0002 状态：\n(1) #19 只读目录退化写分支（目录不可写、文件可写）——容器内以 root 运行，内核绕过目录权限，物理上无法构造真实验证场景；该分支仅为静态检查，非原始任务要求，判为「环境不可验证，不阻塞交付」。\n(2) #20 隐藏验收用例判定口径（/tests、/solution）——按卡面约束禁止读取，非缺陷，判为「按约束不执行，保留为未验证」。\n(3) #21 真实浏览器渲染/执行语义——环境无浏览器，行为按 html.parser 实测语义与 HTML5 规范推导，判为「范围外，保留为未验证」。\n(4) #22 上游地图 6 项保真偏差是否收窄——属口径裁定，不属实施节点权限；我的意见是维持当前「从严」口径（注释/textarea 中的 javascript: 与 on* 前缀属性照删），理由：原始任务要求「移除全部 JavaScript」，从严可保证无 <script/on*/javascript: 残留，而良性保真已被 G8 十八例逐字节相同 + 4000 例 fuzz 覆盖；是否收窄请交审核节点终审。\n另请把下列实施节点交接要点转交审核节点：交付物为 /app/filter.py（仅标准库、位置化外科式删除、原地改写、退出码 0/stdout 静默、无参 exit 2）与 /app/filter_selftest.py（卡0001 的 41 例原样保留 + 新增 G1–G10 共 85 例，实跑全绿）；卡0002 修掉 4 个真实缺陷（未闭合引号导致 html.parser 停止解析的盲区、meta refresh 无 url= 漏判、畸形嵌套标签名残留 <script、CSS 注释绕过 expression），并修掉一处自伤回归（属性 tokenizer 未初始化变量致 NameError 被 except 吞掉导致解析中断）；新增 R10、_sweep_script_literals、_fallback_sweep、符号链接写真实目标、目录不可写时退化就地重写。未验证项：#19、#20、#21、#22 及其余保真偏差收窄口径。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-28T08:03:21.457Z",
+    "事件": "自动链停因",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "节点 实施：卡0002 第 1 次尝试有 4 条自报未达项（not_run 4，fail 0），待 owner 裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，并按自报未达项填写 accepted_deviations；或由原部长调用 pao_minister_rework_cards 返修并重新执行。"
+  },
+  "latest_business_event_at": "2026-10-28T08:03:21.457Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-28T08:03:21.457Z\", \"理由\": \"节点 实施：卡0002 第 1 次尝试有 4 条自报未达项（not_run 4，fail 0），待 owner 裁决，不能自动交付；下一步：核对成果后经 pao_change_status 转 delivered，并按自报未达项填写 accepted_deviations；或由原部长调用 pao_minister_rework_cards 返修并重新执行。\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-28T08:03:26.310734+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

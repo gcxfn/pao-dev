@@ -1,0 +1,98 @@
+
+Running 3 tests using 1 worker
+
+
+
+[1A[2K(node:4740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[1/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:800:5 › 最终发行物 V08/V13：辅助问答与主控并行、连续记录和来源隔离
+[1A[2K[2/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:967:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录
+[1A[2K  1) apps\desktop\tests\production\packaged-side-chat.spec.ts:967:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('side-chat-panel')
+    Expected: [32m"[7mtru[27me"[39m
+    Received: [31m"[7mfals[27me"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('side-chat-panel')[22m
+    [2m    9 × locator resolved to <section class="side-chat" data-busy="false" aria-busy="false" aria-label="辅助对话" data-testid="side-chat-panel" data-source-session="01a1536b-05ad-75f4-b955-560294d70ec0">…</section>[22m
+    [2m      - unexpected value "false"[22m
+
+
+      1020 |       );
+      1021 |       const panel = await openSideChat(window, { waitUntilLoaded: false });
+    > 1022 |       await expect(panel).toHaveAttribute("aria-busy", "true");
+           |                           ^
+      1023 |       await expect(panel.getByText("正在读取独立问答记录…", { exact: true })).toBeVisible();
+      1024 |       await window.clock.runFor(30_100);
+      1025 |       await expect(panel).toHaveAttribute("aria-busy", "true");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:1022:27
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-165359\production-side-chat-rerun2-old-package-output\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-165359\production-side-chat-rerun2-old-package-output\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[1A[2K(node:30440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:30440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[3/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:1125:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录
+[1A[2K  2) apps\desktop\tests\production\packaged-side-chat.spec.ts:1125:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('task-status-todos')
+    Expected substring: [32m"审查一个包含很长的交付路径、执行标识与验收说明的部门任务，用于确认只读详情不会在窄侧栏中产生横向溢出"[39m
+    Received string:    [31m"当前会话尚无 PAO 计划"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('task-status-todos')[22m
+    [2m    9 × locator resolved to <div class="task-status__scroll" data-testid="task-status-todos">…</div>[22m
+    [2m      - unexpected value "当前会话尚无 PAO 计划"[22m
+
+
+      1169 |         .click();
+      1170 |       await selectSession(window, DEPARTMENT_OWNER_A);
+    > 1171 |       await expect(window.getByTestId("task-status-todos")).toContainText(DEPARTMENT_LONG_GOAL);
+           |                                                             ^
+      1172 |       const reviewDepartment = window
+      1173 |         .getByTestId("task-status-departments")
+      1174 |         .getByTestId("task-status-department")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:1171:61
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-165359\production-side-chat-rerun2-old-package-output\production-packaged-side-c-b2191--V04-已读甲部门工人切乙部门或乙主控后不残留甲记录\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-165359\production-side-chat-rerun2-old-package-output\production-packaged-side-c-b2191--V04-已读甲部门工人切乙部门或乙主控后不残留甲记录\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-最终验收-20261019-165359\production-side-chat-rerun2-old-package-output\production-packaged-side-c-b2191--V04-已读甲部门工人切乙部门或乙主控后不残留甲记录\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  2 failed
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:967:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:1125:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录 
+  1 passed (1.7m)

@@ -1,0 +1,64 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\f-budget-concurrency.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\f-budget-concurrency.test.ts"
+index 139512c..b4660c8 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\f-budget-concurrency.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\f-budget-concurrency.test.ts"
+@@ -22,12 +22,7 @@ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { type CardCreateInput, createCard, type ParsedCard, readCard } from "../../src/pao/cards/index.ts";
+-import {
+-	knownCostAmount,
+-	sumMeteredCosts,
+-	unknownAmount,
+-	formatMeteredCost,
+-} from "../../src/pao/usage/basis.ts";
++import { formatMeteredCost, knownCostAmount, sumMeteredCosts, unknownAmount } from "../../src/pao/usage/basis.ts";
+ import {
+ 	budgetLedgerPath,
+ 	committedSpend,
+@@ -128,8 +123,19 @@ function dispatchViaCore(input: {
+ 	cardsDir: string;
+ 	home: string;
+ 	cardNo: number;
+-	gate: (card: ParsedCard, 尝试号: number) => Promise<
+-		{ ok: true; commit: () => Promise<void>; release: () => Promise<void> } | { ok: false; reason: string }
++	gate: (
++		card: ParsedCard,
++		尝试号: number,
++		剩余预算?: { cost?: number },
++	) => Promise<
++		| {
++				ok: true;
++				commit: () => Promise<void>;
++				release: () => Promise<void>;
++				settle: (receipt: WorkerReceipt) => Promise<string | undefined>;
++				settleUnknown: (reason: string) => Promise<string | undefined>;
++		  }
++		| { ok: false; reason: string }
+ 	>;
+ 	/** 完成回调被调用的次数观察点（认领发生才会被调用）。 */
+ 	onCompleted?: () => void;
+@@ -262,6 +268,23 @@ describe("T20-2 门禁拒绝后卡根本没进入认领", () => {
+ 					release: async () => {
+ 						await verdict.releaseSlot();
+ 					},
++					settle: async (receipt) => {
++						await settleDispatchBudget({
++							paoHome: home,
++							idempotencyKey: `派发:卡${String(gateCard.card_no).padStart(4, "0")}:尝试${尝试号}`,
++							实际费用: receipt.usage?.cost,
++							现在: NOW,
++						});
++						return undefined;
++					},
++					settleUnknown: async () => {
++						await settleDispatchBudget({
++							paoHome: home,
++							idempotencyKey: `派发:卡${String(gateCard.card_no).padStart(4, "0")}:尝试${尝试号}`,
++							现在: NOW,
++						});
++						return undefined;
++					},
+ 				};
+ 			},
+ 		});

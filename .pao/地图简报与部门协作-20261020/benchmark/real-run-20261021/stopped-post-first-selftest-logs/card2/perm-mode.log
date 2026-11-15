@@ -1,0 +1,37 @@
+== file mode preserved across in-place rewrite ==
+mode_before=640
+filter_exit=0
+mode_after=640
+<p>a</p><a>t</a><p>b</p>
+
+== leftover temp files in the target directory (expect 0) ==
+0
+
+== encoding detection per fixture ==
+== enc-latin1 ==
+  input_bytes=147 output_bytes=116
+  decode_path: INVALID utf-8 (byte 0xe9 at 41: invalid continuation byte) -> utf-8 + surrogateescape decode/encode
+  byte_exact_except_removed_script=True
+  raw byte b'\xe9' preserved=True
+  raw byte b'\xef' preserved=True
+  raw byte b'\xa9' preserved=True
+  raw byte b'\xff' preserved=True
+  raw byte b'\xfe' preserved=True
+
+== enc-invalid-utf8 ==
+  input_bytes=124 output_bytes=99
+  decode_path: INVALID utf-8 (byte 0xff at 38: invalid start byte) -> utf-8 + surrogateescape decode/encode
+  byte_exact_except_removed_script=True
+  raw byte b'\xa9' preserved=True
+  raw byte b'\xff' preserved=True
+  raw byte b'\xfe' preserved=True
+  raw byte b'\x80' preserved=True
+
+== enc-bom ==
+  input_bytes=85 output_bytes=60
+  decode_path: valid utf-8 -> strict decode + strict encode
+  bom_count_in=1 bom_count_out=1
+  starts_with_bom_out=True
+  byte_exact_except_removed_script=True
+
+perm_mode_exit=0

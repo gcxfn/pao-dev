@@ -1,0 +1,33 @@
+# V5 CLI contract + robustness (FINAL)
+# filter.py md5: 33f20be60951ad990baab551f56d5885  /app/filter.py
+$ python3 /app/filter.py
+exit=2
+--- stdout ---
+--- stderr ---
+usage: python3 filter.py <html-file> | --check <html-file>
+traceback_count=0
+$ python3 /app/filter.py /tmp/pf/does-not-exist.html
+exit=1
+--- stderr ---
+error: cannot read does-not-exist.html: No such file or directory
+traceback_count=0
+$ python3 /app/filter.py /tmp/pf/empty.html
+exit=0 size=0
+$ python3 /app/filter.py /tmp/pf/latin1.html
+exit=0
+$ od -An -tx1 /tmp/pf/latin1.html
+ 3c 68 74 6d 6c 3e 3c 62 6f 64 79 3e 3c 70 20 74
+ 69 74 6c 65 3d 22 63 61 66 e9 22 3e 63 61 66 e9
+ 3c 2f 70 3e 3c 2f 62 6f 64 79 3e 3c 2f 68 74 6d
+ 6c 3e 0a
+size_before=237000
+$ time python3 /app/filter.py /tmp/pf/big.html
+
+real	0m0.337s
+user	0m0.317s
+sys	0m0.020s
+exit=0
+size_after=132000 scripts=0 onerror=0 divs=3000
+perm_before=640
+exit=0
+perm_after=640

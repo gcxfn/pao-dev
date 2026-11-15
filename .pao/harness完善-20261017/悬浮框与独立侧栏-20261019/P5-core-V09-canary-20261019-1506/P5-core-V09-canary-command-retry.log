@@ -1,0 +1,40 @@
+
+Running 1 test using 1 worker
+
+(node:24688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\side-chat-host.spec.ts:357:5 › 真实宿主通过离线脚本验证辅助问答、read、write 拒绝和来源刷新 (12.8s)
+
+
+  1) apps\desktop\tests\core\side-chat-host.spec.ts:357:5 › 真实宿主通过离线脚本验证辅助问答、read、write 拒绝和来源刷新 ────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"全部写入与控制工具"[39m
+    Received string:    [31m"全部写入、注册扩展和 PAO 控制工具均由宿主拒绝。"[39m
+
+      497 |       "assistant",
+      498 |     ]);
+    > 499 |     expect(afterPermissionQuestion.messages.at(-1)?.text).toContain("全部写入与控制工具");
+          |                                                           ^
+      500 |
+      501 |     expect(await readFile(protectedPath, "utf8")).toBe("ORIGINAL_PROTECTED_CONTENT\n");
+      502 |     expect(await readFile(canaryPath, "utf8")).toBe(canaryAfterSourceCall);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\side-chat-host.spec.ts:499:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-core-V09-canary-20261019-1506\playwright-output\core-side-chat-host-真实宿主通过离线脚本验证辅助问答、read、write-拒绝和来源刷新\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-core-V09-canary-20261019-1506\playwright-output\core-side-chat-host-真实宿主通过离线脚本验证辅助问答、read、write-拒绝和来源刷新\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\harness完善-20261017\悬浮框与独立侧栏-20261019\P5-core-V09-canary-20261019-1506\playwright-output\core-side-chat-host-真实宿主通过离线脚本验证辅助问答、read、write-拒绝和来源刷新\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\side-chat-host.spec.ts:357:5 › 真实宿主通过离线脚本验证辅助问答、read、write 拒绝和来源刷新 ─────

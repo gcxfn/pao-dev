@@ -1,0 +1,49 @@
+
+Running 9 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\review-scopes.spec.ts:68:5 › Uncommitted preserves staged and unstaged changes that cancel each other (36.0s)
+  ok 2 apps\desktop\tests\core\review-scopes.spec.ts:101:5 › Uncommitted keeps a reviewed mark through stage and unstage until the file changes (28.3s)
+  ok 3 apps\desktop\tests\core\review-scopes.spec.ts:136:5 › Branch compares committed revisions and reports a missing base explicitly (38.7s)
+  ok 4 apps\desktop\tests\core\review-scopes.spec.ts:180:5 › an outdated comparison cannot mark or stage newer working content (24.2s)
+  ok 5 apps\desktop\tests\core\review-scopes.spec.ts:217:5 › binary, oversized, and conflicted files show incomplete review coverage (21.3s)
+  x  6 apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout (50.4s)
+  ok 7 apps\desktop\tests\core\review-scopes.spec.ts:316:5 › an existing task without captures shows Last turn as unavailable (22.9s)
+  ok 8 apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage (1.0m)
+  ok 9 apps\desktop\tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff (22.5s)
+
+
+  1) apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('menu', { name: 'Review options', exact: true }).locator('[role="menuitemradio"][data-option-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-user-data-j5PDqd\\worktrees\\review-checkout-root\\wt-381a31"]')[22m
+
+
+       at helpers\electron-app.ts:1858
+
+      1856 | export async function chooseReviewCheckout(window: Page, checkoutId: string): Promise<void> {
+      1857 |   const menu = await openReviewOptions(window);
+    > 1858 |   await menu.locator(`[role="menuitemradio"][data-option-id="${checkoutId}"]`).click();
+           |                                                                                ^
+      1859 | }
+      1860 |
+      1861 | /** The resolved comparison shown at the top of the Review "…" menu; press Escape to close. */
+        at chooseReviewCheckout (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:1858:80)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\review-scopes.spec.ts:291:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-review-scopes-choosin-b6c86--task-and-terminal-checkout\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\review-scopes.spec.ts:258:5 › choosing another review checkout preserves the task and terminal checkout 
+  8 passed (5.1m)
+C2SPEC_EXIT=1

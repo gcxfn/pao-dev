@@ -1,0 +1,28 @@
+== T12续 发行验证（隔离目录） 2026-10-06 ==
+隔离目录：D:/AI/workspace/临时文件夹/整体重构-20261005/T12-发行验证/win-unpacked（自 win-unpacked 536MB 全量复制，非开发仓原位）
+PATH 屏蔽：仅 C:\Windows\System32 + C:\Windows（无 node/npm 全局垫片/无 pao/pi）
+
+[D1] 打包 exe 自读 asar 内核入口存在性
+true
+D1 exit=0
+
+[D2] 打包 exe 直跑 asar 内 cli.js --version（无开发仓解析、无全局 CLI PATH）
+1.0.2
+D2 exit=0
+
+== CLI 发行物隔离安装与启动 ==
+发行物：earendil-works-pi-coding-agent-1.0.2.tgz（npm pack --ignore-scripts，9.0MB/1875 文件）
+安装：npm install --prefix cli-install --ignore-scripts → exit 0，added 121 packages in 53s（全部来自 registry.npmjs.org，无 workspace link）
+
+[C1] 安装树独立性：内核包 realpath 与 bin 垫片
+realpath D:\AI\workspace\临时文件夹\整体重构-20261005\T12-发行验证\cli-install\node_modules\@earendil-works\pi-coding-agent
+bin 存在 true
+是否符号链接 false
+C1 exit=0
+
+[C2] 安装态 CLI 启动（PATH 无全局 pao/pi 垫片，cwd=隔离目录）
+1.0.2
+C2 exit=0
+
+[注] 全局 pao/pi 垫片实测位于 D:/npm-global/（which pao→/d/npm-global/pao）；上述 D1/D2/C2 观测 PATH 均不含该目录，屏蔽有效。
+[清理] win-unpacked 536MB 隔离副本验证后已删（原件在 desktop/apps/desktop/release/）；现场留 tgz 发行物＋cli-install 安装树＋本日志，共 159MB。

@@ -1,0 +1,44 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 1 test using 1 worker
+
+  x  1 apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage (58.6s)
+
+
+  1) apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"source 1999"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      388 |     await lastRow.locator(".diff-panel__file-name").focus();
+      389 |     await window.keyboard.press("Enter");
+    > 390 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      391 |       "source 1999",
+      392 |     );
+      393 |     await expect(lastRow).toBeInViewport();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\review-scopes.spec.ts:390:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+    Usage:
+
+        npx playwright show-trace apps\desktop\test-results\core-review-scopes-large-c-84f7e-out-and-expandable-coverage\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\review-scopes.spec.ts:335:5 › large changed-file lists scroll with bounded row layout and expandable coverage 

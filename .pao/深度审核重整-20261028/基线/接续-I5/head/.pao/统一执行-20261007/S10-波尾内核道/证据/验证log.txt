@@ -1,0 +1,44 @@
+=== S10-波尾内核道 output-pruning 移除 验证证据 ===
+日期：2026-10-08 20:13:18　基线 HEAD：c1306e224（开工核对 c1306e224 通过，树净）
+
+--- git status（删后） ---
+ M packages/coding-agent/src/pao/index.ts
+ D packages/coding-agent/src/pao/output-pruning/index.ts
+ D packages/coding-agent/test/pao/output-pruning.test.ts
+
+--- 1) 全仓 tsc --noEmit ---
+tsc_exit=0
+
+--- 2) biome check . ---
+Checked 1795 files in 5s. No fixes applied.
+biome_exit=0
+
+--- 3) check:gates（packages/coding-agent） ---
+[PASS] root(.) — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[PASS] ./pao — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[PASS] ./pao/desktop — 导入无宿主副作用（仅 signal-exit 已知三信号，无写出/stdin 未动/无 disconnect）
+[FAIL] vendor ./pao/desktop: 导入异常 rc=3 
+gates_exit=1
+
+--- 4) 定向测试（隔离 PAO_HOME＋PI_OFFLINE=1＋PI_NO_LOCAL_LLM=1） ---
+隔离 PAO_HOME=/tmp/tmp.upDPNoGRoW
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+vitest_exit=0
+临时 PAO_HOME 已清理
+
+--- 5) 清零 grep（output-pruning|OutputPruning|registerOutputPruning|PAO_OUTPUT_PRUNING，排 node_modules/.git） ---
+grep_exit=1（1=零残留，白名单为空）
+
+--- 3重跑) check:gates 完整复跑（20:13 出现 vendor ./pao/desktop rc=3 间歇抖动，20:16 起复跑自愈，详见实施记录§抖动） ---
+[PASS] B5(pao/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/desktop/index.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B5(pao/todo/summary.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B6: exports ., ./rpc-entry, ./pao, ./pao/desktop, ./pao/todo, ./client, ./experimental/plugin 均不含 cli 目标
+getPackageDir() = D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[PASS] S1 worker子进程内(argv1=cli.js): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[PASS] S2 桌面主进程内(argv1=main.js): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[PASS] S3 SDK内嵌无脚本(argv1=undefined): command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[PASS] S4 argv1指向不存在文件: command=C:\Program Files\nodejs\node.exe argsHead=["D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js","--mode"]
+[PASS] S5 ELECTRON_RUN_AS_NODE 读 asar 内内核入口 → true
+gates_exit=0

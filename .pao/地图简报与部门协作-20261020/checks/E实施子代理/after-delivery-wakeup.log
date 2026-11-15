@@ -1,0 +1,39 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > findUnlockedCards 就绪扫描（§19 口径） > 上游全已交付＋下游待认领有依赖 → 就绪；按卡号升序 2ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > findUnlockedCards 就绪扫描（§19 口径） > 上游进行中/失败/取消 → 不就绪（放行只认已交付） 0ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > findUnlockedCards 就绪扫描（§19 口径） > 依赖卡不在本次视图（跨队列/不存在）→ 保守不就绪 0ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > findUnlockedCards 就绪扫描（§19 口径） > 无依赖的待认领卡不标（建卡即可派，标了只有噪音）；非待认领不标 0ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > findUnlockedCards 就绪扫描（§19 口径） > renderUnlockNotice：空 → undefined（零噪音）；有 → 单行含卡号与目标 0ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > renderQueue「就绪」高亮（§19 通道②） > 待认领且依赖全满足 → 标 [就绪]；依赖未满足与无依赖不标 1ms
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > renderQueue「就绪」高亮（§19 通道②） > 零行为回归：无待认领依赖满足时渲染与既有口径一致（无「就绪」字样） 0ms
+ × packages/coding-agent/test/pao/delivery-wakeup.test.ts > 通道①：pao_change_status 落已交付 → 内联已解锁提示 > 上游交付瞬间下游就绪：返回文本带 [交付唤醒]；无就绪下游时零噪音 123ms
+   → [INVALID_TRANSITION] 拒绝标为已完成：机械验收 1/1 条未过，输出结构化结果留 owner
+ ✓ packages/coding-agent/test/pao/delivery-wakeup.test.ts > 通道①：pao_verify_card 机械全过自动交付 → 内联已解锁提示 > 自动落已交付时提示下游就绪卡 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/delivery-wakeup.test.ts > 通道①：pao_change_status 落已交付 → 内联已解锁提示 > 上游交付瞬间下游就绪：返回文本带 [交付唤醒]；无就绪下游时零噪音
+Error: [INVALID_TRANSITION] 拒绝标为已完成：机械验收 1/1 条未过，输出结构化结果留 owner
+ ❯ fail packages/coding-agent/src/pao/cards/tools.ts:54:9
+     52| function fail(error: unknown): never {
+     53|  if (error instanceof PaoCardError) {
+     54|   throw new Error(`[${error.code}] ${error.message}`);
+       |         ^
+     55|  }
+     56|  throw error;
+ ❯ executeChangeStatus packages/coding-agent/src/pao/cards/tools.ts:418:3
+ ❯ Object.execute packages/coding-agent/src/pao/cards/tools.ts:579:17
+ ❯ runTool packages/coding-agent/test/pao/delivery-wakeup.test.ts:145:17
+ ❯ packages/coding-agent/test/pao/delivery-wakeup.test.ts:179:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  01:01:49
+   Duration  851ms (transform 254ms, setup 0ms, import 469ms, tests 217ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/checks/E实施子代理/after-delivery-wakeup.json

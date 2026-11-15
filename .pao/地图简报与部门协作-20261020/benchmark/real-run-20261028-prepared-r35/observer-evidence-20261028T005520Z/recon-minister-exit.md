@@ -1,0 +1,6 @@
+- 部门:侦察
+- pid:1470
+- 会话标识:f96bbd04-2a4c-44ba-9939-b9c4919ee35c
+- 启动时间:2026-10-28T00:50:04.070Z
+- 留证原因:工作流异常停止，释放本实例部长并保留会话历史
+- stderr尾部:Warning: No project session found with id 'f96bbd04-2a4c-44ba-9939-b9c4919ee35c'; creating a new session with that id.

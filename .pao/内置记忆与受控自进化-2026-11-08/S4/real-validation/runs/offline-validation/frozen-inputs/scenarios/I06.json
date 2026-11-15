@@ -1,0 +1,92 @@
+{
+  "id": "I06",
+  "description": "同名项目和worktree相近词语",
+  "sessions": [
+    {
+      "sessionId": "sess-g",
+      "messages": [
+        {
+          "role": "user",
+          "content": "pao 项目的记忆存储定了吗？",
+          "timestamp": "2026-11-08T17:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "pao-dev 开发仓已定用 SQLite；另一个同名 pao 目录是 PAO_HOME 运行现场，不在同一项目。",
+          "timestamp": "2026-11-08T17:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "确认，pao-dev 用 SQLite。",
+          "timestamp": "2026-11-08T17:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "scope": {"projectId": "pao-dev"}
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "pao 记忆存储",
+          "mustContain": ["mem-pao-dev-sqlite"],
+          "mustNotContain": ["mem-pao-home-sqlite"]
+        }
+      ]
+    },
+    {
+      "sessionId": "sess-g-worktree",
+      "messages": [
+        {
+          "role": "user",
+          "content": "worktree 分支也要用 SQLite 吗？",
+          "timestamp": "2026-11-08T17:05:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "worktree 是同一项目 pao-dev 的分支，记忆范围按项目共享。",
+          "timestamp": "2026-11-08T17:05:05Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "scope": {"projectId": "pao-dev", "branch": "worktree-feature"}
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "记忆存储",
+          "mustContain": ["mem-pao-dev-sqlite"],
+          "mustNotContain": []
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-pao-dev-sqlite",
+        "kind": "decision",
+        "conclusion": "pao-dev 内置记忆存储使用 SQLite",
+        "confirmation": "confirmed",
+        "usageState": "active",
+        "scope": {"projectId": "pao-dev"}
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-g-001",
+        "sessionId": "sess-g",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

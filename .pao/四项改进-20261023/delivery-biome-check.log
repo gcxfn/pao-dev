@@ -1,0 +1,341 @@
+test\pao\delivery-retry-cumulative.test.ts:7:10 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    5 │ import { join } from "node:path";
+    6 │ import { afterEach, describe, expect, it } from "vitest";
+  > 7 │ import { baselineSnapshotPath, captureContentTree, snapshotClaimBaseline } from "../../src/pao/cards/baseline.ts";
+      │          ^^^^^^^^^^^^^^^^^^^^
+    8 │ import { createCard, loadCard, readCard, serializeCard } from "../../src/pao/cards/cardfile.ts";
+    9 │ import { deliverCard } from "../../src/pao/cards/delivery.ts";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    7 │ import·{·baselineSnapshotPath,·captureContentTree,·snapshotClaimBaseline·}·from·"../../src/pao/cards/baseline.ts";
+      │          ----------------------                                                                                   
+
+test\pao\delivery-retry-cumulative.test.ts:218:8 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable current is unused.
+  
+    216 │ 	const unsigned = await captureContentTree(root);
+    217 │ 	markDeliveredWithEvidence(root, cardsDir, 2, second.binding, unsigned.tree);
+  > 218 │ 	const current = await captureContentTree(root);
+        │ 	      ^^^^^^^
+    219 │ 	expect(git(root, ["rev-parse", `${firstEvidence.tree}`])).toBe(firstEvidence.tree);
+    220 │ 	return { root, cardsDir, firstBinding: first.binding, secondBinding: second.binding, stagedIndex };
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend current with an underscore.
+  
+    216 216 │   	const unsigned = await captureContentTree(root);
+    217 217 │   	markDeliveredWithEvidence(root, cardsDir, 2, second.binding, unsigned.tree);
+    218     │ - → const·current·=·await·captureContentTree(root);
+        218 │ + → const·_current·=·await·captureContentTree(root);
+    219 219 │   	expect(git(root, ["rev-parse", `${firstEvidence.tree}`])).toBe(firstEvidence.tree);
+    220 220 │   	return { root, cardsDir, firstBinding: first.binding, secondBinding: second.binding, stagedIndex };
+  
+
+test\pao\delivery-retry-cumulative.test.ts:316:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable current is unused.
+  
+    314 │ 		const unsigned = await captureContentTree(root);
+    315 │ 		markDeliveredWithEvidence(root, cardsDir, 2, second.binding, unsigned.tree);
+  > 316 │ 		const current = await captureContentTree(root);
+        │ 		      ^^^^^^^
+    317 │ 		const before = git(root, ["rev-parse", "HEAD"]);
+    318 │ 		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend current with an underscore.
+  
+    314 314 │   		const unsigned = await captureContentTree(root);
+    315 315 │   		markDeliveredWithEvidence(root, cardsDir, 2, second.binding, unsigned.tree);
+    316     │ - → → const·current·=·await·captureContentTree(root);
+        316 │ + → → const·_current·=·await·captureContentTree(root);
+    317 317 │   		const before = git(root, ["rev-parse", "HEAD"]);
+    318 318 │   		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+  
+
+test\pao\delivery-retry-cumulative.test.ts:392:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable current is unused.
+  
+    390 │ 			unsigned.tree,
+    391 │ 		);
+  > 392 │ 		const current = await captureContentTree(root);
+        │ 		      ^^^^^^^
+    393 │ 		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    394 │ 		expect(result.原因).toBe("累计成果归属不足");
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend current with an underscore.
+  
+    390 390 │   			unsigned.tree,
+    391 391 │   		);
+    392     │ - → → const·current·=·await·captureContentTree(root);
+        392 │ + → → const·_current·=·await·captureContentTree(root);
+    393 393 │   		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    394 394 │   		expect(result.原因).toBe("累计成果归属不足");
+  
+
+test\pao\delivery-retry-cumulative.test.ts:466:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable current is unused.
+  
+    464 │ 			unsigned.tree,
+    465 │ 		);
+  > 466 │ 		const current = await captureContentTree(root);
+        │ 		      ^^^^^^^
+    467 │ 		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    468 │ 		expect(result.交卷, JSON.stringify(result)).toBe(true);
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend current with an underscore.
+  
+    464 464 │   			unsigned.tree,
+    465 465 │   		);
+    466     │ - → → const·current·=·await·captureContentTree(root);
+        466 │ + → → const·_current·=·await·captureContentTree(root);
+    467 467 │   		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    468 468 │   		expect(result.交卷, JSON.stringify(result)).toBe(true);
+  
+
+src\pao\cards\delivery.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     329  329 │   	if (beforeTree === afterTree) return [];
+     330  330 │   	const result = await runGit(
+     331      │ - → → [
+     332      │ - → → → "diff",
+     333      │ - → → → "--name-status",
+     334      │ - → → → "-z",
+     335      │ - → → → "--no-ext-diff",
+     336      │ - → → → "--no-textconv",
+     337      │ - → → → beforeTree,
+     338      │ - → → → afterTree,
+     339      │ - → → → "--",
+     340      │ - → → → ".",
+     341      │ - → → ],
+          331 │ + → → ["diff",·"--name-status",·"-z",·"--no-ext-diff",·"--no-textconv",·beforeTree,·afterTree,·"--",·"."],
+     342  332 │   		repoRoot,
+     343  333 │   		60000,
+    ········· │ 
+     404  394 │   		let binding: ExecutionBinding;
+     405  395 │   		try {
+     406      │ - → → → binding·=
+     407      │ - → → → → execution·&&·attempt·===·currentAttempt
+     408      │ - → → → → → ?·execution
+     409      │ - → → → → → :·readExecutionBinding(key);
+          396 │ + → → → binding·=·execution·&&·attempt·===·currentAttempt·?·execution·:·readExecutionBinding(key);
+     410  397 │   		} catch {
+     411  398 │   			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 缺少真实执行绑定`) };
+    ········· │ 
+     430  417 │   			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的执行绑定在核验期间不可读`) };
+     431  418 │   		}
+     432      │ - → → const·stored·=·readAttemptBaseline(
+     433      │ - → → → baselineSnapshotPath(cardsDir,·card.card_no,·attempt),
+     434      │ - → → → boundaryKey,
+     435      │ - → → → boundary,
+     436      │ - → → );
+          419 │ + → → const·stored·=·readAttemptBaseline(baselineSnapshotPath(cardsDir,·card.card_no,·attempt),·boundaryKey,·boundary);
+     437  420 │   		if (
+     438  421 │   			!stored.ok ||
+    ········· │ 
+     505  488 │   			meaningful.length !== truth.length ||
+     506  489 │   			truth.some((entry) => {
+     507      │ - → → → → const·matches·=·meaningful.filter((change)·=>
+     508      │ - → → → → → declarationMatches(change,·entry,·baseline.projectRoot),
+     509      │ - → → → → );
+          490 │ + → → → → const·matches·=·meaningful.filter((change)·=>·declarationMatches(change,·entry,·baseline.projectRoot));
+     510  491 │   				if (matches.length === 0) return true;
+     511  492 │   				receiptClaims.add(matches[0]!.路径);
+    ········· │ 
+     557  538 │   				const changedPath = repoPath(change.路径, repoRoot);
+     558  539 │   				if (!changedPath) continue;
+     559      │ - → → → → otherClaims.set(
+     560      │ - → → → → → changedPath,
+     561      │ - → → → → → `${formatCardNumber(other.card_no)}·尝试${receipt.attempt}`,
+     562      │ - → → → → );
+          540 │ + → → → → otherClaims.set(changedPath,·`${formatCardNumber(other.card_no)}·尝试${receipt.attempt}`);
+     563  541 │   			}
+     564  542 │   		}
+    ········· │ 
+     631  609 │   				const tab = record.indexOf("\t");
+     632  610 │   				const [mode, type, object] = record.slice(0, tab).split(/\s+/);
+     633      │ - → → → → if·((!mode·||·!type·||·!object)·||·(type·!==·"blob"·&&·type·!==·"commit"))
+          611 │ + → → → → if·(!mode·||·!type·||·!object·||·(type·!==·"blob"·&&·type·!==·"commit"))
+     634  612 │   					throw new Error(`当前交付对象类型不支持：${path}`);
+     635  613 │   				const update = await runGitWithEnv(
+    ········· │ 
+     646  624 │   		}
+     647  625 │   		const write = await runGitWithEnv(["write-tree"], repoRoot, env, signal);
+     648      │ - → → if·(write.code·!==·0·||·!write.stdout.trim())·throw·new·Error(`生成受控交付·tree·失败：${write.stderr.slice(0,·200)}`);
+          626 │ + → → if·(write.code·!==·0·||·!write.stdout.trim())
+          627 │ + → → → throw·new·Error(`生成受控交付·tree·失败：${write.stderr.slice(0,·200)}`);
+     649  628 │   		return write.stdout.trim();
+     650  629 │   	} finally {
+    ········· │ 
+     661  640 │   ): Promise<boolean> {
+     662  641 │   	if (paths.length === 0) return false;
+     663      │ - → const·result·=·await·runGit(
+     664      │ - → → ["diff",·"--quiet",·head,·currentTree,·"--",·...paths],
+     665      │ - → → repoRoot,
+     666      │ - → → 60000,
+     667      │ - → → signal,
+     668      │ - → );
+          642 │ + → const·result·=·await·runGit(["diff",·"--quiet",·head,·currentTree,·"--",·...paths],·repoRoot,·60000,·signal);
+     669  643 │   	if (result.code === 0) return true;
+     670  644 │   	if (result.code === 1) return false;
+    ········· │ 
+     815  789 │   			throw new PaoCardError("INVALID_CARD", "同一交卷请求的基线 tree 已变化", { path: resultPath });
+     816  790 │   		}
+     817      │ - → → const·recordedTree·=·await·gitObject(["rev-parse",·`${persisted.deliveryCommit}^{tree}`],·execution.repositoryRoot);
+          791 │ + → → const·recordedTree·=·await·gitObject(
+          792 │ + → → → ["rev-parse",·`${persisted.deliveryCommit}^{tree}`],
+          793 │ + → → → execution.repositoryRoot,
+          794 │ + → → );
+     818  795 │   		if (recordedTree.code !== 0 || recordedTree.stdout.trim() !== persisted.deliveryTree) {
+     819  796 │   			throw new PaoCardError("INVALID_CARD", "已保存的受控交付对象不可读或 tree 不自洽", { path: resultPath });
+    ········· │ 
+     887  864 │   
+     888  865 │   	const message = buildCommitMessage(card);
+     889      │ - → const·deliveryTree·=·await·treeForPaths(
+     890      │ - → → execution.repositoryRoot,
+     891      │ - → → baselineTree,
+     892      │ - → → currentTree,
+     893      │ - → → paths,
+     894      │ - → → options?.signal,
+     895      │ - → );
+          866 │ + → const·deliveryTree·=·await·treeForPaths(execution.repositoryRoot,·baselineTree,·currentTree,·paths,·options?.signal);
+     896  867 │   	const delivery = await gitObject(
+     897  868 │   		[
+  
+
+test\pao\delivery-retry-cumulative.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { execFileSync } from "node:child_process";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { createHash } from "node:crypto";
+    3 │ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      8   8 │   import { createCard, loadCard, readCard, serializeCard } from "../../src/pao/cards/cardfile.ts";
+      9   9 │   import { deliverCard } from "../../src/pao/cards/delivery.ts";
+     10     │ - import·{·type·ExecutionBinding,·bindExecutionContext·}·from·"../../src/pao/cards/execution-context.ts";
+         10 │ + import·{·bindExecutionContext,·type·ExecutionBinding·}·from·"../../src/pao/cards/execution-context.ts";
+     11  11 │   import { appendReceipt } from "../../src/pao/cards/receipts.ts";
+     12  12 │   import { changeCardStatus } from "../../src/pao/cards/statemachine.ts";
+  
+
+test\pao\delivery-retry-cumulative.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    119 119 │   		结果: attempt === 1 ? "失败" : "成功",
+    120 120 │   		摘要: attempt === 1 ? "尝试一留下已证实成果" : "尝试二只读复验旧成果",
+    121     │ - → → ...(attempt·===·1
+    122     │ - → → → ?·{·失败类型:·"transient"·as·const·}
+    123     │ - → → → :·{·任务态:·options.taskState·??·("completed"·as·const)·}),
+        121 │ + → → ...(attempt·===·1·?·{·失败类型:·"transient"·as·const·}·:·{·任务态:·options.taskState·??·("completed"·as·const)·}),
+    124 122 │   		changes,
+    125 123 │   		...(options.verification !== undefined ? { verification: options.verification } : {}),
+    ······· │ 
+    362 360 │   		const cardsDir = join(root, ".pao", "卡");
+    363 361 │   		mkdirSync(cardsDir, { recursive: true });
+    364     │ - → → await·createCard(cardsDir,·{·目标:·"脏文件",·部门:·"测试",·验收:·"存在:·用户文件.txt",·创建:·"2026-10-23·10:00"·});
+        362 │ + → → await·createCard(cardsDir,·{
+        363 │ + → → → 目标:·"脏文件",
+        364 │ + → → → 部门:·"测试",
+        365 │ + → → → 验收:·"存在:·用户文件.txt",
+        366 │ + → → → 创建:·"2026-10-23·10:00",
+        367 │ + → → });
+    365 368 │   		const first = await claimWithEvidence(root, cardsDir, 1, "1");
+    366 369 │   		writeFileSync(join(root, "用户文件.txt"), "认领前用户内容\nworker 追加\n");
+    ······· │ 
+    383 386 │   		});
+    384 387 │   		const unsigned = await captureContentTree(root);
+    385     │ - → → markDeliveredWithEvidence(
+    386     │ - → → → root,
+    387     │ - → → → cardsDir,
+    388     │ - → → → 2,
+    389     │ - → → → second.binding,
+    390     │ - → → → unsigned.tree,
+    391     │ - → → );
+        388 │ + → → markDeliveredWithEvidence(root,·cardsDir,·2,·second.binding,·unsigned.tree);
+    392 389 │   		const current = await captureContentTree(root);
+    393 390 │   		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    ······· │ 
+    457 454 │   		});
+    458 455 │   		const unsigned = await captureContentTree(root);
+    459     │ - → → markDeliveredWithEvidence(
+    460     │ - → → → root,
+    461     │ - → → → cardsDir,
+    462     │ - → → → 2,
+    463     │ - → → → second.binding,
+    464     │ - → → → unsigned.tree,
+    465     │ - → → );
+        456 │ + → → markDeliveredWithEvidence(root,·cardsDir,·2,·second.binding,·unsigned.tree);
+    466 457 │   		const current = await captureContentTree(root);
+    467 458 │   		const result = await deliverCard(cardsDir, 1, { executionKey: second.binding.key });
+    468 459 │   		expect(result.交卷, JSON.stringify(result)).toBe(true);
+    469     │ - → → const·paths·=·git(root,·[
+    470     │ - → → → "diff-tree",
+    471     │ - → → → "--no-commit-id",
+    472     │ - → → → "--name-status",
+    473     │ - → → → "-r",
+    474     │ - → → → "-M",
+    475     │ - → → → result.提交哈希!,
+    476     │ - → → ]).split(/\r?\n/);
+        460 │ + → → const·paths·=·git(root,·["diff-tree",·"--no-commit-id",·"--name-status",·"-r",·"-M",·result.提交哈希!]).split(
+        461 │ + → → → /\r?\n/,
+        462 │ + → → );
+    477 463 │   		expect(paths).toContain("D\t将删除.txt");
+    478 464 │   		expect(paths).toContain("R100\t已跟踪.txt\t新名字.txt");
+    ······· │ 
+    502 488 │   		writeFileSync(join(fixture.root, "旧成果.txt"), "尝试一写出的成果\n只读复验于第二次尝试\n");
+    503 489 │   		const unsignedEvidence = await captureContentTree(fixture.root);
+    504     │ - → → markDeliveredWithEvidence(
+    505     │ - → → → fixture.root,
+    506     │ - → → → fixture.cardsDir,
+    507     │ - → → → 2,
+    508     │ - → → → fixture.secondBinding,
+    509     │ - → → → unsignedEvidence.tree,
+    510     │ - → → );
+        490 │ + → → markDeliveredWithEvidence(fixture.root,·fixture.cardsDir,·2,·fixture.secondBinding,·unsignedEvidence.tree);
+    511 491 │   		expect(git(fixture.root, ["rev-parse", `${beforeEvidence.tree}^{tree}`])).toBe(beforeEvidence.tree);
+    512 492 │   		const result = await deliverCard(fixture.cardsDir, 1, { executionKey: fixture.secondBinding.key });
+    ······· │ 
+    589 569 │   			],
+    590 570 │   		});
+    591     │ - → → markDeliveredWithEvidence(
+    592     │ - → → → secondRoot,
+    593     │ - → → → cardsDir,
+    594     │ - → → → 2,
+    595     │ - → → → secondBinding,
+    596     │ - → → → (await·captureContentTree(secondRoot)).tree,
+    597     │ - → → );
+        571 │ + → → markDeliveredWithEvidence(secondRoot,·cardsDir,·2,·secondBinding,·(await·captureContentTree(secondRoot)).tree);
+    598 572 │   
+    599 573 │   		git(source, ["worktree", "remove", "--force", firstRoot]);
+  
+
+Checked 3 files in 383ms. No fixes applied.
+Found 3 errors.
+Found 5 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+

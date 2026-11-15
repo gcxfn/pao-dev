@@ -1,0 +1,33 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\memory\\gbrain.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\memory\\gbrain.ts"
+index 403dd54..1e103ce 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\memory\\gbrain.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\memory\\gbrain.ts"
+@@ -279,8 +279,10 @@ export class GbrainVendor implements MemoryVendor {
+ 		return { 记忆ID: String(payload.id), 状态: payload.status };
+ 	}
+ 
+-	async recall(searchQuery: string, limit: number = DEFAULT_RECALL_LIMIT): Promise<MemoryHit[]> {
+-		const payload = payloadFromResult(await this.callRequired("recall", { query: searchQuery, limit: limit }));
++	async recall(searchQuery: string, limit: number = DEFAULT_RECALL_LIMIT, signal?: AbortSignal): Promise<MemoryHit[]> {
++		const payload = payloadFromResult(
++			await this.callRequired("recall", { query: searchQuery, limit: limit }, signal),
++		);
+ 		if (!Array.isArray(payload.facts)) {
+ 			throw new Error("gbrain recall 未返回 facts 数组");
+ 		}
+@@ -327,9 +329,13 @@ export class GbrainVendor implements MemoryVendor {
+ 		if (client) await client.close();
+ 	}
+ 
+-	private async callRequired(toolName: string, params: Record<string, unknown>): Promise<CallToolResult> {
++	private async callRequired(
++		toolName: string,
++		params: Record<string, unknown>,
++		signal?: AbortSignal,
++	): Promise<CallToolResult> {
+ 		if (!this.client) throw new Error("gbrain 未启动(应先经 启动();由 MemoryVendorManager 保证)");
+-		return await this.client.callTool(toolName, params);
++		return await this.client.callTool(toolName, params, signal ? { signal } : {});
+ 	}
+ }
+ 

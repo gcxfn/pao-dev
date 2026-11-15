@@ -1,0 +1,48 @@
+
+Running 3 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\workflow-control.spec.ts:29:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 (26.0s)
+  x  2 apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） (27.0s)
+  ok 3 apps\desktop\tests\core\workflow-control.spec.ts:180:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (17.9s)
+
+
+  1) apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('canvas-load-error')
+    Expected substring: [32m"画布暂未读到此次实例"[39m
+    Received string:    [31m"The workflow canvas could not be loaded. 工作流已启动，请在左侧选择此次实例；发现多个同名实例，未自动猜选。"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-load-error')[22m
+    [2m    9 × locator resolved to <p role="alert" class="error-banner" data-testid="canvas-load-error">The workflow canvas could not be loaded. 工作流已启动，请…</p>[22m
+    [2m      - unexpected value "The workflow canvas could not be loaded. 工作流已启动，请在左侧选择此次实例；发现多个同名实例，未自动猜选。"[22m
+
+
+      166 |     // 不进画布（画布只认带冻结配方的 v2 实例），横幅须如实告知而非谎报同名冲突；启动真相以磁盘为准。
+      167 |     await expect(page.getByTestId("workflow-wizard")).toBeHidden();
+    > 168 |     await expect(page.getByTestId("canvas-load-error")).toContainText("画布暂未读到此次实例");
+          |                                                         ^
+      169 |     // 真实落盘：实例清单＋首批卡（手动配方只落卡不派发——隔离本地执行，非真实供应商）。
+      170 |     const instances = await walkNames(project, "工作流实例-");
+      171 |     expect(instances).toEqual(["工作流实例-手动流.md"]);
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\workflow-control.spec.ts:168:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-向导真实-cee57-实例，修复后启动落实例与首批卡（手动配方，无模型请求）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-control.spec.ts:111:5 › 向导真实启动：预检不过不落假实例，修复后启动落实例与首批卡（手动配方，无模型请求） 
+  2 passed (1.2m)

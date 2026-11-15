@@ -1,0 +1,528 @@
+--- a/packages/coding-agent/src/pao/workflow/tools.ts
++++ b/packages/coding-agent/src/pao/workflow/tools.ts
+@@ -7,6 +7,7 @@
+  * worker 派发不在本层：落卡后由接线层把新卡交给 pao_fanout（配合点说明见模块尾部）。
+  */
+ 
++import { createHash } from "node:crypto";
+ import { existsSync, readFileSync } from "node:fs";
+ import { join, resolve, sep } from "node:path";
+ import { Type } from "typebox";
+@@ -18,7 +19,7 @@
+ 	ExtensionToolContext,
+ } from "../../core/extensions/types.ts";
+ import { parseFrontmatter } from "../../utils/frontmatter.ts";
+-import { projectRootForCards } from "../cards/index.ts";
++import { formatCardNumber, loadCard, parseCardRef, projectRootForCards } from "../cards/index.ts";
+ import { addPaoSubcommand } from "../command-router.ts";
+ import { toastEnabled } from "../host/config.ts";
+ import { paoHome as defaultPaoHome } from "../knowledge/paths.ts";
+@@ -109,6 +110,89 @@
+ 	backgroundCount(): { inFlight: number };
+ }
+ 
++function autoChainCardIdentity(
++	options: AutoChainOptions,
++	flow: ReturnType<typeof readControl> | undefined,
++	refs: readonly string[],
++) {
++	if (flow === undefined) return [];
++	return [...new Set(refs)].sort().map((ref) => {
++		const card = loadCard(options.cardsDir, parseCardRef(ref));
++		return {
++			card: formatCardNumber(card.card_no),
++			status: card.frontmatter.status,
++			attempt: card.frontmatter.attempt,
++			completed: card.frontmatter.completed,
++			// 完整当前有效回执参与身份：verification、changes 等业务变化不能被误判为旧事件。
++			receipts: card.receipts.filter(
++				(receipt) => receipt.archive_flag === undefined && receipt.attempt === card.frontmatter.attempt,
++			),
++		};
++	});
++}
++
++/**
++ * 自动链事件身份取当前业务事实，不解析正文，也不纳入历史轮、历史回执、停链记录或机械步骤。
++ * owner 控制动作、当前节点/卡/尝试、当前有效回执变化都会产生新状态；通知 key 使用同一业务状态，
++ * 避免重复执行产生相同停因时反复唤醒。
++ */
++function autoChainNoticeKey(
++	recipe: WorkflowRecipe,
++	options: AutoChainOptions,
++	chain: AutoChainReport,
++	flow: ReturnType<typeof readControl> | undefined,
++): string {
++	const state = {
++		workflow: recipe.名字,
++		instance: flow?.实例 ?? recipe.文件路径,
++		owner: flow?.owner,
++		parameters: flow?.参数,
++		paused: flow?.暂停,
++		ruling: flow?.裁定,
++		controlStatus: flow?.状态,
++		status: chain.report.status,
++		stopReason: chain.report.stop_reason,
++		nodes: (flow?.节点 ?? chain.report.nodes).map((node) => {
++			const name = "轮次" in node ? node.名字 : node.name;
++			const report = chain.report.nodes.find((candidate) => candidate.name === name);
++			return "轮次" in node
++				? {
++						name: node.名字,
++						round: node.轮次,
++						cards: node.卡,
++						decompositionEnded: node.拆解结束,
++						zeroCardReason: node.零卡理由,
++						ministerSession: node.部长会话,
++						confirmed: node.确认,
++						decision: node.判定,
++						reworkReason: node.重做理由,
++						repairReleased: node.放行修复,
++						status: report?.status,
++						hold: report?.hold,
++					}
++				: {
++						name: node.name,
++						round: node.round,
++						cards: node.card_refs,
++						manualConfirm: node.manual_confirm,
++						confirmed: node.confirmed,
++						status: node.status,
++						hold: node.hold,
++					};
++		}),
++		cards: autoChainCardIdentity(options, flow, [
++			...(flow?.节点.flatMap((node) => node.卡) ?? []),
++			...(flow === undefined ? chain.report.nodes.flatMap((node) => node.card_refs ?? []) : []),
++		]),
++	};
++	const notice = {
++		state,
++		stopReason: chain.stopReason,
++		waitingForEvent: chain.waitingForEvent === true,
++	};
++	return createHash("sha256").update(JSON.stringify(notice)).digest("hex");
++}
++
+ /** 已派发快照：登记表里本卡目录下仍在跑的 worker 行（runner 登记即「已派发」事实源，盘点 ①）。 */
+ function activeWorkerLines(options: AutoChainOptions): string {
+ 	const root = resolve(options.cardsDir);
+@@ -191,8 +275,7 @@
+ 			options.worktreeHost,
+ 			projectRootForCards(options.cardsDir),
+ 		);
+-		if (!capability.ok)
+-			throw new Error(`配方要求独立审核验证，但${capability.reason}；须提供隔离验证能力后再启动`);
++		if (!capability.ok) throw new Error(`配方要求独立审核验证，但${capability.reason}；须提供隔离验证能力后再启动`);
+ 	}
+ 	if (recipe.版本 === 2) {
+ 		if (!options.paoHome) throw new Error("v2 工作流启动须指定 PAO_HOME 以核对部门与技能");
+@@ -453,16 +536,28 @@
+ 		}
+ 		notifySurface.inject(event as DispatchNotifyEvent);
+ 	});
+-	if (!options?.notifySurface) pi.on("session_shutdown", () => notifySurface.shutdown());
+ 	const chainInFlight = new Map<string, { done: Promise<void> }>();
++	const lastNoticeKey = new Map<string, string>();
++	pi.on("session_shutdown", () => {
++		if (!options?.notifySurface) notifySurface.shutdown();
++		lastNoticeKey.clear();
++		chainInFlight.clear();
++	});
+ 	/** 链收敛后处理：与同步路径同口径（驱动段只渲染,链段含叫人 toast＋终态复盘入队）＋通知缓冲。 */
+ 	const settleChain = async (
++		key: string,
+ 		recipe: WorkflowRecipe,
+ 		options: AutoChainOptions,
+ 		chain: AutoChainReport,
+ 		useDrive: boolean,
+ 	): Promise<void> => {
+ 		if (options.运行器.isStopped()) return;
++		const flow = recipe.版本 === 2 ? readControl(recipe, options) : undefined;
++		const noticeKey = autoChainNoticeKey(recipe, options, chain, flow);
++		const previousNoticeKey = lastNoticeKey.get(key);
++		lastNoticeKey.set(key, noticeKey);
++		if (previousNoticeKey === noticeKey) return;
++		if (previousNoticeKey !== undefined) notifySurface.markHandled(previousNoticeKey);
+ 		if (!useDrive) {
+ 			await toastIfHeld(recipe, chain, options, common);
+ 			common.queueReview(chain.report);
+@@ -471,7 +566,11 @@
+ 			`[自动链${chain.stopReason === undefined ? "完成" : "停下"}] 工作流「${recipe.名字}」\n${renderAutoChain(chain)}`,
+ 			undefined,
+ 			undefined,
+-			{ category: chain.waitingForEvent ? "progress" : chain.report.status === "completed" ? "result" : "ruling" },
++			{
++				category: chain.waitingForEvent ? "progress" : chain.report.status === "completed" ? "result" : "ruling",
++				key: noticeKey,
++				retainAfterInjected: chain.waitingForEvent !== true && chain.report.status !== "completed",
++			},
+ 		);
+ 	};
+ 	const background: AutoChainBackground = {
+@@ -498,9 +597,12 @@
+ 				// 快速失败保持同步抛给调用方,不让受理掩盖启动类错误;工具 signal 只守护这段同步面。
+ 				options.signal?.throwIfAborted();
+ 				let snapshot = firstReport;
+-				if (snapshot === undefined && recipe.版本 === 2)
+-					snapshot = await readControlReport(readControl(recipe, options), options);
++				const flow = recipe.版本 === 2 ? readControl(recipe, options) : undefined;
++				if (snapshot === undefined && flow !== undefined) snapshot = await readControlReport(flow, options);
+ 				else if (snapshot === undefined) snapshot = await tickWorkflow(recipe, options);
++				options.signal?.throwIfAborted();
++				// 显式推流仍由现有驱动器重核成果；卡状态不变不能证明文件没有改变。
++				// 相同停因的主动唤醒只在 settleChain 的通知生产口去重。
+ 				const done = (async (): Promise<void> => {
+ 					try {
+ 						// signal 不接后台链（派单先例）:工具调用此刻就返回,取消语义由 runner 树杀承担
+@@ -512,7 +614,7 @@
+ 							useDrive && options.driveDepartments
+ 								? await options.driveDepartments(recipe, bgOptions)
+ 								: await runAutoChain(recipe, bgOptions, snapshot);
+-						await settleChain(recipe, options, chain, useDrive);
++						await settleChain(key, recipe, options, chain, useDrive);
+ 					} catch (error) {
+ 						const reason = error instanceof Error ? error.message : String(error);
+ 						// 普通异常仍即时通知；显式全停后的取消/中止只清理在途，不唤醒主控或部长。
+@@ -577,9 +679,7 @@
+ 			"主控的 v2 节点确认、暂停、人工恢复、当前节点重开（reopen）或审核回边返工（rework）。resume/reopen 须真实界面确认。常规质量返工只走已声明回边。拆卡、判定和原卡返修由真实部长提交。",
+ 		parameters: Type.Object({
+ 			...baseParams,
+-			action: Type.Union(
+-				["confirm", "pause", "resume", "reopen", "rework", "rule"].map((s) => Type.Literal(s)),
+-			),
++			action: Type.Union(["confirm", "pause", "resume", "reopen", "rework", "rule"].map((s) => Type.Literal(s))),
+ 			node: Type.Optional(Type.String()),
+ 			instance: Type.Optional(Type.String()),
+ 			round: Type.Optional(Type.Integer({ minimum: 1 })),
+--- a/packages/coding-agent/test/pao/worker-notify.test.ts
++++ b/packages/coding-agent/test/pao/worker-notify.test.ts
+@@ -192,6 +192,30 @@
+ 		expect(sections[DISPATCH_NOTIFY_SECTION]).toContain("普通无变化轮询");
+ 	});
+ 
++	it("保留型 progress 注入后仍等待显式处理但不计入后台未读", () => {
++		let wakes = 0;
++		const surface = createDispatchNotifySurface({
++			resolvePaoHome: () => undefined,
++			wakeUp: () => {
++				wakes++;
++			},
++		});
++		surface.notify("等待事件", undefined, undefined, {
++			category: "progress",
++			key: "chain:progress",
++			retainAfterInjected: true,
++		});
++		expect(wakes).toBe(0);
++		expect(surface.unreadCount()).toBe(0);
++		const sections: Record<string, string> = {};
++		surface.inject({ systemPromptOptions: { sections } });
++		expect(sections[DISPATCH_NOTIFY_SECTION]).toContain("等待事件");
++		expect(surface.unreadCount()).toBe(0);
++		expect(surface.retainedCount()).toBe(1);
++		expect(surface.markHandled("chain:progress")).toBe(true);
++		expect(surface.retainedCount()).toBe(0);
++	});
++
+ 	it("正文缓冲可同时留 progress 与终态,只有需要处理的通知计入后台未读", () => {
+ 		const surface = createDispatchNotifySurface({ resolvePaoHome: () => undefined });
+ 		surface.notify("普通进度", undefined, undefined, { category: "progress" });
+--- a/packages/coding-agent/test/pao/workflow-auto-chain.test.ts
++++ b/packages/coding-agent/test/pao/workflow-auto-chain.test.ts
+@@ -5,13 +5,13 @@
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ 
+ import type { ExtensionAPI, ExtensionToolContext, ToolDefinition } from "../../src/core/extensions/types.ts";
+-import { changeCardStatus } from "../../src/pao/cards/index.ts";
+ import { deliverCard } from "../../src/pao/cards/delivery.ts";
++import { appendReceipt, changeCardStatus } from "../../src/pao/cards/index.ts";
+ import { registerCardTools } from "../../src/pao/cards/tools.ts";
+ import { listPaoSubcommands, resetPaoSubcommandsForTest } from "../../src/pao/command-router.ts";
++import { DispatchBriefError } from "../../src/pao/dispatch-brief/errors.ts";
+ import * as toastModule from "../../src/pao/notify/toast.ts";
+ import * as atomic from "../../src/pao/shared/atomic.ts";
+-import { DispatchBriefError } from "../../src/pao/dispatch-brief/errors.ts";
+ import * as dispatchCore from "../../src/pao/worker/dispatch-core.ts";
+ import { locateDispatchCard } from "../../src/pao/worker/dispatch-core.ts";
+ import {
+@@ -136,6 +136,8 @@
+ 	pi: ExtensionAPI;
+ 	/** S6 后台链通知注入面：消费式读一轮 before_agent_start 段 */
+ 	fireBeforeAgentStart(): Record<string, string>;
++	/** 模拟本扩展实例收到 session_shutdown；不触发其他夹具实例。 */
++	fireSessionShutdown(): Promise<void>;
+ }
+ 
+ function capturePi(hasUI = true): Captured {
+@@ -153,12 +155,18 @@
+ 		fireBeforeAgentStart: () => {
+ 			throw new Error("未初始化");
+ 		},
++		fireSessionShutdown: async (_event?: unknown) => {
++			throw new Error("未初始化");
++		},
+ 	};
+ 	const handlers = new Map<string, ((event: unknown) => void)[]>();
+ 	captured.fireBeforeAgentStart = () => {
+ 		const sections: Record<string, string> = {};
+ 		for (const handler of handlers.get("before_agent_start") ?? []) handler({ systemPromptOptions: { sections } });
+ 		return sections;
++	};
++	captured.fireSessionShutdown = async () => {
++		for (const handler of handlers.get("session_shutdown") ?? []) await handler({});
+ 	};
+ 	captured.pi = {
+ 		registerTool: (tool: ToolDefinition) =>
+@@ -289,6 +297,7 @@
+ 		...extraOptions,
+ 		resolvePaoHome: () => paoHome,
+ 		resolveCardsDir: () => cardsDir,
++		resolveOwnerSessionId: () => "owner",
+ 		runner,
+ 	});
+ 	const fixture: Fixture = {
+@@ -440,7 +449,10 @@
+ 	});
+ 
+ 	it.each(["prepare", "dispatch"])("v2 地图过期保留原引用供宿主复核：%s（模拟派发异常）", async (stage) => {
+-		const f = setup("地图恢复", recipeYaml("地图恢复", true, nodeYaml("A", "存在: 产物.txt")).replace("---\n", "---\n版本: 2\n"));
++		const f = setup(
++			"地图恢复",
++			recipeYaml("地图恢复", true, nodeYaml("A", "存在: 产物.txt")).replace("---\n", "---\n版本: 2\n"),
++		);
+ 		const recipe = loadRecipe(f.paoHome, "地图恢复");
+ 		const options = { cardsDir: f.cardsDir, paoHome: f.paoHome, ownerSessionId: "owner", 运行器: f.runner };
+ 		await startControl(recipe, {}, options);
+@@ -450,9 +462,13 @@
+ 		await addNodeCards(recipe, options, identity, [{ goal: "实现", acceptance: "存在: 产物.txt" }]);
+ 		await endDecomposition(recipe, options, identity);
+ 		const ref = "pao-map://original-planning-map";
+-		vi.spyOn(dispatchCore, "executeDispatch").mockRejectedValue(new DispatchBriefError("stale_map", "地图覆盖内容已变化", {
+-			stage, kind: "workflow-map-handoff", ref,
+-		}));
++		vi.spyOn(dispatchCore, "executeDispatch").mockRejectedValue(
++			new DispatchBriefError("stale_map", "地图覆盖内容已变化", {
++				stage,
++				kind: "workflow-map-handoff",
++				ref,
++			}),
++		);
+ 		const result = await runAutoChain(recipe, options);
+ 		expect(result.steps.find((step) => step.staleMapRef)?.staleMapRef).toBe(ref);
+ 		expect(result.stopReason).toContain("地图覆盖内容已变化");
+@@ -657,9 +673,7 @@
+ 		await bindMinister(recipe, options, "A", "minister-A");
+ 		const flow = readControl(recipe, options);
+ 		const identity = { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" };
+-		const [aRef] = await addNodeCards(recipe, options, identity, [
+-			{ goal: "A任务", acceptance: "存在: 产物.txt" },
+-		]);
++		const [aRef] = await addNodeCards(recipe, options, identity, [{ goal: "A任务", acceptance: "存在: 产物.txt" }]);
+ 		await endDecomposition(recipe, options, identity);
+ 		f.runner.scripts.set("0001", () => {
+ 			writeFileSync(join(f.repo, "产物.txt"), "产物\n");
+@@ -693,8 +707,8 @@
+ 			operator: owner,
+ 			new_status: "delivered",
+ 			basis: "owner 已逐项核对并接受三项未运行记录",
+-			accepted_deviations: receipt.verification!
+-				.map((item, verification_index) => ({ item, verification_index }))
++			accepted_deviations: receipt
++				.verification!.map((item, verification_index) => ({ item, verification_index }))
+ 				.filter(({ item }) => item.结论 === "fail" || item.结论 === "not_run")
+ 				.map(({ item, verification_index }) => ({
+ 					attempt: 1,
+@@ -704,7 +718,7 @@
+ 				})),
+ 		});
+ 		expect(cardAt(f.cardsDir, "0001").frontmatter).toMatchObject({ status: "delivered", attempt: 1 });
+-		expect((await readControlReport(readControl(recipe, options))).stop_reason).toBeUndefined();
++		expect((await readControlReport(readControl(recipe, options), options)).stop_reason).toBeUndefined();
+ 		const delivered = await deliverCard(f.cardsDir, 1);
+ 		expect(delivered.交卷).toBe(true);
+ 
+@@ -1641,6 +1655,183 @@
+ 		expect(f.runner.runs).toHaveLength(1);
+ 		expect(cardAt(f.cardsDir, "0001").frontmatter.status).toBe("delivered");
+ 	});
++	it("S6 v2 同一人工门重复推流仍核验但不重发通知，真实确认后通知新结果", async () => {
++		const f = setup(
++			"门去重",
++			recipeYaml("门去重", true, [
++				...nodeYaml("A", "存在: 产物.txt", ["    人工确认: true"]),
++				...nodeYaml("B", "存在: 产物2.txt", ["    depends_on: [A]"]),
++			]).replace("---\n", "---\n版本: 2\n"),
++		);
++		const recipe = loadRecipe(f.paoHome, "门去重");
++		const options = { cardsDir: f.cardsDir, paoHome: f.paoHome, ownerSessionId: "owner", 运行器: f.runner };
++		await startControl(recipe, {}, options);
++		await bindMinister(recipe, options, "A", "minister-A");
++		const flow = readControl(recipe, options);
++		const identity = { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" };
++		await addNodeCards(recipe, options, identity, [{ goal: "甲活", acceptance: "存在: 产物.txt" }]);
++		await endDecomposition(recipe, options, identity);
++		f.runner.scripts.set("0001", () => {
++			writeFileSync(join(f.repo, "产物.txt"), "产物\n");
++			return fakeReceipt("0001", "success", ["产物.txt"], f.repo);
++		});
++		f.runner.scripts.set("0002", () => {
++			writeFileSync(join(f.repo, "产物2.txt"), "产物2\n");
++			return fakeReceipt("0002", "success", ["产物2.txt"], f.repo);
++		});
++		await toolOf(f.captured, "pao_push_flow").execute("t1", { name: "门去重" });
++		await settleChains(f);
++		expect(chainNotice(f)).toContain("等待人工确认");
++		expect(f.runner.runs).toHaveLength(1);
++		expect(f.captured.messages).toEqual([DISPATCH_NOTIFY_WAKEUP_TEXT]);
++
++		const repeated = textOf(await toolOf(f.captured, "pao_push_flow").execute("t2", { name: "门去重" }));
++		await settleChains(f);
++		expect(repeated).toContain("后台推进");
++		expect(f.runner.runs).toHaveLength(1);
++		expect(chainNotice(f)).toBe("");
++		expect(f.captured.messages).toEqual([DISPATCH_NOTIFY_WAKEUP_TEXT]);
++
++		await toolOf(f.captured, "pao_control_node").execute("t3", {
++			name: "门去重",
++			action: "confirm",
++			node: "A",
++			instance: flow.实例,
++			round: 1,
++		});
++		await bindMinister(recipe, options, "B", "minister-B");
++		await addNodeCards(recipe, options, { 实例: flow.实例, 节点: "B", 轮次: 1, 部长会话: "minister-B" }, [
++			{ goal: "乙活", acceptance: "存在: 产物2.txt" },
++		]);
++		await endDecomposition(recipe, options, { 实例: flow.实例, 节点: "B", 轮次: 1, 部长会话: "minister-B" });
++		const confirmed = textOf(await toolOf(f.captured, "pao_push_flow").execute("t4", { name: "门去重" }));
++		expect(confirmed).toContain("后台推进");
++		await settleChains(f);
++		expect(chainNotice(f)).toContain("状态：completed");
++		expect(f.runner.runs).toHaveLength(2);
++		expect(f.captured.messages).toEqual([DISPATCH_NOTIFY_WAKEUP_TEXT, DISPATCH_NOTIFY_WAKEUP_TEXT]);
++	});
++
++	it("同一人工门重新核验，纯后台派卡计数变化不重发通知", async () => {
++		const f = setup(
++			"后台记账",
++			recipeYaml("后台记账", true, nodeYaml("A", "存在: 产物.txt", ["    人工确认: true"])).replace(
++				"---\n",
++				"---\n版本: 2\n",
++			),
++		);
++		const recipe = loadRecipe(f.paoHome, "后台记账");
++		const options = { cardsDir: f.cardsDir, paoHome: f.paoHome, ownerSessionId: "owner", 运行器: f.runner };
++		await startControl(recipe, {}, options);
++		await bindMinister(recipe, options, "A", "minister-A");
++		const flow = readControl(recipe, options);
++		await addNodeCards(recipe, options, { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" }, [
++			{ goal: "甲活", acceptance: "存在: 产物.txt" },
++		]);
++		await endDecomposition(recipe, options, { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" });
++		f.runner.scripts.set("0001", () => {
++			writeFileSync(join(f.repo, "产物.txt"), "产物\n");
++			return fakeReceipt("0001", "success", ["产物.txt"], f.repo);
++		});
++		const controlFile = join(f.cardsDir, "..", "工作流实例-后台记账.md");
++		const first = textOf(await toolOf(f.captured, "pao_push_flow").execute("t1", { name: "后台记账" }));
++		expect(first).toContain("后台推进");
++		await settleChains(f);
++		expect(f.captured.messages).toEqual([DISPATCH_NOTIFY_WAKEUP_TEXT]);
++		expect(chainNotice(f)).toContain("等待人工确认");
++		writeFileSync(
++			controlFile,
++			readFileSync(controlFile, "utf8").replace(/^已派卡:.*$/m, (line) => `${line.split(":")[0]}: 2`),
++		);
++
++		const repeated = textOf(await toolOf(f.captured, "pao_push_flow").execute("t2", { name: "后台记账" }));
++		await settleChains(f);
++		expect(repeated).toContain("后台推进");
++		expect(chainNotice(f)).toBe("");
++		expect(f.captured.messages).toEqual([DISPATCH_NOTIFY_WAKEUP_TEXT]);
++		await f.captured.fireSessionShutdown();
++		const afterShutdown = textOf(await toolOf(f.captured, "pao_push_flow").execute("t3", { name: "后台记账" }));
++		expect(afterShutdown).toContain("后台推进");
++	});
++
++	it("owner 修改实际成果后显式推流仍重新驱动复验", async () => {
++		const f = setup(
++			"成果复验",
++			recipeYaml("成果复验", true, nodeYaml("A", "存在: 产物.txt", ["    人工确认: true"])).replace(
++				"---\n",
++				"---\n版本: 2\n",
++			),
++		);
++		const recipe = loadRecipe(f.paoHome, "成果复验");
++		const options = { cardsDir: f.cardsDir, paoHome: f.paoHome, ownerSessionId: "owner", 运行器: f.runner };
++		await startControl(recipe, {}, options);
++		await bindMinister(recipe, options, "A", "minister-A");
++		const flow = readControl(recipe, options);
++		await addNodeCards(recipe, options, { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" }, [
++			{ goal: "甲活", acceptance: "存在: 产物.txt" },
++		]);
++		await endDecomposition(recipe, options, { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" });
++		f.runner.scripts.set("0001", () => {
++			writeFileSync(join(f.repo, "产物.txt"), "产物\n");
++			return fakeReceipt("0001", "success", ["产物.txt"], f.repo);
++		});
++		await toolOf(f.captured, "pao_push_flow").execute("t1", { name: "成果复验" });
++		await settleChains(f);
++		expect(chainNotice(f)).toContain("等待人工确认");
++
++		writeFileSync(join(f.repo, "产物.txt"), "owner 修改后的成果\n");
++		const text = textOf(await toolOf(f.captured, "pao_push_flow").execute("t2", { name: "成果复验" }));
++		await settleChains(f);
++		expect(text).toContain("后台推进");
++		expect(f.runner.runs).toHaveLength(1);
++		// 文件修改可重新核验，但原人工门仍在；没有新的停因不重复主动通知。
++		expect(controlReport(readControl(recipe, options)).nodes[0].hold).toBe("等待人工确认");
++		expect(chainNotice(f)).toBe("");
++	});
++
++	it("同一实例、节点、轮次和停因下出现新的有效回执时重新受理", async () => {
++		const f = setup(
++			"新回执",
++			recipeYaml("新回执", true, nodeYaml("A", "存在: 产物.txt\\n人工看质量", ["    人工确认: true"])).replace(
++				"---\n",
++				"---\n版本: 2\n",
++			),
++		);
++		const recipe = loadRecipe(f.paoHome, "新回执");
++		const options = { cardsDir: f.cardsDir, 运行器: f.runner, paoHome: f.paoHome, ownerSessionId: "owner" };
++		await startControl(recipe, {}, options);
++		await bindMinister(recipe, options, "A", "minister-A");
++		const flow = readControl(recipe, options);
++		const identity = { 实例: flow.实例, 节点: "A", 轮次: 1, 部长会话: "minister-A" };
++		await addNodeCards(recipe, options, identity, [{ goal: "甲活", acceptance: "存在: 产物.txt" }]);
++		await endDecomposition(recipe, options, identity);
++		f.runner.scripts.set("0001", () => {
++			writeFileSync(join(f.repo, "产物.txt"), "产物\n");
++			return {
++				...fakeReceipt("0001", "success", ["产物.txt"], f.repo),
++				verification: [{ 条件: "人工看质量", 结论: "not_run" as const }],
++			};
++		});
++		await toolOf(f.captured, "pao_push_flow").execute("t1", { name: "新回执" });
++		await settleChains(f);
++		expect(chainNotice(f)).toContain("not_run");
++		const card = cardAt(f.cardsDir, "0001");
++		expect(card.frontmatter.status).toBe("in_progress");
++		appendReceipt(card, {
++			尝试号: card.frontmatter.attempt,
++			时间: "2026-10-24 23:59",
++			结果: "success",
++			摘要: "同一尝试的新有效回执",
++		});
++
++		const text = textOf(await toolOf(f.captured, "pao_push_flow").execute("t2", { name: "新回执" }));
++		await settleChains(f);
++		expect(text).toContain("后台推进");
++		expect(f.runner.runs).toHaveLength(1);
++		expect(chainNotice(f)).toContain("自动链停下");
++		expect(cardAt(f.cardsDir, "0001").receipts).toHaveLength(2);
++	});
++
+ 	it("回执回调只在卡面事实落定后触发；回调抛错仍完成验收与交付", async () => {
+ 		const f = setup("回调顺序", recipeYaml("回调顺序", true, nodeYaml("A", "存在: 产物.txt")));
+ 		f.scriptDefault(["产物.txt"]);

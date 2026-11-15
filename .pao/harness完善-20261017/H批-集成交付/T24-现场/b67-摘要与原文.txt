@@ -1,0 +1,2245 @@
+[assistant]
+Now check the packaging job. Use job_output without wait first (probably still running), then decide.
+
+Actually let me wait a bit with wait: true and a timeout, since I'm blocked on it.
+
+Meanwhile, I could also prepare the T24-C judgement lines. But let's check the job.
+
+[assistant • job_output]
+{"job_id":"pwsh-6dc86aff91714578","wait":true,"timeout_ms":600000}
+
+[tool • job_output]
+OLD PAO.exe bytes=204530176 mtime=2026-10-17 14:24:56
+PACKAGE2 END=2026-10-17 22:24:12 EXIT=0 ELAPSED_SEC=303.9 LOG_BYTES=10572
+--- tail 25 ---
+  • loaded configuration  file=D:\AI\workspace\pao-dev\desktop\apps\desktop\electron-builder.yml
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=win32 arch=x64 electron=37.10.3 appOutDir=release\win-unpacked
+  • detected workspace root for project using packageManager field  pm=pnpm config=pnpm@10.25.0 resolved=D:\AI\workspace\pao-dev\desktop projectDir=D:\AI\workspace\pao-dev\desktop\apps\desktop
+  • searching for node modules  pm=pnpm searchDir=D:\AI\workspace\pao-dev\desktop\apps\desktop
+  • dependency not found on disk  dependencies=["parse5@6.0.1","retry@0.12.0","lru-cache@7.18.3","@aws-sdk/token-providers@3.1129.0","ws@8.20.0","ansi-regex@5.0.1","ansi-regex@5.0.1","data-uri-to-buffer@6.0.2","ansi-regex@5.0.1","@types/unist@2.0.11","escape-string-regexp@5.0.0"]
+  • updating asar integrity executable resource  executablePath=release\win-unpacked\PAO.exe
+  • signing with signtool.exe  path=release\win-unpacked\PAO.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-x64\OpenConsole.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\third_party\conpty\1.23.251008001\win10-arm64\OpenConsole.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-x64\winpty-agent.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-x64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-arm64\winpty-agent.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\prebuilds\win32-arm64\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\node-pty\build\Release\conpty\OpenConsole.exe
+  • signing with signtool.exe  path=release\win-unpacked\resources\app.asar.unpacked\node_modules\@esbuild\win32-x64\esbuild.exe
+node.exe : (node:5844) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to
+ security vulnerabilities, as the arguments are not escaped, only concatenated.
+所在位置 D:\tools\npm-global\pnpm.ps1:24 字符: 5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.mjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:5844) [DE...y concatenated.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where the warning was created)
+--- new package ---
+  D:\AI\workspace\pao-dev\desktop\apps\desktop\release\win-unpacked\PAO.exe bytes=204530176 mtime=2026-10-17 22:24:11
+  D:\AI\workspace\pao-dev\desktop\apps\desktop\release\win-unpacked\resources\app.asar bytes=210616175 mtime=2026-10-17 22:24:08
+[status: completed, exit code: 0]
+
+[user]
+<acp tokens="63" type="text">m04005</acp>
+Time sampled while preparing turn 13, step 78: 2026-10-17T22:24:13+08:00[Asia/Shanghai]
+Browser time zone for this request: unavailable. Ask the user to clarify otherwise-unqualified dates and times.
+Elapsed since the preceding step context: 13m 30s.
+
+[assistant]
+Packaging succeeded: EXIT=0, 303.9s (5.1 min), LOG_BYTES=10572, new PAO.exe 204,530,176 B (same size as old, but mtime 22:24:11), app.asar 210,616,175 B (was 210,613,231 → +2,944 B, reflecting the new kernel + sources) at 22:24:08.
+
+Now step 3: rerun production lane on the NEW package, excluding pao-live-smoke. Requirements: clear ELECTRON_RUN_AS_NODE (and confirm it's clear after packaging), cwd `desktop\apps\desktop`, env PI_APP_TEST_LANE=production, PI_APP_REAL_AUTH=0, PI_APP_TEST_MODE=background.
+
+Which specs are in tests/production? From recon (b62): 7 specs, including pao-live-smoke.spec.ts (not run per user authorization), plus notification-onboarding-packaged, notification-settings-packaged, packaged-extension-view, packaged-smoke, release-zip-*, mcp-config... I should verify the exact list before running. Let me list the directory and then build an explicit spec list (safer than --grep-invert).
+
+Run in background (it took 110s for 7 specs first time; expect ~2 min). Actually let me first list + then run in the same command: list names, then run explicit paths excluding pao-live-smoke.
+
+I'll do: 
+```powershell
+$specs = Get-ChildItem "$d\apps\desktop\tests\production" -Filter *.spec.ts | Where-Object { $_.Name -ne 'pao-live-smoke.spec.ts' } | ForEach-Object { "apps/desktop/tests/production/$($_.Name)" }
+```
+then pass $specs to playwright. Careful: `pnpm --dir ../.. exec playwright test -c ... @specs` — pwsh splatting with & works: `& pnpm --dir ../.. exec playwright test ... @specs`.
+
+Also check env var cleared: `$env:ELECTRON_RUN_AS_NODE` should be empty. Add a line confirming.
+
+Let me run it in background with the log going to `t24-production-new-package.log`.
+
+Note: Playwright's line reporter output redirected → UTF-16LE (lesson). Parsing later must handle that.
+
+Let me start it.
+
+[assistant • pwsh]
+{"command":"$d='D:\\AI\\workspace\\pao-dev\\desktop'\nSet-Location \"$d\\apps\\desktop\"\n'--- tests/production spec files ---'\nGet-ChildItem \"$d\\apps\\desktop\\tests\\production\" -Filter *.spec.ts | ForEach-Object { \"  $($_.Name)\" }\n$log='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-production-new-package.log'\nRemove-Item Env:\\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue\n\"ELECTRON_RUN_AS_NODE after clear: '$($env:ELECTRON_RUN_AS_NODE)'\"\n$specs = Get-ChildItem \"$d\\apps\\desktop\\tests\\production\" -Filter *.spec.ts | Where-Object { $_.Name -ne 'pao-live-smoke.spec.ts' } | ForEach-Object { \"apps/desktop/tests/production/$($_.Name)\" }\n\"SPEC_COUNT=$($specs.Count)\"\n$env:PI_APP_TEST_LANE='production'; $env:PI_APP_REAL_AUTH='0'; $env:PI_APP_TEST_MODE='background'\n$sw=[System.Diagnostics.Stopwatch]::StartNew()\n& pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts @specs --reporter=line *> $log\n$code=$LASTEXITCODE; $sw.Stop()\n\"PROD2 END=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') EXIT=$code ELAPSED_SEC=$([math]::Round($sw.Elapsed.TotalSeconds,1)) LOG_BYTES=$((Get-Item $log).Length)\"\nRemove-Item Env:PI_APP_TEST_LANE,Env:PI_APP_REAL_AUTH,Env:PI_APP_TEST_MODE -ErrorAction SilentlyContinue\n'--- tail 45 ---'\nGet-Content $log -Encoding unicode -Tail 45","description":"Rerun production lane on new package","run_in_background":true}
+
+[tool • pwsh]
+started background job pwsh-3b435ab4af2b4708
+
+[assistant]
+While that runs (~2 min), let me prepare the report structure and content. I need to rewrite `T24-解包发行-Windows实测.md` with four sections T24-A/B/C/D, two tables (old package vs new package).
+
+I need the exact first-run results (from the old package). Those are in b63 summary. Let me search/decompress to get the exact per-item data for the "old package" table, plus the report's current content (v1) so I can edit it rather than rewrite blindly.
+
+Let me read the current report file first (it's the artifact I'll rewrite). 261 lines. Let me read it.
+
+Actually, more efficient: read the report to see its current structure and which content I can keep (traps, env facts, etc.). Then after the new run finishes, do a targeted rewrite of the parts that must change.
+
+Let me read it now.
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\T24-解包发行-Windows实测.md"}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\.pao\harness完善-20261017\H批-集成交付\T24-解包发行-Windows实测.md</path>
+<type>file</type>
+<content>
+1: # T24 解包发行 Windows 实测（H 批）
+2: 
+3: - 日期：2026-10-17
+4: - 执行：teammate `d3-host`
+5: - 结论口径：**数字全部来自本机实跑日志，不估算**；正式 PAO_HOME（`D:\AI\workspace\pao`）全程未读写，所有 userDataDir 都是 `mkdtemp` 出来的临时目录。
+6: 
+7: ---
+8: 
+9: ## §1 结论
+10: 
+11: 一句话：**Windows 上的解包发行（unpacked）关键流「部分通过」**——打包件本身能被真实启动并跑完一条完整线程（`packaged-smoke` 通过）、CI 在 Windows 上真正执行的打包校验两项全绿（`verify:packaged-runtime-deps:windows`、`verify:launcher-contract` EXIT=0）；production 车道 7 例 **2 passed / 5 failed（1.8 分钟，EXIT=1）**，其中 4 条是 macOS 通知语义（Windows 不适用），1 条是**跨车道同形的扩展视图点击态失效，不是打包缺陷**。
+12: 
+13: | 项 | 实测结果 | 证据 |
+14: |---|---|---|
+15: | production 车道（7 例） | `5 failed` / `2 passed (1.8m)`，EXIT=1，110.4 秒 | `t24-production-run.log`（25,026 B，UTF-16LE+BOM，222 行，5 个失败块） |
+16: | 打包件能不能真启动并建线程 | **通过**（`packaged-smoke.spec.ts:11`） | 同上，`[6/7]` 无失败 |
+17: | 打包件终端 | **弱通过**（`packaged-terminal.spec.ts:11`，见 §4.2 的口径警告） | 同上，`[7/7]` 无失败 |
+18: | 打包运行时依赖（CI Windows 步骤） | **EXIT=0**，157.4 秒 | `t24-verify-packaged-deps.log`（3,868 B） |
+19: | 开发启动器 argv/PATH 契约（CI Windows 步骤） | **EXIT=0** | `t24-verify-launcher-contract.log`（734 B） |
+20: | 现场重跑 `package:win:dir`（重新打包） | **未能完成：EXIT=1，1.3 秒，被 fork 的 fail-closed「内核 dist 陈旧」门拒绝** | `t24-package-win-dir.log`（2,050 B），逐字消息见 §3.2 |
+21: | 本轮被测的包是谁 | **今天 14:24 那份 `release\win-unpacked`**（不是现场重打的；asar 内含 D 批标记，见 §2.3） | 文件 mtime + asar 二进制标记 |
+22: 
+23: 三条最重要的话：
+24: 
+25: 1. **打包件是真的能跑**：`packaged-smoke` 断言的 5 个环节全过（`process.defaultApp=false` 且 `execPath` 就是 `win-unpacked\PAO.exe`、侧栏列出临时工作区、点 New thread → 填 prompt → Start thread → `.chat-header__title` 有标题、composer 拿到焦点、transcript 里出现 prompt 文本）。
+26: 2. **5 条红里只有 1 条值得追**，而它的对比证据在**另一条车道**上：core 车道的 `extension-view-security.spec.ts` 有三条**同形**失败（点 Increment 后计数不动），说明这是 Windows 上扩展视图「点击 → Chord 状态回传」失效，**dev 车道与打包车道一起红 ⇒ 与打包无关**。
+27: 3. **重新打包这条路本轮没走通，原因不是 Windows 不行**，而是 fork 的陈旧门 fail-closed：`PAO\packages\coding-agent\src\pao\已知边界.md`（16:04:49）比 `PAO\packages\coding-agent\dist\bundle\cli.js`（14:22:34）新。要现场重打必须先在内核根跑 `pnpm build:offline`——**那是共享 dist 变更、超出我的写范围，我没跑，交 lead 决策**（见 §6.2）。
+28: 
+29: ---
+30: 
+31: ## §2 本轮产物与被测包
+32: 
+33: ### 2.1 落盘产物（全部在 `D:\AI\workspace\pao-dev\.pao\harness完善-20261017\H批-集成交付\`）
+34: 
+35: | 文件 | 字节 | 内容 |
+36: |---|---|---|
+37: | `T24-解包发行-Windows实测.md` | 本文件 | 报告 |
+38: | `t24-package-win-dir.log` | 2,050 | 现场重打包的失败原文（陈旧门） |
+39: | `t24-production-run.log` | 25,026 | production 车道 7 例逐字日志（UTF-16LE+BOM） |
+40: | `t24-verify-packaged-deps.log` | 3,868 | CI「打包运行时依赖」校验输出 |
+41: | `t24-verify-launcher-contract.log` | 734 | CI「开发启动器契约」校验输出 |
+42: 
+43: 一次性解析脚本（不在交付目录，放系统临时目录）：`C:\Users\ASUS\AppData\Local\Temp\d3-parse-prod.mjs`——处置 Playwright line reporter 日志的 UTF-16LE+BOM 与 ANSI 转义，输出 `LOG_BYTES/LINES/UTF16/SUMMARY/FAIL_BLOCKS` 与每个失败块的关键证据行。
+44: 
+45: 失败现场（`desktop\apps\desktop\test-results\`，5 个目录）：
+46: 
+47: ```
+48: production-notification-on-aad01-ork-moves-to-the-background            1 file   22,658 B
+49: production-notification-se-91778--authoritative-macOS-status           1 file   23,075 B
+50: production-notification-se-be9b6-urning-from-System-Settings           2 files 200,119 B
+51: production-notification-se-f81a0-d-macOS-notification-access           1 file   23,076 B
+52: production-packaged-extens-b1d2c--exchanges-live-Chord-state           1 file   26,571 B
+53: ```
+54: 
+55: （`packaged-smoke` / `packaged-terminal` 通过，按 `retain-on-failure` 不产物。）
+56: 
+57: ### 2.2 被测包：`desktop\apps\desktop\release\win-unpacked`
+58: 
+59: | 项 | 实测 |
+60: |---|---|
+61: | 入口 exe | `PAO.exe` **204,530,176 B**，mtime 2026-10-17 14:24:56 |
+62: | `resources\app.asar` | **210,613,231 B**，mtime 2026-10-17 14:24:53 |
+63: | `resources\app.asar.unpacked` | **189 文件 / 24,132,686 B**；`node_modules` 下：`@earendil-works`、`@esbuild`、`@silvia-odwyer`、`node-pty`、`quickjs-wasi` |
+64: | Electron 运行时文件 | 齐（`locales\`、`*.pak`、`icudtl.dat`、`resources.pak`、`vk_swiftshader*`、`d3dcompiler_47.dll`、`dxcompiler.dll`、`dxil.dll`、`vulkan-1.dll` 等） |
+65: | `release\` 其他条目 | `.icon-ico\`、`builder-debug.yml`（14:24）、`icudtl.dat
+
+[... tool result middle pruned ...]
+
+B） |
+246: | 隔离 | `PI_APP_REAL_AUTH=0`；`buildDesktopLaunchEnv()` 会剔除所有供应商凭证变量并设 `PI_APP_USER_DATA_DIR`（临时） |
+247: | 前置 | 每条 Electron 命令前 `Remove-Item Env:\ELECTRON_RUN_AS_NODE` |
+248: 
+249: **残留进程（22:1x 复查）**：`electron` **0**、`PAO` **0**。系统里 8 个 `node.exe` 全部与本车道无关（2 个 DSH `billion-context`，pid 28452@17:58:26 / 22908@20:50:18；3 个 OpenAI Codex runtime `./server.mjs` 18:11:45–46；1 个 `./tools/serve-game.mjs` pid 32572@20:07:45；2 个 Codex `--eval` pid 29996/4876@20:08:55）。本轮启动的 Electron 进程已随用例 `finally` 关闭，**无残留、无手工 kill 需要**。
+250: 
+251: ---
+252: 
+253: ## §8 字节自检
+254: 
+255: ```
+256: # 本文件写入后实测（PowerShell：ReadAllBytes + UTF8.GetString）
+257: T24-解包发行-Windows实测.md
+258: # → bytes=19488 lines=261 fffd=0 ctrl=0 cjk=2179 bom=False  mtime=2026-10-17 22:17:00
+259: ```
+260: 
+261: 校验口径：`\uFFFD` 计数必须为 0（无编码损坏）、`[\x00-\x08\x0B\x0C\x0E-\x1F]` 计数必须为 0（无控制字符）、无 BOM、UTF-8。日志侧同理：`t24-production-run.log` 是 **UTF-16LE + BOM**（`FF FE`），读它必须按 Unicode 解码再剥 ANSI，否则每个字符后夹 `\0`，正则什么都数不到（这是本轮踩过的坑）。
+
+(End of file - total 261 lines)
+</content>
+
+[assistant]
+I read the head and tail; the middle was pruned. I have a good sense of the structure: §1 结论, §2 产物与被测包, §3 (跑法/失败原文), §4 (逐条?), §5?, §6 待决策, §7 环境, §8 字节自检.
+
+Lead wants the report to have four sections T24-A/B/C/D. I could:
+- Keep the report's existing sections but rename/restructure so that A/B/C/D are explicit. Lead's requirement: "报告里必须有的四节" — T24-A 打包, T24-B 生产车道 (two tables), T24-C 失败定性, T24-D 未验与口径.
+
+Approach: rewrite the whole file cleanly with the four T24 sections at the top level (T24-A..D), keeping the useful content (traps §3, env facts, byte self-check) folded inside D or an appendix. That's cleanest for the reviewer and avoids a Frankenstein file. I'll rewrite fully with `write` after the new run finishes.
+
+I need the old-package table details. Let me pull the key facts from b63 via search_context or decompress. Let me decompress b63 to get the exact per-item old-run results (5 failures with spec:line, use case name, first error line, and the 2 passes).
+
+Actually I have most of it in my summary of b63 (which I wrote). Let me read b63 to be precise — decompress to context is fine (5389ch ≈ 1.4K tokens).
+
+Also need §4/§5 of current report (pruned middle) — but I'm going to rewrite anyway; the facts I need from it (old run details) are in b63. Let me decompress b63.
+
+Meanwhile check the production job.
+
+[assistant • decompress]
+{"blockId":"b63"}
+
+[tool • decompress]
+[Block b63 content — 81 item(s)]
+Content (162461 chars) written to: C:\Users\ASUS\AppData\Local\Temp\acp-decompress-b63-1792247096277.txt
+Use the read tool to access it.
+
+[assistant]
+It wrote to a file (too large). Let me read the summary tier (not full). I asked for b63 default = one tier up = T1 summary. It returned 162461 chars?! That means b63 is at T0 and one tier up... hmm, it says content written to file. The tiers might not exist yet, so it gave originals. Let me instead search_context for the old production results specifics, or read the relevant part of the temp file.
+
+Simpler: read specific sections of the temp file with grep for the failure names. Actually I mostly need the old-run table rows; I can reconstruct from what I know (in b63 summary I wrote: 5 failures with details). Let me just grep the temp file for "failed" / spec names to extract exact lines.
+
+Actually, the first-run log file still exists: `t24-production-run.log`. I can parse it directly with my parse script approach — that's authoritative and cheap. Let me write a small parse command that extracts the failure blocks (spec:line, name, first error) from the UTF-16LE log. I'll do it in Node via a temp .mjs? PowerShell can do it: read lines as Unicode, strip ANSI, find headers `^\s*\d+\)\s+\S*spec\.ts`, and print each block's first 3 non-empty lines + the summary lines.
+
+Let me do that for the old log now (and later for the new log similarly).
+
+Also check the job status.
+
+[assistant • pwsh]
+{"command":"$p='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-production-run.log'\n$lines=[System.IO.File]::ReadAllLines($p,[System.Text.Encoding]::Unicode)\n$clean = $lines | ForEach-Object { $_ -replace '\\x1b\\[[0-9;]*[A-Za-z]','' }\n\"TOTAL_LINES=$($clean.Count)\"\n$idx=@(); for($i=0;$i -lt $clean.Count;$i++){ if($clean[$i] -match '^\\s*\\d+\\)\\s+\\S*spec\\.ts'){ $idx+=$i } }\n\"FAIL_HEADERS=$($idx.Count)\"\nforeach($i in $idx){\n  $blk=$clean[$i..([math]::Min($i+9,$clean.Count-1))] | Where-Object { $_.Trim() -ne '' }\n  '==='\n  $blk | ForEach-Object { '  ' + $_.Trim() }\n}\n'--- summary lines ---'\n$clean | Select-String -Pattern 'passed|failed|skipped' | Select-Object -Last 3 | ForEach-Object { $_.Line.Trim() }\n'--- job status ---'\n(Get-Job | Out-String).Trim()","description":"Parse old-package production log"}
+
+[tool • pwsh]
+TOTAL_LINES=221
+FAIL_HEADERS=5
+===
+  1) apps\desktop\tests\production\notification-onboarding-packaged.spec.ts:17:5 › requests notification permission in the packaged app when active work moves to the background
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+  - Timeout 5000ms exceeded while waiting on the predicate
+===
+  2) apps\desktop\tests\production\notification-settings-packaged.spec.ts:19:5 › shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+  - Timeout 5000ms exceeded while waiting on the predicate
+===
+  3) apps\desktop\tests\production\notification-settings-packaged.spec.ts:65:5 › keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+  - Timeout 5000ms exceeded while waiting on the predicate
+===
+  4) apps\desktop\tests\production\notification-settings-packaged.spec.ts:103:5 › refreshes packaged notification status after returning from System Settings
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "denied"
+  Received: "granted"
+  Call Log:
+  - Timeout 5000ms exceeded while waiting on the predicate
+===
+  5) apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 › packaged extension frame loads its bundled bridge and exchanges live Chord state
+  Error: expect(locator).toHaveText(expected) failed
+  Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+  Expected: "Count 1 · activations 1"
+  Received: "Count 0 · activations 1"
+  Timeout:  5000ms
+  Call log:
+--- summary lines ---
+Error: expect(locator).toHaveText(expected) failed
+5 failed
+2 passed (1.8m)
+--- job status ---
+
+
+
+[assistant]
+Old-package table data captured exactly:
+
+1) notification-onboarding-packaged.spec.ts:17:5 — "requests notification permission in the packaged app when active work moves to the background" — Expected "default" / Received "granted"
+2) notification-settings-packaged.spec.ts:19:5 — "shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status" — Expected "default" / Received "granted"
+3) notification-settings-packaged.spec.ts:65:5 — "keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access" — Expected "default" / Received "granted"
+4) notification-settings-packaged.spec.ts:103:5 — "refreshes packaged notification status after returning from System Settings" — Expected "denied" / Received "granted"
+5) packaged-extension-view.spec.ts:16:5 — "packaged extension frame loads its bundled bridge and exchanges live Chord state" — `#counter` Expected "Count 1 · activations 1" / Received "Count 0 · activations 1"
+
+2 passed: packaged-smoke, packaged-terminal (need names confirmed — from b62: production specs list. Let me verify the spec list; the job I started prints the spec file list — I'll get that from the job output).
+
+Now, notification failure detail: `Timeout 5000ms exceeded while waiting on the predicate` and expected default vs received granted — note this is the app's *reported* status. Interesting: the app reports "granted" on Windows because Electron's Notification.permission on Windows returns "granted" always? Actually in Electron on Windows, `Notification.permission` returns "granted". Yes — Chromium on Windows reports "granted" for notifications. And the spec sets `PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS=...` env + status file to force "default"/"denied" — but the helper is macOS-only (notification-permission.ts:330 `process.platform !== "darwin" || !app.isPackaged` guard for the test helper). So on Windows the test helper is ignored → real permission "granted" → mismatch. That's the precise judgement with line numbers:
+- `desktop\apps\desktop\electron\platform\notification-permission.ts:330` — `if (process.platform !== "darwin" || !app.isPackaged) {` (the test helper hook, i.e. the env vars at :13-16 are only honoured on darwin+packaged)
+- `:269` — `if (process.platform !== "darwin") {` (early return for non-darwin in the status query path)
+- `:205` — `if (process.platform === "darwin" && app.isPackaged) {`
+
+Wait, I should double-check what those lines actually do, because I want to state the判据 precisely ("读了哪个 API / 哪行断言"). Let me read notification-permission.ts around lines 1-40, 195-215, 260-280, 320-345.
+
+Also read the specs' assertion lines to cite: notification-onboarding-packaged.spec.ts:42ish? I have partial from b64: spec assertions use `globalThis.window.piApp.getNotificationPermissionStatus()` and env overrides. Let me re-read the two spec files quickly to cite exact lines (they're small: 57 lines and ~120 lines).
+
+Let me check the running job first — it may already be done. Then gather the notification evidence.
+
+[assistant • job_output]
+{"job_id":"pwsh-3b435ab4af2b4708","timeout_ms":300000,"wait":true}
+
+[tool • job_output]
+--- tests/production spec files ---
+  applications-relaunch.spec.ts
+  finder-env-open-folder.spec.ts
+  notification-onboarding-packaged.spec.ts
+  notification-settings-packaged.spec.ts
+  open-folder-real.spec.ts
+  packaged-extension-view.spec.ts
+  packaged-smoke.spec.ts
+  packaged-terminal.spec.ts
+  pao-live-smoke.spec.ts
+  release-zip-reopen-new-thread.spec.ts
+  release-zip-smoke.spec.ts
+ELECTRON_RUN_AS_NODE after clear: ''
+SPEC_COUNT=10
+PROD2 END=2026-10-17 22:26:23 EXIT=1 ELAPSED_SEC=114.3 LOG_BYTES=43492
+--- tail 45 ---
+
+
+[1A[2K(node:24864) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[13/13] apps\desktop\tests\production\release-zip-smoke.spec.ts:11:5 › launches the packaged release zip app bundle from an extracted download path and starts a thread
+[1A[2K  9) apps\desktop\tests\production\release-zip-smoke.spec.ts:11:5 › launches the packaged release zip app bundle from an extracted download path and starts a thread 
+
+    Error: No packaged macOS release zip found under D:\AI\workspace\pao-dev\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.
+
+       at helpers\packaged-app.ts:73
+
+      71 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+      72 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+    > 73 |     entries.find((entry) => entry.isFile() && entry.name.endsWith(".zip"));
+         |           ^
+      74 |
+      75 |   if (!zipEntry) {
+      76 |     throw new Error(
+        at resolvePackagedReleaseZip (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\packaged-app.ts:73:11)
+        at extractPackagedReleaseZipAppBundle (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\packaged-app.ts:78:19)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\release-zip-smoke.spec.ts:17:25
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-release-zip-smo-8bf0e-ad-path-and-starts-a-thread\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-release-zip-smo-8bf0e-ad-path-and-starts-a-thread\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  9 failed
+    apps\desktop\tests\production\applications-relaunch.spec.ts:15:5 › launches an installed app copy from /Applications and relaunches with persisted state 
+    apps\desktop\tests\production\notification-onboarding-packaged.spec.ts:17:5 › requests notification permission in the packaged app when active work moves to the background 
+    apps\desktop\tests\production\notification-settings-packaged.spec.ts:19:5 › shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status 
+    apps\desktop\tests\production\notification-settings-packaged.spec.ts:65:5 › keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access 
+    apps\desktop\tests\production\notification-settings-packaged.spec.ts:103:5 › refreshes packaged notification status after returning from System Settings 
+    apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 › packaged extension frame loads its bundled bridge and exchanges live Chord state 
+    apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:20:5 › relaunches a packaged release-zip build with a new auto-titled thread and restores title plus transcript 
+    apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:93:5 › relaunches a packaged release-zip build with multiple new threads and restores transcript selection 
+    apps\desktop\tests\production\release-zip-smoke.spec.ts:11:5 › launches the packaged release zip app bundle from an extracted download path and starts a thread 
+  2 skipped
+  2 passed (1.9m)
+[status: completed, exit code: 0]
+
+[assistant]
+Important: the tests/production directory has **11 spec files**, not 7! My earlier recon said 7 (probably I listed something narrower). Now:
+- applications-relaunch.spec.ts
+- finder-env-open-folder.spec.ts
+- notification-onboarding-packaged.spec.ts
+- notification-settings-packaged.spec.ts
+- open-folder-real.spec.ts
+- packaged-extension-view.spec.ts
+- packaged-smoke.spec.ts
+- packaged-terminal.spec.ts
+- pao-live-smoke.spec.ts (excluded)
+- release-zip-reopen-new-thread.spec.ts
+- release-zip-smoke.spec.ts
+
+10 specs run (excluding pao-live-smoke), 13 tests total ([13/13]) → 9 failed / 2 skipped / 2 passed (1.9m), EXIT=1, 114.3s, LOG_BYTES=43492.
+
+New failures vs old:
+- #1 applications-relaunch.spec.ts:15:5 (macOS `/Applications`) — new: this spec wasn't run in round 1 (round 1 had 7 specs: probably notification×2, packaged-extension-view, packaged-smoke, packaged-terminal, pao-live-smoke?, release-zip?). Hmm round 1: 5 failed + 2 passed = 7 tests. Which specs? Old run had 5 failures: notification-onboarding (:17), notification-settings (:19, :65, :103), packaged-extension-view (:16). 2 passed: presumably packaged-smoke and packaged-terminal. So round 1 probably ran only 5 specs (notification-onboarding, notification-settings, packaged-extension-view, packaged-smoke, packaged-terminal) — I likely passed an explicit spec list of 5 or used a grep. Now running all 10 adds 5 more tests: applications-relaunch (1), finder-env-open-folder (?), open-folder-real (?), release-zip-reopen-new-thread (2), release-zip-smoke (1) = 5 tests, of which 2 skipped (probably finder-env-open-folder + open-folder-real skipped on Windows? or finder-env is macOS-only → skip), 3 failed (applications-relaunch, release-zip-reopen ×2, release-zip-smoke) — that's 4 failed + ... let me count: new failures list = 9 total = 5 (old same) + 4 new: applications-relaunch, release-zip-reopen-new-thread (:20), release-zip-reopen-new-thread (:93), release-zip-smoke. And 2 skipped = finder-env-open-folder + open-folder-real (likely macOS/darwin-gated or `test.skip`).
+
+So the new run's 9 failures = 5 same-as-before (4 notification + 1 packaged-extension-view) + 4 platform/missing-artifact ones:
+- applications-relaunch: installed app copy from `/Applications` → macOS-only, no such dir on Windows → fails at helper.
+- release-zip-*: "No packaged macOS release zip found" → macOS-only; we only have win-unpacked dir.
+- packaged-extension-view: `#counter` Count 0 vs Count 1 — cross-lane same-shape (extension view click state) → not packaging-related.
+
+2 passed: need to identify — packaged-smoke, packaged-terminal presumably (both [n/13] no failure). The tail shows only the last part; the "2 passed" listing is above. I need the pass names. Let me parse the new log for the summary block: lines after `9 failed` list → `2 skipped` list → `2 passed` list. The tail shows `2 skipped` then `2 passed (1.9m)` without names (Playwright lists skipped names and passed names? In line reporter, the final summary lists failed names, then skipped count (names if few), then passed count. Here it printed `2 skipped` with no names... hmm it printed "2 skipped" then "2 passed (1.9m)". Actually line reporter prints:
+```
+  9 failed
+    <names...>
+  2 skipped
+    <names...>
+  2 passed (1.9m)
+```
+The tail I see shows `2 skipped` and immediately `2 passed (1.9m)` — the skipped names may have been printed after `2 skipped` but before... no. Playwright's line reporter (list style) prints failed with names, and for passed/skipped just counts. Earlier for core it printed `10 skipped` without names (I derived them by grep). Right — so I need to determine which 2 were skipped and which 2 passed from the per-test progress lines `[N/13]`. Each progress line shows the spec; only failures get a `)` marker. To find passes/skips: parse all `/13]` lines in order and compare with failure list; the remaining 2 are passed/skipped (distinguishing pass vs skip needs the ANSI-stripped progress line — Playwright writes `✓`/`-`? In line reporter, each completed test prints a line like `[1/13] ... › title` without status; the status appears on the next iteration clearing. Hmm.
+
+Easier: count 13 tests by listing tests with `--list`? Or check the specs for `test.skip` to identify the 2 skipped (like the core lane analysis). Let me grep tests/production for `test.skip` / `describe.skip` and for `darwin` guards.
+
+Plan for evidence gathering (fast):
+1. Parse new log: FAIL_HEADERS=9, extract first error lines per failure (needed for the table).
+2. `grep -n "test.skip\|skip(" tests/production` and `darwin` to identify skipped ones.
+3. Identify the 2 passed among the 11-1(pao-live)=10 specs minus 9 failed minus 2 skipped = ... wait 10 specs → 13 tests. 9 failed + 2 skipped + 2 passed = 13 ✓. So 2 passed.
+
+Let me get the `[N/13]` lines to enumerate all 13 tests in order, then subtract.
+
+Then T24-C: notification macOS judgement (read notification-permission.ts key lines + spec assertion lines).
+And applications-relaunch details (what it does at :15, where it failed) and release-zip details (helper packaged-app.ts:73 — macOS-only zip).
+Also verify:packaged-runtime-deps:windows result (3868B, EXIT=0, from b63) — earlier in round 1 I ran it; keep as is (lead thought 0B; correct him).
+
+Let me now run the parse + greps in one command.
+
+[assistant • pwsh]
+{"command":"$p='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-production-new-package.log'\n$lines=[System.IO.File]::ReadAllLines($p,[System.Text.Encoding]::Unicode)\n$clean = $lines | ForEach-Object { $_ -replace '\\x1b\\[[0-9;]*[A-Za-z]','' }\n\"TOTAL_LINES=$($clean.Count)\"\n$idx=@(); for($i=0;$i -lt $clean.Count;$i++){ if($clean[$i] -match '^\\s*\\d+\\)\\s+\\S*spec\\.ts'){ $idx+=$i } }\n\"FAIL_HEADERS=$($idx.Count)\"\nforeach($i in $idx){\n  $blk=$clean[$i..([math]::Min($i+7,$clean.Count-1))] | Where-Object { $_.Trim() -ne '' }\n  '==='\n  $blk | Select-Object -First 5 | ForEach-Object { '  ' + $_.Trim() }\n}\n'--- progress lines ([N/13]) ---'\n$seen=@{}\nfor($i=0;$i -lt $clean.Count;$i++){ if($clean[$i] -match '\\[(\\d+)/13\\]\\s+(\\S*spec\\.ts:\\d+:\\d+)\\s+›\\s+(.*)$'){ $k=$matches[2]+' | '+$matches[3].Trim(); if(-not $seen.ContainsKey($k)){ $seen[$k]=$matches[1]; \"  [$($matches[1])] $($matches[2]) | $($matches[3].Trim())\" } } }\n'--- summary tail ---'\n$clean | Select-String -Pattern '^\\s*\\d+ (failed|passed|skipped)' | ForEach-Object { '  ' + $_.Line.Trim() }","description":"Parse new-package production log"}
+
+[tool • pwsh]
+TOTAL_LINES=360
+FAIL_HEADERS=9
+===
+  1) apps\desktop\tests\production\applications-relaunch.spec.ts:15:5 › launches an installed app copy from /Applications and relaunches with persisted state
+  Error: No packaged macOS release zip found under D:\AI\workspace\pao-dev\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.
+  at helpers\packaged-app.ts:73
+  71 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+  72 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+===
+  2) apps\desktop\tests\production\notification-onboarding-packaged.spec.ts:17:5 › requests notification permission in the packaged app when active work moves to the background
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+===
+  3) apps\desktop\tests\production\notification-settings-packaged.spec.ts:19:5 › shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+===
+  4) apps\desktop\tests\production\notification-settings-packaged.spec.ts:65:5 › keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "default"
+  Received: "granted"
+  Call Log:
+===
+  5) apps\desktop\tests\production\notification-settings-packaged.spec.ts:103:5 › refreshes packaged notification status after returning from System Settings
+  Error: expect(received).toBe(expected) // Object.is equality
+  Expected: "denied"
+  Received: "granted"
+  Call Log:
+===
+  6) apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 › packaged extension frame loads its bundled bridge and exchanges live Chord state
+  Error: expect(locator).toHaveText(expected) failed
+  Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+  Expected: "Count 1 · activations 1"
+  Received: "Count 0 · activations 1"
+===
+  7) apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:20:5 › relaunches a packaged release-zip build with a new auto-titled thread and restores title plus transcript
+  Error: No packaged macOS release zip found under D:\AI\workspace\pao-dev\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.
+  at helpers\packaged-app.ts:73
+  71 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+  72 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+===
+  8) apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:93:5 › relaunches a packaged release-zip build with multiple new threads and restores transcript selection
+  Error: No packaged macOS release zip found under D:\AI\workspace\pao-dev\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.
+  at helpers\packaged-app.ts:73
+  71 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+  72 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+===
+  9) apps\desktop\tests\production\release-zip-smoke.spec.ts:11:5 › launches the packaged release zip app bundle from an extracted download path and starts a thread
+  Error: No packaged macOS release zip found under D:\AI\workspace\pao-dev\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.
+  at helpers\packaged-app.ts:73
+  71 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+  72 |     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+--- progress lines ([N/13]) ---
+  [1] apps\desktop\tests\production\applications-relaunch.spec.ts:15:5 | launches an installed app copy from /Applications and relaunches with persisted state
+  [2] apps\desktop\tests\production\finder-env-open-folder.spec.ts:18:5 | launches a packaged app under a Finder-style PATH and opens the first folder
+  [3] apps\desktop\tests\production\notification-onboarding-packaged.spec.ts:17:5 | requests notification permission in the packaged app when active work moves to the background
+  [4] apps\desktop\tests\production\notification-settings-packaged.spec.ts:19:5 | shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status
+  [5] apps\desktop\tests\production\notification-settings-packaged.spec.ts:65:5 | keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access
+  [6] apps\desktop\tests\production\notification-settings-packaged.spec.ts:103:5 | refreshes packaged notification status after returning from System Settings
+  [7] apps\desktop\tests\production\open-folder-real.spec.ts:13:5 | opens the real macOS folder picker from the empty state button and adds the selected workspace
+  [8] apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 | packaged extension frame loads its bundled bridge and exchanges live Chord state
+  [9] apps\desktop\tests\production\packaged-smoke.spec.ts:11:5 | launches the packaged app bundle and starts a thread through the real UI
+  [10] apps\desktop\tests\production\packaged-terminal.spec.ts:11:5 | packaged app opens a real integrated terminal
+  [11] apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:20:5 | relaunches a packaged release-zip build with a new auto-titled thread and restores title plus transcript
+  [12] apps\desktop\tests\production\release-zip-reopen-new-thread.spec.ts:93:5 | relaunches a packaged release-zip build with multiple new threads and restores transcript selection
+  [13] apps\desktop\tests\production\release-zip-smoke.spec.ts:11:5 | launches the packaged release zip app bundle from an extracted download path and starts a thread
+--- summary tail ---
+  9 failed
+  2 skipped
+  2 passed (1.9m)
+
+
+[assistant]
+13 tests enumerated. 9 failed as listed. So 2 skipped = the two remaining tests among the 13: #2 finder-env-open-folder:18, #7 open-folder-real:13. And 2 passed = #9 packaged-smoke:11, #10 packaged-terminal:11.
+
+Let me confirm the skipped reasons by reading those two spec files' skip guards. Then gather notification evidence.
+
+Let me grep for skip in tests/production and read the two specs' first ~30 lines.
+
+[assistant • grep]
+{"include":"*.ts","path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\production","pattern":"test\\.skip|describe\\.skip|skip\\(|process\\.platform"}
+
+[tool • grep]
+Found 4 matches
+
+desktop\apps\desktop\tests\production\pao-live-smoke.spec.ts
+Line 21:   test.skip(
+
+desktop\apps\desktop\tests\production\open-folder-real.spec.ts
+Line 11: test.skip(process.platform !== "darwin", "Real open-folder production coverage is macOS-only");
+Line 19:     test.skip(true, String(error));
+
+desktop\apps\desktop\tests\production\finder-env-open-folder.spec.ts
+Line 16: test.skip(process.platform !== "darwin", "Finder-style packaged app coverage is macOS-only");
+
+[assistant]
+Confirmed the 2 skipped with exact guard lines:
+- `finder-env-open-folder.spec.ts:16` `test.skip(process.platform !== "darwin", "Finder-style packaged app coverage is macOS-only");`
+- `open-folder-real.spec.ts:11` `test.skip(process.platform !== "darwin", "Real open-folder production coverage is macOS-only");`
+
+Now notification evidence. Read notification-permission.ts key regions and the specs' assertion lines. Let me read the relevant parts.
+
+I'll read: 
+- notification-permission.ts lines 1-40 (env names), 195-215, 260-285, 320-345.
+- notification-onboarding-packaged.spec.ts (whole 57 lines).
+- notification-settings-packaged.spec.ts lines 1-130 (partially).
+
+To save tokens: read notification-permission.ts:1-40 and :255-345, and the onboarding spec fully, and settings spec lines 1-45.
+
+Let me batch several reads.
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\production\\notification-onboarding-packaged.spec.ts"}
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron\\platform\\notification-permission.ts","offset":255,"limit":95}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\notification-onboarding-packaged.spec.ts</path>
+<type>file</type>
+<content>
+1: import { join } from "node:path";
+2: import { writeFile } from "node:fs/promises";
+3: import { expect, test } from "@playwright/test";
+4: import {
+5:   getDesktopState,
+6:   launchPackagedDesktop,
+7:   makeUserDataDir,
+8:   makeWorkspace,
+9: } from "../helpers/electron-app";
+10: import { emitRunningEvent, readOptionalLog } from "../helpers/notification-events";
+11: import {
+12:   createThread,
+13:   selectSessionByTitle,
+14:   setSessionVisibilityOverride,
+15: } from "../helpers/session-event-test-helpers";
+16: 
+17: test("requests notification permission in the packaged app when active work moves to the background", async () => {
+18:   const userDataDir = await makeUserDataDir();
+19:   const requestLogPath = join(userDataDir, "notification-onboarding-packaged.log");
+20:   const helperStatusFilePath = join(userDataDir, "notification-onboarding-packaged-status.txt");
+21:   const workspacePath = await makeWorkspace("notification-onboarding-packaged-workspace");
+22:   await writeFile(helperStatusFilePath, "default\n", "utf8");
+23:   const harness = await launchPackagedDesktop(userDataDir, {
+24:     initialWorkspaces: [workspacePath],
+25:     testMode: "background",
+26:     envOverrides: {
+27:       PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS_FILE: helperStatusFilePath,
+28:       PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_FOLLOWS_REQUEST: "1",
+29:       PI_APP_TEST_NOTIFICATION_PERMISSION_REQUEST_RESULT: "granted",
+30:       PI_APP_TEST_NOTIFICATION_PERMISSION_REQUEST_LOG_PATH: requestLogPath,
+31:     },
+32:   });
+33: 
+34:   try {
+35:     const window = await harness.firstWindow();
+36:     await expect
+37:       .poll(() => window.evaluate(() => globalThis.window.piApp.getNotificationPermissionStatus()))
+38:       .toBe("default");
+39:     const sessionA = await createThread(window, "Packaged Session A");
+40:     await createThread(window, "Packaged Session B");
+41:     await setSessionVisibilityOverride(harness, "active");
+42:     await selectSessionByTitle(window, "Packaged Session A");
+43:     await emitRunningEvent(harness, sessionA, "Packaged");
+44: 
+45:     await expect((await getDesktopState(window)).activeView).toBe("threads");
+46:     await expect.poll(() => readOptionalLog(requestLogPath), { timeout: 5_000 }).toBe("");
+47: 
+48:     await selectSessionByTitle(window, "Packaged Session B");
+49:     await expect.poll(() => readOptionalLog(requestLogPath), { timeout: 5_000 }).not.toBe("");
+50: 
+51:     await window.getByRole("button", { name: "Settings", exact: true }).click();
+52:     await window.getByRole("button", { name: "Notifications", exact: true }).click();
+53:     await expect(window.locator(".settings-view")).toContainText("Enabled");
+54:   } finally {
+55:     await harness.close();
+56:   }
+57: });
+
+(End of file - total 57 lines)
+</content>
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\electron\platform\notification-permission.ts</path>
+<type>file</type>
+<content>
+255:     const parsed = JSON.parse(stdout) as { status?: unknown };
+256:     return normalizePermissionStatus(parsed.status) ?? "unknown";
+257:   } catch {
+258:     return undefined;
+259:   }
+260: }
+261: 
+262: async function openSystemNotificationSettingsInternal(): Promise<void> {
+263:   const testLogPath = process.env[TEST_SETTINGS_LOG_PATH_ENV]?.trim();
+264:   if (testLogPath) {
+265:     await appendFile(testLogPath, `${new Date().toISOString()}\n`, "utf8");
+266:     return;
+267:   }
+268: 
+269:   if (process.platform !== "darwin") {
+270:     await shell.openExternal(
+271:       "https://support.apple.com/guide/mac-help/change-notifications-settings-mh40583/mac",
+272:     );
+273:     return;
+274:   }
+275: 
+276:   const targets = [
+277:     "x-apple.systempreferences:com.apple.Notifications-Settings.extension",
+278:     "x-apple.systempreferences:com.apple.preference.notifications",
+279:   ] as const;
+280: 
+281:   for (const target of targets) {
+282:     try {
+283:       await execFileAsync("open", [target]);
+284:       return;
+285:     } catch {
+286:       // Try the next fallback.
+287:     }
+288:   }
+289: 
+290:   await shell.openPath("/System/Applications/System Settings.app");
+291: }
+292: 
+293: async function readRendererNotificationPermission(
+294:   window: BrowserWindow | null,
+295: ): Promise<DesktopNotificationPermissionStatus> {
+296:   if (!window || window.isDestroyed() || window.webContents.isDestroyed()) {
+297:     return "unknown";
+298:   }
+299: 
+300:   try {
+301:     const value: unknown = await window.webContents.executeJavaScript(
+302:       `globalThis.Notification?.permission ?? "unsupported"`,
+303:       true,
+304:     );
+305:     return normalizePermissionStatus(value) ?? "unknown";
+306:   } catch {
+307:     return "unknown";
+308:   }
+309: }
+310: 
+311: async function readPackagedMacOsNotificationPermissionStatus(): Promise<
+312:   DesktopNotificationPermissionStatus | undefined
+313: > {
+314:   const helperPath = resolveNotificationStatusHelperPath();
+315:   if (!helperPath) {
+316:     return undefined;
+317:   }
+318:   try {
+319:     const { stdout } = await execFileAsync(helperPath, [], {
+320:       env: process.env,
+321:     });
+322:     const parsed = JSON.parse(stdout) as { status?: unknown };
+323:     return normalizePermissionStatus(parsed.status);
+324:   } catch {
+325:     return undefined;
+326:   }
+327: }
+328: 
+329: function resolveNotificationStatusHelperPath(): string | undefined {
+330:   if (process.platform !== "darwin" || !app.isPackaged) {
+331:     return undefined;
+332:   }
+333: 
+334:   return path.join(process.resourcesPath, "..", "MacOS", NOTIFICATION_STATUS_HELPER_NAME);
+335: }
+336: 
+337: async function logPermissionRequestAttempt(): Promise<void> {
+338:   const testLogPath = process.env[TEST_REQUEST_LOG_PATH_ENV]?.trim();
+339:   if (!testLogPath) {
+340:     return;
+341:   }
+342: 
+343:   await appendFile(testLogPath, `${new Date().toISOString()}\n`, "utf8");
+344: }
+345: 
+346: async function updatePackagedHelperOverrideStatus(
+347:   status: DesktopNotificationPermissionStatus,
+348: ): Promise<void> {
+349:   if (process.env[TEST_HELPER_FOLLOWS_REQUEST_ENV] !== "1") {
+
+(Showing lines 255-349 of 381. Use offset=350 to continue.)
+</content>
+
+[assistant]
+I need the key part: the test-helper env override path and where it's gated. Let me read lines 350-381 and also search for `TEST_HELPER_STATUS_FILE_ENV` usage.
+
+Let me grep in notification-permission.ts for the env names to see the gating lines.
+
+[assistant • grep]
+{"include":"notification-permission.ts","path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron\\platform","pattern":"TEST_HELPER_STATUS_FILE_ENV|TEST_HELPER_STATUS_ENV|TEST_HELPER_FOLLOWS_REQUEST_ENV|TEST_REQUEST_RESULT_ENV|readPackagedMacOsNotificationPermissionStatus|readRendererNotificationPermission|app.isPackaged|export async function|function getDesktopNotificationPermissionStatus|return \""}
+
+[tool • grep]
+Found 20 matches
+
+desktop\apps\desktop\electron\platform\notification-permission.ts
+Line 10: const TEST_REQUEST_RESULT_ENV = "PI_APP_TEST_NOTIFICATION_PERMISSION_REQUEST_RESULT";
+Line 13: const TEST_HELPER_STATUS_ENV = "PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS";
+Line 14: const TEST_HELPER_STATUS_FILE_ENV = "PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS_FILE";
+Line 15: const TEST_HELPER_FOLLOWS_REQUEST_ENV =
+Line 192:   const packagedMacOsStatus = await readPackagedMacOsNotificationPermissionStatus();
+Line 197:   return readRendererNotificationPermission(window);
+Line 204:   const override = normalizePermissionStatus(process.env[TEST_REQUEST_RESULT_ENV]);
+Line 205:   if (process.platform === "darwin" && app.isPackaged) {
+Line 222:     return "unknown";
+Line 239:     return "unknown";
+Line 293: async function readRendererNotificationPermission(
+Line 297:     return "unknown";
+Line 307:     return "unknown";
+Line 311: async function readPackagedMacOsNotificationPermissionStatus(): Promise<
+Line 330:   if (process.platform !== "darwin" || !app.isPackaged) {
+Line 349:   if (process.env[TEST_HELPER_FOLLOWS_REQUEST_ENV] !== "1") {
+Line 353:   const helperStatusFilePath = process.env[TEST_HELPER_STATUS_FILE_ENV]?.trim();
+Line 360:     !(TEST_HELPER_STATUS_ENV in process.env) ||
+Line 361:     !normalizePermissionStatus(process.env[TEST_HELPER_STATUS_ENV])
+Line 365:   process.env[TEST_HELPER_STATUS_ENV] = status;
+
+[assistant]
+Now read lines 180-210 to see the resolution order (line 192 `readPackagedMacOsNotificationPermissionStatus()` — on Windows returns undefined → falls to `readRendererNotificationPermission` at :197 → `globalThis.Notification?.permission` → Chromium on Windows reports "granted" → spec expects "default" → fail).
+
+That's the precise判据 chain:
+- `notification-permission.ts:192` `const packagedMacOsStatus = await readPackagedMacOsNotificationPermissionStatus();`
+- `:329-335 resolveNotificationStatusHelperPath()` returns undefined unless `process.platform === "darwin" && app.isPackaged` ⇒ on Windows the packaged helper (which reads the test status file `PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS_FILE` = "default") is never consulted.
+- `:197 return readRendererNotificationPermission(window);` → `:301-304` evaluates `globalThis.Notification?.permission` → Chromium/Electron on Windows returns **"granted"** for any page ⇒ spec's `toBe("default")` fails.
+
+Let me read 185-200 to make sure I quote correctly.
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron\\platform\\notification-permission.ts","limit":30,"offset":182}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\electron\platform\notification-permission.ts</path>
+<type>file</type>
+<content>
+182:   }
+183: }
+184: 
+185: async function readNotificationPermissionStatus(
+186:   window: BrowserWindow | null,
+187: ): Promise<DesktopNotificationPermissionStatus> {
+188:   if (testPermissionStatus) {
+189:     return testPermissionStatus;
+190:   }
+191: 
+192:   const packagedMacOsStatus = await readPackagedMacOsNotificationPermissionStatus();
+193:   if (packagedMacOsStatus) {
+194:     return packagedMacOsStatus;
+195:   }
+196: 
+197:   return readRendererNotificationPermission(window);
+198: }
+199: 
+200: async function requestNotificationPermissionInternal(
+201:   window: BrowserWindow | null,
+202: ): Promise<DesktopNotificationPermissionStatus> {
+203:   await logPermissionRequestAttempt();
+204:   const override = normalizePermissionStatus(process.env[TEST_REQUEST_RESULT_ENV]);
+205:   if (process.platform === "darwin" && app.isPackaged) {
+206:     if (override) {
+207:       await updatePackagedHelperOverrideStatus(override);
+208:       return readNotificationPermissionStatus(window);
+209:     }
+210: 
+211:     const packagedMacOsStatus = await requestPackagedMacOsNotificationPermission();
+
+(Showing lines 182-211 of 381. Use offset=212 to continue.)
+</content>
+
+[assistant]
+Now I have the T24-C judgement for the 4 notification cases.
+
+Note: `testPermissionStatus` at :188 is set only when...? Line 16-ish had `TEST_HELPER_STATUS_ENV` read at startup probably: `const testPermissionStatus = normalizePermissionStatus(process.env[TEST_HELPER_STATUS_ENV]);` — and the spec sets `PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS_FILE` (file), not `..._HELPER_STATUS` (direct env). So on macOS the file is read by the helper binary; on Windows the file is never read (helper path undefined) ⇒ falls to renderer `Notification.permission` = "granted" on Windows. Good.
+
+Also for the record: is `Notification.permission` == "granted" on Windows? Evidence: the observed Received "granted" on all four — the renderer path is the only remaining source. That's empirical evidence. Good enough: "实测四条都收到 granted，而 Windows 上 packaged helper 路径恒为 undefined（:330），只剩 renderer 一条路（:197/:301），Chromium 在 Windows 上对 Notification.permission 恒报 granted" — I should phrase the Chromium claim carefully: "实测收到 granted（本机 Chromium 行为）".
+
+Now the applications-relaunch failure: it fails at `helpers\packaged-app.ts:73` "No packaged macOS release zip found" — meaning `applications-relaunch.spec.ts:15` also goes through the release-zip helper (installed app copy from /Applications ← extracted from a macOS zip). So applications-relaunch + 3 release-zip cases = 4 cases all failing in the same macOS-only helper: `resolvePackagedReleaseZip` (packaged-app.ts:73) looking for `-arm64.zip` / `-mac.zip` / `*.zip` in `release\`. Windows `package:win:dir` produces `win-unpacked` + `PAO-1.0.1-x64-portable.exe`, no zip ⇒ macOS-only artifact dependency.
+
+Let me confirm applications-relaunch.spec.ts:15-30 quickly to cite what it does. And read packaged-app.ts:60-80 to cite the helper. Both cheap.
+
+Then write the report.
+
+Also for T24-D: which production-lane items were NOT run:
+- pao-live-smoke (1 test, skipped by authorization; also has its own `test.skip` at :21 — probably env-gated on real auth). Note: it wasn't in my spec list, so it didn't even appear in the 13. Actually my SPEC_COUNT=10 excluded pao-live-smoke; the 13 tests came from the 10 specs.
+- release-zip-* were run (and failed on missing macOS zip) ⇒ so "release-zip 是否跑过" = yes, ran, red for macOS-only reason (not a Windows packaging defect).
+- verify:packaged-runtime-deps:windows: EXIT=0 / 157.4s / log 3868B (correct lead's 0B).
+- verify:launcher-contract: EXIT=0 / 734B.
+- Windows has no HEAD baseline for production lane (docs/ci-baseline.md).
+- Also: `--shard` never used; single worker.
+
+Let me also double check the win-unpacked new package numbers: PAO.exe 204,530,176 B mtime 22:24:11; app.asar 210,616,175 B mtime 22:24:08. Also confirm the asar contains the new kernel (e.g. mtime diff is enough: +2,944 B). Could also verify the "已知边界.md" content inside asar is the new one — nice-to-have evidence that the new package really carries the rebuilt kernel. Let me check: search for a string in the new asar? The kernel bundle is in `resources/app.asar` (or unpacked?). `app.asar.unpacked` contains node_modules/@earendil-works. Hmm — the kernel `dist/bundle/cli.js` likely goes into asar.unpacked under @earendil-works/pi-coding-agent/dist. Let me check the unpacked path's cli.js mtime — if 22:18 (after build:offline) that proves the new kernel is in the package. Good evidence for T24-A!
+
+Let me gather: `release\win-unpacked\resources\app.asar.unpacked\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js` mtime/size, plus the kernel source file `PAO\packages\coding-agent\src\pao\已知边界.md` mtime and the built `PAO\packages\coding-agent\dist\bundle\cli.js` mtime (should now be 22:18 > source 16:04 → gate satisfied).
+
+Let me run these checks + read the two helper files.
+
+[assistant • pwsh]
+{"command":"$u='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\release\\win-unpacked'\n'--- gate check after build:offline ---'\nforeach($f in @('D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\已知边界.md','D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js')){ $i=Get-Item $f; \"  $f bytes=$($i.Length) mtime=$($i.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- packaged kernel artifacts ---'\nforeach($rel in @('resources\\app.asar','resources\\app.asar.unpacked\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js','resources\\app.asar.unpacked\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle')){ $f=Join-Path $u $rel; if(Test-Path $f){ $i=Get-Item $f; if($i.PSIsContainer){ $n=(Get-ChildItem $f -Recurse -File | Measure-Object -Property Length -Sum); \"  $rel DIR files=$($n.Count) bytes=$($n.Sum) mtime=$($i.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" } else { \"  $rel bytes=$($i.Length) mtime=$($i.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" } } else { \"  MISSING $rel\" } }\n'--- release dir listing ---'\nGet-ChildItem 'D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\release' | ForEach-Object { \"  $($_.Name) $(if($_.PSIsContainer){'DIR'}else{$_.Length}) $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- zip present? ---'\n\"ZIP_COUNT=$((Get-ChildItem 'D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\release' -Filter *.zip -ErrorAction SilentlyContinue | Measure-Object).Count)\"","description":"Verify new package carries rebuilt kernel"}
+
+[tool • pwsh]
+--- gate check after build:offline ---
+  D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\pao\已知边界.md bytes=16271 mtime=2026-10-17 16:04:49
+  D:\AI\workspace\pao-dev\PAO\packages\coding-agent\dist\bundle\cli.js bytes=160 mtime=2026-10-17 22:18:24
+--- packaged kernel artifacts ---
+  resources\app.asar bytes=210616175 mtime=2026-10-17 22:24:08
+  MISSING resources\app.asar.unpacked\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js
+  MISSING resources\app.asar.unpacked\node_modules\@earendil-works\pi-coding-agent\dist\bundle
+--- release dir listing ---
+  .icon-ico DIR 2026-10-05 03:32:04
+  win-unpacked DIR 2026-10-17 22:24:11
+  builder-debug.yml 848 2026-10-17 22:24:11
+  icudtl.dat 10467680 2026-10-09 22:03:50
+  latest.yml 343 2026-10-12 09:02:20
+  PAO-1.0.1-x64-portable.exe 128065050 2026-10-12 09:02:20
+  PAO-1.0.1-x64-setup.exe 128218462 2026-10-12 09:02:16
+  PAO-1.0.1-x64-setup.exe.blockmap 134322 2026-10-12 09:02:19
+--- zip present? ---
+ZIP_COUNT=0
+
+
+[assistant]
+Interesting: `PAO\packages\coding-agent\dist\bundle\cli.js` is only **160 bytes** at 22:18:24?! And the vendor script copies... hmm. Earlier the build log said "Built packages\coding-agent\dist\bundle (74 files, 9.6 MiB)". So the bundle dir has 74 files; `cli.js` being 160 B is plausible if it's a re-export shim. Fine.
+
+Wait — the stale gate compared the newest source vs the newest dist artifact: the message said dist artifact = `dist\bundle\cli.js` at 14:22:34. Now cli.js = 22:18:24 > source 16:04:49 ⇒ gate satisfied, packaging proceeded ✓.
+
+Packaged kernel: `app.asar.unpacked\node_modules\@earendil-works\pi-coding-agent\dist\bundle` **MISSING**. So where does the kernel live in the package? Maybe the vendor step puts the kernel elsewhere, e.g. `resources\pao-kernel\` or inside app.asar. Let me check what's under `resources\` and `app.asar.unpacked` now.
+
+Also note release dir has no zip (ZIP_COUNT=0) ⇒ explains release-zip failures ✓ (macOS-only, and also there are no macOS scripts run here: `package:win:dir` only made win-unpacked). Note the portable/setup exe are from 2026-10-12 (not rebuilt this time — `--dir` only).
+
+Let me check the package layout for the kernel: list `release\win-unpacked\resources\` and search for the kernel bundle in app.asar (using npx @electron/asar? There's `@electron/asar@3.4.1` in node_modules). A quick asar list would be strong evidence that the new kernel is inside. Let me do:
+
+```powershell
+$d='D:\AI\workspace\pao-dev\desktop'
+& node "$d\node_modules\@electron\asar\bin\asar.js" list "release\win-unpacked\resources\app.asar" | Select-String 'pi-coding-agent/dist/bundle' | Select-Object -First 5
+```
+Hmm, asar CLI path: `node_modules\@electron\asar\bin\asar.js` or `...\lib\asar.js`? The bin is `bin/asar.js`. Also `node_modules\.bin\asar.CMD` may exist.
+
+Also check `resources\` listing first. Let me do both in one command, with fallback.
+
+Careful: `asar list` on a 210MB archive may be slow but OK.
+
+Also for evidence of the vendored kernel: maybe the packaging script `scripts/package-windows.mjs` / `vendor-pao-kernel.mjs` copies the kernel into `apps/desktop/resources/pao-kernel/` which is then packed as extraResources. Let me check `apps\desktop` for a kernel dir + electron-builder.yml extraResources. Let me grep electron-builder.yml and list resources.
+
+[assistant • pwsh]
+{"command":"$u='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\release\\win-unpacked'\n'--- resources/ ---'\nGet-ChildItem \"$u\\resources\" | ForEach-Object { \"  $($_.Name) $(if($_.PSIsContainer){'DIR'}else{$_.Length}) $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- app.asar.unpacked top ---'\nGet-ChildItem \"$u\\resources\\app.asar.unpacked\" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object { \"  $($_.FullName.Replace($u,'')) $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- vendor target dir in repo ---'\nGet-ChildItem 'D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop' -Directory | Where-Object { $_.Name -match 'kernel|vendor|pao' } | ForEach-Object { \"  $($_.Name) $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- electron-builder.yml extraResources ---'\nSelect-String -Path 'D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron-builder.yml' -Pattern 'extraResources|from:|to:|filter' -Context 0,1 | ForEach-Object { '  ' + $_.Line.Trim() }","description":"Locate packaged kernel artifacts"}
+
+[tool • pwsh]
+--- resources/ ---
+  app.asar.unpacked DIR 2026-10-17 22:23:34
+  app.asar 210616175 2026-10-17 22:24:08
+  icon.png 11512 2026-10-04 02:19:53
+--- app.asar.unpacked top ---
+  \resources\app.asar.unpacked\node_modules 2026-10-17 22:24:01
+  \resources\app.asar.unpacked\node_modules\@earendil-works 2026-10-17 22:23:34
+  \resources\app.asar.unpacked\node_modules\@esbuild 2026-10-17 22:23:49
+  \resources\app.asar.unpacked\node_modules\@silvia-odwyer 2026-10-17 22:23:56
+  \resources\app.asar.unpacked\node_modules\node-pty 2026-10-17 22:24:02
+  \resources\app.asar.unpacked\node_modules\quickjs-wasi 2026-10-17 22:23:34
+  \resources\app.asar.unpacked\node_modules\@earendil-works\pi-tui 2026-10-17 22:23:34
+  \resources\app.asar.unpacked\node_modules\@esbuild\win32-x64 2026-10-17 22:23:49
+  \resources\app.asar.unpacked\node_modules\@silvia-odwyer\photon-node 2026-10-17 22:23:56
+  \resources\app.asar.unpacked\node_modules\node-pty\build 2026-10-17 22:24:01
+  \resources\app.asar.unpacked\node_modules\node-pty\deps 2026-10-17 22:24:01
+  \resources\app.asar.unpacked\node_modules\node-pty\lib 2026-10-17 22:24:02
+  \resources\app.asar.unpacked\node_modules\node-pty\prebuilds 2026-10-17 22:24:02
+  \resources\app.asar.unpacked\node_modules\node-pty\scripts 2026-10-17 22:24:02
+  \resources\app.asar.unpacked\node_modules\node-pty\src 2026-10-17 22:24:02
+  \resources\app.asar.unpacked\node_modules\node-pty\third_party 2026-10-17 22:24:02
+--- vendor target dir in repo ---
+  vendor 2026-10-05 03:47:53
+--- electron-builder.yml extraResources ---
+  - from: ../../node_modules/proper-lockfile/node_modules/retry
+  to: node_modules/proper-lockfile/node_modules/retry
+  filter:
+  - from: ../../node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers
+  to: node_modules/@aws-sdk/client-bedrock-runtime/node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers
+  filter:
+  - from: vendor/pao-runtime/node_modules
+  to: node_modules
+  filter:
+  extraResources:
+  - from: resources/icon.png
+  to: icon.png
+  - from: build/native/pi-gui-notification-status-helper
+  to: MacOS/pi-gui-notification-status-helper
+
+
+[assistant]
+The vendored kernel lives in `apps\desktop\vendor\pao-runtime\node_modules` (from the `from: vendor/pao-runtime/node_modules` rule → `to: node_modules`, i.e. inside app.asar). So the kernel is inside app.asar. `vendor` dir mtime 2026-10-05 03:47:53 — hmm, that's the parent dir; the vendor:kernel script rewrites contents (dir mtime may not update for nested changes... actually the parent's mtime updates when entries are added/removed; if it recreates dirs, mtime would update. It shows 10-05, suspicious). Let me check `vendor\pao-runtime\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js` mtime — if it's 22:18-ish, the vendor step ran and copied the fresh kernel; then it got packed into app.asar.
+
+Let me check that and also verify the asar contains it with a fresh timestamp... asar entries don't store mtimes reliably (they do store mtime but listing shows paths only). Simplest strong evidence: the vendor path's cli.js mtime + the fact that `vendor:kernel` ran as step 1 of this build and the packaging log shows the vendor step's output.
+
+Let me check the vendor path.
+
+[assistant • pwsh]
+{"command":"$v='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\vendor\\pao-runtime'\nif(Test-Path $v){ \n  $i=Get-Item $v; \"vendor/pao-runtime mtime=$($i.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\"\n  foreach($rel in @('node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js','node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle','node_modules\\@earendil-works\\pi-coding-agent\\package.json')){ $f=Join-Path $v $rel; if(Test-Path $f){ $x=Get-Item $f; if($x.PSIsContainer){ $n=(Get-ChildItem $f -Recurse -File | Measure-Object -Property Length -Sum); \"  $rel DIR files=$($n.Count) bytes=$($n.Sum) mtime=$($x.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" } else { \"  $rel bytes=$($x.Length) mtime=$($x.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" } } else { \"  MISSING $rel\" } }\n} else { 'NO vendor/pao-runtime' }\n'--- vendor:kernel log lines (package log #2) ---'\nSelect-String -Path 'D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-package-win-dir-2.log' -Pattern 'vendor|内核|stale|陈旧' | Select-Object -First 12 | ForEach-Object { '  ' + $_.Line.Trim() }","description":"Check vendored kernel freshness"}
+
+[tool • pwsh]
+vendor/pao-runtime mtime=2026-10-17 22:19:10
+  MISSING node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js
+  MISSING node_modules\@earendil-works\pi-coding-agent\dist\bundle
+  MISSING node_modules\@earendil-works\pi-coding-agent\package.json
+--- vendor:kernel log lines (package log #2) ---
+  > pnpm run vendor:kernel && pnpm run build && node scripts/package-windows.mjs --win --dir --publish never --config.npmRebuild=false
+  > @pi-gui/desktop@1.0.1 vendor:kernel D:\AI\workspace\pao-dev\desktop\apps\desktop
+  > node scripts/vendor-pao-kernel.mjs
+  [vendor-pao-kernel] 已物化：kernel dist＋6 个兄弟运行时（@earendil-works/chord、@earendil-works/pi-agent-core、@earendil-works/pi-ai、@earendil-works/pi-codemode、@earendil-works/pi-mcp、@earendil-works/pi-tui）＋缺失补扫 5 包（grok-mermaid、quickjs-wasi、@earendil-works/pi-telemetry、get-east-asian-width、marked），合计约 92.6 MB。
+
+
+[assistant]
+The vendor step succeeded: "已物化：kernel dist＋6 个兄弟运行时…合计约 92.6 MB" (mtime 22:19:10). So the vendored kernel exists somewhere in `vendor/pao-runtime/node_modules` — but the @earendil-works/pi-coding-agent path is missing? Let me find where the kernel dist went: search vendor/pao-runtime for `coding-agent`.
+
+Maybe the layout is `vendor/pao-runtime/node_modules/@earendil-works/pi-coding-agent/...` but the dir listing Depth shows... my Test-Path said MISSING for package.json too, so the path differs. Let me list `vendor\pao-runtime` top and find the pi-coding-agent dir.
+
+This is minor evidence though — the key T24-A facts are: gate passed, packaging EXIT=0, package rebuilt at 22:24, and the vendor step materialized 92.6 MB. I could verify the kernel freshness inside the package differently: the "已知边界.md" is a *source* doc, not shipped. Better: check that the vendored kernel's bundled cli.js is newer than 16:04. Let me locate the file.
+
+Quick command: `Get-ChildItem vendor\pao-runtime -Recurse -Filter cli.js -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match 'bundle' } | Select-Object -First 5 FullName,Length,LastWriteTime`.
+
+Let me also verify the asar contains the vendored kernel by running asar list and grepping for `pi-coding-agent/dist/bundle`. If `.bin\asar` exists.
+
+Do both in one command. Then write the report.
+
+[assistant • pwsh]
+{"command":"$v='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\vendor\\pao-runtime'\n'--- top of vendor/pao-runtime ---'\nGet-ChildItem $v | ForEach-Object { \"  $($_.Name) $(if($_.PSIsContainer){'DIR'}else{$_.Length})\" }\n'--- bundle cli.js candidates ---'\nGet-ChildItem $v -Recurse -Filter cli.js -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match 'bundle' } | Select-Object -First 5 | ForEach-Object { \"  $($_.FullName.Replace($v,'')) bytes=$($_.Length) mtime=$($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))\" }\n'--- asar list grep ---'\n$asar='D:\\AI\\workspace\\pao-dev\\desktop\\node_modules\\.bin\\asar.CMD'\nif(Test-Path $asar){\n  $out = & $asar list 'D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\release\\win-unpacked\\resources\\app.asar' 2>&1\n  \"ASAR_LIST_LINES=$($out.Count)\"\n  $hit = $out | Select-String -Pattern 'pi-coding-agent/dist/bundle' | Select-Object -First 6\n  if($hit){ $hit | ForEach-Object { '  ' + $_.Line.Trim() } } else { '  no pi-coding-agent/dist/bundle entries; searching coding-agent...'; $out | Select-String -Pattern 'coding-agent' | Select-Object -First 10 | ForEach-Object { '  ' + $_.Line.Trim() } }\n} else { 'NO asar.CMD' }","description":"Verify vendored kernel inside app.asar"}
+
+[tool • pwsh]
+--- top of vendor/pao-runtime ---
+  node_modules DIR
+--- bundle cli.js candidates ---
+--- asar list grep ---
+ASAR_LIST_LINES=37112
+  no pi-coding-agent/dist/bundle entries; searching coding-agent...
+  \node_modules\@earendil-works\pi-coding-agent
+  \node_modules\@earendil-works\pi-coding-agent\dist
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\cli.d.ts.map
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\cli.js
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\cli.js.map
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\restore-sandbox-env.d.ts.map
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\restore-sandbox-env.js
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\restore-sandbox-env.js.map
+  \node_modules\@earendil-works\pi-coding-agent\dist\bun\runtime-setup.d.ts.map
+
+
+[assistant]
+The asar contains `\node_modules\@earendil-works\pi-coding-agent\dist\...` — but note the CLI list uses backslashes in this asar (created on Windows). The vendored kernel is inside app.asar ✓ (no `dist/bundle` dir though — maybe named `dist/bun`? Interesting: the build log said "Built packages\coding-agent\dist\bundle (74 files, 9.6 MiB)" but the package has `dist/bun`. Hmm, maybe `copy-assets`/vendor copies a different flavor: for the desktop it uses the "bun" flavor? Let me not go down this path.
+
+Better evidence for "new kernel is in the new package": compare the asar's content of a file that changed in this batch's kernel source. The batch changed `PAO/packages/coding-agent/src/pao/*` (known-boundary doc etc.). A good probe: grep the asar binary for a distinctive new string. E.g. the known-boundary file's content had distinctive marker; the E2E report mentioned `[PLAN_CONFIRM_REQUIRED]` etc. Simpler: compare app.asar size old vs new: 210,613,231 → 210,616,175 (+2,944 B) ✓ already evidence of changed content.
+
+Even better and cheap: use asar extract-file for one file that the batch touched, e.g. `\node_modules\@earendil-works\pi-coding-agent\dist\bundle\...` doesn't exist. Which file corresponds to PAO kernel pao workflow code? Maybe `dist\bun\` is the bundled flavor. Let me check asar listing for `dist/bun` files count and whether a `pao` workflow chunk exists with the batch's new code. 
+
+Honest approach in the report: state (a) gate passed after rebuild (timestamps), (b) package rebuilt EXIT=0 at 22:24, (c) app.asar changed by +2,944 B vs the 14:24 one, (d) the vendored kernel was re-materialized at 22:19:10 (92.6 MB) and the asar contains `@earendil-works/pi-coding-agent/dist/...` — but also state I did NOT byte-compare a specific kernel file inside the old vs new asar (limit). Then, actually, I can do better cheaply: check whether old asar still exists? No — it was overwritten. So I cannot compare. But the mtime + size delta + vendor log is enough with an explicit "未做逐文件字节对照（旧 asar 已被覆盖）" note.
+
+Hmm, but there IS a way: `PAO-1.0.1-x64-portable.exe` (2026-10-12) contains the old kernel — but that's from 10-12, not comparable to 14:24.
+
+Fine. Note as a limitation.
+
+Now let me identify the 5 old-run specs vs the 10 now run — for the "two tables" requirement. Wait, old run had 7 tests: 5 failed + 2 passed. Which specs? I now run 10 specs/13 tests. The old run likely used a narrower list. From b62/b63 I recorded the old run details. The old run's 5 failures are exactly the same 5 as now (#2-#6 in the new list: 4 notification + packaged-extension-view). And 2 passed = packaged-smoke + packaged-terminal. So the old run covered 7 tests = {notification-onboarding(1), notification-settings(3), packaged-extension-view(1), packaged-smoke(1), packaged-terminal(1)} = 7 ✓. That means in round 1 I passed 5 explicit spec paths (likely because the other 5 specs were judged macOS-only). Good: I can state that precisely, and the new run adds the 5 previously-not-run specs (applications-relaunch, finder-env-open-folder, open-folder-real, release-zip-reopen ×2, release-zip-smoke = 6 tests) → 13 total.
+
+So the "two tables" comparison: old-package table (7 tests) vs new-package table (13 tests, superset), with a shared subset row-by-row showing identical outcomes (5 red same shape) ⇒ 差异不来自包的新旧. That's exactly what lead wants to see.
+
+Let me now also determine pass/fail per test in the new run for the table:
+1. applications-relaunch:15 — FAIL (macOS zip missing)
+2. finder-env-open-folder:18 — SKIP (darwin-only, :16)
+3. notification-onboarding:17 — FAIL (default vs granted)
+4. notification-settings:19 — FAIL (default vs granted)
+5. notification-settings:65 — FAIL (default vs granted)
+6. notification-settings:103 — FAIL (denied vs granted)
+7. open-folder-real:13 — SKIP (darwin-only, :11)
+8. packaged-extension-view:16 — FAIL (Count 0 vs Count 1)
+9. packaged-smoke:11 — PASS
+10. packaged-terminal:11 — PASS
+11. release-zip-reopen-new-thread:20 — FAIL (macOS zip missing)
+12. release-zip-reopen-new-thread:93 — FAIL (macOS zip missing)
+13. release-zip-smoke:11 — FAIL (macOS zip missing)
+
+Old run (7 tests): 3,4,5,6 FAIL; 8 FAIL; 9 PASS; 10 PASS → "5 failed / 2 passed" ✓ consistent.
+
+Now T24-D items:
+- pao-live-smoke: not run (user authorization; also gated at :21).
+- release-zip-*: ran, red — macOS-only helper (no zip on Windows; `package:win:dir` produces only win-unpacked).
+- verify:packaged-runtime-deps:windows: EXIT=0, 157.4s, log 3868B (correct lead's "0B" observation — I'll note the file is 3,868 B).
+- verify:launcher-contract: EXIT=0, 734B.
+- Windows has no HEAD baseline for the production lane (`desktop/docs/ci-baseline.md`); CI Windows job doesn't run production lane.
+- Also packaged run uses real window (foreground-ish) — no, testMode background.
+- Not verified: macOS-only coverage (notifications, Finder PATH, real open-folder, release-zip/applications-relaunch) — 9 of 13 tests are macOS-dependent (6 red + 2 skipped + ... let me count macOS-dependent: #1 (zip), #2 (skip darwin), #7 (skip darwin), #11,#12,#13 (zip) = 6; notification 4 = macOS semantics; packaged-extension-view is not macOS-specific (cross-lane).
+
+Also: no `--shard`, 1 worker; also I should note the two CI verify scripts were run in the *earlier* round on the old package — do they need re-running on the new package? `verify:packaged-runtime-deps:windows` checks the packaged runtime deps in release\win-unpacked — since the package was rebuilt after, its result no longer applies to the new package. Being rigorous: rerun it now on the new package (it's a CI Windows step, cheap-ish 157s). Lead asked "verify:packaged-runtime-deps:windows 结果（我看到 t24-verify-packaged-deps.log 是 0B，若是没跑成就如实写）". Best: rerun it now so the result matches the new package, and `verify:launcher-contract` too (fast). Let me do that — it strengthens T24-D and corrects the record.
+
+Let me run both now in background: 
+```powershell
+$d='D:\AI\workspace\pao-dev\desktop'
+Set-Location $d
+$log1='...\t24-verify-packaged-deps-2.log'; $log2='...\t24-verify-launcher-contract-2.log'
+$sw=...; & pnpm --filter @pi-gui/desktop run verify:packaged-runtime-deps:windows *> $log1; ...
+```
+Need the exact script names. Lead mentioned `verify:packaged-runtime-deps:windows` and `verify:launcher-contract`. Let me check apps/desktop/package.json scripts to get exact names, then run.
+
+Do it in one command: read scripts then run.
+
+Actually to be safe: run `pnpm --filter @pi-gui/desktop run verify:packaged-runtime-deps:windows` (lead's exact name from ci.yml). I'll verify existence by grepping package.json first in the same command, and only run if found.
+
+Let me kick this off in the background while I write the report.
+
+Also: the report must have the byte self-check. I'll write the report after these verifications finish (T24-D numbers), or write now with placeholders and fill. Better: start verification now, draft report content, then write once numbers are in.
+
+Let me start the verify job.
+
+[assistant • pwsh]
+{"command":"$d='D:\\AI\\workspace\\pao-dev\\desktop'\nSet-Location $d\n'--- script names ---'\nSelect-String -Path \"$d\\apps\\desktop\\package.json\" -Pattern '\"verify:packaged-runtime-deps:windows\"|\"verify:launcher-contract\"' | ForEach-Object { '  ' + $_.Line.Trim() }\n$log1='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-verify-packaged-deps-2.log'\n$log2='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-verify-launcher-contract-2.log'\nRemove-Item Env:\\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue\n$sw=[System.Diagnostics.Stopwatch]::StartNew()\n& pnpm --filter @pi-gui/desktop run verify:packaged-runtime-deps:windows *> $log1\n$c1=$LASTEXITCODE\n$sw2=[System.Diagnostics.Stopwatch]::StartNew()\n& pnpm --filter @pi-gui/desktop run verify:launcher-contract *> $log2\n$c2=$LASTEXITCODE; $sw.Stop()\n\"VERIFY_DEPS EXIT=$c1 SEC=$([math]::Round($sw2.Elapsed.TotalSeconds,1)) LOG_BYTES=$((Get-Item $log1).Length)\"\n\"VERIFY_LAUNCHER EXIT=$c2 LOG_BYTES=$((Get-Item $log2).Length)\"\n'--- tail deps ---'; Get-Content $log1 -Encoding utf8 -Tail 12\n'--- tail launcher ---'; Get-Content $log2 -Encoding utf8 -Tail 8","description":"Rerun CI packaged-deps and launcher checks","run_in_background":true}
+
+[tool • pwsh]
+started background job pwsh-174292902c3b465f
+
+[assistant]
+While that runs, let me read the remaining bits I need for T24-C judging:
+- `applications-relaunch.spec.ts:15` head (to describe what it does).
+- `helpers/packaged-app.ts:60-80` (resolvePackagedReleaseZip).
+- packaged-extension-view context: it's the cross-lane same-shape failure; I have core-lane evidence from earlier (extension-view-security.spec.ts three same-shape failures). Also should check if `packaged-extension-view` failure is identical shape to core `extension-view-security` red: `#counter` "Count 1 · activations 1" vs "Count 0 · activations 1" — in core lane the failures were `toHaveAttribute`/`toHaveText` on `#counter`'s Increment button. Hmm, the packaged one says activations 1 but Count 0 — meaning the click activated (activation counted) but the counter state didn't propagate. Wait "activations 1" suggests the frame-side count of activations = 1 while Count = 0: the click reached the frame (activation recorded) but the Chord state didn't come back. Same shape as core-lane extension view reds. Good — I'll describe as "跨车道同形（core 车道 extension-view-security 三条同形红），与打包无关" and note that I did not root-cause it (C 类 in the E2E report).
+
+Let me read those two files quickly.
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\production\\applications-relaunch.spec.ts","limit":30}
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\helpers\\packaged-app.ts","limit":40,"offset":55}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\applications-relaunch.spec.ts</path>
+<type>file</type>
+<content>
+1: import { mkdir, rm, writeFile } from "node:fs/promises";
+2: import { basename, join } from "node:path";
+3: import { expect, test } from "@playwright/test";
+4: import {
+5:   copyAppBundle,
+6:   createNamedThread,
+7:   extractPackagedReleaseZipAppBundle,
+8:   launchDesktopByExecutable,
+9:   makeUserDataDir,
+10:   makeWorkspace,
+11:   resolveAppBundleExecutable,
+12:   waitForWorkspaceByPath,
+13: } from "../helpers/electron-app";
+14: 
+15: test("launches an installed app copy from /Applications and relaunches with persisted state", async () => {
+16:   test.setTimeout(120_000);
+17: 
+18:   const userDataDir = await makeUserDataDir("pi-gui-installed-user-data-");
+19:   const agentDir = join(userDataDir, "agent");
+20:   await mkdir(agentDir, { recursive: true });
+21:   await writeFile(
+22:     join(agentDir, "auth.json"),
+23:     `${JSON.stringify({ openai: { type: "api_key", key: "test-openai-key" } }, null, 2)}\n`,
+24:     "utf8",
+25:   );
+26:   await writeFile(
+27:     join(agentDir, "settings.json"),
+28:     `${JSON.stringify(
+29:       {
+30:         defaultProvider: "openai",
+
+(Showing lines 1-30 of 87. Use offset=31 to continue.)
+</content>
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\packaged-app.ts</path>
+<type>file</type>
+<content>
+55:   const entries = await readdir(macOsDir, { withFileTypes: true });
+56:   const expectedExecutableName = basename(appBundle, ".app");
+57:   const executableEntry =
+58:     entries.find((entry) => entry.isFile() && entry.name === expectedExecutableName) ??
+59:     entries.find((entry) => entry.isFile());
+60: 
+61:   if (!executableEntry) {
+62:     throw new Error(`No packaged executable found under ${macOsDir}.`);
+63:   }
+64: 
+65:   return join(macOsDir, executableEntry.name);
+66: }
+67: 
+68: export async function resolvePackagedReleaseZip(releaseDir = packagedReleaseDir): Promise<string> {
+69:   const entries = await readdir(releaseDir, { withFileTypes: true });
+70:   const zipEntry =
+71:     entries.find((entry) => entry.isFile() && entry.name.endsWith("-arm64.zip")) ??
+72:     entries.find((entry) => entry.isFile() && entry.name.endsWith("-mac.zip")) ??
+73:     entries.find((entry) => entry.isFile() && entry.name.endsWith(".zip"));
+74: 
+75:   if (!zipEntry) {
+76:     throw new Error(
+77:       `No packaged macOS release zip found under ${releaseDir}. Run pnpm --filter @pi-gui/desktop run package first.`,
+78:     );
+79:   }
+80: 
+81:   return join(releaseDir, zipEntry.name);
+82: }
+83: 
+84: export async function extractPackagedReleaseZipAppBundle(
+85:   releaseDir = packagedReleaseDir,
+86:   appName = "pi-gui 2.app",
+87: ): Promise<string> {
+88:   const zipPath = await resolvePackagedReleaseZip(releaseDir);
+89:   return extractAppBundleFromReleaseZip(zipPath, appName);
+90: }
+91: 
+92: export async function extractAppBundleFromReleaseZip(
+93:   zipPath: string,
+94:   appName = "pi-gui 2.app",
+
+(Showing lines 55-94 of 152. Use offset=95 to continue.)
+</content>
+
+[assistant]
+Good. Now I have everything for T24-C:
+1. **4 notification cases = macOS-only**: judged by `notification-permission.ts:329-335 resolveNotificationStatusHelperPath()` (`if (process.platform !== "darwin" || !app.isPackaged) return undefined;`) + `:192-197` fallback chain → renderer `globalThis.Notification?.permission` (`:301-304`) which on Windows reports `"granted"`; test fixtures drive the status through `PI_APP_TEST_NOTIFICATION_PERMISSION_HELPER_STATUS_FILE` (`notification-onboarding-packaged.spec.ts:20,22,27`) whose only reader is the macOS status helper (`notification-permission.ts:353` inside `updatePackagedHelperOverrideStatus`, reachable only via `:205` darwin+packaged branch). Plus `:269` non-darwin early return in `openSystemNotificationSettingsInternal` (the "Ask macOS" path opens an Apple support URL instead of System Settings) ⇒ the three `notification-settings-packaged` cases' premise (macOS System Settings round-trip) cannot hold.
+2. **6 cases fail on missing macOS release zip / /Applications** (applications-relaunch:15 + release-zip-reopen-new-thread:20/:93 + release-zip-smoke:11): `helpers/packaged-app.ts:68-82 resolvePackagedReleaseZip()` looks for `-arm64.zip` / `-mac.zip` / `*.zip` under `release\`; `package:win:dir` produces only `win-unpacked` (+ old `PAO-1.0.1-x64-*.exe` from 10-12) ⇒ ZIP_COUNT=0. `applications-relaunch` → `copyAppBundle`/`extractPackagedReleaseZipAppBundle` + `/Applications` (line 15 title).
+3. **2 skipped**: `finder-env-open-folder.spec.ts:16`, `open-folder-real.spec.ts:11` — `test.skip(process.platform !== "darwin", …)`.
+4. **1 cross-lane red**: packaged-extension-view:16 (Count 0 vs Count 1; activations 1) — same shape as core-lane `extension-view-security.spec.ts` reds ⇒ not packaging-related; not root-caused.
+5. **2 passed on the new package**: packaged-smoke:11, packaged-terminal:11.
+
+Now, one nuance: the "5 failed / 2 passed (1.8m)" from the old run vs "9 failed / 2 skipped / 2 passed (1.9m)" from the new. Identical on the shared 7: 5 red (same specs, same first errors) + 2 green ⇒ 包的新旧没有改变结果 ✓.
+
+Now check the verify job, then write the report.
+
+Also T24-D should mention:
+- `pao-live-smoke.spec.ts` — not run (user authorization; also has `test.skip(` at :21).
+- `verify:packaged-runtime-deps:windows` — rerun on new package: result pending.
+- No HEAD baseline for Windows production lane.
+- `--shard` not used.
+- Also: the production lane ran with `PI_APP_TEST_MODE=background`; `retries=0` (background), workers=1.
+- Also: the win-unpacked rebuild overwrote the old package (recorded old/new sizes+mtime); `PAO-1.0.1-x64-portable.exe`/`setup.exe` in release\ remain from 2026-10-12 (not rebuilt by `--dir`).
+- Not done: `package:win` (zip/installer) — only `--dir`; no code signing identity checks (log shows signtool steps; worth noting? The packaging log shows "signing with signtool.exe" for several exes — presumably a no-op/default signing? Not needed.)
+- Also not done: macOS packaging (impossible on this machine).
+
+Let me check the verify job now.
+
+[assistant • job_output]
+{"job_id":"pwsh-174292902c3b465f","timeout_ms":420000,"wait":true}
+
+[tool • job_output]
+--- script names ---
+  "verify:launcher-contract": "node scripts/verify-launcher-contract.mjs",
+  "verify:packaged-runtime-deps:windows": "pnpm run verify:runtime-model-registry && cross-env PI_APP_PACKAGE_PLATFORM=win32 node scripts/assert-packaged-runtime-deps.mjs",
+VERIFY_DEPS EXIT=0 SEC=1.1 LOG_BYTES=3868
+VERIFY_LAUNCHER EXIT=0 LOG_BYTES=734
+--- tail deps ---
+Verified bundled Pi runtime exposes anthropic/claude-opus-4-7.
+Verified bundled Pi runtime exposes zai/glm-5.3.
+Verified packaged runtime dependencies in D:\AI\workspace\pao-dev\desktop\apps\desktop\release\win-unpacked\resources\app.asar
+node.exe : (node:14604) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead t
+o security vulnerabilities, as the arguments are not escaped, only concatenated.
+所在位置 D:\tools\npm-global\pnpm.ps1:24 字符: 5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.mjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:14604) [D...y concatenated.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where the warning was created)
+--- tail launcher ---
+> @pi-gui/desktop@1.0.1 verify:launcher-contract D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/verify-launcher-contract.mjs
+
+ok - PATH augmentation contract
+ok - argv preserved exactly from a path containing spaces
+ok - .cmd/executable shim resolves without ENOENT
+ok - no DEP0190 deprecation warning
+Verified dev launcher argv/PATH contract
+[status: completed, exit code: 0]
+
+[assistant]
+Both verifications on the NEW package: EXIT=0.
+- `verify:packaged-runtime-deps:windows` EXIT=0 (1.1 s for the second command; the whole chain total time ~? I measured sw2 only for launcher... I printed SEC=1.1 which was sw2 (launcher) mislabeled. Oops: `"VERIFY_DEPS EXIT=$c1 SEC=$([math]::Round($sw2.Elapsed.TotalSeconds,1))..."` — I printed sw2 (launcher elapsed) labeled as deps. Didn't measure deps elapsed separately. I should state EXIT=0 and log bytes 3868, and avoid a wrong duration. Note: launcher took 1.1 s; deps duration unmeasured in this run (round-1 measured 157.4 s under a different invocation? Hmm, b63 says 157.4s). To be safe, in the report: "本轮第二次跑（新包）EXIT=0；耗时未单独计时（首轮同命令 157.4 秒，本轮 chain 实际 1.1 秒的是 launcher 那条）" — messy. Cleanest: report EXIT=0 + log bytes, and note the deps verification log is 3,868 B (correcting the 0 B observation), and that the deps check re-verified against the **new** `release\win-unpacked\resources\app.asar` (evidence: log line "Verified packaged runtime dependencies in …win-unpacked\resources\app.asar"). Also mention the two "Verified bundled Pi runtime exposes anthropic/claude-opus-4-7" / "zai/glm-5.3" lines.
+
+Also note: the deps check log is identical in size to round 1 (3,868 B) → consistent.
+
+Hmm wait, is that possible that the check took only ~1s? In round 1 I recorded 157.4 s for it — maybe that 157.4 s included pnpm install/cold start. Whatever: don't state durations for this run beyond what I measured.
+
+Actually, let me be accurate: the whole background job ran both; I have no total timing. I'll simply say EXIT=0 for both, and the deps log says verified against the new asar. Also note `--dir` packaging step took 303.9 s.
+
+Now write the report. Structure (four sections as lead requires):
+
+```
+# T24 解包发行 Windows 实测（H 批）
+- 日期 2026-10-17 / 执行 teammate d3-host / 口径
+
+## §0 结论（一句话 + 表格 + 三条要点）
+## T24-A 打包
+ A.1 第一次为什么失败（vendor:kernel 守卫 + 两时间戳 + 逐字消息）
+ A.2 补跑内核构建 pnpm build:offline（EXIT=0 15.3s，git status 137→137，bundle 74 files 9.6MiB）
+ A.3 第二次 package:win:dir（EXIT=0 303.9s，vendor 物化 92.6MB，asar/app.exe 前后对照）
+ A.4 新包是否真的含新内核（证据与限制）
+## T24-B 生产车道
+ B.1 跑法（逐字命令、前置、env）
+ B.2 表 1：14:24 旧包（7 例）
+ B.3 表 2：本轮新包（13 例）
+ B.4 共享 7 例逐行对照（同红同绿 ⇒ 差异不来自包的新旧）
+## T24-C 失败定性
+ C.1 4 条 macOS 通知语义（判据行号）
+ C.2 6 条 macOS 发布物缺失（applications-relaunch + release-zip ×3，helper 行号，ZIP_COUNT=0）
+ C.3 2 条 darwin-only skip
+ C.4 1 条跨车道同形红（packaged-extension-view）
+ C.5 通过 2 条（packaged-smoke / packaged-terminal）
+## T24-D 未验与口径
+ D.1 未跑：pao-live-smoke
+ D.2 release-zip 跑过但红（macOS 专属）
+ D.3 CI Windows 两步校验结果（新包）
+ D.4 Windows 无 HEAD 基线
+ D.5 其他未做项
+## §E 环境事实与踩坑
+## §F 产物与字节自检
+```
+
+I need the old-run pass names: packaged-smoke + packaged-terminal (inferred from round 1 = 7 tests). I should double check from the old log: parse which tests appear in the old log's progress lines. Let me verify quickly (1 command) to avoid asserting an inference: parse `[N/7]` lines from `t24-production-run.log`.
+
+Also get the old run's first-run command line (from b63: I ran with 5 explicit spec paths? or 7?). The old log's progress lines will show the count and names. Let me check.
+
+Also useful for B.1: the new run's exact command and env (I have it).
+
+One more piece for §E: residual processes check (electron=0, PAO=0) — do it at the end after all Electron runs. I'll do a final check before writing (and include in report). Also confirm ELECTRON_RUN_AS_NODE still clear after packaging.
+
+Let me run: parse old log progress lines + process check + env check.
+
+[assistant • pwsh]
+{"command":"$p='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-production-run.log'\n$lines=[System.IO.File]::ReadAllLines($p,[System.Text.Encoding]::Unicode)\n$clean = $lines | ForEach-Object { $_ -replace '\\x1b\\[[0-9;]*[A-Za-z]','' }\n'--- old-run progress lines ---'\n$seen=@{}\nforeach($l in $clean){ if($l -match '\\[(\\d+)/(\\d+)\\]\\s+(\\S*spec\\.ts:\\d+:\\d+)\\s+›\\s+(.*)$'){ $k=$matches[3]+' | '+$matches[4].Trim(); if(-not $seen.ContainsKey($k)){ $seen[$k]=$matches[1]; \"  [$($matches[1])/$($matches[2])] $k\" } } }\n'--- old-run command/args lines ---'\n$clean | Select-String -Pattern 'playwright test|-c apps' | Select-Object -First 4 | ForEach-Object { '  ' + $_.Line.Trim() }\n'--- processes ---'\n\"electron count=$((Get-Process electron -ErrorAction SilentlyContinue | Measure-Object).Count) PAO count=$((Get-Process PAO -ErrorAction SilentlyContinue | Measure-Object).Count)\"\n\"ELECTRON_RUN_AS_NODE='$($env:ELECTRON_RUN_AS_NODE)'\"\n'--- test-results summary ---'\n$tr='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\test-results'\n$dirs=Get-ChildItem $tr -Directory -ErrorAction SilentlyContinue\n\"test-results dirs=$($dirs.Count) production_dirs=$(($dirs | Where-Object { $_.Name -like 'production-*' }).Count) with_trace=$((($dirs | Where-Object { Test-Path (Join-Path $_.FullName 'trace.zip') })).Count) with_png=$((($dirs | Where-Object { Get-ChildItem $_.FullName -Filter 'test-failed-*.png' -ErrorAction SilentlyContinue })).Count)\"","description":"Parse old-run tests and check environment"}
+
+[tool • pwsh]
+--- old-run progress lines ---
+  [1/7] apps\desktop\tests\production\notification-onboarding-packaged.spec.ts:17:5 | requests notification permission in the packaged app when active work moves to the background
+  [2/7] apps\desktop\tests\production\notification-settings-packaged.spec.ts:19:5 | shows not enabled yet in the packaged app and enables after Ask macOS updates the authoritative macOS status
+  [3/7] apps\desktop\tests\production\notification-settings-packaged.spec.ts:65:5 | keeps showing not enabled yet when Ask macOS does not change packaged macOS notification access
+  [4/7] apps\desktop\tests\production\notification-settings-packaged.spec.ts:103:5 | refreshes packaged notification status after returning from System Settings
+  [5/7] apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 | packaged extension frame loads its bundled bridge and exchanges live Chord state
+  [6/7] apps\desktop\tests\production\packaged-smoke.spec.ts:11:5 | launches the packaged app bundle and starts a thread through the real UI
+  [7/7] apps\desktop\tests\production\packaged-terminal.spec.ts:11:5 | packaged app opens a real integrated terminal
+--- old-run command/args lines ---
+--- processes ---
+electron count=0 PAO count=0
+ELECTRON_RUN_AS_NODE='1'
+--- test-results summary ---
+test-results dirs=9 production_dirs=9 with_trace=9 with_png=1
+
+
+[assistant]
+Old run: 7 tests across 5 specs ✓ (as inferred). Passes = packaged-smoke (6/7), packaged-terminal (7/7) ✓ confirmed.
+
+Note: `ELECTRON_RUN_AS_NODE='1'` — it's back to 1 in this new shell (each new pwsh process inherits from DSH). Fine: it's inherited, not persistent; each command must clear it (and the runs did clear it before Electron).
+
+test-results: 9 production dirs (7 failed? no—9 failures in new run: 9 dirs ✓), with_trace=9, with_png=1. Note: old run's 5 dirs were replaced (test-results is cleared per run). So the old-run failure artifacts are gone (only 1 png present). I must note this in the report: test-results now holds the new run's 9 failing dirs; the old (14:24 package) run's artifacts were overwritten by the new run (Playwright cleans test-results at start). Not deleted by me. Important honesty note — earlier core lane's 55 dirs: are they still there? The overall test-results dir count is now 9 → **the core lane's 55 dirs are gone!** Because running the production lane cleaned test-results. That's important: lead said "test-results 里的失败产物别删". Playwright's default `outputDir` cleaning removed the core-lane artifacts. I must report this honestly and check whether traces exist elsewhere (maybe in the E2E report I recorded the directory names & sizes — yes, in the E2E report §12; and the log has path references). So the artifacts themselves are gone but the report recorded names/sizes/traces.
+
+Wait — is that right? `test-results dirs=9` means only 9 dirs. Earlier (after core run) it was 55. So yes, cleaned. Hmm, unless the production run used a different outputDir... no, config testDir same, outputDir = test-results. Playwright removes stale output at run start. The two production runs (round 1, round 2) each cleaned.
+
+This is an important disclosure for T24-D and for lead's earlier requirement. The core-lane failure artifacts (traces/pngs) are gone; the recorded evidence survives in the E2E report (§12 artifact table with dir names + file names + bytes) and in the core log.
+
+Let me double-check that earlier E2E report indeed recorded the 55 dirs with names and bytes — my b58/b57 summaries say §12 includes "产物与字节校验" and I recorded "逐个目录名+files+bytes". Yes: "逐个目录名+files+bytes 已记录" from m03675–m03693 block. Good.
+
+Also: is there a chance the core artifacts are still on disk under a different name pattern? dirs=9 total. So no.
+
+I must tell lead this clearly (it's a loss of on-disk artifacts, though not of information).
+
+Now let me write the report. I'll write the complete file with `write` (it's a rewrite). Then byte-check, fill self-check line, re-verify.
+
+Length: aim for a thorough but organized doc, maybe ~330-400 lines.
+
+Let me now compose the content carefully in Chinese, with exact numbers:
+
+Key data:
+- Kernel build: `pnpm build:offline` in `D:\AI\workspace\pao-dev\PAO`, EXIT=0, 15.3 s, log `t24-kernel-build-offline.log` 5,592 B, `git -C PAO status --porcelain` counts 137 → 137 (dist 未被 git 跟踪), last line "Built packages\coding-agent\dist\bundle (74 files, 9.6 MiB)".
+- Gate: source `PAO\packages\coding-agent\src\pao\已知边界.md` 16,271 B @ 2026-10-17 16:04:49; dist artifact before = `PAO\packages\coding-agent\dist\bundle\cli.js` @ 14:22:34; after build @ 22:18:24 (160 B — 这是 bundle 入口再导出文件; bundle 目录共 74 files).
+- Packaging #1: `t24-package-win-dir.log` 2,050 B, EXIT=1 @ 22:05:34 (1.3 s), verbatim message.
+- Packaging #2: `t24-package-win-dir-2.log` 10,572 B, EXIT=0, 303.9 s, END 22:24:12; vendor line 物化 92.6 MB @ 22:19:10; electron-builder lines: appOutDir release\win-unpacked, skipped dependencies rebuild (npmRebuild=false), "dependency not found on disk" list, asar integrity resource, signtool steps; new PAO.exe 204,530,176 B @ 22:24:11; app.asar 210,616,175 B @ 22:24:08 (old 210,613,231 B @ 14:24:53, Δ +2,944 B).
+- Production round 2: 10 specs / 13 tests, 9 failed / 2 skipped / 2 passed (1.9m), EXIT=1, 114.3 s, log `t24-production-new-package.log` 43,492 B (UTF-16LE+BOM, 360 lines).
+- Production round 1 (old pkg): 5 specs / 7 tests, 5 failed / 2 passed (1.8m), EXIT=1, 110.4 s, log `t24-production-run.log` 25,026 B (221 lines).
+- verify deps: EXIT=0, log `t24-verify-packaged-deps-2.log` 3,868 B, verified against new asar; verify launcher: EXIT=0, 734 B, 1.1 s.
+- test-results: 9 dirs (all production), with_trace=9, with_png=1; core lane 55 dirs 已被 Playwright 的 outputDir 清理覆盖（未手工删除）。
+- Processes: electron 0, PAO 0.
+- ELECTRON_RUN_AS_NODE: 每个新 pwsh 会话继承为 '1'，必须每条命令前清（本条非持久配置）。
+
+Report path: same.
+
+Let me write it. I'll include the byte self-check placeholder `@@SELF@@` and arithmetic-fill afterwards like before. Actually simpler: write the file, then measure, then edit the self-check line with final numbers computed arithmetically to converge (as I did before).
+
+I'll write the file with the self-check block containing `@@SELF@@` placeholder line.
+
+Let me be careful to make the content accurate and not overlong. Write now.
+
+Regarding the "四条疑点先验证再判断" and other T24 specifics — not needed here.
+
+Let me write the report content.
+
+One more consideration for T24-B tables: I should give per-line: spec:行号 + 用例名 + 过/红 + 错误首行. For the new table include all 13.
+
+For T24-C, give判据 with line numbers.
+
+Also T24-D should mention: `pao-live-smoke` 未跑；`release-zip-*` 跑过但红（macOS 专属）；`verify:*` 结果；Windows 无 HEAD 基线（`desktop/docs/ci-baseline.md` Windows job 不跑 production 车道 — I should verify the exact line/section for the production lane claim. The ci-baseline.md:49-56 covers core shards. For production lane coverage, ci.yml has jobs... I know CI runs production lane on macOS (there's `desktop-production` job?). To be safe: phrase as "CI 的 Windows job（`.github/workflows/ci.yml`）只跑 verify:launcher-contract / test:changed-files / package:win:dir / verify:packaged-runtime-deps:windows，不含 production 车道；本轮没有 Windows 上的 HEAD 基线可比" — this was established earlier in the session (lead's own statement + my check). Keep it, cite ci.yml.
+
+Let me also double check quickly that statement is safe... It was verified earlier (b57/b58: "Windows job 只跑 verify:launcher-contract/test:changed-files/package:win:dir/verify:packaged-runtime-deps:windows，从不跑 core"). For production: unknown whether a macOS job runs production lane. I'll write: "Windows 的 CI job 里没有 production 车道（`desktop\.github\workflows\ci.yml` 的 Windows 步骤为 verify:launcher-contract / test:changed-files / package:win:dir / verify:packaged-runtime-deps:windows）；production 车道在 CI 上由 macOS 承担（`desktop\docs\ci-baseline.md`）" — hmm, do I know production is macOS-only in CI? The specs are heavily macOS-flavored (darwin skips, /Applications, release zip). I can check ci.yml quickly for "production" grep. Let me do that to be accurate.
+
+Let me grep ci-baseline.md and ci.yml for production.
+
+[assistant • pwsh]
+{"command":"$d='D:\\AI\\workspace\\pao-dev\\desktop'\n'--- ci.yml production/lane mentions ---'\nSelect-String -Path \"$d\\.github\\workflows\\ci.yml\" -Pattern 'production|test:e2e|runs-on|verify:packaged-runtime-deps|package:win' | ForEach-Object { \"  :$($_.LineNumber) $($_.Line.Trim())\" } | Select-Object -First 40\n'--- ci-baseline.md production mentions ---'\nSelect-String -Path \"$d\\docs\\ci-baseline.md\" -Pattern 'production|Production' | ForEach-Object { \"  :$($_.LineNumber) $($_.Line.Trim())\" } | Select-Object -First 20","description":"Check CI coverage of production lane"}
+
+[tool • pwsh]
+--- ci.yml production/lane mentions ---
+  :23 runs-on: ubuntu-latest
+  :37 runs-on: ubuntu-latest
+  :68 runs-on: ubuntu-latest
+  :90 runs-on: ubuntu-latest
+  :105 runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-latest' || 'macos-latest' }}
+  :129 run: pnpm --filter @pi-gui/desktop run test:e2e:ci:mac --shard=${{ matrix.shard }}/4 --reporter=line,json
+  :150 pnpm --filter @pi-gui/desktop run test:e2e:core --shard=${{ matrix.shard }}/4 --reporter=line,json
+  :166 runs-on: ubuntu-latest
+  :188 run: pnpm --dir apps/desktop run verify:packaged-runtime-deps:linux
+  :228 runs-on: windows-latest
+  :250 run: pnpm --filter @pi-gui/desktop run package:win:dir
+  :253 run: pnpm --dir apps/desktop run verify:packaged-runtime-deps:windows
+--- ci-baseline.md production mentions ---
+
+
+[user]
+<acp tokens="1.7K" type="text">m04067</acp>
+Team message from lead:【T24 新包结果我复核完了：2 过 9 红 2 跳都对得上，但有 1 条必须真诊断，另附两条口径 —— Lead】
+
+## 一、我独立核过的数字（你不用再跑，直接采信并写进报告）
+
+新包（`release\win-unpacked` 目录 mtime **22:24:11**、`PAO.exe` 22:24:11）生产车道 `t24-production-new-package.log`（43492B，22:26:23）：**`Running 13 tests using 1 worker` → `2 passed (1.9m)` / `9 failed` / `2 skipped`**，13 = 2+9+2 对得上。
+- **2 过** = `[9/13] packaged-smoke.spec.ts:11` + `[10/13] packaged-terminal.spec.ts:11`。
+- **9 红** = `[1] applications-relaunch:15`、`[3] notification-onboarding-packaged:17`、`[4][5][6] notification-settings-packaged:19/65/103`、`[8] packaged-extension-view:16`、`[11][12] release-zip-reopen-new-thread:20/93`、`[13] release-zip-smoke:11`。
+- **2 跳** = 按 13 减出来只能是 `[2] finder-env-open-folder:18` 与 `[7] open-folder-real:13`（用例名里就写着 Finder-style PATH / real macOS folder picker）——**请你从日志或 trace 确认这两条确实是 skip 而不是没进列表，并把 skip 原因逐条写出来**。
+- **8 条 macOS 专属（判据已足够硬）**：`applications-relaunch` 用例名 `launches an installed app copy from /Applications`；4 条 notification 用例名含 `macOS status`/`System Settings`/`macOS notification access`；3 条 release-zip 报 `Error: No packaged macOS release zip found under D:\...\desktop\apps\desktop\release. Run pnpm --filter @pi-gui/desktop run package first.`（`tests\helpers\packaged-app.ts:71-73` 找 `-arm64.zip` / `-mac.zip` / `.zip`，而 `package` = `electron-builder --mac`，本机 `release\` 里根本没有 zip）。
+
+## 二、**必须真诊断的那 1 条：`packaged-extension-view.spec.ts:16`**（旧包、新包同一条同一点，确定性，不是包新旧造成的）
+
+原文：
+```
+Error: expect(locator).toHaveText(expected) failed
+Locator:  locator('[data-testid="extension-view-frame"]').contentFrame().locator('#counter')
+Expected: "Count 1 · activations 1"
+Received: "Count 0 · activations 1"
+  55 |     await expectExtensionViewReady(window);
+  56 |     await frame.getByRole("button", { name: "Increment", exact: true }).click();
+> 57 |     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+```
+**关键点：`:55` 的 `expectExtensionViewReady(window)` 过了** —— 扩展 frame 起来了、bundled bridge 也通了（否则 `activations 1` 这半截不会出现），**卡在「点 Increment 后计数不动」**。这不像「包缺文件」，更像「点击没生效或点击→桥→状态这条回路在打包环境下断在某一环」。请你给结论，**三选一并附证据**：
+- (a) 真产品缺陷（打包环境里 bridge 往返坏了）；
+- (b) Windows 专属（输入/iframe 焦点之类，Linux/macOS 上没这问题）；
+- (c) 测试或环境问题（比如 `PAO_DISABLE_BUILTIN_EXTENSION` / lane 变量 / fixture 扩展没进包 / 该 spec 需要某种 env）。
+取证要求：读 `tests\production\packaged-extension-view.spec.ts` 全文、它用的 fixture 扩展从哪来（`writeProjectExtension`？内置？`examples/`？）、以及 `apps\desktop\test-results\production-packaged-extens-b1d2c--exchanges-live-Chord-state\trace.zip`（22:25:54 那份）里的实际 DOM/IPC 事件。**别只说「未定因」**——这一条是全批唯一「平台无关且可能真是产品坏」的线索。
+
+## 三、两条口径必须写进报告
+
+1. **生产车道整体不在 CI 里**（我查的，你复核一下）：`desktop/.github/workflows/` 全目录 grep `test:prod|tests/production` **只命中 1 处** —— `release.yml:101` 的 `pnpm --dir apps/desktop run test:prod:release-zip-smoke:ci`。`ci.yml` 里**没有任何 job 跑 `tests/production`**；`apps\desktop\package.json` 的生产用例只有**逐 spec 的手动脚本**（`test:prod:packaged-smoke` / `:packaged-terminal` / `:notification-onboarding` / `:notification-settings` / `:applications-relaunch` / `:release-zip-smoke` / `:open-folder-real`，`package.json:71-78`），**没有整条车道的脚本**；`docs\ci-baseline.md` 通篇没提 production/packaged 车道（只在 `:68-69` 写「Windows package jobs remain separate，`pnpm check` 不证明这些」）。
+   ⇒ 结论口径：**「Windows 上没有生产车道基线」比 core 车道更彻底——这个车道在 Windows 上一次都没被验收过；`packaged-extension-view` 在任何平台上都没有 CI 覆盖。** 所以不能称它为「回归」，只能称「首次实测发现」。
+2. **旧包/新包对照表**要并列：旧包（14:24:56）`5 failed / 2 passed (1.8m)`，只跑了 5 个 spec 文件；新包（22:24:11）`9 failed / 2 passed / 2 skipped (1.9m)`，13 个用例（全目录）。**两次的 2 过是同样两条**，`packaged-extension-view` 两次都红 ⇒ 可直接得出「与包新旧无关」。
+
+## 四、报告里还要有的
+
+- `build:offline` 的实测：日志 `t24-kernel-build-offline.log`（5592B）我读了，**成功**——末尾逐字 `Built packages\coding-agent\dist\bundle (74 files, 9.6 MiB)`；`dist\bundle\cli.js` 只有 160B 是**正常的**（薄入口，真身在 `cli-runtime.js` 5662B + `chunks\`），别把它当异常写。请补上退出码与耗时。
+- 我也核过 **`build:offline` 没有污染 PAO 仓**：`PAO` 下最近 30 分钟内被改动的非 dist/非 node_modules 文件 = **0 个**；`git -C PAO ls-files 'packages/coding-agent/dist'` = **0 个文件**（dist 不被跟踪）。
+- `t24-package-win-dir-2.log`（10572B，22:24:11）请给出**退出码**（成功/失败）与耗时；`t24-verify-packaged-deps.log`（22:15:26，3868B）、`t24-verify-launcher-contract.log`（22:15:27，734B）、`t24-verify-packaged-deps-2.log`（22:29:12）三份的结果也要落进去。
+- `release\` 里另有 **09:02 的两个 Windows 安装包**（`PAO-1.0.1-x64-setup.exe` 128,218,462B、`PAO-1.0.1-x64-portable.exe` 128,065,050B、`latest.yml` 343B）——**这是本批 `package:win` 的产物吗？** 是就写进「发行物」一节并注明「未发布（`--publish never`）」，不是就说明来源，别默认它们是本轮的。
+
+报告仍落 `T24-解包发行-Windows实测.md`（现在 19488B/22:17:34，需按上述扩写），附自检行；`test-results\` 里失败产物别删；收尾确认无残留 `electron.exe`。
+
+[assistant]
+Lead now asks for much more, including a real diagnosis of `packaged-extension-view.spec.ts:16` with evidence from the trace. Let me plan:
+
+1. Confirm skip reasons (I already have the guard lines: finder-env-open-folder.spec.ts:16 `test.skip(process.platform !== "darwin", "Finder-style packaged app coverage is macOS-only")`, open-folder-real.spec.ts:11 + :19). Also confirm from the log that they're skip: the log's final summary shows `2 skipped` and no `)` failure block for them. Also could grep the log for "skipped" per-test markers. Playwright line reporter prints `-`? Let me check the log lines around [2] and [7] — maybe there's a line like "  2 skipped" only. I'll extract log lines mentioning these spec names to see the surrounding text (may include the skip reason? likely not). The guard lines give the reason. Good. Optionally, run `pnpm --dir ../.. exec playwright test ... --list`? Not needed; but to be strict "confirm these two are skip not missing": the progress lines show `[2/13]` and `[7/13]` executed → they ran and were skipped; plus 13 = 2+9+2 ✓. I'll state that.
+
+2. Diagnose packaged-extension-view: read the spec fully, find the fixture extension source, and inspect the trace.zip (extract → test.trace JSONL) for DOM/IPC events. Also compare with core-lane behavior: in core lane, extension-view-security.spec.ts had 3 same-shape reds (`#counter` Increment button attribute/text) → suggests it's not packaging-specific but a Windows-wide issue with extension frame click→Chord round trip. Note packaged-extension-view says "activations 1" - meaning something counted an activation. Let me look at the fixture extension code to understand what "activations" means: it's probably a counter in the extension's view HTML: "Count N · activations M" where activations is the number of times the frame received a chord activation?? Hmm, need to read the extension example (`examples/desktop-extensions/...` chord?) to know the semantics.
+
+Let me find the fixture: read the spec first.
+
+3. Report expansion with all the requested numbers.
+
+Let me start reading the spec + find fixture.
+
+Also lead asks: are the two 09:02 Windows installers from this batch's `package:win`? Evidence: `t24-package-win-dir-2.log` only did `--dir`, so it does NOT build installers. Those files dated 2026-10-12 09:02 → from a previous session's `package:win` (dated 10-12, way before this batch's 10-17 work). Also `latest.yml` 10-12. So: NOT this round; they're leftovers from a 2026-10-12 packaging run; the current desktop working tree's changes (10-17) are not in those installers. Also note `.icon-ico` 10-05 and `icudtl.dat` 10-09.
+
+Hmm wait: lead said "09:02 的两个 Windows 安装包" — I observed mtime 2026-10-12 09:02:16/20. So "09:02" refers to time of day; date 10-12. I'll state: mtime 2026-10-12 09:02:16/20 ⇒ 早于本批（本批为 10-17），不是本轮 `package:win:dir` 的产物（后者用 `--dir`，不产安装包）。
+
+4. Also `build:offline` exit code + duration: EXIT=0, 15.3 s. ✓ (have it)
+5. `t24-package-win-dir-2.log`: EXIT=0, 303.9 s ✓.
+6. verify logs: deps (22:15:26, 3868B) EXIT=0 157.4s? I have from b63 summary: EXIT=0 157.4s. Let me trust: earlier I measured "157.4 秒" for the first deps run. And launcher-contract (734B) EXIT=0. Plus the new runs: deps-2 EXIT=0 (3868B, 22:29:12), launcher-contract-2 EXIT=0 (734B, 1.1s).
+
+Let me now dig into the extension view diagnosis — the most important part.
+
+Read the spec file fully.
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\production\\packaged-extension-view.spec.ts"}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-extension-view.spec.ts</path>
+<type>file</type>
+<content>
+1: import { join } from "node:path";
+2: import { expect, test } from "@playwright/test";
+3: import {
+4:   installDesktopExtensionFixture,
+5:   expectExtensionViewReady,
+6:   openDesktopExtensionFixture,
+7: } from "../helpers/desktop-extension-fixture";
+8: import {
+9:   launchPackagedDesktop,
+10:   makeUserDataDir,
+11:   makeWorkspace,
+12:   startThreadFromSurface,
+13:   waitForWorkspaceByPath,
+14: } from "../helpers/electron-app";
+15: 
+16: test("packaged extension frame loads its bundled bridge and exchanges live Chord state", async () => {
+17:   test.setTimeout(120_000);
+18:   const workspace = await makeWorkspace("packaged-extension-view");
+19:   const harness = await launchPackagedDesktop(await makeUserDataDir(), {
+20:     initialWorkspaces: [workspace],
+21:     testMode: "background",
+22:   });
+23:   try {
+24:     const artifact = await harness.electronApp.evaluate(({ app }) => ({
+25:       appPath: app.getAppPath(),
+26:       isPackaged: app.isPackaged,
+27:       defaultApp: Boolean(process.defaultApp),
+28:     }));
+29:     expect(artifact.isPackaged).toBe(true);
+30:     expect(artifact.defaultApp).toBe(false);
+31:     expect(artifact.appPath).toMatch(/[/\\]app\.asar$/);
+32: 
+33:     // Use the shipped author helper too: a checkout import would conceal omissions from ASAR.
+34:     // Runtime discovery happens when the first task starts, after this fixture is installed.
+35:     await installDesktopExtensionFixture(
+36:       workspace,
+37:       "http://127.0.0.1:9/unused",
+38:       join(artifact.appPath, "node_modules", "@pi-gui", "extension-ui", "dist", "index.js"),
+39:     );
+40:     const window = await harness.firstWindow();
+41:     await waitForWorkspaceByPath(window, workspace);
+42:     await startThreadFromSurface(window, { prompt: "Packaged extension view" });
+43: 
+44:     const bridgeResponse = window.waitForResponse((response) => {
+45:       const url = new URL(response.url());
+46:       return url.protocol === "pi-extension:" && url.pathname === "/_host/frame-bridge.js";
+47:     });
+48:     await openDesktopExtensionFixture(window);
+49:     expect((await bridgeResponse).status()).toBe(200);
+50:     const frameElement = window.getByTestId("extension-view-frame");
+51:     const frame = window.frameLocator('[data-testid="extension-view-frame"]');
+52:     await expect(frameElement).toHaveAttribute("sandbox", "allow-scripts");
+53:     await expect(frame.getByRole("heading", { name: "Security fixture" })).toBeVisible();
+54:     await expect(frame.locator("#counter")).toHaveText("Count 0 · activations 1");
+55:     await expectExtensionViewReady(window);
+56:     await frame.getByRole("button", { name: "Increment", exact: true }).click();
+57:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+58: 
+59:     // A fresh connection must hydrate the same live backend state from the packaged bridge.
+60:     const firstFrameUrl = await frameElement.getAttribute("src");
+61:     if (!firstFrameUrl) throw new Error("Missing packaged extension frame URL");
+62:     await window.getByRole("button", { name: "Reload view", exact: true }).click();
+63:     await expect(frameElement).not.toHaveAttribute("src", firstFrameUrl);
+64:     await expect(frameElement).toHaveAttribute("src", /^pi-extension:\/\/[^/]+\/$/);
+65:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+66:     const screenshot = test.info().outputPath("packaged-extension-chord-state.png");
+67:     await window.screenshot({ path: screenshot, animations: "disabled" });
+68:     await test.info().attach("Packaged extension Chord state", {
+69:       path: screenshot,
+70:       contentType: "image/png",
+71:     });
+72:   } finally {
+73:     await harness.close();
+74:   }
+75: });
+
+(End of file - total 75 lines)
+</content>
+
+[assistant]
+Line 54 already asserts "Count 0 · activations 1" and PASSED (since the failure is at :57). Then click Increment at :56, and expect "Count 1 · activations 1" but got "Count 0 · activations 1" — so the baseline was fine ("activations 1" was already 1 before the click!), and the click did nothing.
+
+Key insight: "activations 1" was already 1 at baseline (line 54 passed), meaning `activations` counts something else (probably module activation/load count = 1) — so lead's inference "activations 1 说明 bridge 通了" is partially right: the frame loaded, bridge delivered initial state (Count 0), and the click did NOT change Count.
+
+Now: is this Windows-specific or a real defect? Evidence: the same-shape failure in core lane (extension-view-security.spec.ts:18/111/140) on Windows — need to check whether those core-lane cases pass in CI on Ubuntu/macOS. If CI runs core lane on Ubuntu/macOS and these specs pass there, then it's Windows-specific → (b). That's strong evidence available statically: the specs are in `tests/core` which CI runs on ubuntu (PR) / macos (main) — 4 shards. If they pass there (CI green on HEAD), then Windows-only. But is CI currently green? The batch's changes are uncommitted, so CI status on HEAD (2cf4c807) tells about HEAD's code. Our core-lane red for extension-view-security was on the working tree (D batch) — hmm, but I classified them as C 类 (未定因). And the packaged-extension-view red appears on both old and new packages.
+
+Best available evidence path: inspect the trace for the actual click → what happened inside the frame. Let me extract the trace and look at `test.trace` for:
+- network requests to `pi-extension://.../_host/frame-bridge.js`
+- DOM snapshots (`frame-snapshot` entries) before/after click showing the counter text.
+- console messages: maybe a JS error inside the frame after click (e.g. bridge postMessage failing).
+- The fixture code: `installDesktopExtensionFixture` + the "Security fixture" panel source → find the extension fixture (probably `tests/fixtures/desktop-extensions/...` or `examples/desktop-extensions/security`).
+
+Also the packaged spec injects the fixture using the **shipped** author helper from inside app.asar: `join(artifact.appPath, "node_modules", "@pi-gui", "extension-ui", "dist", "index.js")` — so if the packaged asar lacks/older `@pi-gui/extension-ui` dist, the fixture could install but behave differently (e.g. bridge handshake mismatch with bundled bridge version). That's a plausible packaging-specific cause: **packaged `extension-ui` dist vs the shipped frame bridge** version mismatch. Wait but line 54 passed with initial state delivered from the backend ("Count 0 · activations 1") — the counter's initial value comes from the extension's backend state via bridge. Then clicking Increment sends a Chord activation → the frame sends a message → bridge → backend increments → state back. If the bridge's message handler for activations is missing/mismatched, the click would do nothing while initial hydration works. Hmm, but initial hydration also uses the bridge.
+
+Alternatively the click didn't reach the frame: in the packaged app, the iframe is in a separate process; a click via frameLocator should dispatch a real mouse event... In core lane the same spec shape failed too, meaning the same pattern (`#counter` text unchanged after click) fails in dev/unpackaged runs on Windows. If it also fails in dev mode on Windows, then it's Windows-specific (b) or a test issue (c) — not a packaging defect (a).
+
+Wait — the core-lane extension-view-security failures: those are a *different* spec file, but same fixture (Security fixture with #counter Increment). Let me check the core-lane failure details: `extension-view-security.spec.ts:18` failed at `:56:29` `toHaveAttribute` on `#counter`... I recorded: "`expect(locator).toHaveAttribute(expected) failed`" for #10 and `toHaveText` for #11/#12. Those looked at `#counter` too.
+
+Crucially, does the *same* fixture spec pass on Linux/macOS? Evidence available: run the core spec locally? It's already known red on Windows (background mode, both dev and packaged). To decide (a) vs (b) vs (c), the strongest local experiment would be: run the packaged spec again but check whether the click registers at all — e.g. inspect the trace's frame snapshot before/after click to see if the button got a visible focus/pressed state, and check console errors.
+
+Alternatively, hmm: maybe the fixture's Increment button requires the *host* to deliver a Chord activation, and the frame's own JS updates Count only after the host replies. If the host (main process) handles the activation asynchronously but the test's 5s timeout... default expect timeout in non-CI is 5s. Under background mode on Windows maybe slower? But 5s is plenty.
+
+Let me look at the trace: extract and examine. Trace entries: `test.trace` may include `frame-snapshot` (DOM), `console`, `event`, and `after` with error. Let me extract and list entry types + look for console errors and the frame snapshots around the click.
+
+Also read the fixture extension source to understand semantics (search for "activations" in the repo).
+
+Let me do: grep for "activations" in desktop source; find installDesktopExtensionFixture helper; find the fixture extension dir.
+
+Then extract the trace.
+
+Let me batch: grep for 'activations' and read `helpers/desktop-extension-fixture.ts`.
+
+[assistant • grep]
+{"path":"D:\\AI\\workspace\\pao-dev\\desktop","pattern":"activations"}
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\tests\\helpers\\desktop-extension-fixture.ts"}
+
+[tool • grep]
+Found 29 matches
+
+desktop\apps\desktop\tests\helpers\desktop-extension-fixture.ts
+Line 17:   let activations = 0;
+Line 22:       const state = env.replicatedState({ value: 0, activations: ++activations });
+Line 47:   const render = value => { root.querySelector('#counter').textContent = 'Count ' + value.value + ' · activations ' + value.activations; };
+
+desktop\apps\desktop\electron\extensions\extension-view-owner.ts
+Line 156:     const activations: Promise<void>[] = [];
+Line 161:         activations.push(pending);
+Line 168:       activations.push(activation);
+Line 170:     await Promise.all(activations);
+
+desktop\apps\desktop\tests\core\extension-view-security.spec.ts
+Line 42:     await expect(frame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 57:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 72:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 77:     await expect(frame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 130:     await expect(frame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 134:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 152:     await expect(firstFrame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 174:     await expect(secondFrame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 191:     await expect(firstFrame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 192:     await expect(secondFrame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 196:     await expect(secondFrame.locator("#counter")).toHaveText("Count 2 · activations 1");
+
+desktop\apps\desktop\tests\unit\extension-view-owner.spec.ts
+Line 33:   let activations = 0;
+Line 54:             activations += 1;
+Line 66:     activations: () => activations,
+Line 89:     expect(data.activations()).toBe(1);
+Line 208:     expect(first.activations()).toBe(2);
+Line 337:     expect(data.activations()).toBe(0);
+Line 340:     expect(data.activations()).toBe(1);
+Line 397:     expect(data.activations()).toBe(1);
+
+desktop\apps\desktop\tests\production\packaged-extension-view.spec.ts
+Line 54:     await expect(frame.locator("#counter")).toHaveText("Count 0 · activations 1");
+Line 57:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+Line 65:     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\desktop-extension-fixture.ts</path>
+<type>file</type>
+<content>
+1: import { mkdir, writeFile } from "node:fs/promises";
+2: import { join } from "node:path";
+3: import { expect, type Page } from "@playwright/test";
+4: 
+5: export async function installDesktopExtensionFixture(
+6:   workspace: string,
+7:   attackUrl: string,
+8:   helperModulePath = require.resolve("@pi-gui/extension-ui"),
+9: ): Promise<void> {
+10:   const directory = join(workspace, ".pi", "extensions", "desktop-security");
+11:   await mkdir(join(directory, "dist"), { recursive: true });
+12:   await writeFile(
+13:     join(directory, "index.ts"),
+14:     `
+15: import { registerDesktopView } from ${JSON.stringify(helperModulePath)};
+16: export default function fixture(pi) {
+17:   let activations = 0;
+18:   registerDesktopView(pi, {
+19:     id: "security", title: "Security fixture", source: import.meta.url,
+20:     frontend: new URL("./dist/desktop.js", import.meta.url),
+21:     backend: () => ({ id: "security.backend", setup(env) {
+22:       const state = env.replicatedState({ value: 0, activations: ++activations });
+23:       env.provide({ id: "security.counter", local: false }, {
+24:         state,
+25:         async increment(context) {
+26:           state.change(context, (draft) => { draft.value += 1; });
+27:           return state.value;
+28:         },
+29:       });
+30:     } }),
+31:   });
+32: }
+33: 
+34: `,
+35:   );
+36:   // This small, prebuilt ESM frontend consumes the same public structural service API as authors.
+37:   await writeFile(
+38:     join(directory, "dist", "desktop.js"),
+39:     `
+40: export async function mount(root, host) {
+41:   root.innerHTML = '<h1>Security fixture</h1><output id="counter"></output><button id="increment">Increment</button><pre id="boundary"></pre><button id="network">Try network</button><output id="network-result"></output><button id="navigate">Try navigation</button><output id="navigation-result"></output><button id="outside">Try outside file</button><output id="outside-result"></output><button id="draft">Prepare task draft</button>';
+42:   const context = { abortSignal: host.signal, value() { return undefined; }, toString() { return 'security fixture'; } };
+43:   const Counter = { id: 'security.counter', local: false };
+44:   const binding = host.services.open({ services: [Counter], assertAccess: () => host.signal.throwIfAborted(), onError: error => { root.dataset.error = error.message; } });
+45:   const service = binding.use(Counter);
+46:   await binding.ready(context);
+47:   const render = value => { root.querySelector('#counter').textContent = 'Count ' + value.value + ' · activations ' + value.activations; };
+48:   render(service.state.value);
+49:   const unsubscribe = service.state.subscribe(render);
+50:   let parentAccess = 'allowed';
+51:   try { void parent.document.body; } catch { parentAccess = 'blocked'; }
+52:   root.querySelector('#boundary').textContent = JSON.stringify({ preload: typeof window.piApp, process: typeof process, require: typeof require, parentAccess, origin: self.origin });
+53:   // Record delivery and failure so a missing increment says whether the click or the call was lost.
+54:   root.querySelector('#increment').onclick = event => {
+55:     const button = event.currentTarget;
+56:     button.dataset.clicks = String(Number(button.dataset.clicks ?? 0) + 1);
+57:     service.increment(context).catch(error => { button.dataset.error = String(error?.message ?? error); });
+58:   };
+59:   root.querySelector('#network').onclick = async () => {
+60:     try { await fetch(${JSON.stringify(attackUrl)}); root.querySelector('#network-result').textContent = 'Network allowed'; }
+61:     catch { root.querySelector('#network-result').textContent = 'Network blocked'; }
+62:   };
+63:   root.querySelector('#navigate').onclick = () => {
+64:     location.href = ${JSON.stringify(attackUrl)};
+65:     setTimeout(() => { root.querySelector('#navigation-result').textContent = 'Navigation blocked'; }, 100);
+66:   };
+67:   root.querySelector('#outside').onclick = async () => {
+68:     try { await host.actions.openFile({path:'../outside.txt'}); root.querySelector('#outside-result').textContent = 'Outside allowed'; }
+69:     catch { root.querySelector('#outside-result').textContent = 'Outside blocked'; }
+70:   };
+71:   root.querySelector('#draft').onclick = () => host.actions.prepareTaskDraft({ title: 'Extension prepared task', prompt: 'Inspect the scoped extension findings.' }).catch(() => {});
+72:   return () => { unsubscribe(); return binding.dispose(context); };
+73: }
+74: `,
+75:   );
+76: }
+77: 
+78: export async function openDesktopExtensionFixture(window: Page): Promise<void> {
+79:   const workbench = window.getByTestId("workbench");
+80:   if (!(await workbench.isVisible())) await window.getByTestId("toggle-side-panel").click();
+81:   const chooser = window.getByTestId("workbench-chooser");
+82:   if (!(await chooser.isVisible())) await window.getByTestId("workbench-add-tab").click();
+83:   await chooser.getByRole("button", { name: "Security fixture", exact: true }).click();
+84: }
+85: 
+86: /**
+87:  * Waits until the host has received the frame's ready signal. The frame paints its content
+88:  * before mount() returns, so visible frame text alone does not mean the view is ready.
+89:  */
+90: export async function expectExtensionViewReady(window: Page): Promise<void> {
+91:   await expect(window.getByTestId("extension-view-panel")).toHaveAttribute("data-state", "ready");
+92: }
+
+(End of file - total 92 lines)
+</content>
+
+[assistant]
+Excellent. The fixture records `button.dataset.clicks` (line 56) and `button.dataset.error` (line 57)! So the trace/DOM can reveal:
+- `#increment` `data-clicks` = "1" ⇒ the click reached the frame's JS (so click delivery works; the IPC `service.increment()` call is the suspect).
+- `data-clicks` absent/0 ⇒ click never reached the frame's JS (platform/input issue).
+- `data-error` set ⇒ the increment call threw.
+
+Great — that's exactly the experiment lead wants. I can inspect this in the trace (frame snapshot DOM) or better: rerun... but lead said no more Electron? Lead authorized Electron for T24 (they asked to rerun lanes). Running one spec again is authorized-ish ("补跑"), but to be careful: rather than a new Electron run, extract the trace of the failing test — the trace should contain frame snapshots including the button's attributes (if recorded after the click). Let me check the trace content.
+
+Trace path: `apps\desktop\test-results\production-packaged-extens-b1d2c--exchanges-live-Chord-state\trace.zip` (22:25:54).
+
+Extract to temp and inspect test.trace JSONL for:
+- entries with `type` and look for `frame-snapshot` and search for "data-clicks" / "dataset" / "error".
+Note: Playwright trace records DOM snapshots only if `snapshots` in trace options — config uses `trace: "retain-on-failure"`, default snapshot mode for `retain-on-failure` is... Playwright's `trace: "retain-on-failure"` captures DOM snapshots (default sources: false, snapshots: true). Earlier with #19 I found no frame-snapshot in the trace (only `resources`); hmm, I noted "本次 trace 里没有 frame-snapshot". That may be because the failure was `element(s) not found`, no snapshot. Let me look again in this trace for `frame-snapshot` / `screencast-frame` entries.
+
+Plan:
+1. Extract trace zip to temp.
+2. Read `test.trace`, list distinct `type` values and count.
+3. Grep for "increment"/"data-clicks"/"_host/frame-bridge"/"activations" in the JSONL (careful: it may be large; grep with context).
+4. Check `0-trace.network` files for the frame-bridge request and any pi-extension:// RPC (the Chord calls might go over the bridge as fetch/XHR → network entries!). This is promising: bridge calls probably use `fetch("pi-extension://.../_host/...")` or a message channel. If the increment call appears as a network request with a response, we learn if it was sent and what came back.
+
+Let me do it with Node (safer for JSONL) or PowerShell. Use PowerShell: ReadAllLines of test.trace, count types via regex on `"type":"..."`.
+
+Let me write a command that:
+- extracts the zip
+- lists files with sizes
+- for test.trace: counts entry types, and searches for keywords.
+
+I'll use Node inline via a temp .mjs to avoid PowerShell encoding pitfalls? PowerShell with single-quoted regexes is fine. But the trace JSONL lines are long; I'll only print counts and small snippets.
+
+Let me write the mjs script to a file and run it (cleaner).
+
+Script `d3-trace-probe.mjs` in TEMP:
+```js
+import fs from 'node:fs';
+const dir = process.argv[2];
+const files = fs.readdirSync(dir);
+...
+```
+Actually simpler: use PowerShell for extraction (Expand-Archive) and a Node script for parsing.
+
+Let me write the script now.
+
+[assistant • write]
+{"file_path":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\d3-trace-extview.mjs","content":"// 用途：解析 packaged-extension-view 失败用例的 Playwright trace，判断「点 Increment 后计数不动」断在哪一环。\n// 输入：argv[2] = 已解压的 trace 目录；输出：条目类型统计、frame 快照里的 #increment 属性、网络里与 pi-extension 有关的请求、console 消息。\nimport fs from \"node:fs\";\nimport path from \"node:path\";\n\nconst dir = process.argv[2];\nif (!dir || !fs.existsSync(dir)) {\n  console.error(\"usage: node d3-trace-extview.mjs <extracted-trace-dir>\");\n  process.exit(2);\n}\n\nconst entries = [];\nfor (const name of fs.readdirSync(dir)) {\n  const full = path.join(dir, name);\n  const st = fs.statSync(full);\n  console.log(`FILE ${name} bytes=${st.size}`);\n  if (!/\\.trace$/.test(name)) continue;\n  const text = fs.readFileSync(full, \"utf8\");\n  for (const line of text.split(\"\\n\")) {\n    if (!line.trim()) continue;\n    try {\n      entries.push(JSON.parse(line));\n    } catch {\n      entries.push({ type: \"<unparsable>\", raw: line.slice(0, 120) });\n    }\n  }\n}\n\nconst typeCounts = new Map();\nfor (const e of entries) typeCounts.set(e.type, (typeCounts.get(e.type) ?? 0) + 1);\nconsole.log(\"ENTRY_TYPES=\" + JSON.stringify([...typeCounts.entries()].sort((a, b) => b[1] - a[1])));\n\nconst hit = (label, re, limit = 6) => {\n  const out = [];\n  for (const e of entries) {\n    const s = JSON.stringify(e);\n    if (re.test(s)) out.push(s);\n    if (out.length >= limit) break;\n  }\n  console.log(`\\n=== ${label} hits=${out.length} ===`);\n  for (const s of out) console.log(\"  \" + (s.length > 900 ? s.slice(0, 900) + \" …\" : s));\n};\n\nhit(\"frame-snapshot\", /\"type\":\"frame-snapshot\"/, 3);\nhit(\"increment-button-attrs\", /data-clicks|dataset\\.clicks|\"increment\"/i, 8);\nhit(\"frame-bridge\", /frame-bridge/, 6);\nhit(\"pi-extension\", /pi-extension/, 8);\nhit(\"console-error\", /\"type\":\"console\"[^\\n]*(error|Error)/, 8);\nhit(\"dataset-error\", /dataset\\.error|data-error/, 6);\n\n// 单独抽取网络请求 URL 清单（若 trace 内含 network 资源）\nconst urls = new Set();\nfor (const e of entries) {\n  const s = JSON.stringify(e);\n  const m = s.match(/\"url\":\"([^\"]{1,200})\"/g);\n  if (m) for (const u of m) urls.add(u.slice(7, -1));\n}\nconsole.log(`\\n=== URLS count=${urls.size} ===`);\nfor (const u of [...urls].filter((u) => /pi-extension|frame-bridge|extension/i.test(u)).slice(0, 25)) console.log(\"  \" + u);\n\nconsole.log(\"\\n=== last entry (error) ===\");\nconst last = [...entries].reverse().find((e) => e.error || e.type === \"after\");\nconsole.log(JSON.stringify(last)?.slice(0, 1500));\n"}
+
+[tool • write]
+<path>C:\Users\ASUS\AppData\Local\Temp\d3-trace-extview.mjs</path>
+<type>file</type>
+<content>
+Created file
+</content>
+
+[assistant • pwsh]
+{"command":"$zip='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\test-results\\production-packaged-extens-b1d2c--exchanges-live-Chord-state\\trace.zip'\n\"ZIP exists=$(Test-Path $zip) bytes=$((Get-Item $zip).Length)\"\n$dest='C:\\Users\\ASUS\\AppData\\Local\\Temp\\d3-trace-extview'\nif(Test-Path $dest){ Remove-Item $dest -Recurse -Force }\nExpand-Archive -Path $zip -DestinationPath $dest -Force\nnode 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\d3-trace-extview.mjs' $dest","description":"Extract and parse extension view trace","timeoutMs":240000}
+
+[tool • pwsh]
+ZIP exists=True bytes=26711
+FILE resources bytes=0
+FILE test.trace bytes=47122
+ENTRY_TYPES=[["before",87],["after",87],["context-options",1],["error",1]]
+
+=== frame-snapshot hits=0 ===
+
+=== increment-button-attrs hits=0 ===
+
+=== frame-bridge hits=0 ===
+
+=== pi-extension hits=0 ===
+
+=== console-error hits=0 ===
+
+=== dataset-error hits=0 ===
+
+=== URLS count=0 ===
+
+=== last entry (error) ===
+{"type":"after","callId":"hook@144","endTime":84243.756,"annotations":[]}
+
+
+[user]
+<acp tokens="63" type="text">m04081</acp>
+Time sampled while preparing turn 13, step 101: 2026-10-17T22:34:17+08:00[Asia/Shanghai]
+Browser time zone for this request: unavailable. Ask the user to clarify otherwise-unqualified dates and times.
+Elapsed since the preceding step context: 10m 3s.
+
+[assistant]
+The trace has only `before`/`after` API call entries (87 each) — no DOM snapshots, no network. So the trace can't answer the click question. Entry types: before/after with callId + apiName presumably. Let me dump the API call list around the failure to see what happened: e.g. `locator.click` before/after entries will show whether the click succeeded, and maybe `expect.toHaveText` retries. That's still useful: if `click` has an `after` (no error), the click was dispatched.
+
+But lead wants a real diagnosis with evidence. Options:
+1. Analyze the trace's API calls (click dispatched OK) → narrows to "click delivered but state didn't change".
+2. Statically analyze the packaged vs checkout `@pi-gui/extension-ui` dist to see if the packaged version matches (version drift). Since the spec installs the fixture using the **packaged** helper (`app.asar/node_modules/@pi-gui/extension-ui/dist/index.js`), a mismatch between packaged helper and packaged frame-bridge could break the increment RPC while initial hydration works. Let me compare the packaged `extension-ui/dist/index.js` with the repo's built `packages/extension-ui/dist/index.js`: sizes/hashes. If the packaged one differs → drift (packaging defect!). But note: `vendor`/packaging copies from the repo's node_modules — the packaged helper should equal the repo build at package time.
+3. Key question: does the same spec pass in **dev** (core lane)? Yes there IS a dev-lane equivalent: `tests/core/extension-view-security.spec.ts` — and it FAILED on Windows in the full core run (3 reds: :18/:111/:140). Its assertion at :42 is the same baseline, :57 is the same click assertion. Which line failed? Earlier I recorded #10 `extension-view-security.spec.ts:18` → assertion at `:56:29` `toHaveAttribute`; #11 `:111` → `:134:45` `toHaveText`; #12 `:140` → `:196:51` `toHaveText`.
+
+Hmm, for #10 the failure was at `:56:29` with `toHaveAttribute` — that's not :57's toHaveText. Let me look at the core spec lines 40-80 to understand. Line 52 in the fixture sets `#boundary` text; the spec may assert attributes on `#increment` (dataset.clicks / dataset.error) — I need the actual core spec content to compare.
+
+Actually — the most valuable and cheap decisive experiment: **in the packaged run, the fixture's own instrumentation (`data-clicks`, `data-error`) can distinguish "click lost" vs "call lost"** — but we need to read the DOM in the failing state. Since the trace has no snapshots, we can re-run just this one spec with a small probe: no wait, we can't modify spec/helper (lead forbids changing spec/helper to make green — but adding a *probe* spec is also modifying test source; and lead explicitly asked for diagnosis, and earlier forbade new Electron probes? The T24 authorization allows running lanes; adding a probe spec is a new file in tests/production — that's "改测试源码" territory. Hmm.
+
+Alternative: re-run the SAME spec with `--trace on` (full tracing with snapshots) so the DOM at failure is recorded! That's a legit run-config change (CLI flag), not a source change. Then inspect `#increment`'s `data-clicks` and `data-error` in the frame snapshot. That is decisive between:
+- `data-clicks` = 1 & no error ⇒ click delivered, `service.increment()` await hung (no throw) ⇒ bridge RPC lost → likely product/bridge defect.
+- `data-clicks` = 1 & `data-error` set ⇒ the RPC threw (message reveals reason).
+- `data-clicks` = 0/absent ⇒ click never reached frame JS ⇒ platform/input issue.
+
+Cost: one Electron run of a single spec (~30-60 s incl. packaged launch). That is within T24 authorization (lead explicitly authorized rerunning the production lane; and lead demands real diagnosis). Risk: it overwrites test-results dir for that spec — acceptable (lead wants artifacts kept; I'll copy the existing trace first to the H批-集成交付 dir as evidence before rerunning!). Actually safer: copy the current trace.zip + test-failed png into the deliverable dir first? Lead said don't delete test-results artifacts; running again will replace them. I'll back up the existing failure artifact to `H批-集成交付\T24-现场\` before rerunning (that also satisfies "现场留存").
+
+Wait — also: does `--trace on` include DOM snapshots for iframes? Playwright trace snapshots include iframe contents (frame-snapshot entries with `frameId`). Yes, traces capture frames.
+
+Plan:
+1. Back up current production test-results artifacts (9 dirs) — that's ~200KB+; copy to `.pao\harness完善-20261017\H批-集成交付\T24-现场\生产车道-失败产物-新包\`. Good practice anyway (lead wants artifacts preserved).
+2. Re-run ONLY `packaged-extension-view.spec.ts` with `--trace on --reporter=line`, capturing log `t24-extview-trace-on.log`.
+3. Parse the new trace for frame snapshots → read `#increment` attributes (`data-clicks`, `data-error`) and `#counter` text; also check console messages.
+4. Also compare packaged `extension-ui/dist/index.js` vs repo build (hash) for drift; and check whether the core-lane dev spec fails at the same "click → no state change" spot (already known red in core lane ⇒ evidence for (b) Windows-specific, since dev+packaged both red on Windows and CI runs core lane on Linux/macOS).
+
+Hmm, to claim (b) "Windows 专属" I need evidence that it passes on Linux/macOS. Available: CI (ci.yml) runs core lane on ubuntu (PR) / macos (main) with 4 shards — if that spec passes in CI, then Windows-specific. Can I check CI results? Would need network (gh CLI / GitHub API). Lead earlier wrote "github假gh-Windows修法.md" — the repo has issues with fake gh. Fetching CI run status via web could work: GitHub Actions API for the repo — but is the repo public/private? Probably private/local. Risky.
+
+Alternative evidence for (b): the SAME failure shape occurs in dev lane (core) and packaged lane on Windows; and the *mechanism* is likely an Electron/Chromium on Windows difference in the extension view's cross-frame service RPC... I can look for Windows-specific code paths in the bridge: e.g. `extension-view-owner.ts` (main process) handles activations; maybe it uses `MessageChannelMain`/`MessagePort` and there's a Windows-specific quirk (like `postMessage` timing, or `frame.url` parsing with backslashes!).
+
+Ooh — that's a strong hypothesis worth checking: the bridge resolves frames by URL (`pi-extension://<id>/`), and on Windows the *frame element's src* or the extension's file path (`C:\...` with backslashes) might break the host's route matching for the RPC (while initial hydration is push-based and works). Recall the batch had a similar bug class: "不再把Windows反斜杠路径拼CSS属性选择器". And `installDesktopExtensionFixture` passes a Windows path (`join(artifact.appPath, "node_modules", ...)`) into the fixture's `registerDesktopView` — the extension source path contains backslashes; the extension loader imports from `C:\...` URL. If the *host's* activation routing keys on a path with backslashes... Connect: the click → `service.increment()` sends a Chord activation over the bridge → main process routes the activation to the extension's backend → if the backend lookup key is built from a Windows path, the route may miss and the call never resolves (no error!) ⇒ exactly the observed symptom: click delivered, call hangs, count unchanged, no error. And on Linux/macOS the separator is `/` so the route matches ⇒ green in CI.
+
+That would make it: **(b) Windows-specific**, real product bug (not test), with a concrete mechanism to verify statically by reading the bridge/owner code for path-keyed routing.
+
+Let me examine: `apps/desktop/electron/extensions/extension-view-owner.ts` (activations at :156-170) and the bridge host implementation. Let me find files: `electron/extensions/*.ts`, and the frame-bridge implementation (probably `electron/extensions/extension-frame-bridge.ts`), plus the `@pi-gui/extension-ui` package (packages/extension-ui/src/*) for `host.services.open` / `use()` / `state.change()`.
+
+Given the depth, maybe delegate? I'm a teammate; delegation depth exhausted (subagent depth 0). So do it myself.
+
+Efficient path: grep for `_host/` routes and for `activation` routing keyed on something path-like in electron/extensions.
+
+Let me look at the directory and read the owner file.
+
+[assistant • pwsh]
+{"command":"$e='D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron\\extensions'\nGet-ChildItem $e -File | ForEach-Object { \"  $($_.Name) $($_.Length)\" }\n'--- extension-ui package src ---'\nGet-ChildItem 'D:\\AI\\workspace\\pao-dev\\desktop\\packages\\extension-ui\\src' -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { \"  $($_.FullName.Replace('D:\\AI\\workspace\\pao-dev\\desktop\\packages\\extension-ui\\','')) $($_.Length)\" }","description":"List extension bridge sources"}
+
+[tool • pwsh]
+  app-operations.ts 4473
+  extension-frame-document.ts 4379
+  extension-notices.ts 1790
+  extension-view-actions.ts 7407
+  extension-view-owner.ts 20112
+  extension-view-source.ts 4527
+--- extension-ui package src ---
+  src\browser.ts 7130
+  src\frame-bridge.ts 119
+  src\index.ts 2621
+  src\transport.ts 20342
+
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\desktop\\apps\\desktop\\electron\\extensions\\extension-view-owner.ts","limit":120,"offset":100}
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\desktop\apps\desktop\electron\extensions\extension-view-owner.ts</path>
+<type>file</type>
+<content>
+100:   }
+101:   if (typeof declaration.backend !== "function") {
+102:     throw new Error("Desktop view must declare a backend facet factory");
+103:   }
+104: }
+105: 
+106: /** Owns live extension views, never Pi session selection or durable extension state. */
+107: export class DesktopExtensionViewOwner {
+108:   private readonly runtimes = new Map<string, RuntimeEntry>();
+109:   private readonly connections = new Map<string, ConnectionEntry>();
+110:   private readonly listeners = new Set<(target: SessionRef) => void>();
+111: 
+112:   constructor(private readonly options: DesktopExtensionViewOwnerOptions) {}
+113: 
+114:   subscribe(listener: (target: SessionRef) => void): () => void {
+115:     this.listeners.add(listener);
+116:     return () => this.listeners.delete(listener);
+117:   }
+118: 
+119:   listViews(target: SessionRef): readonly DesktopExtensionViewInfo[] {
+120:     const runtime = this.runtimes.get(sessionKey(target));
+121:     return runtime?.alive ? [...runtime.views.values()].map(({ info }) => ({ ...info })) : [];
+122:   }
+123: 
+124:   async replaceRuntime(input: DesktopExtensionRuntimeInput): Promise<void> {
+125:     const key = sessionKey(input.target);
+126:     let runtime = this.runtimes.get(key);
+127:     if (runtime?.generation !== input.generation) {
+128:       const previous = runtime;
+129:       runtime = {
+130:         target: { ...input.target },
+131:         generation: input.generation,
+132:         views: new Map(),
+133:         pending: new Map(),
+134:         activating: new Map(),
+135:         desired: new Set(input.declarations),
+136:         alive: true,
+137:       };
+138:       this.runtimes.set(key, runtime);
+139:       if (previous)
+140:         this.disposeRuntime(previous).catch((error: unknown) => {
+141:           this.options.onDiagnostic?.(previous.target, "desktop-view", messageOf(error));
+142:         });
+143:     }
+144:     if (!runtime.alive) return;
+145:     const declarations = new Set(input.declarations);
+146:     runtime.desired = declarations;
+147:     for (const [registeredKey, view] of runtime.views) {
+148:       if (declarations.has(view.declaration)) continue;
+149:       runtime.views.delete(registeredKey);
+150:       this.closeViewConnections(runtime, view, "Extension view was removed");
+151:       if (view.host)
+152:         view.host.dispose().catch((error: unknown) => {
+153:           this.options.onDiagnostic?.(runtime.target, view.source.sourcePath, messageOf(error));
+154:         });
+155:     }
+156:     const activations: Promise<void>[] = [];
+157:     for (const declaration of declarations) {
+158:       if ([...runtime.views.values()].some((view) => view.declaration === declaration)) continue;
+159:       const pending = runtime.pending.get(declaration);
+160:       if (pending) {
+161:         activations.push(pending);
+162:         continue;
+163:       }
+164:       const activation = this.activateView(runtime, declaration, input.extensions).finally(() => {
+165:         runtime.pending.delete(declaration);
+166:       });
+167:       runtime.pending.set(declaration, activation);
+168:       activations.push(activation);
+169:     }
+170:     await Promise.all(activations);
+171:     this.publish(runtime.target);
+172:   }
+173: 
+174:   async invalidateRuntime(target: SessionRef, generation: string): Promise<void> {
+175:     const key = sessionKey(target);
+176:     const runtime = this.runtimes.get(key);
+177:     if (runtime?.generation !== generation) return;
+178:     this.runtimes.delete(key);
+179:     const disposal = this.disposeRuntime(runtime);
+180:     this.publish(target);
+181:     await disposal;
+182:   }
+183: 
+184:   async openConnection(
+185:     input: {
+186:       readonly target: SessionRef;
+187:       readonly extensionId: string;
+188:       readonly viewId: string;
+189:       readonly senderId: number;
+190:     },
+191:     send: (message: unknown) => void,
+192:   ): Promise<{ readonly connectionId: string; readonly frameUrl: string }> {
+193:     const runtime = this.runtimes.get(sessionKey(input.target));
+194:     const view = runtime?.views.get(viewKey(input.extensionId, input.viewId));
+195:     if (!runtime?.alive || !view?.host || !view.assets) {
+196:       throw new Error(view?.info.error ?? "Desktop extension view is unavailable");
+197:     }
+198:     const connectionId = randomUUID();
+199:     const context: DesktopExtensionConnectionContext = {
+200:       connectionId,
+201:       senderId: input.senderId,
+202:       target: { ...runtime.target },
+203:       generation: runtime.generation,
+204:       extensionId: input.extensionId,
+205:       viewId: input.viewId,
+206:     };
+207:     const transport = createChordServerConnection({
+208:       provider: view.host.services,
+209:       send: (message) => {
+210:         if (!this.connections.has(connectionId)) return;
+211:         try {
+212:           send(message);
+213:         } catch {
+214:           this.closeConnection(connectionId, input.senderId);
+215:         }
+216:       },
+217:       onError: (error) => {
+218:         this.options.onDiagnostic?.(runtime.target, view.source.sourcePath, messageOf(error));
+219:         this.closeConnection(connectionId, input.senderId);
+
+(Showing lines 100-219 of 529. Use offset=220 to continue.)
+</content>
+
+[assistant]
+The connection uses `senderId` (a number) — so the RPC is routed by `senderId`, not by path. So the "path-keyed routing" hypothesis is less likely. The frame sends messages via `ipcRenderer`/`window.postMessage` through the bridge with senderId.
+
+Hmm. So why would the increment call not resolve on Windows while initial hydration works?
+
+Let me reconsider: does the *initial* hydration come through the same connection? The fixture's frontend calls `host.services.open(...)`, `await binding.ready(context)`, `render(service.state.value)` — that already requires a working connection + replicated state. So the connection works and `state.subscribe(render)` works (baseline "Count 0 · activations 1" was rendered by `render`).
+
+Then the click → `service.increment(context)` → RPC over the connection → main process `env.provide(...).increment` → `state.change(...)` → state replicated back → subscribe fires → text becomes "Count 1 · activations 1".
+
+Failure: text stays at "Count 0 · activations 1". With `data-clicks`/`data-error` instrumentation unavailable in the trace, we can't tell.
+
+Note something important: the assertion at :54 passed with "activations 1", and `activations` is `++activations` at backend setup. Notice: if the backend setup ran TWICE (two connections/runtimes), activations would be 2. It's 1.
+
+Hmm, is it possible that the click at :56 goes to a *different* frame instance than the one asserted at :57? No.
+
+What about `frame.getByRole("button", { name: "Increment", exact: true })` — in the packaged app the frame has `sandbox="allow-scripts"`; Playwright's click on a sandboxed iframe should work. If the click were not delivered, Playwright's `click` would still succeed (it dispatches at coordinates). Then `data-clicks` would be absent.
+
+Given the trace has no snapshots, and lead explicitly demands evidence-based classification, the cheapest decisive step is the `--trace on` rerun of this single spec (snapshots enabled) → read `#increment` attributes in the frame snapshot at failure. Let me do that.
+
+Before rerunning, back up the current failure artifacts (all 9 production dirs) to the deliverable folder as T24 现场.
+
+One catch: `--trace on` for a *passing*... it fails, so trace retained anyway. With `--trace on`, snapshots are recorded continuously → the DOM at failure time is in the trace.
+
+Also add `--reporter=line`. Keep env: PI_APP_TEST_LANE=production, PI_APP_REAL_AUTH=0, PI_APP_TEST_MODE=background.
+
+Let's do it. Also grab the console messages from the trace (the owner may log diagnostics).
+
+Command:
+```powershell
+$d=...; $dest='...\H批-集成交付\T24-现场\生产车道-新包-失败产物'
+New-Item -ItemType Directory -Force $dest
+Copy-Item "$d\apps\desktop\test-results\production-*" $dest -Recurse -Force
+```
+then run the spec with --trace on, log to `t24-extview-trace-on.log`.
+
+Then extract new trace and parse.
+
+Let me run the backup+run in the background (it's ~1 min).
+
+Note: also copy the *core lane* dirs? They're gone (only 1 png). Fine.
+
+Let me write the command.
+
+[assistant • pwsh]
+{"command":"$d='D:\\AI\\workspace\\pao-dev\\desktop'\n$dest='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\T24-现场\\生产车道-新包-失败产物'\nNew-Item -ItemType Directory -Force -Path $dest | Out-Null\n$src=Get-ChildItem \"$d\\apps\\desktop\\test-results\" -Directory -ErrorAction SilentlyContinue\n\"BACKUP_SRC_DIRS=$($src.Count)\"\nforeach($s in $src){ Copy-Item $s.FullName -Destination $dest -Recurse -Force }\n$n=(Get-ChildItem $dest -Recurse -File | Measure-Object -Property Length -Sum)\n\"BACKUP files=$($n.Count) bytes=$($n.Sum)\"\n'--- rerun single spec with --trace on ---'\n$log='D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-集成交付\\t24-extview-trace-on.log'\nRemove-Item Env:\\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue\nSet-Location \"$d\\apps\\desktop\"\n$env:PI_APP_TEST_LANE='production'; $env:PI_APP_REAL_AUTH='0'; $env:PI_APP_TEST_MODE='background'\n$sw=[System.Diagnostics.Stopwatch]::StartNew()\n& pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/production/packaged-extension-view.spec.ts --trace on --reporter=line *> $log\n$code=$LASTEXITCODE; $sw.Stop()\n\"EXTVIEW_RERUN EXIT=$code SEC=$([math]::Round($sw.Elapsed.TotalSeconds,1)) LOG_BYTES=$((Get-Item $log).Length)\"\nRemove-Item Env:PI_APP_TEST_LANE,Env:PI_APP_REAL_AUTH,Env:PI_APP_TEST_MODE -ErrorAction SilentlyContinue\nGet-Content $log -Encoding unicode -Tail 18\nGet-ChildItem \"$d\\apps\\desktop\\test-results\" -Directory | ForEach-Object { \"  RESULT $($_.Name)\" }","description":"Rerun extension view spec with full trace","run_in_background":true}
+
+[tool • pwsh]
+started background job pwsh-1891126f34ab4d7d
+
+[assistant]
+While that runs, let me look for other evidence of the Windows-specific mechanism: read `packages/extension-ui/src/transport.ts` for the RPC/activation path and look for Windows-sensitive code (path separators, MessageChannel, timing). And `extension-view-owner.ts` around `createChordServerConnection` / how messages arrive (`senderId`).
+
+Actually, a very promising angle: the increment RPC may be gated by the host's **frame document** serving and `senderId` mapping to a `webContents`; on the second... hmm.
+
+Alternatively — maybe the issue is that the click's RPC *does* reach the backend and the state changes, but the **replicated state update isn't pushed back to the frame** because `state.change` inside `increment` uses `context` (the connection context) and the replication loop... but that would fail on Linux too.
+
+Let me look for Windows-conditional code in the extension bridge chain: grep `process.platform` in electron/extensions and packages/extension-ui.
+
+[assistant • grep]
+{"path":"D:\\AI\\workspace\\pao-dev\\desktop\\packages\\extension-ui\\src","pattern":"process\\.platform|win32|sep|\\\\\\\\|postMessage|MessageChannel|senderId|setTimeout|queueMicrotask"}
+
+[tool • grep]
+No matches found
+
+[user]
+<acp tokens="1.9K" type="text">m04093</acp>
+Team message from lead:【停一下：T24 的正式报告早就有了，别另起一份 —— 先读再写 —— Lead】
+
+## 一、我发现的既有事实（你写报告前必须先读，否则会重复劳动且造成「两个 T24 之家」）
+
+`.pao\harness完善-20261017\H批-解包发行验证\` 这个目录**已经有一整套 T24 验证正本**，是今天 14:27–16:22 做的，比你现在这份深得多：
+
+| 文件 | 大小 / 时间 | 内容 |
+|---|---|---|
+| `T24-解包发行总报告.md` | 19731B / 16:21:27 | 只有结论与指针，四段结论表 + 缺口全表 + 教训 + 现场留存 |
+| `T24-解包发行验证-第2步.md` | 15367B / 14:35:37 | 内核版本、路径扫描、PAO_HOME、依赖警告、泄漏检查 |
+| `T24-解包发行验证-第3步.md` | 19043B / 15:41:18 | 关键流四段取证、通道名核实、踩坑 |
+| `现场-干净\` | 111 文件 / 11.7 MB | 第 3 步用的真实现场 |
+| `asar-extract\` | 32920 文件 / 215.6 MB | 当时那份 asar 的解包留存 |
+| `运行须知-本机core-lane.md`（在上一层 `.pao\harness完善-20261017\`） | 20085B / 16:21:43 | 本机跑 core lane 的运行须知，**陷阱 8** 记着 4 个 desktop API 签名坑 |
+
+**它已经验成的事（你不用重验，直接引用）**：
+- 真启动打包后的 `PAO.exe`（`release/win-unpacked/PAO.exe`，195.06 MB，FileVersion 1.0.1）；解包目录 264 文件 / 541.2 MB，**打包 exit=0，约 2 分 10 秒**；`app.asar` 200.86 MB；electron-builder 26.8.1 + electron 37.10.3。
+- **内核身份**：asar 内 `dist/pao/usage/budget-command.js` 与开发仓同名文件 **SHA256 双侧一致** `DD3FB5003B46DCF8C7B230C412B6873203355548FFA4E5E82E6407BDD6CB31B6`。
+- **泄漏检查**：三组绝对路径扫描全 0 命中（`pao-dev` 裸子串 3 命中全是注释）；asar 内 `*.spec.*` **0**、`.pao` **0**、`.git` **0**。
+- **关键流四段**：①建部/建配方（`createDept` 幂等 `createDept-idempotent` 零新建；`saveRecipe` 真落盘 `PAO_HOME/工作流/t24-审校.md`；重名被拒、名字与文件名不一致被拒；桌面 `getWorkflowCatalog()` 返回 `departments:["写作","审校"]`、`recipes:["t24-审校"]`、`errors:[]`）②派发（实例 `820031f5-d655-4761-a77d-a18f4346ebbc`，状态「运行中」，节点 s1 挂 `卡0001`/`卡0002` 且 `拆解结束:true`）③首章真实文件（`正文/第一章-关键流.md` 243B、`.pao/卡/卡0001-第一章.md` 548B、执行目录两张卡 598B/516B、控制清单 509754B/4710 行）④重开查回（新进程 `processStartedAt:2026-10-17T07:27:53.989Z` 读回 `getTemporaryPlans` ok、`getWorkflowControl` ok 且 `ownerSessionId` == 重放会话 id `01a148bd-a27a-7204-80be-f6ec11f0308f`、`lastError:null`、`startupDiagnostics:[]`）。
+- **已知缺口（原文口径）**：「从零建部」「从零派发」「启动关联 `starts`」三项没验成；那次「从零一轮」在 16:03–16:07 **被宿主重启打断，不计入通过**（判据三条：唯一 `app.close()` 在 `finally` 而当时还卡在 `waitIdle`；现场目录最后写入 16:07:01、输出 16:07:02；`waitIdle` 超时 300 秒而实际只等了 230 秒）。
+- **`vendor:kernel` 的「内核 dist 陈旧门」早就写进报告了**（总报告 §2 最后一行、第2步 §6）——**所以这不是你的新发现，别当新发现写**。你踩到的正是它。
+
+## 二、由此产生的三条硬要求
+
+1. **不要另起一份 T24 正本。** 你那份 `H批-集成交付\T24-解包发行-Windows实测.md` 应改成**明确的补充件**：标题里写清「**补充：Windows Playwright production 车道的首次实测**」，开头一句「T24 的总报告在 `..\H批-解包发行验证\T24-解包发行总报告.md`，本文只补它没覆盖的一层：用仓库自带的 `tests/production` 车道（而不是手写驱动脚本）在 Windows 上跑一遍」。**并在总报告里加一行指针指回你这份**（如果你不方便改总报告，就写进你那份的「与总报告的关系」一节，我来加指针）。
+2. **口径必须与既有报告对齐**：既有报告说的打包是 **14:24:56 那次（exit=0）**，而你 22:24:11 **重新打了一次并覆盖了 `release\win-unpacked`**。所以凡是引用「解包目录文件数/体积/asar 大小/内核 SHA256」这类数字，**必须写明是哪一次打的包**；你新打的包要重新取一遍这些数字（内核 SHA256 可以复用既有方法重算，因为现在内核 dist 已经 `build:offline` 重建过）。
+3. **顺手把一处既有矛盾登记出来（只登记，先别改 F 批文档）**：F 批的两份文档仍写 T24 未验 —— `F批-全链离线验证\T01-T25-覆盖表.md:306`「L3 解包发行 … 未验 | 本批未打包，无任何证据」、`:50` T24 行、`F批-对账结论.md:322`「U3 解包发行 … T24 保持 `未验`」；而 `执行记录.md:499` 又写 H3「F 批已做掉大半，余『补发行口径』」。**这三处与上面那套 T24 报告互相矛盾**，请在报告里如实列出来，我按你的结论去改 F 批文档。
+
+## 三、你这一轮真正的新价值（写清楚，别被上面淹没）
+
+既有 T24 用的是**手写驱动脚本**（`驱动-从零.mjs`）直连桌面 API；**你这轮用的是仓库自带的 `tests/production` 车道**，这是两条独立证据线，互补。新价值就三条：
+1. `package:win:dir` 在 `build:offline` 之后**成功**（`win-unpacked` 22:24:11 刷新）——给出退出码与耗时。
+2. 生产车道 `Running 13 tests using 1 worker` → **2 passed / 9 failed / 2 skipped (1.9m)**；2 过是 `packaged-smoke` + `packaged-terminal`；9 红里 **8 条 macOS 专属**（`/Applications`、4 条 macOS 通知、3 条 release-zip 找 `-arm64.zip`/`-mac.zip`）、**2 跳**（`finder-env-open-folder`、`open-folder-real`）；**1 条平台无关且两次打包都红**：`packaged-extension-view.spec.ts:16`（`Count 0 · activations 1` 点了 Increment 不变）。
+3. **生产车道整体不在 CI 里**：`desktop\.github\workflows\` 全目录只有 `release.yml:101` 一条 `test:prod:release-zip-smoke:ci`；`ci.yml` 没有任何 job 跑 `tests/production`；`apps\desktop\package.json:71-78` 只有逐 spec 手动脚本、**没有整条车道的脚本**；`docs\ci-baseline.md` 通篇没提 production/packed 车道。⇒ 口径：**这个车道在任何平台的 CI 里都没有基线，`packaged-extension-view` 从未被 CI 覆盖过**，所以只能叫「首次实测发现」，不能叫「回归」。
+
+`packaged-extension-view` 那一条仍然按我上一条消息的要求**真诊断到三选一**（真产品缺陷 / Windows 专属 / 测试或环境问题），带 trace 证据。
+
+[assistant]
+Big context shift: there's an existing T24 authoritative report set in `.pao\harness完善-20261017\H批-解包发行验证\`. My file must become an explicit supplement titled "补充：Windows Playwright production 车道的首次实测", with a "与总报告的关系" section, recomputed package numbers for the NEW package (22:24:11), and register the F-batch contradictions (three file:line references).
+
+Also: my trace-on rerun job is running (pwsh-1891126f34ab4d7d) — that's still needed for the packaged-extension-view diagnosis. Let me:
+
+1. Wait for the rerun job, parse the new trace for `#increment` data-clicks/data-error.
+2. Read the existing T24 总报告 to align口径 (and to cite it). Also confirm the existing numbers claim (195.06 MB PAO.exe — my measured new package: 204,530,176 B = 195.06 MiB ✓ consistent).
+3. Recompute new package numbers: file count/size of win-unpacked, app.asar size (210,616,175), kernel SHA256 inside asar (`dist/pao/usage/budget-command.js` vs dev repo) — need to extract from new asar and compare with `PAO/packages/coding-agent/dist/pao/usage/budget-command.js`? Careful: the existing report compared asar's `dist/pao/usage/budget-command.js` with the dev repo same-named file. Let me redo with `npx @electron/asar extract-file`. The asar CLI supports `extract-file <archive> <filename>`. Path uses forward slashes.
+4. Also check the F-batch contradictions (read the three lines to quote exactly).
+5. Then rewrite my report as supplement with:
+   - title change
+   - §0 与总报告的关系 + 本次是第几次打包
+   - T24-A 打包（build:offline + package #2）
+   - T24-B production 车道 two tables
+   - T24-C 失败定性 (macOS 8 + 2 skips + 1 platform-agnostic diagnosis)
+   - T24-D 未验与口径 (CI 无 prod 车道基线、Windows 无 HEAD 基线、live 未跑、release-zip 跑过红、verify:*)
+   - 新包数字（文件数/体积/asar/内核 SHA）
+   - 与既有报告的差异/矛盾登记（F 批三处）
+   - 现场留存 + 字节自检
+
+Let me start by checking the job and reading the existing 总报告 + F 批 lines in parallel.
+
+Actually I should be careful about context budget. Let me:
+- job_output (wait) for the rerun.
+- read 总报告 (19731B, ~250 lines) — that's a big read; maybe read selectively: §1 结论 + §4 缺口 + §7 现场. I'll read the whole thing since alignment matters (19KB ≈ 6K tokens, acceptable).
+- grep the F batch files for the three lines.
+
+Let me batch: job_output wait + read 总报告 + grep F batch.
+
+Since job_output blocks, do them in one message (independent calls).
+
+For grep of F批: pattern 'T24|U3|解包发行' in that dir.
+Also need `F批-全链离线验证\T01-T25-覆盖表.md:306` and `:50`, `F批-对账结论.md:322`, `执行记录.md:499`.
+
+Let me write the grep with include *.md path F批 dir.
+
+[assistant • job_output]
+{"job_id":"pwsh-1891126f34ab4d7d","timeout_ms":300000,"wait":true}
+
+[assistant • read]
+{"file_path":"D:\\AI\\workspace\\pao-dev\\.pao\\harness完善-20261017\\H批-解包发行验证\\T24-解包发行总报告.md"}
+
+[tool • job_output]
+BACKUP_SRC_DIRS=9
+BACKUP files=10 bytes=298921
+--- rerun single spec with --trace on ---
+EXTVIEW_RERUN EXIT=1 SEC=29 LOG_BYTES=6072
+    > 57 |     await expect(frame.locator("#counter")).toHaveText("Count 1 · activations 1");
+         |                                             ^
+      58 |
+      59 |     // A fresh connection must hydrate the same live backend state from the packaged bridge.
+      60 |     const firstFrameUrl = await frameElement.getAttribute("src");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-extension-view.spec.ts:57:45
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-extens-b1d2c--exchanges-live-Chord-state\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-packaged-extens-b1d2c--exchanges-live-Chord-state\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\production\packaged-extension-view.spec.ts:16:5 › packaged extension frame loads its bundled bridge and exchanges live Chord state 
+  RESULT production-packaged-extens-b1d2c--exchanges-live-Chord-state
+[status: completed, exit code: 0]
+
+[tool • read]
+<path>D:\AI\workspace\pao-dev\.pao\harness完善-20261017\H批-解包发行验证\T24-解包发行总报告.md</path>
+<type>file</type>
+<content>
+1: # T24 解包发行验证 · 总报告
+2: 
+3: > **这是什么**：PAO 桌面发行物（`PAO.exe`）到底能不能用的一次总核对。回答四个问题——
+4: > 打出来的包是不是当前开发仓的代码？有没有夹带开发仓路径/测试文件？内核在包里怎么找数据目录？
+5: > 用户拿到 exe 能不能真的跑起一条完整任务？
+6: >
+7: > **只有结论和指针，不复制证据正文**。详细证据在两个分步正本里（一个事实一个家）：
+8: > - [`T24-解包发行验证-第2步.md`](T24-解包发行验证-第2步.md)（15367 B / 271 行）—— 内核版本、路径扫描、PAO_HOME、依赖警告、泄漏检查
+9: > - [`T24-解包发行验证-第3步.md`](T24-解包发行验证-第3步.md)（19043 B / 277 行）—— 关键流四段取证、通道名核实、踩坑
+10: >
+11: > **验证方式声明**：第 1–3 步都是**真启动打包后的 `PAO.exe`** 跑出来的（2026-10-17）。
+12: > 第 4 节里「从零一轮」那次**中途被宿主重启打断，未完成，不计入通过**，归因见 §4.1。
+13: 
+14: ---
+15: 
+16: ## §1 结论
+17: 
+18: **一句话**：包里的内核确实是当前开发仓的代码、没夹带开发仓路径和测试文件、数据目录（PAO_HOME）不猜路径也不回落开发仓；
+19: 关键流的四段（建部/建配方 → 派发 → 首章真实文件 → 重开查回）都走到了，
+20: 但**「从零建部」「从零派发」「启动关联 `starts`」三项没验成**，属于本轮已知缺口，不是已通过项。
+21: 
+22: > **口径优先级**：本报告与两份分步文档**出现矛盾时，以分步文档的原始输出为准**——那是当时真跑出来的原件，
+23: > 本报告是摘要，摘要服从原件。
+24: 
+25: ### 四段结论表
+26: 
+27: | 段 | 内容 | 结论 | 证据在哪 |
+28: |---|---|---|---|
+29: | ① | 建部 / 建配方 | **通过（有缺口）** | 第3步 §2 段① |
+30: | ② | 派发（建实例、交卡） | **通过（有缺口）** | 第3步 §2 段② |
+31: | ③ | 首章真实文件落盘 | **通过** | 第3步 §2 段③ |
+32: | ④ | 重开查回 | **通过（有缺口）** | 第3步 §2 段④ |
+33: 
+34: - ① 缺口：那次 `createDept` 报的是「新建:[] / 已有:14 项」——**不是从零建**，因为现场先被种子脚本落过同名部门。幂等性倒是真验到了（`createDept-idempotent` 零新建）。**「新用户从空 PAO_HOME 自己建部」本轮没验成**，见 §4.1。
+35: - ② 缺口：本轮 `startControl` / `addNodeCards` 都命中「实例已存在，跳过」——卡号与运行状态是**上一轮真做出来、本轮真读出来**的，不是这一次重派。**「从零派发的这一次」没过**，见 §4.2。
+36: - ③ 干净：三处真实文件字节数见第3步 §2 段③。
+37: - ④ 缺口：`starts` 为空，因为没写启动关联文件——**这是正确行为不是坏了**，见 §4.3。
+38: 
+39: ### 从零验证结论
+40: 
+41: **没做完**，且**不能算通过**。跑到「起了一轮真实对话、拿到了空 PAO_HOME 的真实报错」，但在等待会话结束时被外部中断（§4.1）。
+42: 
+43: ---
+44: 
+45: ## §2 本次产物
+46: 
+47: | 项 | 值 |
+48: |---|---|
+49: | 可执行文件 | `desktop/apps/desktop/release/win-unpacked/PAO.exe`，**195.06 MB**，FileVersion **1.0.1** / ProductVersion 1.0.1.0 |
+50: | 解包目录 | `release/win-unpacked/`，**264 文件 / 541.2 MB**，打包 **exit=0**，耗时约 2 分 10 秒 |
+51: | `app.asar` | **200.86 MB** |
+52: | 工具链 | electron-builder 26.8.1，electron 37.10.3 |
+53: | 内核身份 | asar 内 `dist/pao/usage/budget-command.js` 与开发仓同名文件 **SHA256 双侧一致** `DD3FB5003B46DCF8C7B230C412B6873203355548FFA4E5E82E6407BDD6CB31B6`（拿当天新写的文件当试金石） |
+54: | 开发仓路径 | 三组绝对路径扫描**全 0 命中**；`pao-dev` 裸子串 3 命中**全是注释** |
+55: | 测试泄漏 | asar 内 `*.spec.*` **0**、`.pao` **0**、`.git` **0** |
+56: | 内核 dist 陈旧门 | 内核 `src/**` 或 `package.json` 比 `dist/**` 新时，`vendor-pao-kernel.mjs` **exit 1 拒打包**（陈旧产物不进包） |
+57: 
+58: **版本状态声明**：本次 asar 对应 `contracts/i18n-zh.ts` 删重复键**之前**的状态。第 2 步的扫描里零处 i18n 相关命中，故无需重打。
+59: 
+60: 详细数据见第2步 §2 / §3 / §6 / §7。
+61: 
+62: ---
+63: 
+64: ## §3 关键流四段取证
+65: 
+66: 四段的完整证据（return 值、文件字节数、控制清单、会话 id）全部在第3步 §2，这里只列骨架与关键数字。
+67: 
+68: | 段 | 关键事实 | 详见 |
+69: |---|---|---|
+70: | ① 建部/建配方 | `createDept` 报「已有:14 项」；`saveRecipe` 真落盘 `PAO_HOME/工作流/t24-审校.md`；重名被拒（`配方已存在:…（要覆盖旧版请显式传 覆盖:true…）`）；名字与文件名不一致被拒；桌面 `getWorkflowCatalog()` 返回 `departments:["写作","审校"]`、`recipes:["t24-审校"]`、`errors:[]` | 第3步 §2 段① |
+71: | ② 派发 | 实例 `820031f5-d655-4761-a77d-a18f4346ebbc`，`状态:"运行中"`，节点 s1 挂 `卡0001`/`卡0002` 且 `拆解结束:true` | 第3步 §2 段② |
+72: | ③ 首章真实文件 | `正文/第一章-关键流.md` **243 B**、`.pao/卡/卡0001-第一章.md` **548 B**、执行目录内两张卡 **598 B / 516 B**、控制清单 **509754 B / 4710 行**；会话 `.jsonl` 有 `toolCall:write` → `toolResult` 成功 → 收尾文本 | 第3步 §2 段③ |
+73: | ④ 重开查回 | 新进程（`processStartedAt:2026-10-17T07:27:53.989Z`）读回：`getTemporaryPlans` ok、`getWorkflowControl` ok 且 `ownerSessionId` == 重放会话 id `01a148bd-a27a-7204-80be-f6ec11f0308f`、`lastError:null`、`startupDiagnostics:[]`；节点 s2 `requiresConfirmation:true` / `hold:"等待前置节点"` / `status:"no_card"` | 第3步 §2 段④ |
+74: 
+75: **这一节证明的**：计划、实例、owner 会话、控制状态**跨进程存活**，不是内存残留。
+76: **这一节不证明的**：从零建部、从零派发、`starts` 有值——见 §4。
+77: 
+78: ---
+79: 
+80: ## §4 缺口全表
+81: 
+82: **本表是本报告最重要的部分。凡未验成的都在这里，一条不少。** 下文「能验」一栏写的是**谁在哪一层能验**，不是「以后再说」。
+83: 
+84: ### 4.1 从零验证一轮：**中断，不计入**（2026-10-17 16:03–16:07）
+85: 
+86: **跑到哪一步**：起了打包 exe、注入了**空 PAO_HOME**、起了一轮真实对话（假 provider 收到带 50 个工具的请求、模型回了 `stopReason:"stop"`），
+87: 在等会话状态转 idle 时**页面被关闭**。
+88: 
+89: **报错原文**（`现场\从零输出.txt`，3514 B / 16:07:02）：
+90: ```
+91: fatal: page.evaluate: Target page, context or 
+
+[... tool result middle pruned ...]
+
+ API 签名会让夹具静默走错路（本步踩了 4 次）
+223: `parseRecipe` 第二参是路径不是内容、`saveRecipe` 是四参、`startThread` **返回整份桌面快照**（不是 `{sessionId}`，要前后差集找新会话）、
+224: `getTemporaryPlans` 收对象不是字符串。修法已全部落到 `运行须知-本机core-lane.md` 的**陷阱 8**。
+225: 
+226: ### 6.6 中断要用时间线证明，不能凭"我觉得"
+227: 本次判断"外部中断还是脚本缺陷"，靠的是三条硬判据：驱动唯一的 `app.close()` 在 `finally`（`驱动-从零.mjs:399`）而当时还卡在 `waitIdle` 里；
+228: 现场全部目录最后写入 16:07:01、输出文件 16:07:02；`waitIdle` 超时 300 秒而实际只等了 230 秒。
+229: **三条缺一条都不能下"是中断"这个结论。**
+230: 
+231: ---
+232: 
+233: ## §7 现场留存（证据，不是正式数据）
+234: 
+235: | 现场 | 路径 | 体积 | 位置性质 |
+236: |---|---|---|---|
+237: | 现场-干净（第 3 步用） | `D:\AI\workspace\pao-dev\.pao\harness完善-20261017\H批-解包发行验证\现场-干净\` | 111 文件 / 11.7 MB | 在 `pao-dev` git 仓库内 |
+238: | 现场B（从零验证用） | `D:\AI\workspace\_t24现场B\` | 82 文件 / 9.8 MB | **不在任何 git 仓库内** |
+239: | 解包内容 | `…\H批-解包发行验证\asar-extract\` | 32920 文件 / 215.6 MB | 验证用，可删 |
+240: 
+241: **声明**：这两处都是**测试现场，不是正式 PAO_HOME**。正式运行数据在独立的 PAO_HOME（`D:\AI\workspace\pao`），
+242: 本批**全程未读写**该目录。现场留作证据，后续需要复核时直接读文件即可，不必重跑。
+
+(End of file - total 242 lines)
+</content>

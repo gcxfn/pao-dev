@@ -1,0 +1,89 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\knowledge-ingest.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\knowledge-ingest.test.ts"
+index 8228fad..5d742f8 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\knowledge-ingest.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\knowledge-ingest.test.ts"
+@@ -2,13 +2,24 @@
+  * 卡0004 验收 5：入库幂等——转正三件事（移条目/子索引加行/触发巡检），
+  * 重复执行修索引不重复生成，中断重跑修复，子索引行可由条目文件校验生成。
+  */
+-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
++import {
++	existsSync,
++	mkdirSync,
++	mkdtempSync,
++	readdirSync,
++	readFileSync,
++	renameSync,
++	rmSync,
++	writeFileSync,
++} from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join, sep } from "node:path";
+ import { afterEach, beforeEach, describe, expect, test } from "vitest";
+ import { parseEntry, subindexRow } from "../../src/pao/knowledge/entry.ts";
+ import { ingestEntry } from "../../src/pao/knowledge/ingest.ts";
+ import { inspectLibrary } from "../../src/pao/knowledge/inspect.ts";
++import { repairIndex } from "../../src/pao/knowledge/repair.ts";
++import { scanLibrary, searchLibrary } from "../../src/pao/knowledge/search.ts";
+ 
+ let libRoot: string;
+ 
+@@ -258,7 +269,9 @@ describe("入库新文件名必须是所选类型区的普通 .md（审查第 4
+ 		["绝对路径", `${sep}绝对.md`],
+ 		["点路径", ".."],
+ 		["保留子索引名", "子索引.md"],
++		["保留子索引大写扩展名", "子索引.MD"],
+ 		["保留门面名", "索引.md"],
++		["保留门面大写扩展名", "索引.MD"],
+ 		["Windows 非法字符", "条目:冒号.md"],
+ 		["Windows 通配符", "条目*.md"],
+ 		["Windows 保留设备名", "con.md"],
+@@ -270,6 +283,7 @@ describe("入库新文件名必须是所选类型区的普通 .md（审查第 4
+ 		const candidate = join(libRoot, `待验证-${Math.random().toString(36).slice(2)}.md`);
+ 		writeFileSync(candidate, CONTENT, "utf8");
+ 		const originalRaw = readFileSync(candidate, "utf8");
++		const typeDirBefore = readdirSync(join(libRoot, "教训")).sort();
+ 		const subindexBefore = existsSync(join(libRoot, "教训", "子索引.md"))
+ 			? readFileSync(join(libRoot, "教训", "子索引.md"), "utf8")
+ 			: null;
+@@ -280,6 +294,7 @@ describe("入库新文件名必须是所选类型区的普通 .md（审查第 4
+ 
+ 		expect(readFileSync(candidate, "utf8")).toBe(originalRaw);
+ 		expect(existsSync(candidate)).toBe(true);
++		expect(readdirSync(join(libRoot, "教训")).sort()).toEqual(typeDirBefore);
+ 		const subindexAfter = existsSync(join(libRoot, "教训", "子索引.md"))
+ 			? readFileSync(join(libRoot, "教训", "子索引.md"), "utf8")
+ 			: null;
+@@ -300,4 +315,32 @@ describe("入库新文件名必须是所选类型区的普通 .md（审查第 4
+ 		expect(existsSync(candidate)).toBe(false);
+ 		expect(readFileSync(join(libRoot, "教训", "子索引.md"), "utf8")).toContain("改名后经验.md");
+ 	});
++
++	test("合法大写扩展名照常入库，且入库巡检扫描同一文件", async () => {
++		const candidate = join(libRoot, "待验证", "大写扩展候选.md");
++		writeFileSync(candidate, "大写扩展名正文 2026-10-20\n");
++
++		const result = await ingestEntry({
++			libRoot,
++			candidatePath: candidate,
++			type: "教训",
++			newFileName: "大写扩展条目.MD",
++			now: new Date("2026-10-20"),
++		});
++
++		const target = join(libRoot, "教训", "大写扩展条目.MD");
++		expect(result.targetPath).toBe(target);
++		expect(existsSync(target)).toBe(true);
++		expect(existsSync(candidate)).toBe(false);
++		expect(result.inspection.findings.map((finding) => finding.relPath)).toEqual(["教训/大写扩展条目.MD"]);
++		expect(readFileSync(join(libRoot, "教训", "子索引.md"), "utf8")).toContain("(大写扩展条目.MD)");
++		const allAreaInspection = await inspectLibrary(libRoot, { areas: ["教训"], now: new Date("2026-10-20") });
++		expect(allAreaInspection.findings.map((finding) => finding.relPath)).toEqual(["教训/大写扩展条目.MD"]);
++		expect(scanLibrary(libRoot).map((entry) => entry.meta.relPath)).toContain("教训/大写扩展条目.MD");
++		const beforeRepair = readFileSync(join(libRoot, "教训", "子索引.md"), "utf8");
++		await repairIndex(libRoot);
++		expect(readFileSync(join(libRoot, "教训", "子索引.md"), "utf8")).toBe(beforeRepair);
++		const search = await searchLibrary({ libRoot, query: "大写扩展", embed: null, now: new Date("2026-10-20") });
++		expect([...search.hits, ...search.riskHits].map((hit) => hit.relPath)).toContain("教训/大写扩展条目.MD");
++	});
+ });

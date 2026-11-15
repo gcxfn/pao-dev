@@ -1,0 +1,58 @@
+# S3-3 红灯首跑日志（合并：内核单测→desktop 单测→e2e；实现前快照）
+
+## 1. 内核单测（PAO vitest，desktop-editor.test.ts）
+```
+[41m[1m FAIL [22m[49m test/pao/desktop-editor.test.ts[2m > [22m桌面删除配方守卫与入口语义[2m > [22m守卫通过后 deleteRecipe 删本体；revision 漂移拒且文件不动
+[31m[1mAssertionError[22m: expected [Function] to throw error including '其他入口修改' but got '(0 , __vite_ssr_import_4__.checkDeskt…'[39m
+Received: [31m"(0 , __vite_ssr_import_4__.checkDesktopRecipeDelete) is not a function"[39m
+[41m[1m FAIL [22m[49m test/pao/desktop-editor.test.ts[2m > [22m桌面删除配方守卫与入口语义[2m > [22m清单不可读拒：坏实例清单未处理前不删除
+[31m[1mAssertionError[22m: expected [Function] to throw error including '存在不可读项目/控制清单' but got '(0 , __vite_ssr_import_4__.checkDeskt…'[39m
+Received: [31m"(0 , __vite_ssr_import_4__.checkDesktopRecipeDelete) is not a function"[39m
+[41m[1m FAIL [22m[49m test/pao/desktop-editor.test.ts[2m > [22m桌面删除配方守卫与入口语义[2m > [22m运行中实例拒；已完成实例不拦且删除后冻结图仍可读
+[31m[1mAssertionError[22m: expected [Function] to throw error including '运行中的冻结实例' but got '(0 , __vite_ssr_import_4__.checkDeskt…'[39m
+Received: [31m"(0 , __vite_ssr_import_4__.checkDesktopRecipeDelete) is not a function"[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+```
+
+## 2. desktop 单测（playwright，wizard/ipc-validation/recipe-library 三 spec）
+```
+  x  24 apps\desktop\tests\unit\recipe-library.spec.ts:162:7 › 配方库行右键菜单（S3-3 删除链接线） › 「删除工作流」菜单项可用并携带删除回调 (4ms)
+  x  41 apps\desktop\tests\unit\workflow-wizard.spec.ts:392:7 › wizard bridge › deleteRecipe：缺会话/名字＝结构化错误；revision 原样透传（null 不伪造指纹） (2ms)
+  x  42 apps\desktop\tests\unit\workflow-wizard.spec.ts:418:7 › wizard bridge › deleteRecipe：fork 守卫错误原样透出；成功 ok (7ms)
+  1) apps\desktop\tests\unit\ipc-request-validation.spec.ts:32:5 › 删除配方输入校验：名字非空＋revision null 或非空（照保存口径，深度终判在内核） 
+    TypeError: (0 , _requestValidation.expectWorkflowRecipeDeleteInput) is not a function
+    > 34 |   const parsed = expectWorkflowRecipeDeleteInput(input);
+      37 |   expect(expectWorkflowRecipeDeleteInput({ ...input, revision: "r1" }).revision).toBe("r1");
+  2) apps\desktop\tests\unit\recipe-library.spec.ts:162:7 › 配方库行右键菜单（S3-3 删除链接线） › 「删除工作流」菜单项可用并携带删除回调 
+      172 |     // 菜单项启用（S3-2 占位禁用已由 S3-3 接线替换；点击行为由 core e2e 覆盖）。
+    apps\desktop\test-results\unit-recipe-library-配方库行右键菜单（S3-3-删除链接线）-「删除工作流」菜单项可用并携带删除回调\trace.zip
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-recipe-library-配方库行右键菜单（S3-3-删除链接线）-「删除工作流」菜单项可用并携带删除回调\trace.zip
+  3) apps\desktop\tests\unit\workflow-wizard.spec.ts:392:7 › wizard bridge › deleteRecipe：缺会话/名字＝结构化错误；revision 原样透传（null 不伪造指纹） 
+    TypeError: bridge.deleteRecipe is not a function
+    > 406 |       await bridge.deleteRecipe({ sessionId: "", project: "/p", name: "旧流", revision: null }),
+      409 |       await bridge.deleteRecipe({ sessionId: "s", project: "/p", name: "  ", revision: "r1" }),
+  4) apps\desktop\tests\unit\workflow-wizard.spec.ts:418:7 › wizard bridge › deleteRecipe：fork 守卫错误原样透出；成功 ok 
+    TypeError: bridge.deleteRecipe is not a function
+    > 430 |       await bridge.deleteRecipe({ sessionId: "s", project: "/p", name: "旧流", revision: "r1" }),
+  4 failed
+    apps\desktop\tests\unit\recipe-library.spec.ts:162:7 › 配方库行右键菜单（S3-3 删除链接线） › 「删除工作流」菜单项可用并携带删除回调 
+    apps\desktop\tests\unit\workflow-wizard.spec.ts:392:7 › wizard bridge › deleteRecipe：缺会话/名字＝结构化错误；revision 原样透传（null 不伪造指纹） 
+    apps\desktop\tests\unit\workflow-wizard.spec.ts:418:7 › wizard bridge › deleteRecipe：fork 守卫错误原样透出；成功 ok 
+  43 passed (5.9s)
+```
+
+## 3. e2e（重建前 out/，-g 删除工作流 两条）
+```
+  x  1 apps\desktop\tests\core\workflow-canvas.spec.ts:825:5 › 删除工作流：确认弹窗含 .bak 说明，取消无副作用、标签不变 (43.9s)
+  x  2 apps\desktop\tests\core\workflow-canvas.spec.ts:864:5 › 删除工作流：确认后 .bak 保留、冻结实例可读、对应标签关闭 (44.1s)
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:825:5 › 删除工作流：确认弹窗含 .bak 说明，取消无副作用、标签不变 ───────
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    [2m  - waiting for getByTestId('recipe-row-context-menu').getByRole('menuitem', { name: '删除工作流' })[22m
+    [2m    - locator resolved to <button disabled type="button" role="menuitem" title="删除链路接入后启用">删除工作流</button>[22m
+    [2m      - element is not enabled[22m
+    [2m      - element is not enabled[22m
+    [2m       - element is not enabled[22m
+      838 |       .getByRole("menuitem", { name: "删除工作流" })
+      840 |     const dialog = page.getByRole("dialog").filter({ hasText: "删除工作流配方" });
+    apps\desktop\test-results\core-workflow-canvas-删除工作流：确认弹窗含-bak-说明，取消无副作用、标签不变\test-failed-1.png
+```

@@ -1,0 +1,51 @@
+
+=== SS2 2026-10-06 09:32:05 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts apps/desktop/tests/core/smoke.spec.ts apps/desktop/tests/core/thread-menu.spec.ts apps/desktop/tests/core/thread-switcher.spec.ts apps/desktop/tests/core/skills-settings.spec.ts apps/desktop/tests/core/slash-command-attachments.spec.ts apps/desktop/tests/core/streaming-publish.spec.ts
+
+Running 11 tests using 1 worker
+
+  x   1 apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data (37.9s)
+  ok  2 apps\desktop\tests\core\skills-settings.spec.ts:78:5 › skills and extensions live inside settings as one tabbed page (10.7s)
+  ok  3 apps\desktop\tests\core\skills-settings.spec.ts:140:5 › matches skill slash commands by skill name aliases (7.8s)
+  ok  4 apps\desktop\tests\core\slash-command-attachments.spec.ts:14:5 › a typed slash command keeps composer attachments across thread switch and restart (21.4s)
+  ok  5 apps\desktop\tests\core\smoke.spec.ts:15:5 › adds a workspace to an empty launched app (2.8s)
+  ok  6 apps\desktop\tests\core\smoke.spec.ts:33:5 › boots an existing workspace and starts a new thread through the real UI (7.9s)
+  ok  7 apps\desktop\tests\core\smoke.spec.ts:81:5 › aligns workspace names with session titles in the sidebar gutter (12.7s)
+  ok  8 apps\desktop\tests\core\streaming-publish.spec.ts:114:5 › coalesces token publishes without losing stick-to-bottom or wheel unpin (6.7s)
+  ok  9 apps\desktop\tests\core\thread-menu.spec.ts:28:5 › right-click thread menu supports rename, archive/restore, mark read, and copy id (47.6s)
+  ok 10 apps\desktop\tests\core\thread-menu.spec.ts:170:5 › header and right-click menus match, show shortcuts, and Shift chords rename and archive (27.8s)
+  ok 11 apps\desktop\tests\core\thread-switcher.spec.ts:26:5 › Ctrl-Tab switches threads in most-recently-used order and keeps it across restart (35.7s)
+
+
+  1) apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Skills', exact: true })[22m
+
+
+      38 |     await createNamedThread(window, "Skill test session");
+      39 |
+    > 40 |     await window.getByRole("button", { name: "Skills", exact: true }).click();
+         |                                                                       ^
+      41 |     await expect(window.getByTestId("skills-surface")).toBeVisible();
+      42 |     await expect(window.getByTestId("skills-list")).toContainText("Demo Skill");
+      43 |     await window.getByRole("button", { name: /Demo Skill/i }).click();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\skills-settings.spec.ts:40:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+  10 passed (3.7m)
+SS2_EXIT=1

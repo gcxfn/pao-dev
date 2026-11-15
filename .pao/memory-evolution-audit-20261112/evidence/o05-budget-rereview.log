@@ -1,0 +1,36 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o05-budget-rereview.test.ts > O05 修复后的完整请求预算 > C1 实际 context 钩子刷新记忆时沿用本轮收紧预算 48ms
+   → expected 513 to be less than or equal to 287
+ × o05-budget-rereview.test.ts > O05 修复后的完整请求预算 > C2 before_agent_start 返回的首次召回完整消息符合预算 357ms
+   → expected 396 to be less than or equal to 331
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o05-budget-rereview.test.ts > O05 修复后的完整请求预算 > C1 实际 context 钩子刷新记忆时沿用本轮收紧预算
+AssertionError: expected 513 to be less than or equal to 287
+ ❯ o05-budget-rereview.test.ts:54:37
+     52|     const text = messages.map(m => m.content).join("\n");
+     53|     results.C1 = { initialBudget, currentBudget: budget, renderedChars…
+     54|     expect(Array.from(text).length).toBeLessThanOrEqual(budget);
+       |                                     ^
+     55|   });
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  o05-budget-rereview.test.ts > O05 修复后的完整请求预算 > C2 before_agent_start 返回的首次召回完整消息符合预算
+AssertionError: expected 396 to be less than or equal to 331
+ ❯ o05-budget-rereview.test.ts:86:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  16:02:23
+   Duration  4.62s (transform 3.25s, setup 0ms, import 4.03s, tests 416ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o05-budget-rereview-vitest.json

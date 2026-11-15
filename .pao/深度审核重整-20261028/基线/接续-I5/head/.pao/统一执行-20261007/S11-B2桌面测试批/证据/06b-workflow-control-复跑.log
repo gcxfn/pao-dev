@@ -1,0 +1,85 @@
+
+Running 2 tests using 1 worker
+
+[1A[2K[1/2] apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝
+[1A[2K  1) apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ───────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })[22m
+    [2m    9 × locator resolved to <button disabled type="button" class="button">确认放行</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      74 |     const controls = page.getByTestId("workflow-runtime-controls");
+      75 |     await controls.getByRole("button", { name: "打开原主控", exact: true }).click();
+    > 76 |     await expect(controls.getByRole("button", { name: "确认放行", exact: true })).toBeEnabled();
+         |                                                                               ^
+      77 |     await controls.getByRole("button", { name: "确认放行", exact: true }).click();
+      78 |     await page
+      79 |       .getByRole("dialog")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:76:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[2/2] apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写
+[1A[2K  2) apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-runtime-controls').getByRole('button', { name: '确认放行', exact: true })[22m
+    [2m    9 × locator resolved to <button disabled type="button" class="button">确认放行</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      304 |     const controls = page.getByTestId("workflow-runtime-controls");
+      305 |     await controls.getByRole("button", { name: "打开原主控", exact: true }).click();
+    > 306 |     await expect(controls.getByRole("button", { name: "确认放行", exact: true })).toBeEnabled();
+          |                                                                               ^
+      307 |     // 另一入口（终端同源内核）把轮次推进到 2；页面还停留在第 1 轮的旧视图。
+      308 |     const controlPath = join(task, "工作流实例-过期请求.md");
+      309 |     const before = await readFile(controlPath, "utf8");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:306:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  2 failed
+    apps\desktop\tests\core\workflow-control.spec.ts:20:5 › 主控暂停与人工恢复真实落盘，确认未交付节点显示内核拒绝 ────────────
+    apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ─────────
+WFCONTROL2_EXIT=1

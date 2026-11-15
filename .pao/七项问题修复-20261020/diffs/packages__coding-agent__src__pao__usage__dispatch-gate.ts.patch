@@ -1,0 +1,141 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\usage\\dispatch-gate.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\usage\\dispatch-gate.ts"
+index 18f6586..fb4a501 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\usage\\dispatch-gate.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\usage\\dispatch-gate.ts"
+@@ -12,17 +12,18 @@
+ import { createHash } from "node:crypto";
+ 
+ import { reserveSharedRequest, type SharedBudgetConfig } from "../runtime/shared-budget.ts";
++import type { WorkerReceipt } from "../worker/receipt.ts";
+ import {
+ 	BudgetLedgerError,
++	type BudgetReservation,
+ 	budgetLedgerPath,
+ 	currentGrant,
+ 	inspectReservation,
++	readBudgetLedger,
+ 	releaseBudget,
+ 	remainingBudget,
+ 	reserveBudget,
+-	readBudgetLedger,
+ 	settleBudget,
+-	type BudgetReservation,
+ } from "./budget-ledger.ts";
+ 
+ /** 派发门禁的判定结果。 */
+@@ -213,6 +214,9 @@ export type DispatchBudgetGateResult =
+ 			说明?: string;
+ 			commit: () => Promise<void>;
+ 			release: () => Promise<void>;
++			settle: (receipt: WorkerReceipt) => Promise<string | undefined>;
++			/** runner 已提交但没有回执时，按「费用未知」结算。 */
++			settleUnknown: (reason: string) => Promise<string | undefined>;
+ 	  }
+ 	/** 拒绝：`reason` 是给用户看的真实原因（含下一步）。 */
+ 	| { ok: false; reason: string };
+@@ -228,7 +232,8 @@ export type DispatchBudgetGateResult =
+  * 这样同一卡同尝试的并发重派只会在账上留一条预留（复用而不是再扣一份），
+  * 换尝试号（重开）才是新的一笔——与卡状态机的尝试语义对齐。
+  *
+- * 金额：卡的每卡预算 `budget.cost` 就是这次派发**最多可能花多少**，用它做预留额；
++ * 金额：卡的每卡预算 `budget.cost` 经历史回执扣减后剩下的额度，就是这次派发**最多还可能花多少**，
++ * 用它做预留额；重试只申请卡内剩余，不再按整张卡的原始上限重复占额。
+  * 没写每卡预算时按 0 预留（= 软门禁，只靠"总额已被占满"来拦），不凭空捏一个数。
+  *
+  * 三处装配（单卡/扇出/自动链）共用本函数，所以判据与拒绝文案不可能分叉。
+@@ -241,7 +246,13 @@ export function buildDispatchBudgetGate(input: {
+ 	paoHome: string | undefined;
+ 	/** 现在（ISO 生成器）；缺省 `new Date()`，测试注入固定时间用。 */
+ 	现在?: () => string;
+-}): ((card: { card_no: number | string; frontmatter: { budget?: { cost?: number }; goal?: string } }, 尝试号: number) => Promise<DispatchBudgetGateResult>) | undefined {
++}):
++	| ((
++			card: { card_no: number | string; frontmatter: { budget?: { cost?: number }; goal?: string } },
++			尝试号: number,
++			剩余预算?: { cost?: number },
++	  ) => Promise<DispatchBudgetGateResult>)
++	| undefined {
+ 	const home = input.paoHome;
+ 	if (!home) return undefined;
+ 	const now = input.现在 ?? (() => new Date().toISOString());
+@@ -258,9 +269,9 @@ export function buildDispatchBudgetGate(input: {
+ 		});
+ 	}
+ 	if (!enabled) return undefined;
+-	return async (card, 尝试号) => {
++	return async (card, 尝试号, 剩余预算) => {
+ 		const 卡号 = String(card.card_no).padStart(4, "0");
+-		const 金额 = card.frontmatter.budget?.cost ?? 0;
++		const 金额 = card.frontmatter.budget?.cost === undefined ? 0 : (剩余预算?.cost ?? card.frontmatter.budget.cost);
+ 		const 指纹 = createHash("sha256")
+ 			.update(JSON.stringify({ 卡号, 尝试号, 目标: card.frontmatter.goal }), "utf8")
+ 			.digest("hex");
+@@ -272,7 +283,8 @@ export function buildDispatchBudgetGate(input: {
+ 			现在: now(),
+ 			卡号,
+ 		});
+-		if (!verdict.ok) return { ok: false, reason: `${verdict.reason}（下一步：${BUDGET_REFUSAL_NEXT[verdict.kind]}）` };
++		if (!verdict.ok)
++			return { ok: false, reason: `${verdict.reason}（下一步：${BUDGET_REFUSAL_NEXT[verdict.kind]}）` };
+ 		return {
+ 			ok: true,
+ 			commit: async () => {
+@@ -289,6 +301,25 @@ export function buildDispatchBudgetGate(input: {
+ 				});
+ 				await verdict.releaseSlot();
+ 			},
++			settle: async (receipt) =>
++				await settleDispatchBudgetQuietly({
++					paoHome: home,
++					卡号,
++					尝试号,
++					缺账轮次: receipt.missing_usage_rounds ?? 0,
++					实际费用: receipt.usage?.cost,
++					现在: now,
++				}),
++			settleUnknown: async (reason) =>
++				await settleDispatchBudgetQuietly({
++					paoHome: home,
++					卡号,
++					尝试号,
++					缺账轮次: 0,
++					实际费用: undefined,
++					现在: now,
++					备注: `派发链已开跑但无回执（${reason}）：结果不明，预留额继续占用，先查清再结算`,
++				}),
+ 		};
+ 	};
+ }
+@@ -314,6 +345,7 @@ export function settleDispatchBudgetQuietly(input: {
+ 	/** 回执声明的费用（undefined＝回执不带 usage）。 */
+ 	实际费用: number | undefined;
+ 	现在?: () => string;
++	备注?: string;
+ }): Promise<string | undefined> | undefined {
+ 	const home = input.paoHome;
+ 	if (!home) return undefined;
+@@ -338,9 +370,10 @@ export function settleDispatchBudgetQuietly(input: {
+ 				idempotencyKey: dispatchBudgetKey(input.卡号, input.尝试号),
+ 				...(实际费用 === undefined ? {} : { 实际费用 }),
+ 				现在: now(),
++				...(input.备注 ? { 备注: input.备注 } : {}),
+ 			});
+ 			return 实际费用 === undefined
+-				? `总预算结算:费用未知(${缺账轮次 > 0 ? `有 ${缺账轮次} 轮没回 usage` : "回执未带 usage"}),预留额 $${settled.预留额.toFixed(2)} 继续占着——先查清再结算,不重复授额`
++				? `总预算记「结果不明」:费用未知(${缺账轮次 > 0 ? `有 ${缺账轮次} 轮没回 usage` : (input.备注 ?? "回执未带 usage")}),预留额 $${settled.预留额.toFixed(2)} 继续占着——先查清再结算,不重复授额`
+ 				: undefined;
+ 		} catch (error) {
+ 			return `总预算结算失败（派发结果不受影响,但钱没结上,请核对总预算账）:${
+@@ -460,7 +493,11 @@ export async function releaseReservationExplicit(
+ 		});
+ 		if (!released) {
+ 			// 账上没有这一笔：如实报，并把当前停着的判据键交出去让人自己抄，不猜他想还哪一笔。
+-			return { ok: false, kind: "没有这笔预留", reservedKeys: listReservedReservations(paoHome).map((row) => row.idempotencyKey) };
++			return {
++				ok: false,
++				kind: "没有这笔预留",
++				reservedKeys: listReservedReservations(paoHome).map((row) => row.idempotencyKey),
++			};
+ 		}
+ 		return { ok: true, reservation: released };
+ 	} catch (error) {

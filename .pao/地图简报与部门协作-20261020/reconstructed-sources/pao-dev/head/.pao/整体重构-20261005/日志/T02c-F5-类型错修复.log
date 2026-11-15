@@ -1,0 +1,14 @@
+## T02c-F5 dispatch-workflow-check.test.ts 类型错修复（2026-10-06）
+
+文件：packages/coding-agent/test/pao/dispatch-workflow-check.test.ts
+
+修复前（根级 `PAO/tsconfig.json` tsc 报错原文）：
+1. (18,15) TS2459: Module '"../../src/pao/worker/runner.ts"' declares 'WorkerReceipt' locally, but it is not exported.
+   —— WorkerReceipt 正本在 src/pao/worker/receipt.ts，runner.ts 只 import 未 re-export，测试导错源头。
+   修法：改从 receipt.ts 导入（`import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts"`）。
+   导入修好后连带暴露 (43,3) TS2739：桩回执缺 WorkerReceipt 必填字段 命令/pid/持续时间毫秒（此前导入失败时对象未被校验）。修法：桩补 `命令:"stub", pid:0, 持续时间毫秒:0`，断言不读这三个字段，不改测试语义。
+2. (50,15) TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+   —— options.卡路径 为 `string | undefined`，join 不收 undefined。修法：`options.卡路径 ?? ""`。
+
+修后：本文件零错；根级 tsc 余 5 条既有报错（3 个非本轮文件：stream.test.ts 1 条、friction-drafts.test.ts 1 条、results-aggregate.test.ts 3 条），未动。
+测试：`npx vitest run test/pao/dispatch-workflow-check.test.ts --maxWorkers=1` → 8/8 全过（1.71s）。

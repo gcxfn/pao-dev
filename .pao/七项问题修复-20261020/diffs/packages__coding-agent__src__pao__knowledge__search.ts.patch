@@ -1,0 +1,24 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\search.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\search.ts"
+index 760e79d..ba44784 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\search.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\search.ts"
+@@ -33,7 +33,7 @@ import {
+ 	sharedQueryEmbedding,
+ 	throwIfAborted,
+ } from "./embed.ts";
+-import { parseEntry, stripEvidenceBlock } from "./entry.ts";
++import { isMarkdownEntryFile, parseEntry, stripEvidenceBlock } from "./entry.ts";
+ import { DEFAULT_STALE_DAYS, inspectHook } from "./inspect.ts";
+ import { lexicalScore } from "./lexical.ts";
+ import { checkOutbound, loadOutboundConfig, type OutboundConfig } from "./outbound.ts";
+@@ -87,9 +87,7 @@ export function scanLibrary(libRoot: string, options: ScanOptions = {}): ScanEnt
+ 	for (const area of areas) {
+ 		const dir = join(libRoot, area);
+ 		if (!existsSync(dir)) continue;
+-		for (const file of readdirSync(dir)
+-			.filter((f) => f.endsWith(".md") && f !== "子索引.md")
+-			.sort()) {
++		for (const file of readdirSync(dir).filter(isMarkdownEntryFile).sort()) {
+ 			const abs = join(dir, file);
+ 			const relPath = `${area}/${file}`;
+ 			const { mtimeMs, size } = statSync(abs);

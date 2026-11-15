@@ -1,0 +1,16 @@
+# --check semantics (FINAL)
+$ python3 /app/filter.py --check unclean.html  # expect unsafe, exit 1
+check: unclean.html: unsafe: dangerous URL in 'href', script element
+exit=1
+$ python3 /app/filter.py unclean.html
+exit=0
+<html><body><a>t</a></body></html>
+$ python3 /app/filter.py --check unclean.html  # expect clean, exit 0
+check: unclean.html: clean
+exit=0
+$ cmp -s unclean.html unclean.bak  # file must have been modified only by normal mode
+cmp=1
+$ python3 /app/filter.py --check benign.html
+check: benign.html: clean
+exit=0
+benign_untouched_by_check=0

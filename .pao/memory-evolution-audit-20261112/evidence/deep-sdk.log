@@ -1,0 +1,36 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ↓ deep-audit.test.ts > D1：异地恢复后，原现场不可用仍可回读来源原文
+ ↓ deep-audit.test.ts > D2：旧备份重放最新删除记录后，按 ID 也不能恢复已删除正文
+ ↓ deep-audit.test.ts > D3：先选择改善方案再冻结三组样例，正常流程可以继续
+ ↓ deep-audit.test.ts > D4：公开生成入口生成的候选，零验证结果不能发布并生效
+ ↓ deep-audit.test.ts > D5：同一冻结输入的双侧执行，实际消费不同版本的技能
+ × deep-audit.test.ts > D6：真实 SDK 新会话正常提炼时，同时续做旧会话持久任务 566ms
+   → expected 'pending' to be 'done' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  deep-audit.test.ts > D6：真实 SDK 新会话正常提炼时，同时续做旧会话持久任务
+AssertionError: expected 'pending' to be 'done' // Object.is equality
+
+Expected: "done"
+Received: "pending"
+
+ ❯ deep-audit.test.ts:259:23
+    257|   expect(current?.status).toBe("done");
+    258|   expect(persisted).toBeTruthy();
+    259|   expect(old?.status).toBe("done");
+       |                       ^
+    260| });
+    261|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  16:19:50
+   Duration  19.38s (transform 17.08s, setup 0ms, import 18.66s, tests 567ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/deep-sdk-vitest.json

@@ -1,0 +1,44 @@
+
+Running 7 tests using 1 worker
+
+  ok 1 apps\desktop\tests\unit\worktree-manager.spec.ts:102:5 › rolls back a just-created worktree and its branch on failed thread creation (592ms)
+pi-gui: kept branch pi/unmerged-1 after worktree removal: Command failed: git -C C:\Users\ASUS\AppData\Local\Temp\wt-remove-wIllXV\repo branch -d pi/unmerged-1
+error: the branch 'pi/unmerged-1' is not fully merged
+hint: If you are sure you want to delete it, run 'git branch -D pi/unmerged-1'
+hint: Disable this message with "git config set advice.forceDeleteBranch false"
+
+  ok 2 apps\desktop\tests\unit\worktree-manager.spec.ts:134:5 › removeWorktree deletes the merged pi/* branch but keeps unmerged work (1.0s)
+pi-gui: kept orphaned worktree C:\Users\ASUS\AppData\Local\Temp\wt-prune-60r0hZ\worktrees\repo\dirty: Command failed: git -C C:\Users\ASUS\AppData\Local\Temp\wt-prune-60r0hZ\repo worktree remove C:\Users\ASUS\AppData\Local\Temp\wt-prune-60r0hZ\worktrees\repo\dirty
+fatal: 'C:\Users\ASUS\AppData\Local\Temp\wt-prune-60r0hZ\worktrees\repo\dirty' contains modified or untracked files, use --force to delete it
+
+  ok 3 apps\desktop\tests\unit\worktree-manager.spec.ts:169:5 › pruneOrphanedWorktrees removes clean merged orphans and fails closed for protected worktrees (1.9s)
+  x  4 apps\desktop\tests\unit\worktree-manager.spec.ts:239:5 › app worktree paths are matched inside the profile root only, even before it exists (14ms)
+  ok 5 apps\desktop\tests\unit\worktree-manager.spec.ts:259:5 › folders list only the app worktrees they own and never remove the user's own checkouts (964ms)
+  ok 6 apps\desktop\tests\unit\worktree-manager.spec.ts:302:5 › a user's checkout inside the app worktree folder still cannot be removed (361ms)
+  ok 7 apps\desktop\tests\unit\worktree-manager.spec.ts:321:5 › the folder that creates a worktree keeps it even if another folder listed it first (525ms)
+
+
+  1) apps\desktop\tests\unit\worktree-manager.spec.ts:239:5 › app worktree paths are matched inside the profile root only, even before it exists 
+
+    Error: EPERM: operation not permitted, symlink 'C:\Users\ASUS\AppData\Local\Temp\wt-roots-SV004L\real' -> 'C:\Users\ASUS\AppData\Local\Temp\wt-roots-SV004L\linked'
+
+      247 |     // Git reports resolved paths; a root reached through a symlink must still match.
+      248 |     await mkdir(join(root, "real", "worktrees", "repo", "task-2"), { recursive: true });
+    > 249 |     await symlink(join(root, "real"), join(root, "linked"));
+          |     ^
+      250 |     const throughLink = appWorktreeRootMatcher(join(root, "linked", "worktrees"));
+      251 |     expect(
+      252 |       await throughLink(await realpath(join(root, "real", "worktrees", "repo", "task-2"))),
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\worktree-manager.spec.ts:249:5
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-worktree-manager-app--913e4--only-even-before-it-exists\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\unit-worktree-manager-app--913e4--only-even-before-it-exists\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\worktree-manager.spec.ts:239:5 › app worktree paths are matched inside the profile root only, even before it exists 
+  6 passed (7.1s)

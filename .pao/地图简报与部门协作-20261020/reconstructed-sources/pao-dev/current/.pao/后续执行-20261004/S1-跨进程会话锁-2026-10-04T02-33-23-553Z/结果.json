@@ -1,0 +1,256 @@
+{
+  "status": "通过",
+  "boundary": "真实正式CLI RPC跨进程控制，surface为终端/桌面身份标签；不替代Electron双窗口操作",
+  "modelRequests": 0,
+  "checks": [
+    {
+      "name": "首控制方",
+      "response": {
+        "success": true,
+        "response": {
+          "id": "f7554da8-be21-476f-a50d-588a41241ffd",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_ui_request",
+            "id": "27e77477-bbe6-403b-a52c-9ec90c3bbc68",
+            "method": "setStatus",
+            "statusKey": "用量",
+            "statusText": "本轮 usage 未回"
+          },
+          {
+            "type": "extension_ui_request",
+            "id": "d650285b-3dfc-40c2-81ed-09a7080b3f09",
+            "method": "notify",
+            "message": "本会话控制权有效",
+            "notifyType": "info"
+          },
+          {
+            "id": "f7554da8-be21-476f-a50d-588a41241ffd",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      },
+      "pid": 24028
+    },
+    {
+      "name": "同会话拒双控",
+      "response": {
+        "success": false,
+        "error": "Error: 同会话已有控制方，拒绝同时驱动",
+        "response": {
+          "id": "f47c5620-ea5d-4530-9d1f-49609f1678a3",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_ui_request",
+            "id": "89e457bb-bfa1-47a3-8534-12c6d22c0ccd",
+            "method": "notify",
+            "message": "会话只读：Error: 同会话已有控制方，拒绝同时驱动；残锁可用 /pao runtime takeover <原控制标识> 显式接管。",
+            "notifyType": "error"
+          },
+          {
+            "type": "extension_ui_request",
+            "id": "0ea3449e-4b06-4e13-a9fa-d89cc9c70ea3",
+            "method": "setStatus",
+            "statusKey": "用量",
+            "statusText": "本轮 usage 未回"
+          },
+          {
+            "type": "extension_error",
+            "extensionPath": "command:pao",
+            "event": "command",
+            "error": "Error: 同会话已有控制方，拒绝同时驱动"
+          },
+          {
+            "id": "f47c5620-ea5d-4530-9d1f-49609f1678a3",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      },
+      "pid": 31672
+    },
+    {
+      "name": "不同会话并行",
+      "response": {
+        "success": true,
+        "response": {
+          "id": "782ccd9e-2ebd-48d3-92a8-020462618e5c",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_ui_request",
+            "id": "5da6f2e7-a5f1-4351-b100-8976cbe972c7",
+            "method": "setStatus",
+            "statusKey": "用量",
+            "statusText": "本轮 usage 未回"
+          },
+          {
+            "type": "extension_ui_request",
+            "id": "17c496b2-3ae3-463e-adf3-ddb9a07539b7",
+            "method": "notify",
+            "message": "本会话控制权有效",
+            "notifyType": "info"
+          },
+          {
+            "id": "782ccd9e-2ebd-48d3-92a8-020462618e5c",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      },
+      "pid": 36464
+    },
+    {
+      "name": "父死不隐式接管",
+      "response": {
+        "success": false,
+        "error": "Error: 同会话已有控制方，拒绝同时驱动",
+        "response": {
+          "id": "1a1084d9-fb89-4cee-bdd0-ea34799029bf",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_error",
+            "extensionPath": "command:pao",
+            "event": "command",
+            "error": "Error: 同会话已有控制方，拒绝同时驱动"
+          },
+          {
+            "id": "1a1084d9-fb89-4cee-bdd0-ea34799029bf",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "显式接管残锁",
+      "response": {
+        "success": true,
+        "response": {
+          "id": "0698fbd3-e929-4352-9acb-efa43797a676",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_ui_request",
+            "id": "4462a9c4-522f-48d9-95ec-ea1138805ca3",
+            "method": "notify",
+            "message": "本会话控制权有效",
+            "notifyType": "info"
+          },
+          {
+            "id": "0698fbd3-e929-4352-9acb-efa43797a676",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "独立会话不受影响",
+      "response": {
+        "success": true,
+        "response": {
+          "id": "cbb8c917-9618-4ae2-9af2-e78d58d8a961",
+          "type": "response",
+          "command": "prompt",
+          "success": true,
+          "data": {
+            "disposition": "handled"
+          }
+        },
+        "events": [
+          {
+            "type": "extension_ui_request",
+            "id": "fb45de97-c8b4-4af2-a476-996e14ad027e",
+            "method": "notify",
+            "message": "本会话控制权有效",
+            "notifyType": "info"
+          },
+          {
+            "id": "cbb8c917-9618-4ae2-9af2-e78d58d8a961",
+            "type": "response",
+            "command": "prompt",
+            "success": true,
+            "data": {
+              "disposition": "handled"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "pids": [
+    {
+      "label": "终端身份",
+      "pid": 24028,
+      "exitCode": null,
+      "signal": "SIGTERM"
+    },
+    {
+      "label": "桌面身份同会话",
+      "pid": 31672,
+      "exitCode": null,
+      "signal": "SIGTERM"
+    },
+    {
+      "label": "桌面身份不同会话",
+      "pid": 36464,
+      "exitCode": null,
+      "signal": "SIGTERM"
+    }
+  ]
+}

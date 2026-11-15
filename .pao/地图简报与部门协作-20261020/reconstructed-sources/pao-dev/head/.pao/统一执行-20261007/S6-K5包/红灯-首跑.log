@@ -1,0 +1,45 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[32m·[39m[33m[39m[32m·[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/bash-abort-classify.test.ts[2m > [22mbash 工具：取消语义优先于树杀失败（stopError）[2m > [22m取消＋树杀失败：exec 以 aborted 拒绝（不抛 killTree 错误文本），stopError 挂 cause＋warn 留痕
+[31m[1mAssertionError[22m: expected '模拟：PowerShell 树杀超时失败' to be 'aborted' // Object.is equality[39m
+
+Expected: [32m"aborted"[39m
+Received: [31m"模拟：PowerShell 树杀超时失败"[39m
+
+[36m [2m❯[22m test/pao/bash-abort-classify.test.ts:[2m89:40[22m[39m
+    [90m 87|[39m    [90m// 取消归类优先：消息恒为 "aborted"（工具层按此精确匹配渲染 Command aborted）[39m
+    [90m 88|[39m    [34mexpect[39m(captured)[33m.[39m[34mtoBeInstanceOf[39m([33mError[39m)[33m;[39m
+    [90m 89|[39m    [34mexpect[39m((captured [35mas[39m [33mError[39m)[33m.[39mmessage)[33m.[39m[34mtoBe[39m([32m"aborted"[39m)[33m;[39m
+    [90m   |[39m                                        [31m^[39m
+    [90m 90|[39m    [90m// stopError 不吞：挂 cause 可追溯[39m
+    [90m 91|[39m    [34mexpect[39m((captured [35mas[39m [33mError[39m)[33m.[39mcause)[33m.[39m[34mtoBe[39m(stopError)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/bash-abort-classify.test.ts[2m > [22mbash 工具：取消语义优先于树杀失败（stopError）[2m > [22m取消＋树杀失败：bash 工具层渲染 Command aborted（取消不被当普通命令错误）
+[31m[1mAssertionError[22m: expected [Function] to throw error including 'Command aborted' but got '模拟：PowerShell 树杀超时失败'[39m
+
+Expected: [32m"Command aborted"[39m
+Received: [31m"模拟：PowerShell 树杀超时失败"[39m
+
+[36m [2m❯[22m test/pao/bash-abort-classify.test.ts:[2m113:20[22m[39m
+    [90m111|[39m    [35mawait[39m [34mwaitForReady[39m(readyFile)[33m;[39m
+    [90m112|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+    [90m113|[39m    [35mawait[39m [34mexpect[39m(op)[33m.[39mrejects[33m.[39m[34mtoThrow[39m([32m"Command aborted"[39m)[33m;[39m
+    [90m   |[39m                    [31m^[39m
+    [90m114|[39m   } [35mfinally[39m {
+    [90m115|[39m    controller[33m.[39m[34mabort[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 21:30:06
+[2m   Duration [22m 3.54s[2m (transform 570ms, setup 0ms, import 915ms, tests 2.42s, environment 0ms)[22m
+

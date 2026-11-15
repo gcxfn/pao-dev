@@ -1,0 +1,52 @@
+
+> pi-monorepo@0.0.3 build:offline
+> cd packages/chord && npm run build && cd ../tui && npm run build && cd ../telemetry && npm run build && cd ../codemode && npm run build && cd ../mcp && npm run build && cd ../ai && npm run build:offline && cd ../durable && npm run build && cd ../agent && npm run build && cd ../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../coding-agent && npm run build
+
+
+> @earendil-works/chord@1.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @earendil-works/pi-tui@1.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @earendil-works/pi-telemetry@1.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @earendil-works/pi-codemode@1.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @earendil-works/pi-mcp@1.0.0 build
+> tsc -p tsconfig.build.json
+
+
+> @earendil-works/pi-ai@1.0.0 build:offline
+> npm run check:model-data && tsc -p tsconfig.build.json && shx rm -rf dist/providers/data && shx cp -r src/providers/data dist/providers/data
+
+
+> @earendil-works/pi-ai@1.0.0 check:model-data
+> node scripts/check-model-data.ts
+
+Invalid generated model data:
+  - model data generation stamp does not match the generated catalog
+  - nvidia.json does not match its manifest hash
+  - together.json does not match its manifest hash
+
+Model data is missing or stale. Run `npm run hydrate:model-data` from the repository root.
+npm error Lifecycle script `check:model-data` failed with error:
+npm error code 1
+npm error path D:\AI\workspace\pao-dev\PAO\packages\ai
+npm error workspace @earendil-works/pi-ai@1.0.0
+npm error location D:\AI\workspace\pao-dev\PAO\packages\ai
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c node scripts/check-model-data.ts
+npm error Lifecycle script `build:offline` failed with error:
+npm error code 1
+npm error path D:\AI\workspace\pao-dev\PAO\packages\ai
+npm error workspace @earendil-works/pi-ai@1.0.0
+npm error location D:\AI\workspace\pao-dev\PAO\packages\ai
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c npm run check:model-data && tsc -p tsconfig.build.json && shx rm -rf dist/providers/data && shx cp -r src/providers/data dist/providers/data

@@ -1,0 +1,63 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ✓ o05-context-budget.test.ts > O05 最终上下文累计预算 > C3 上下文增长但记忆不变时，已有自动召回仍按本轮预算收紧 36ms
+ ✓ o05-context-budget.test.ts > O05 最终上下文累计预算 > C4 多轮召回均刷新时，共享最终上下文预算 17ms
+ × o05-context-budget.test.ts > O05 最终上下文累计预算 > C5 复用首次注入的长消息时，按实际原文计算预算 20ms
+   → expected 236 to be less than or equal to 226
+ × o05-context-budget.test.ts > O05 最终上下文累计预算 > C6 同一块只容纳前一条时，不复用仍包含全部条目的原消息 15ms
+   → expected 349 to be less than or equal to 241
+ × o05-context-budget.test.ts > O05 最终上下文累计预算 > C7 整块省略不消耗预算，后续能放入的召回继续保留 20ms
+   → expected '' to contain 'PostgreSQL'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o05-context-budget.test.ts > O05 最终上下文累计预算 > C5 复用首次注入的长消息时，按实际原文计算预算
+AssertionError: expected 236 to be less than or equal to 226
+ ❯ o05-context-budget.test.ts:82:19
+     80|     const chars = messages.reduce((n, m) => n + Array.from(m.content).…
+     81|     results.C5 = { budget, originalChars, renderedChars: chars, return…
+     82|     expect(chars).toBeLessThanOrEqual(budget);
+       |                   ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  o05-context-budget.test.ts > O05 最终上下文累计预算 > C6 同一块只容纳前一条时，不复用仍包含全部条目的原消息
+AssertionError: expected 349 to be less than or equal to 241
+ ❯ o05-context-budget.test.ts:102:19
+    100|     const chars = messages.reduce((n, m) => n + Array.from(m.content).…
+    101|     results.C6 = { budget, renderedChars: chars, returnedOriginal: mes…
+    102|     expect(chars).toBeLessThanOrEqual(budget);
+       |                   ^
+    103|   });
+    104|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  o05-context-budget.test.ts > O05 最终上下文累计预算 > C7 整块省略不消耗预算，后续能放入的召回继续保留
+AssertionError: expected '' to contain 'PostgreSQL'
+
+- Expected
++ Received
+
+- PostgreSQL
+
+ ❯ o05-context-budget.test.ts:118:18
+    116|     const text = messages.map(m => m.content).join("\n");
+    117|     results.C7 = { budget, renderedChars: Array.from(text).length, sec…
+    118|     expect(text).toContain("PostgreSQL");
+       |                  ^
+    119|   });
+    120| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  16:45:05
+   Duration  3.34s (transform 2.36s, setup 0ms, import 3.05s, tests 118ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o05-context-close-vitest.json

@@ -1,0 +1,54 @@
+
+Running 1 test using 1 worker
+
+
+
+[1A[2K(node:33952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K(node:33952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K[1/1] .agents\skills\verify-pi-gui\scripts\conversation.spec.ts:10:5 › real conversation: stream, switch, tool, stop, archive, restart
+[1A[2K  1) .agents\skills\verify-pi-gui\scripts\conversation.spec.ts:10:5 › real conversation: stream, switch, tool, stop, archive, restart › Send Alpha and observe growing assistant text while running 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('send')
+    Expected: [32m"S[7mtop run[27m"[39m
+    Received: [31m"S[7mend message[27m"[39m
+    Timeout:  30000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 30000ms[22m
+    [2m  - waiting for getByTestId('send')[22m
+    [2m    31 × locator resolved to <button disabled type="button" data-testid="send" aria-label="Send message" class="button button--primary button--cta-icon">…</button>[22m
+    [2m       - unexpected value "Send message"[22m
+
+
+      171 |     await page.getByLabel("New thread prompt", { exact: true }).fill(prompt);
+      172 |     await page.getByRole("button", { name: "Start thread", exact: true }).click();
+    > 173 |     await expect(page.getByTestId("send")).toHaveAttribute("aria-label", "Stop run", {
+          |                                            ^
+      174 |       timeout: 30_000,
+      175 |     });
+      176 |     const id = await page.locator(".session-row--active").getAttribute("data-session-id");
+        at start (D:\AI\workspace\pao-dev\桌面端\.agents\skills\verify-pi-gui\scripts\conversation.spec.ts:173:44)
+        at D:\AI\workspace\pao-dev\桌面端\.agents\skills\verify-pi-gui\scripts\conversation.spec.ts:190:15
+        at D:\AI\workspace\pao-dev\桌面端\.agents\skills\verify-pi-gui\scripts\conversation.spec.ts:189:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\后续执行-20261004\桌面真实对话-发送诊断\playwright\conversation-real-conversa-e1f90-h-tool-stop-archive-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\后续执行-20261004\桌面真实对话-发送诊断\playwright\conversation-real-conversa-e1f90-h-tool-stop-archive-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\后续执行-20261004\桌面真实对话-发送诊断\playwright\conversation-real-conversa-e1f90-h-tool-stop-archive-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    .agents\skills\verify-pi-gui\scripts\conversation.spec.ts:10:5 › real conversation: stream, switch, tool, stop, archive, restart 

@@ -1,0 +1,32 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/worker-dispatch-nongit-real.test.ts > 无 worktreeHost 的旧 SDK executeDispatch 在非 Git 根启动真实进程并落成功回执
+AssertionError: expected { available: false, …(4) } to match object { '可用': false, …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "原因": StringContaining "not a git repository",
+-   "可用": false,
++   "attempt": 1,
++   "available": false,
++   "existingEntryCount": 0,
++   "reason": "fatal: not a git repository (or any of the parent directories): .git",
++   "snapshotPath": undefined,
+  }
+
+ ❯ test/pao/worker-dispatch-nongit-real.test.ts:86:31
+     84|  const f = await fixture();
+     85|  const result = await executeDispatch(f.input, f.options, async (claim…
+     86|   expect(claim.claimBaseline).toMatchObject({ 可用: false, 原因: expect.st…
+       |                               ^
+     87|   expect(receipt.pid).toBeGreaterThan(0);
+     88|   await appendDispatchReceipt(claim.card, receipt);
+ ❯ executeDispatch src/pao/worker/dispatch-core.ts:1537:20
+ ❯ test/pao/worker-dispatch-nongit-real.test.ts:85:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

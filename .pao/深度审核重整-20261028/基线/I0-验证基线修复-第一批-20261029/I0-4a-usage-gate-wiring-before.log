@@ -1,0 +1,89 @@
+[I0-4a] cwd=D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[I0-4a] PAO_HOME=D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-4a-behavior-groups\PAO_HOME
+[I0-4a] PI_OFFLINE=1
+[I0-4a] PI_NO_LOCAL_LLM=1
+[I0-4a] command=node ../../node_modules/vitest/vitest.mjs run test/pao/usage-gate-wiring.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/usage-gate-wiring.test.ts > 未授权总预算时零行为变化（不凭空设默认限额） > 没授权记录 → 派发照常成功，且盘上根本不产生总预算账 825ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 未授权总预算时零行为变化（不凭空设默认限额） > 授权后行为立刻不同（对照上面：同一场景注入门禁，账上留下预留并结算） 825ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 一次成功派发：预留额＝每卡预算，结算额＝回执真实费用 817ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 单卡重试只预留上次消耗后的剩余额度 1576ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执缺 usage → 记「结果不明」，钱继续占着，且回执文本如实说明（不填 0 冒充没花钱） 730ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执只缺部分 usage → 整笔费用记「结果不明」，不能拿部分金额当全额结算 721ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 回执完全缺 usage 字段 → 仍记「结果不明」，不因结算代码取值而抛错 776ms
+ × test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 取消回执带实际费用 → 按实际费用结算，取消不抹费用 812ms
+   → expected '' to contain 'canceled'
+stderr | test/pao/usage-gate-wiring.test.ts > 真并发争同一份总额（出批条件） > 两张卡各要 6、总额 10 → 只过一个，另一个拿到真实拒绝原因且卡未被派发
+[pao] 后台通知主动唤醒失败,通知已保留待下一轮补投:pi.sendMessage is not a function
+ × test/pao/usage-gate-wiring.test.ts > 真并发争同一份总额（出批条件） > 两张卡各要 6、总额 10 → 只过一个，另一个拿到真实拒绝原因且卡未被派发 1002ms
+
+stderr | test/pao/usage-gate-wiring.test.ts > 真并发争同一份总额（出批条件） > 两张卡各要 6、总额 10 → 只过一个，另一个拿到真实拒绝原因且卡未被派发
+[pao] 后台通知主动唤醒失败,通知已保留待下一轮补投:pi.sendMessage is not a function
+
+   → expected '[pao 后台通知] 以下为后台派卡/自动链的完成/被拒/失败/静默提醒(…' to contain '派卡被拒'
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁拒绝不留已派发的任何痕迹 > 总额不足被拒 → 卡仍 unclaimed、在途表归零、通知面只出现「被拒」不出现「完成」 226ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 门禁拒绝不留已派发的任何痕迹 > 上次结果不明的同判据请求 → 拒派并叫人先查，不重复授额 835ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 没开跑时预留归还（不给没派出去的请求占额度） > 门禁放行但认领因依赖未放行而失败 → 预留归还为 released，额度回到可用 224ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 没开跑时预留归还（不给没派出去的请求占额度） > runner 拉起就抛错（无回执）→ 账上如实记「结果不明」，钱继续占着、不归还 826ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 重启可核（不新造状态,全部复用 G2 持久账） > 派发完成后重建对象（模拟重启）仍能按判据判出 settled 与真实费用 849ms
+ ✓ test/pao/usage-gate-wiring.test.ts > 重启可核（不新造状态,全部复用 G2 持久账） > 登记表里不残留活条目（派发结束后可观察事实是干净的） 777ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/usage-gate-wiring.test.ts > 门禁放行：先预留、后开跑、完成按真实用量结算 > 取消回执带实际费用 → 按实际费用结算，取消不抹费用
+AssertionError: expected '' to contain 'canceled'
+
+- Expected
++ Received
+
+- canceled
+
+ ❯ test/pao/usage-gate-wiring.test.ts:386:14
+    384|   }
+    385|   const 通知 = h.readInjection();
+    386|   expect(通知).toContain("canceled");
+       |              ^
+    387|   expect(通知).not.toContain("不能归还");
+    388|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/usage-gate-wiring.test.ts > 真并发争同一份总额（出批条件） > 两张卡各要 6、总额 10 → 只过一个，另一个拿到真实拒绝原因且卡未被派发
+AssertionError: expected '[pao 后台通知] 以下为后台派卡/自动链的完成/被拒/失败/静默提醒(…' to contain '派卡被拒'
+
+- Expected
++ Received
+
+- 派卡被拒
++ [pao 后台通知] 以下为后台派卡/自动链的完成/被拒/失败/静默提醒(运行态,重启归零;卡文件状态与回执是真相,R25):
++ [派卡失败] 卡0001:执行根存在持久占位，未确认停止前拒绝重新派发:C:\Users\ASUS\AppData\Local\Temp\pao-g4-gate-HM85Ou\.pao\执行占位.json(派单理由:并发A)
++
++ [派卡完成] 卡0002(success)
++ 派单完成:卡0002〔success〕尝试 1(部门 测试)
++ 派单理由:并发B
++ owner:主控(认领走状态机:无主卡由派单者认领,有主卡须 owner 本人)
++ 派发告警:总预算记「结果不明」:费用未知(有 1 轮没回 usage),预留额 $6.00 继续占着——先查清再结算,不重复授额
++ 摘要:离线假回执
++ 认领基线:不可用——fatal: not a git repository (or any of the parent directories): .git(越界比对无基线,边界如实标注)
+
+ ❯ test/pao/usage-gate-wiring.test.ts:414:14
+    412|   const 通知 = h.readInjection();
+    413|   expect(通知).toContain("派卡完成");
+    414|   expect(通知).toContain("派卡被拒");
+       |              ^
+    415|   // 拒绝原因必须是真实原因，带下一步
+    416|   expect(通知).toContain("总预算不足");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  02:07:39
+   Duration  14.72s (transform 1.98s, setup 0ms, import 2.63s, tests 11.82s, environment 0ms)
+
+
+[I0-4a] exitCode=1

@@ -1,0 +1,92 @@
+PAO 补充重复路径重构命令日志
+日期：2026-10-22
+工作目录：D:/AI/workspace/pao-dev/PAO
+Node：C:/Program Files/nodejs/node.exe
+
+1. 代码图状态
+命令：
+codebase-memory-mcp.exe cli index_status --project D-AI-workspace-pao-dev-PAO --format json
+结果：
+status=ready；nodes=32136；edges=166742；indexed_at=2026-10-22T06:22:47Z；索引早于并行源码修改，只用于初筛调用面，结论回到当前源码核对。
+
+2. 分别运行计划查询回归
+命令：
+node node_modules/vitest/vitest.mjs --run packages/coding-agent/test/pao/workflow-plan.test.ts packages/coding-agent/test/pao/workflow-plan-tools.test.ts
+结果：
+Test Files 2 passed (2)
+Tests 87 passed (87)
+Duration 4.49s
+
+3. 分别运行记忆回归
+命令：
+node node_modules/vitest/vitest.mjs --run packages/coding-agent/test/pao/memory-resident.test.ts packages/coding-agent/test/pao/memory-session.test.ts --testTimeout=30000
+结果：
+Test Files 2 passed (2)
+Tests 56 passed (56)
+Duration 4.82s
+
+4. 记忆投影定向用例
+命令：
+node node_modules/vitest/vitest.mjs --run packages/coding-agent/test/pao/memory-resident.test.ts -t "自动召回成功只构建一次会话投影|召回抛错后仍读取本轮投影供可见消息过滤|自动召回开:top3 命中带防污染标注注入|召回抛错:首轮一次性标注失败"
+结果：
+Test Files 1 passed (1)
+Tests 4 passed | 31 skipped (35)
+
+5. 角色接线冷启动复核
+命令：
+node node_modules/vitest/vitest.mjs --run packages/coding-agent/test/pao/memory-resident.test.ts -t "主控:registerMemory 建的管理器被 resident 复用|worker:resident 不注册" --testTimeout=30000
+结果：
+Test Files 1 passed (1)
+Tests 2 passed | 33 skipped (35)
+说明：
+默认 5 秒超时时两个既有动态导入 pao/index.ts 的用例本机约 5 秒超时；命令行临时放宽通过。未改产品测试配置。
+
+6. 产品构建配置类型检查
+命令：
+node node_modules/typescript/bin/tsc --noEmit -p packages/coding-agent/tsconfig.build.json
+结果：
+exit 0，无输出。
+
+7. 全仓测试类型检查
+命令：
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json
+结果：
+exit 1。共享工作区其他并行改动有多项测试类型错误。筛选本轮文件后，只剩 workflow-plan.test.ts:256 原有 { tokens: 1000 } 与当前 CardBudget 不匹配；该行不在本轮新增 hunk 内。
+
+8. 差异检查
+命令：
+git diff --check -- [本轮六个指定文件]
+结果：
+exit 0，无空白错误。
+
+9. 代码差异核对
+命令：
+git diff --no-index --text -- <主控提供的 resident.ts 原文> packages/coding-agent/src/pao/memory/resident.ts
+结果：
+仅有以下产品改动：
+- 新增 projectedMessages 局部变量；
+- 召回成功后构建投影并赋值；
+- selectForContext 使用 projectedMessages；
+- 可见消息过滤使用 projectedMessages ?? 原投影表达式。
+原有纠正正文处理、正则“此前召回“([\s\S]*?)””、current() 和关闭保护未改。
+
+最终文件状态：
+PAO Git 根为 D:/AI/workspace/pao-dev/PAO。
+resident.ts、memory-resident.test.ts、memory-session.test.ts 为已跟踪修改。
+workflow/plan.ts、workflow-plan.test.ts、workflow-plan-tools.test.ts 在本轮前即为未跟踪共享工作。
+workflow-plan-tools.test.ts 和 memory-session.test.ts 没有计划内测试内容修改。
+
+
+10. workflow-plan-tools.test.ts 哈希审计与恢复
+差异：
+- 审计前 SHA-256=D95F3AA94D3EE6545C763A0BAC9DC6E9ED5D18E67A0E70BF2176D2AE926F9231，49,551 字节。
+- 目标基线 SHA-256=a1f1c357f0c0127c4188333b3630301ba9e065ade0049ac1e69a1c13b83903e4，49,490 字节。
+- 逐行比较确认差异是 Biome 格式化造成的 16 行无关排版，没有测试内容变化。
+恢复来源：
+D:/AI/workspace/pao-dev/.pao/七项问题修复-20261020/baseline/test-pao/workflow-plan-tools.test.ts
+恢复前核验源文件 SHA-256 与目标一致；恢复后当前文件 SHA-256 一致。
+恢复后：
+- SHA-256=A1F1C357F0C0127C4188333B3630301BA9E065ADE0049AC1E69A1C13B83903E4
+- bytes=49490；lines=1269；LF=1269；CRLF=0
+说明：
+本次只处理该测试文件的无关格式差异；未修改生产源码，未重新运行产品测试。

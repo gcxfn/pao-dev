@@ -1,0 +1,164 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+xxxxxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 真实历史回执与相邻基线 tree 对应时，第二次只读复验仍提交第一次成果
+AssertionError: {"card_no":1,"尝试":2,"结论":"全过自动交付","条目结果":[{"序号":1,"类型":"存在","摘要":"旧成果.txt","结果":"过","说明":"路径存在（项目根 C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-2aVYmw；实际路径 C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-2aVYmw\\旧成果.txt）"}],"人话句":[],"自报未达项":[],"汇总":"机械条目 1 条全过，机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理","执行上下文":{"cardsDir":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-2aVYmw\\.pao\\卡","attempt":2,"projectRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-2aVYmw","executionRoot":"C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-2aVYmw","repositoryRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-2aVYmw","bindingDigest":"sha256:0a30d4adf2dc966bdd099cdaa18117167685102b5a1b75955374f4dbef562d08","worktreeBindingDigest":"sha256:bfe08c0f4b5eca4efa9e3ec2ac9962d0c5e181aab9de1d6def90b852548ccec9","snapshotDigest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"代码内容":{"基线Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查后Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前HEAD":"05baf4a00276f2d8357222c3f853b67f67fab63b","检查后HEAD":"05baf4a00276f2d8357222c3f853b67f67fab63b","检查前内容摘要":"sha256:5977befed39f76ce95e6bdc451470f2f471ef1c52e57e1bca4b355848bc9a820","检查后内容摘要":"sha256:5977befed39f76ce95e6bdc451470f2f471ef1c52e57e1bca4b355848bc9a820"},"越界核查":{"结论":"虚报","虚报":["旧成果.txt"],"越界":[],"相符":[],"不可核验":[],"汇总":"虚报 1 项(声明未写):旧成果.txt"},"交付说明":"机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ deliverCardReady test/pao/delivery-retry-cumulative.test.ts:136:64
+    134|   sandbox_root: sandboxRoot,
+    135|  });
+    136|  expect(verified.result.自动交付, JSON.stringify(verified.result)).toBe(tr…
+       |                                                                ^
+    137|  return readCard(card.path);
+    138| }
+ ❯ positiveFixture test/pao/delivery-retry-cumulative.test.ts:182:2
+ ❯ test/pao/delivery-retry-cumulative.test.ts:189:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 第一次尝试没有历史回执时明确拒绝，不把已存在文件猜成本卡成果
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:217:21
+    215|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    216|   expect(result.交卷).toBe(false);
+    217|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    218|   expect(result.消息).toContain("尝试 1 缺少历史回执");
+    219|   expect(result.消息).not.toContain("幂等");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 历史回执声明与真实 tree 差不符合时拒绝
+AssertionError: expected '验收证据不匹配' to be '累计成果归属不足' // Object.is equality
+
+Expected: "累计成果归属不足"
+Received: "验收证据不匹配"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:241:21
+    239|   markDeliveredWithoutCurrentVerification(cardsDir, 2);
+    240|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    241|   expect(result.原因).toBe("累计成果归属不足");
+       |                     ^
+    242|   expect(result.消息).toContain("相邻基线 tree 差不能逐项对应");
+    243|  }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 认领前同路径已脏时不猜混合编辑归属
+AssertionError: expected '卡0001 拒绝交卷：累计成果归属不足——尝试 1 的基线或执行绑定已变化…' to contain '认领前已脏'
+
+Expected: "认领前已脏"
+Received: "卡0001 拒绝交卷：累计成果归属不足——尝试 1 的基线或执行绑定已变化。保留原基线与回执，不猜中间改动属于本卡。"
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:273:21
+    271|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    272|   expect(result.原因).toBe("累计成果归属不足");
+    273|   expect(result.消息).toContain("认领前已脏");
+       |                     ^
+    274|  }, 60000);
+    275|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 其他卡已声明同一路径时拒绝混入
+AssertionError: {"card_no":1,"尝试":2,"结论":"全过自动交付","条目结果":[{"序号":1,"类型":"存在","摘要":"旧成果.txt","结果":"过","说明":"路径存在（项目根 C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-iXpmRj；实际路径 C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-iXpmRj\\旧成果.txt）"}],"人话句":[],"自报未达项":[],"汇总":"机械条目 1 条全过，机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理","执行上下文":{"cardsDir":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-iXpmRj\\.pao\\卡","attempt":2,"projectRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-iXpmRj","executionRoot":"C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-iXpmRj","repositoryRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-iXpmRj","bindingDigest":"sha256:9164b88b37d0c11895a690e72a8757c963a6a91cb28cd7465fb0ff689c70e919","worktreeBindingDigest":"sha256:bfe08c0f4b5eca4efa9e3ec2ac9962d0c5e181aab9de1d6def90b852548ccec9","snapshotDigest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"代码内容":{"基线Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查后Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前HEAD":"7e19977f52536277e234dff887510e5454e64f98","检查后HEAD":"7e19977f52536277e234dff887510e5454e64f98","检查前内容摘要":"sha256:0dd86810cf48042ca61ab3e12f1b38657ea1f17d6c5b821746cc692497c1f654","检查后内容摘要":"sha256:0dd86810cf48042ca61ab3e12f1b38657ea1f17d6c5b821746cc692497c1f654"},"越界核查":{"结论":"虚报","虚报":["旧成果.txt"],"越界":[],"相符":[],"不可核验":[],"汇总":"虚报 1 项(声明未写):旧成果.txt"},"交付说明":"机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ deliverCardReady test/pao/delivery-retry-cumulative.test.ts:136:64
+    134|   sandbox_root: sandboxRoot,
+    135|  });
+    136|  expect(verified.result.自动交付, JSON.stringify(verified.result)).toBe(tr…
+       |                                                                ^
+    137|  return readCard(card.path);
+    138| }
+ ❯ positiveFixture test/pao/delivery-retry-cumulative.test.ts:182:2
+ ❯ test/pao/delivery-retry-cumulative.test.ts:277:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：保护边界 > 第一次尝试的删除与重命名按旧、新路径累计提交
+AssertionError: {"card_no":1,"交卷":false,"暂存文件":[],"ok":false,"原因":"累计成果归属不足","消息":"卡0001 拒绝交卷：累计成果归属不足——尝试 1 的基线或执行绑定已变化。保留原基线与回执，不猜中间改动属于本卡。"}: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:336:45
+    334|   );
+    335|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    336|   expect(result.交卷, JSON.stringify(result)).toBe(true);
+       |                                             ^
+    337|   const paths = git(root, ["diff-tree", "--no-commit-id", "--name-stat…
+    338|   expect(paths).toContain("D\t将删除.txt");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 重试卡缺少当前真实校验证据时拒绝
+AssertionError: {"card_no":1,"尝试":2,"结论":"全过自动交付","条目结果":[{"序号":1,"类型":"存在","摘要":"旧成果.txt","结果":"过","说明":"路径存在（项目根 C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-oj59v0；实际路径 C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-oj59v0\\旧成果.txt）"}],"人话句":[],"自报未达项":[],"汇总":"机械条目 1 条全过，机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理","执行上下文":{"cardsDir":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-oj59v0\\.pao\\卡","attempt":2,"projectRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-oj59v0","executionRoot":"C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-oj59v0","repositoryRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-oj59v0","bindingDigest":"sha256:b47d8f7b2cd32b62fe90613255ce54e191bd88f459cc3504487ee322ee0c3051","worktreeBindingDigest":"sha256:bfe08c0f4b5eca4efa9e3ec2ac9962d0c5e181aab9de1d6def90b852548ccec9","snapshotDigest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"代码内容":{"基线Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查后Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前HEAD":"332cfd80d0ae4555d2d89eb26e0b6f3c114a8a1c","检查后HEAD":"332cfd80d0ae4555d2d89eb26e0b6f3c114a8a1c","检查前内容摘要":"sha256:7f6942272f714cbd5530e5f942e447505c44f06c8f86f22cafd82e5067dbea2b","检查后内容摘要":"sha256:7f6942272f714cbd5530e5f942e447505c44f06c8f86f22cafd82e5067dbea2b"},"越界核查":{"结论":"虚报","虚报":["旧成果.txt"],"越界":[],"相符":[],"不可核验":[],"汇总":"虚报 1 项(声明未写):旧成果.txt"},"交付说明":"机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ deliverCardReady test/pao/delivery-retry-cumulative.test.ts:136:64
+    134|   sandbox_root: sandboxRoot,
+    135|  });
+    136|  expect(verified.result.自动交付, JSON.stringify(verified.result)).toBe(tr…
+       |                                                                ^
+    137|  return readCard(card.path);
+    138| }
+ ❯ positiveFixture test/pao/delivery-retry-cumulative.test.ts:182:2
+ ❯ test/pao/delivery-retry-cumulative.test.ts:345:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 历史证据充足但当前回执漏报本次改动时仍拒绝
+AssertionError: {"card_no":1,"尝试":2,"结论":"全过自动交付","条目结果":[{"序号":1,"类型":"存在","摘要":"旧成果.txt","结果":"过","说明":"路径存在（项目根 C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-3sFSR0；实际路径 C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-3sFSR0\\旧成果.txt）"}],"人话句":[],"自报未达项":[],"汇总":"机械条目 1 条全过，机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理","执行上下文":{"cardsDir":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-3sFSR0\\.pao\\卡","attempt":2,"projectRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-3sFSR0","executionRoot":"C:/Users/ASUS/AppData/Local/Temp/pao-delivery-cumulative-3sFSR0","repositoryRoot":"C:\\Users\\ASUS\\AppData\\Local\\Temp\\pao-delivery-cumulative-3sFSR0","bindingDigest":"sha256:80ada75eb2abcc3a956783158e188158a322dba24e266a57d1a5bffa7e38f815","worktreeBindingDigest":"sha256:bfe08c0f4b5eca4efa9e3ec2ac9962d0c5e181aab9de1d6def90b852548ccec9","snapshotDigest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"代码内容":{"基线Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查后Tree":"59610b048057d84f87cddbeb24e038a31115d5d5","检查前HEAD":"dd2c4750f517817af4586e21e7e379c1336a2396","检查后HEAD":"dd2c4750f517817af4586e21e7e379c1336a2396","检查前内容摘要":"sha256:c1060fc32c3df929e1f0419b5677a430975dcc21d333862699ca8ccb023eab4d","检查后内容摘要":"sha256:c1060fc32c3df929e1f0419b5677a430975dcc21d333862699ca8ccb023eab4d"},"越界核查":{"结论":"虚报","虚报":["旧成果.txt"],"越界":[],"相符":[],"不可核验":[],"汇总":"虚报 1 项(声明未写):旧成果.txt"},"交付说明":"机械全过但越界核查 虚报（改动与声明对不上）：虚报 1 项(声明未写):旧成果.txt，不自动交付，留 owner 处理"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ deliverCardReady test/pao/delivery-retry-cumulative.test.ts:136:64
+    134|   sandbox_root: sandboxRoot,
+    135|  });
+    136|  expect(verified.result.自动交付, JSON.stringify(verified.result)).toBe(tr…
+       |                                                                ^
+    137|  return readCard(card.path);
+    138| }
+ ❯ positiveFixture test/pao/delivery-retry-cumulative.test.ts:182:2
+ ❯ test/pao/delivery-retry-cumulative.test.ts:352:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  09:22:00
+   Duration  74.51s (transform 240ms, setup 0ms, import 434ms, tests 73.92s, environment 0ms)
+

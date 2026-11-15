@@ -1,0 +1,78 @@
+
+Running 3 tests using 1 worker
+
+(node:22128) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22128) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 apps\desktop\tests\core\d4-sidebar-draft.spec.ts:187:5 › 窄窗口里右侧状态栏默认收起，展开能看、收起能记住 (17.0s)
+  x  2 apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 (40.2s)
+(node:11992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened (38.0s)
+
+
+  1) apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('toggle-side-panel-topbar')[22m
+
+
+      263 |     if ((await compact.count()) > 0) await compact.click();
+      264 |     await expect(window.getByTestId("task-status")).toBeVisible();
+    > 265 |     await window.getByTestId("toggle-side-panel-topbar").click();
+          |                                                          ^
+      266 |     const status = window.getByTestId("task-status");
+      267 |     const tools = window.getByTestId("workbench");
+      268 |     const composer = window.getByTestId("composer");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d4-sidebar-draft.spec.ts:265:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d4-sidebar-draft-窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('toggle-side-panel-topbar')[22m
+
+
+      70 | async function openWorkbench(window: Page): Promise<void> {
+      71 |   const workbench = window.getByTestId("workbench");
+    > 72 |   if (!(await workbench.isVisible())) await window.getByTestId("toggle-side-panel-topbar").click();
+         |                                                                                            ^
+      73 |   await expect(workbench).toBeVisible();
+      74 | }
+      75 |
+        at openWorkbench (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:72:92)
+        at addTool (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:77:3)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:414:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workbench-tabs-hiding-b62ee-d-its-output-until-reopened\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\d4-sidebar-draft.spec.ts:250:5 › 窄窗手动展开概况并打开工具时，概况、工具和正文各占位置且无横向溢出 ─────
+    apps\desktop\tests\core\workbench-tabs.spec.ts:403:5 › hiding the workbench keeps the mounted terminal and its output until reopened 
+  1 passed (1.6m)

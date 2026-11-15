@@ -1,0 +1,24 @@
+// 用途：正式bundle + 外置dist扩展无模型子进程验收；输入隔离构建；输出stdout/stderr及断言。
+import {spawn} from 'node:child_process';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+const root='D:/AI/workspace/pao-dev';const iso=join(root,'PAO/packages/coding-agent/.channel-check');
+const evidence=join(root,'.pao/后续执行-20261004/输出通道正常退出');mkdirSync(evidence,{recursive:true});
+const agent=join(evidence,'agent');mkdirSync(agent,{recursive:true});writeFileSync(join(agent,'settings.json'),'{"packages":[],"skills":[]}');
+const fixture=join(iso,'fixture.mjs');
+writeFileSync(fixture,`import {writeRawStdout} from './dist/core/output-guard.js';
+export default function(pi){pi.on('session_start',()=>{pi.appendEntry('pao-native-usage-status',{usageReported:false}); console.log('EXTENSION_NOISE');});pi.on('session_shutdown',()=>{writeRawStdout(JSON.stringify({type:'pao_worker_budget_exhausted',field:'test-only-no-provider'})+'\\n');});}`);
+const args=[join(iso,'dist/bundle/cli.js'),'--mode','rpc','--no-session','--no-extensions','--no-skills','-e',join(iso,'dist/pao/index.js'),];
+const child=spawn(process.execPath,args,{cwd:root,env:{...process.env,PI_CODING_AGENT_DIR:agent,PAO_ROLE:'worker',PAO_HOME:join(evidence,'home'),PAO_SESSION_BUDGET:'',PAO_WORKER_BUDGET:'',PAO_PRECOMPACTION:'0'},stdio:['pipe','pipe','pipe']});
+let out='',err='';const timeout=setTimeout(()=>child.kill(),20000);
+child.stdout.on('data',chunk=>{out+=chunk;if(out.includes('"id":"ready"'))child.stdin.end();});child.stderr.on('data',chunk=>err+=chunk);
+child.stdin.write(JSON.stringify({type:'get_state',id:'ready'})+'\n');
+const code=await new Promise(resolve=>child.on('close',resolve));clearTimeout(timeout);
+writeFileSync(join(evidence,'stdout.jsonl'),out);writeFileSync(join(evidence,'stderr.txt'),err);
+assert.equal(code,0);const events=out.trim().split('\n').map(line=>JSON.parse(line));
+assert.equal(events.filter(e=>e.type==='pao_usage_complete').length,1);
+assert.equal(events.filter(e=>e.type==='pao_usage_entry').length,0);
+assert.equal(events.filter(e=>e.type==='pao_worker_budget_exhausted').length,0);
+assert.ok(!err.includes('EXTENSION_NOISE'));assert.ok(!err.includes('pao_usage_complete'));assert.ok(!err.includes('pao_usage_entry'));assert.ok(!err.includes('pao_worker_budget_exhausted'));
+writeFileSync(join(evidence,'结果.json'),JSON.stringify({code,events:events.map(e=>e.type),modelRequests:0,fixture:'only synthetic unknown ledger and budget marker; real bundle and real external pao extension'},null,2));console.log('PASS actual bundle+external dist extension, zero model requests');

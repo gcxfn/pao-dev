@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-26T05:11:58.401965+00:00",
+  "instance": "7a6de6d3-eaac-4e01-b65d-85d7b90f1b3d",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "7a6de6d3-eaac-4e01-b65d-85d7b90f1b3d",
+      "owner": "01a17680-4d39-72e1-a82e-4a75e54007e1",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "卡0001 已交付（filter.py + tests_local/ 冒烟与报告，机械验收自报全 PASS），但部长现场核对源码发现两处确定性缺陷，需派发修复卡，而派发通道被卡：(1) pao_minister_submit_cards 连续两次返回“派发交接的地图覆盖内容已变化”——上游（侦察/规划）地图生成于卡0001 产物（filter.py、tests_local/）存在之前，覆盖范围已过期；本节点无权刷新地图（pao_dispatch_brief 与 pao_minister_save_node_map 均被拒，理由为“工作流部长只读规划”/“零卡只读节点才可保存”）。(2) pao_minister_rework_cards 连续三次返回“文件锁获取失败：/app/.pao/benchmark/工作流实例-基准开发流水线.md.dispatch”，无法对卡0001 返修。待修缺陷（均在卡0001 验收范围“除移除有害片段外其余内容原样保留”内）：A. 自闭合 <script/> 走 handle_startendtag→handle_endtag，handle_endtag 用 src.find('>', off) 定位结束位置，会把 <script/> 与文档中下一个 '>' 之间的正常 HTML 一并越界删除（如 <p>keep</p><script/>alert(1) 吞掉 <p>keep</p>）；B. 无引号 style 属性的切除基址固定用 off+value_start+1（仅对带引号成立），无引号写法切除区间整体错位一字节。请裁定：(a) 刷新/重发上游地图覆盖（filter.py、tests_local）后我即提交修复卡；或 (b) 允许对卡0001 返修；或 (c) 由主控/规划节点代为刷新地图。卡0002（回归用例集与证据）仍在途，其结果到达后我会一并核对并补交修复卡。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-26T05:08:45.365Z",
+    "事件": "自动链停因",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "等待人工裁定:卡0001 已交付（filter.py + tests_local/ 冒烟与报告，机械验收自报全 PASS），但部长现场核对源码发现两处确定性缺陷，需派发修复卡，而派发通道被卡：(1) pao_minister_submit_cards 连续两次返回“派发交接的地图覆盖内容已变化”——上游（侦察/规划）地图生成于卡0001 产物（filter.py、tests_local/）存在之前，覆盖范围已过期；本节点无权刷新地图（pao_dispatch_brief 与 pao_minister_save_node_map 均被拒，理由为“工作流部长只读规划”/“零卡只读节点才可保存”）。(2) pao_minister_rework_cards 连续三次返回“文件锁获取失败：/app/.pao/benchmark/工作流实例-基准开发流水线.md.dispatch”，无法对卡0001 返修。待修缺陷（均在卡0001 验收范围“除移除有害片段外其余内容原样保留”内）：A. 自闭合 <script/> 走 handle_startendtag→handle_endtag，handle_endtag 用 src.find('>', off) 定位结束位置，会把 <script/> 与文档中下一个 '>' 之间的正常 HTML 一并越界删除（如 <p>keep</p><script/>alert(1) 吞掉 <p>keep</p>）；B. 无引号 style 属性的切除基址固定用 off+value_start+1（仅对带引号成立），无引号写法切除区间整体错位一字节。请裁定：(a) 刷新/重发上游地图覆盖（filter.py、tests_local）后我即提交修复卡；或 (b) 允许对卡0001 返修；或 (c) 由主控/规划节点代为刷新地图。卡0002（回归用例集与证据）仍在途，其结果到达后我会一并核对并补交修复卡。"
+  },
+  "latest_business_event_at": "2026-10-26T05:08:45.365Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-26T05:08:45.365Z\", \"理由\": \"等待人工裁定:卡0001 已交付（filter.py + tests_local/ 冒烟与报告，机械验收自报全 PASS），但部长现场核对源码发现两处确定性缺陷，需派发修复卡，而派发通道被卡：(1) pao_minister_submit_cards 连续两次返回“派发交接的地图覆盖内容已变化”——上游（侦察/规划）地图生成于卡0001 产物（filter.py、tests_local/）存在之前，覆盖范围已过期；本节点无权刷新地图（pao_dispatch_brief 与 pao_minister_save_node_map 均被拒，理由为“工作流部长只读规划”/“零卡只读节点才可保存”）。(2) pao_minister_rework_cards 连续三次返回“文件锁获取失败：/app/.pao/benchmark/工作流实例-基准开发流水线.md.dispatch”，无法对卡0001 返修。待修缺陷（均在卡0001 验收范围“除移除有害片段外其余内容原样保留”内）：A. 自闭合 <script/> 走 handle_startendtag→handle_endtag，handle_endtag 用 src.find('>', off) 定位结束位置，会把 <script/> 与文档中下一个 '>' 之间的正常 HTML 一并越界删除（如 <p>keep</p><script/>alert(1) 吞掉 <p>keep</p>）；B. 无引号 style 属性的切除基址固定用 off+value_start+1（仅对带引号成立），无引号写法切除区间整体错位一字节。请裁定：(a) 刷新/重发上游地图覆盖（filter.py、tests_local）后我即提交修复卡；或 (b) 允许对卡0001 返修；或 (c) 由主控/规划节点代为刷新地图。卡0002（回归用例集与证据）仍在途，其结果到达后我会一并核对并补交修复卡。\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-26T05:08:45.490652+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false,
+  "container": {
+    "name": "html-js-filter__bdvjhbi__env-main-1",
+    "state": "running"
+  }
+}

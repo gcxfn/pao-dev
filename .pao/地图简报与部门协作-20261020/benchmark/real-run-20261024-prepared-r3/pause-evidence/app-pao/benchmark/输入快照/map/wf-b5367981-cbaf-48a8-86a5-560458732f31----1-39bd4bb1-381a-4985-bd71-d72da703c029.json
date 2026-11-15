@@ -1,0 +1,84 @@
+{
+	"schemaVersion": 1,
+	"kind": "pao-map",
+	"id": "wf-b5367981-cbaf-48a8-86a5-560458732f31----1-39bd4bb1-381a-4985-bd71-d72da703c029",
+	"projectRoot": "/app",
+	"repositoryRoot": "/app",
+	"coverage": {
+		"paths": [
+			".",
+			".git",
+			"filter.py"
+		],
+		"excludes": [
+			"../solution",
+			"../tests",
+			".git",
+			".pao"
+		]
+	},
+	"facts": [
+		"任务入口: /app/filter.py 已存在。脚本以 argv[1] 接收 HTML 文件路径并原地改写; main(argv) 在 len(argv)<2 时向 stderr 打印 usage 并 return 2, 路径非文件时 return 2, OSError 时 return 1, 成功 return 0。",
+		"/app/filter.py 头部 docstring 自述设计契约: 仅用标准库; 按原始字节读写; 除被删除的 JS 载体外逐字节保留(缩进/换行/属性顺序/引号风格/实体/注释); 不做整文档重序列化, 用容错词法器定位待删区间后从原文剪切。",
+		"实际 import 清单证明无第三方依赖: codecs, html, os, re, sys, tempfile(全部 CPython 标准库), 另有 from __future__ import annotations。因此满足『只用环境已装包』约束。",
+		"主扫描逻辑: strip_js(text, max_passes=8) 迭代到不动点以保证幂等; _strip_js_once 逐 '<' 扫描, 注释/CDATA/doctype/PI/普通结束标签均原样复制。",
+		"被移除/中和的清单(均在 filter.py 内实现): (a) <script>...</script> 整元素, 含属性、自闭合、未闭合至 EOF、残留 </script>; (b) 全部 on* 事件属性, 不区分大小写、含命名空间变体、引号/无引号/多行值; (c) URL 属性 href/src/action/formaction/xlink:href/background/poster/data/cite/longdesc/lowsrc/dynsrc/codebase/profile/usemap 中 javascript:/vbscript:/data:(html|svg) 协议(先做实体解码+忽略字符折叠+小写化再判定); (d) srcset/ping/archive/manifest/imagesrcset 容器属性含脚本协议时整属性丢弃; (e) style 属性与 <style> 块内 expression( / javascript: / vbscript: / behavior: / -moz-binding, 只删危险声明或规则; (f) iframe[srcdoc] 递归 sanitize 后重转义; (g) meta[http-equiv=refresh][content] 含脚本协议; (h) SVG animate/set/animatetransform/animatemotion/discard 的 attributename 指向 on* 时删元素, 及其 from/to/values/by 含脚本 URL 时删属性。",
+		"字节保真实现: decode_bytes/encode_text 处理 UTF-16LE/BE 与 UTF-8 BOM, 使用 surrogateescape 保证 encode(decode(data))==data; write_atomic 用 tempfile.mkstemp 在同目录写入后 os.replace, 并 chmod 继承原 st_mode; 无危险内容时 process_file 直接 return False 不写盘(mtime 不变, 天然幂等)。",
+		"属性级最小改动实现: parse_start_tag 记录每个属性的 name_start/value_start/value_end/token_end 精确源区间; rebuild_start_tag 仅在判定需要变化时用原前缀+新值+原尾部重建开始标签, 未变属性原样切片回贴; 无引号属性改值且含 WS 或 \\\"'=<>` 时补双引号。",
+		"环境事实(路径 /usr/local/lib/python3.12/site-packages, 在项目根之外故不计入覆盖): /usr/local/bin/python3 是 CPython 3.12 的 ELF 可执行文件(Py_BytesMain, libpython3.12.so.1.0); 该 site-packages 内存在 bs4(BeautifulSoup 1170+ 行)与 soupsieve、lxml; html5lib 与 bleach 不存在。",
+		"/app 现存文件确认到 filter.py 与 .git 目录; 经 read 逐一确认不存在: README.md/README.rst、requirements.txt、requirements-dev.txt、pyproject.toml、setup.py、Dockerfile、Makefile、TASK.md、main.py、sanitize.py、run.py、filter_test.py、index.html/test.html/sample.html/page.html/content.html, 以及目录 tests/、data/、static/、examples/、samples/、.venv/、venv/、__pycache__/。",
+		"/app/.git 存在且为真实仓库: HEAD=ref: refs/heads/master; refs/heads/master=cfdb0d8168da9f69c1595df975baf7e8dfebb1b6; user.email=benchmark@local, user.name=PAO-benchmark; logs/HEAD 记录一次初始提交(时间戳 1792777043, 'commit (initial): benchmark input baseline'); COMMIT_EDITMSG='benchmark input baseline'。",
+		"可用验证入口(不需 /tests, 执行者在临时 scratch 目录自建 fixture 即可): python3 /app/filter.py <fixture.html>; 判据建议: ①<script> 块/on* 属性/javascript: URL 消失 ②表格、标题、普通属性、缩进、引号风格、实体、注释逐字节不变 ③二次运行文件不再变化(幂等) ④退出码为 0 且原地写出。",
+		"本次会话限制: bash/tool_search/pao_dispatch_brief/pao_query_kb 在部长只读位被拒绝, 未执行任何命令; 以上结论全部来自 read 直读源码与路径存在性探测, 属静态证据。"
+	],
+	"unknowns": [
+		"filter.py 当前内容是否等于基线提交内容(未用 git 核对, 本会话无 shell)。",
+		"是否存在未探测到的 /app 其他文件或子目录(无法列目录)。",
+		"实跑行为全部未验证: 典型 XSS 向量是否真被清除、未触碰区域是否逐字节保真、二次运行是否无变化、退出码与原地写入是否正常。",
+		"评测口径未知: 逐字节比对过滤后文本, 还是解析后功能等价比对; 是否要求 style/事件属性的处理与某参考实现完全一致。",
+		"其它解释器存在性未知: 仅知 /usr/local/bin/python3 链接 libpython3.12。"
+	],
+	"relations": [],
+	"risks": [
+		"filter.py 是否为基线自带未确认: .git/index 为二进制不可直读, 且本会话无 git 命令。执行者应先运行 git -C /app status --porcelain 与 git -C /app show --stat HEAD 确认来源, 再决定『新建』还是『复核既有实现』, 避免覆盖已有成果或重复劳动。",
+		"零运行时验证: filter.py 从未被执行, 任何『已可用/已通过』说法都缺证据; 必须由执行者在 scratch 目录实跑 fixture 后才可下结论。",
+		"保真口径风险: 任务允许『解析时可能发生的规范化』, 而现有实现走逐字节保真、不重序列化。对『保留尽可能多 HTML』更安全, 但若评测期望解析器规范化后的文本(bs4/lxml 重排、引号统一、实体还原), 逐字节保真可能与期望不一致; 应检验『未被触碰区域逐字节不变』这条硬约束, 不要引入重序列化。",
+		"潜在过度删除边界(需实测确认不过界): ①textarea/title/xmp/plaintext 内的字面 <script> 会被 _strip_literal_scripts 删除, 但浏览器中该处不可执行, 属可争议的额外删除 ②游离 </script> 结束标签被删 ③style 块仅删危险声明, 但 _render_css_items 会补 ';' 分隔符, 可能导致该 style 块文本与原文不完全逐字节一致。",
+		"编码/非法字节风险: 依赖 surrogateescape 往返; UTF-16 仅在 BOM 场景识别。无 BOM 的 legacy 编码(GBK/Latin-1)会按 UTF-8 + surrogateescape 往返, 通常能原样写回, 但任何重编码异常都会破坏整文件; 需至少实测 UTF-8(含 BOM)/UTF-16 各一例。",
+		"覆盖缺口: 本会话无法列目录(bash/ls 均被拒), 『/app 下无其他文件』来自逐名探测, 可能有未探测到的文件名遗漏; 执行者应以 ls -la /app 与 git -C /app ls-files 复核实际清单。",
+		"危险协议判定依赖 _fold 的最多 4 轮实体解码与忽略字符折叠; 更深层嵌套实体或 data:text/plain 内藏 <script> 等变体不在删除范围, 属保守边界, 但若评测含此类用例会失分。"
+	],
+	"integrationOwner": "实施",
+	"scopeConfirmed": true,
+	"scopeBasis": [
+		"read 对 /app 常见文件名与目录的存在性探测结果",
+		"read 直读 /app/.git/HEAD、refs/heads/master、config、logs/HEAD、COMMIT_EDITMSG",
+		"read 直读 /app/filter.py 全文所得真实源码证据",
+		"公开任务原文: argv[1] 原地去 JS、保结构保格式、只用已装包",
+		"范围约定: 不读 /tests、/solution、oracle 或在线答案; 业务内容限于 /app, 排除 .git 与本轮编排目录 .pao"
+	],
+	"scopeReviewRequired": false,
+	"status": "valid",
+	"repo": {
+		"head": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"treeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"indexDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		"untrackedDigest": "sha256:5c810667e1fcbd7651508d8efb59b80ca604f0303e42ca33a6f930d93ae2d0b5"
+	},
+	"files": [
+		{
+			"path": "filter.py",
+			"workingDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"contentDigest": "sha256:2325080112573536db225d39b0378383629ec5972a0d8e2f37fe0ffb1512c9e1",
+			"size": 25144
+		},
+		{
+			"path": "selftest/run_checks.py",
+			"workingDigest": "sha256:bcc85f018ed1e6b49d06354dd726eaa4690d8c7cfc803492542b52b0f3124214",
+			"contentDigest": "sha256:bcc85f018ed1e6b49d06354dd726eaa4690d8c7cfc803492542b52b0f3124214",
+			"size": 23087
+		}
+	],
+	"capturedAt": "2026-10-23T18:20:16.963Z",
+	"mapDigest": "sha256:7f04a80d6d38af9394ebaea80cfe8ddcebc22f764b2152a9d16e8ce8bfdae5f4"
+}

@@ -1,0 +1,152 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\worker\\dispatch-core.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\worker\\dispatch-core.ts"
+index 6ec2197..a42013d 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\worker\\dispatch-core.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\worker\\dispatch-core.ts"
+@@ -739,8 +739,9 @@ export interface ExecuteDispatchOptions {
+ 	 * 总预算门禁接线（计划 §8.2，G4）:在**认领之前**问一次「这次派发允不允许花钱」。
+ 	 *
+ 	 * 不传 = 完全零行为变化（跨任务额度未启用时的常态,也是既有所有调用方的现状）。
+-	 * 传了就必须表态:放行交回 `commit`（预留已落盘）与 `release`（确定未开跑时归还）,
+-	 * 拒绝交回 `reason`（给用户看的真实原因）。拒绝发生在锁后重核之后、认领之前——
++	 * 传了就必须表态:放行交回 `commit`（预留已落盘）、`release`（确定未开跑时归还）
++	 * 与 `settle`（拿到回执后按真实用量结算）,拒绝交回 `reason`（给用户看的真实原因）。
++	 * 拒绝发生在锁后重核之后、认领之前——
+ 	 * 此刻卡还没有任何写盘动作,因此"拒绝"不会留下已派发的痕迹（卡状态/in-flight/通知都不会变）。
+ 	 *
+ 	 * 为什么不在认领之后再拦:状态机没有 `in_progress → unclaimed` 这条迁移（见
+@@ -748,18 +749,29 @@ export interface ExecuteDispatchOptions {
+ 	 * 「进行中」而根本没有 worker 在跑——那正是要防的"已派发"假象。认领只许发生在
+ 	 * 「这一步之后不会再被拒」的位置上,所以门禁必须前置。
+ 	 */
+-	预算门禁?: (card: ParsedCard, 尝试号: number) => Promise<DispatchBudgetGateResult>;
++	预算门禁?: (card: ParsedCard, 尝试号: number, 剩余预算?: CardBudget) => Promise<DispatchBudgetGateResult>;
+ }
+ 
++/**
++ * 门禁结果的操作阶段：
++ * - committed：runner 可能开始花钱，必须走 settle 或 settleUnknown；
++ * - settled：本链已处理唯一一次结算，finally 不归还；
++ * - notCommitted：commit 前中断，finally 负责 release。
++ */
++type DispatchGatePhase = "notCommitted" | "committed" | "settled";
++
+ /** 总预算门禁的接线契约（dispatch-core 只认这个形状,不 import usage/ 的实现）。 */
+ export type DispatchBudgetGateResult =
+-	/** 放行:`commit` 在即将拉起 runner 前调用（此刻已确定要开跑）;`release` 在确定没开跑时归还。 */
++	/** 放行:`commit` 在即将拉起 runner 前调用;`release` 在确定没开跑时归还;`settle` 在拿到回执后结算。 */
+ 	| {
+ 			ok: true;
+ 			/** 预留判据/身份说明（进通知与回执,便于人对照账本）。 */
+ 			说明?: string;
+ 			commit: () => Promise<void>;
+ 			release: () => Promise<void>;
++			settle: (receipt: WorkerReceipt) => Promise<string | undefined>;
++			/** runner 已提交但没有回执时，按「费用未知」结算。 */
++			settleUnknown: (reason: string) => Promise<string | undefined>;
+ 	  }
+ 	/** 拒绝:`reason` 是给用户看的真实原因（含下一步）。 */
+ 	| { ok: false; reason: string };
+@@ -784,6 +796,40 @@ async function releaseGateQuietly(
+ 	}
+ }
+ 
++function errorMessage(error: unknown): string {
++	return error instanceof Error ? error.message : String(error);
++}
++
++/**
++ * 已提交的门禁只能结算一次。settle 自身失败不推翻 worker 结果，但必须返回可见告警，
++ * 不能把“钱没结上”伪装成成功。
++ */
++async function settleGateOnce(
++	gate: Extract<DispatchBudgetGateResult, { ok: true }> | undefined,
++	phase: { value: DispatchGatePhase },
++	settle: (gate: Extract<DispatchBudgetGateResult, { ok: true }>) => Promise<string | undefined>,
++): Promise<string | undefined> {
++	if (!gate) throw new PaoWorkerError("无效参数", "预算门禁已提交但结算句柄丢失，拒绝伪装成功");
++	if (phase.value !== "committed")
++		throw new PaoWorkerError(
++			"无效参数",
++			phase.value === "notCommitted" ? "预算门禁尚未提交，拒绝提前结算" : "同一次派发的预算门禁被重复结算",
++		);
++	phase.value = "settled";
++	try {
++		return await settle(gate);
++	} catch (error) {
++		return `总预算结算失败（派发结果不受影响，但账未结清，请核对总预算账）：${errorMessage(error)}`;
++	}
++}
++
++function errorWithSettlementNote(error: unknown, note: string | undefined): unknown {
++	if (!note) return error;
++	const message = `${errorMessage(error)}；${note}`;
++	if (error instanceof PaoWorkerError) return new PaoWorkerError(error.code, message, error.detail);
++	return new Error(message, { cause: error });
++}
++
+ /**
+  * 单一受保护派发入口（T03:正式派发只有这一条事务链）。单卡(pao_dispatch_card)、扇出(pao_fanout)、
+  * 工作流自动链三个入口都经它派发,准入判断同源;职责按五段拆在本模块既有函数,不另设管理器:
+@@ -823,8 +869,9 @@ export async function executeDispatch<T>(
+ 	let stopConfirmFailed: unknown;
+ 	/** 归一化尝试号（门禁要用它做判据；未注入门禁时不参与任何逻辑）。 */
+ 	let 尝试号: number | undefined;
+-	/** 门禁预留是否已转成"已提交"（= 已经开始可能花钱）。 */
+-	let gateCommitted = false;
++	/** 已提交门禁必须保留独立引用：清空待归还句柄后，成功回执与异常回执仍要靠它结算。 */
++	let committedGate: Extract<DispatchBudgetGateResult, { ok: true }> | undefined;
++	const gatePhase: { value: DispatchGatePhase } = { value: "notCommitted" };
+ 	/**
+ 	 * 门禁放行后挂在这里的预留句柄:非 undefined 且未提交 = 还没来得及开跑,finally 负责归还。
+ 	 * 声明在 try 外是因为 finally 要看见它（try 块内的 let 在 finally 里不可见）。
+@@ -883,7 +930,7 @@ export async function executeDispatch<T>(
+ 			if (options.预算门禁 && takeoverBlocked === undefined) {
+ 				const gateCard = locateDispatchCard(input.cardsDir, input.card_no);
+ 				尝试号 = gateCard.frontmatter.attempt + 1;
+-				const verdict = await options.预算门禁(gateCard, 尝试号);
++				const verdict = await options.预算门禁(gateCard, 尝试号, budget);
+ 				if (verdict.ok) gate = verdict;
+ 				else gateRefusal = verdict.reason;
+ 			}
+@@ -937,10 +984,30 @@ export async function executeDispatch<T>(
+ 				// 清空 gate 的时机在 commit 成功之后:commit 自己抛错＝还没开跑,交给 finally 归还。
+ 				if (gate) {
+ 					await gate.commit();
++					committedGate = gate;
+ 					gate = undefined;
+-					gateCommitted = true;
++					gatePhase.value = "committed";
++				}
++				let receipt: WorkerReceipt;
++				try {
++					receipt = await runner.run(runOptions);
++				} catch (error) {
++					const settlementNote =
++						gatePhase.value === "committed"
++							? await settleGateOnce(committedGate, gatePhase, (committed) =>
++									committed.settleUnknown(errorMessage(error)),
++								)
++							: undefined;
++					throw errorWithSettlementNote(error, settlementNote);
++				}
++				// 单卡、扇出、自动链都在同一处按回执结算，业务回调只处理各自结果，避免漏结或重复结算。
++				const settlementNote =
++					gatePhase.value === "committed"
++						? await settleGateOnce(committedGate, gatePhase, (committed) => committed.settle(receipt))
++						: undefined;
++				if (settlementNote) {
++					receipt.派发告警 = [...(receipt.派发告警 ?? []), settlementNote];
+ 				}
+-				const receipt = await runner.run(runOptions);
+ 				outcome = { 可派: true, result: await completed(claimed, receipt) };
+ 			}
+ 		}
+@@ -949,7 +1016,7 @@ export async function executeDispatch<T>(
+ 	} finally {
+ 		// 预留归还（G4）:只在"确定没开跑"时归还——gate 仍挂着＝commit 没成功（或压根没认领成功）,
+ 		// 线程从未拉起,这笔钱没花;已 commit 或已有回执的都不归还（结果不明按 G2 口径留给人工查）。
+-		if (gate && !gateCommitted) await releaseGateQuietly(gate, input);
++		if (gate && gatePhase.value === "notCommitted") await releaseGateQuietly(gate, input);
+ 		try {
+ 			if (lock) await releaseProjectLock(lock, runner.confirmStopped(initial.path));
+ 		} catch (error) {

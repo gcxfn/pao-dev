@@ -1,0 +1,126 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\worker\\index.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\worker\\index.ts"
+index ae868c8..2c3d6aa 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\worker\\index.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\worker\\index.ts"
+@@ -41,14 +41,7 @@ import {
+ 	renderMinisterInventoryLine,
+ } from "../host/index.ts";
+ import { nowString } from "../shared/time.ts";
+-import { BUDGET_LEDGER_FILENAME, inspectReservation } from "../usage/budget-ledger.ts";
+-import {
+-	buildDispatchBudgetGate,
+-	dispatchBudgetKey,
+-	readBudgetStatus,
+-	settleDispatchBudgetQuietly,
+-	settleDispatchBudget as settleDispatchBudgetRaw,
+-} from "../usage/dispatch-gate.ts";
++import { buildDispatchBudgetGate } from "../usage/dispatch-gate.ts";
+ import { resolveWorkflowDispatch } from "../workflow/dispatch-context.ts";
+ import {
+ 	appendDispatchReceipt,
+@@ -59,7 +52,6 @@ import {
+ 	DEPT_CONCURRENCY_CONFIG_RELATIVE_PATH,
+ 	type DispatchBaseline,
+ 	type DispatchClaimInput,
+-	type DispatchBudgetGateResult,
+ 	type DispatchPermission,
+ 	executeDispatch,
+ 	locateDispatchCard,
+@@ -171,55 +163,6 @@ export function formatDispatchResult(outcome: DispatchOutcome, receipt: WorkerRe
+ // fanout 与 workflow/auto 两条路径要共用同一个工厂，而它们对 worker/index.ts 已有依赖方向，
+ // 反向 import 会成环。搬动是零逻辑变更，判据与文案仍只有一份（见下方 import 处）。
+ 
+-/**
+- * 派发链抛错且**没有回执**时的钱账兜底（G4）。
+- *
+- * 场景：门禁放行、认领成功、`runner.run` 抛错——线程可能起过也可能没起，但总之没有回执，
+- * 真实费用不可知。这时账上若停在 `reserved`，外人会以为"还在跑"，而实际已经没有在跑的进程。
+- * 按 G2 口径记 `unknown`：钱继续占着（宁可少给额度），同判据重派会被拦下要求先查清。
+- *
+- * 只动"确实已经预留过"的那一条：missing（没授权/门禁没走/已被归还）、released、settled、
+- * already-unknown 一律不动——不能凭空给一笔没预留过的钱记账。
+- *
+- * 返回一句给人看的说明（无事可做时 undefined）。
+- */
+-async function markDispatchBudgetUnknown(input: {
+-	resolveHome: () => string | undefined;
+-	cardsDir: string;
+-	cardNo: string;
+-	原因: string;
+-}): Promise<string | undefined> {
+-	const home = input.resolveHome();
+-	if (!home) return undefined;
+-	try {
+-		if (!readBudgetStatus(home).enabled) return undefined;
+-	} catch {
+-		return undefined;
+-	}
+-	// 尝试号从卡上读：认领成功时它已被 +1，正是门禁预测过的那个尝试号。
+-	let 尝试号: number;
+-	try {
+-		尝试号 = locateDispatchCard(input.cardsDir, input.cardNo).frontmatter.attempt;
+-	} catch {
+-		return undefined;
+-	}
+-	const 判据 = dispatchBudgetKey(input.cardNo, 尝试号);
+-	const 现状 = inspectReservation(home, 判据);
+-	if (现状.state !== "reserved") return undefined;
+-	try {
+-		await settleDispatchBudgetRaw({
+-			paoHome: home,
+-			idempotencyKey: 判据,
+-			// 不传实际费用 → G2 记 unknown（钱继续占着，不归还）
+-			现在: new Date().toISOString(),
+-			备注: `派发链抛错且无回执（${input.原因}）：结果不明，预留额继续占用，先查清再结算`,
+-		});
+-		return `总预算记「结果不明」:卡${input.cardNo} 这次派发没有回执,预留额继续占着——先查清再重派,不重复授额`;
+-	} catch (error) {
+-		return `总预算账兜底失败（请人工核对总预算账）:${error instanceof Error ? error.message : String(error)}`;
+-	}
+-}
+-
+ const DispatchParams = Type.Object({
+ 	card_ref: Type.String({ description: "card_ref(卡0017/卡#17/17 均可)" }),
+ 	reason: Type.String({
+@@ -766,17 +709,6 @@ export function registerWorkerTools(
+ 							receiptNote,
+ 							durationMs: Date.now() - startedAt,
+ 						};
+-						// 总预算结算（G4）:按**真实用量**结这一笔,判据与门禁预留同一份（dispatchBudgetKey）。
+-						// 没回 usage / 该轮缺账 → 实际费用留 undefined,G2 口径记「结果不明」、钱继续占着
+-						// （先查不重复授额）,绝不填 0 当作"没花钱"。
+-						const 结算说明 = await settleDispatchBudgetQuietly({
+-							paoHome: resolveHome(),
+-							卡号: outcome.cardNo,
+-							尝试号: claimed.尝试号,
+-							缺账轮次: receipt.missing_usage_rounds ?? 0,
+-							实际费用: receipt.usage?.cost,
+-						});
+-						if (结算说明) outcome.receiptNote = outcome.receiptNote ?? 结算说明;
+ 						return {
+ 							content: [{ type: "text" as const, text: formatDispatchResult(outcome, reportedReceipt) }],
+ 							details: outcome,
+@@ -800,22 +732,11 @@ export function registerWorkerTools(
+ 				);
+ 			} catch (e) {
+ 				const reason = e instanceof Error ? e.message : String(e);
+-				// 派发链抛错＝这次**没有回执**。若门禁预留已经 commit（可能已经花过钱），
+-				// 就必须在账上如实记「结果不明」，不能停在 reserved 让人误以为还在跑。
+-				// 记 unknown 的语义（G2）：钱继续占着、拒绝同判据重派，直到有人查清。
+-				const 兜底说明 = await markDispatchBudgetUnknown({
+-					resolveHome,
+-					cardsDir: input.cardsDir,
+-					cardNo,
+-					原因: reason,
+-				});
+ 				// 护栏拒绝(PaoWorkerError「无效参数」:部门/共享名额、双跑等)与真失败分开口径——
+ 				// 被拒＝改参数/换卡可再试,失败＝执行过程出错须人工看;通知前缀与 toast 标题随之。
+ 				const refused = e instanceof PaoWorkerError && e.code === "无效参数";
+ 				notifySurface.notify(
+-					`${refused ? "[派卡被拒]" : "[派卡失败]"} 卡${cardNo}:${reason}(派单理由:${input.dispatch_reason ?? ""})${
+-						兜底说明 ? `\n${兜底说明}` : ""
+-					}`,
++					`${refused ? "[派卡被拒]" : "[派卡失败]"} 卡${cardNo}:${reason}(派单理由:${input.dispatch_reason ?? ""})`,
+ 					refused ? "PAO 派卡被拒" : "PAO 派卡失败",
+ 					`卡${cardNo}:${reason}`,
+ 				);

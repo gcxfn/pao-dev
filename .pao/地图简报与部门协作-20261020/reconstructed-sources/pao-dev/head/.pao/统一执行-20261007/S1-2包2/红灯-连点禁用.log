@@ -1,0 +1,41 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 3 tests using 1 worker
+
+  ok 1 apps\desktop\tests\unit\session-takeover-button.spec.ts:39:5 › 确认弹窗取消：不提交任何接管命令 (3ms)
+  ok 2 apps\desktop\tests\unit\session-takeover-button.spec.ts:45:5 › 确认接受：恰好提交一条 /pao runtime takeover <token> (1ms)
+  x  3 apps\desktop\tests\unit\session-takeover-button.spec.ts:51:5 › 连点防护：已提交过再点击不重复提交（F8 钉防双发） (3ms)
+
+
+  1) apps\desktop\tests\unit\session-takeover-button.spec.ts:51:5 › 连点防护：已提交过再点击不重复提交（F8 钉防双发） ─────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "/pao runtime takeover 39c64f0e-1c1b-4a8f-9d0a-6fb4c2a6f001",[39m
+    [31m+ ][39m
+
+      51 | test("连点防护：已提交过再点击不重复提交（F8 钉防双发）", () => {
+      52 |   const { commands, submitted } = run(true, true);
+    > 53 |   expect(commands).toEqual([]);
+         |                    ^
+      54 |   expect(submitted).toBe(false);
+      55 | });
+      56 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\unit\session-takeover-button.spec.ts:53:20
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\unit-session-takeover-button-连点防护：已提交过再点击不重复提交（F8-钉防双发）\trace.zip
+    Usage:
+
+        npx playwright show-trace apps\desktop\test-results\unit-session-takeover-button-连点防护：已提交过再点击不重复提交（F8-钉防双发）\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\unit\session-takeover-button.spec.ts:51:5 › 连点防护：已提交过再点击不重复提交（F8 钉防双发） ──────
+  2 passed (1.5s)

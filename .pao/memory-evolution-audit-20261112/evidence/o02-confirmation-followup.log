@@ -1,0 +1,49 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o02-confirmation-followup.test.ts > J1：明确用户纠正经工具修订后，用户实据能使同一 ID 定案 90ms
+   → expected 'tentative' to be 'confirmed' // Object.is equality
+ × o02-confirmation-followup.test.ts > J2：工具保存的待定经验获得后续用户明确确认后转正 56ms
+   → expected 'tentative' to be 'confirmed' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o02-confirmation-followup.test.ts > J1：明确用户纠正经工具修订后，用户实据能使同一 ID 定案
+AssertionError: expected 'tentative' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "tentative"
+
+ ❯ o02-confirmation-followup.test.ts:93:43
+     91|   const got = await saved(f); results.push({ id: "J1", afterTool, out,…
+     92|   expect(got.memory.id).toBe(before.memory.id);
+     93|   expect(got.memory.content.confirmation).toBe("confirmed");
+       |                                           ^
+     94|   expect(got.memory.content.evidenceKind).toBe("user_statement");
+     95|   expect(got.sourceSummaries.map((s: any) => s.sourceId)).toContain(co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  o02-confirmation-followup.test.ts > J2：工具保存的待定经验获得后续用户明确确认后转正
+AssertionError: expected 'tentative' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "tentative"
+
+ ❯ o02-confirmation-followup.test.ts:109:43
+    107|   const got = await saved(f); results.push({ id: "J2", before, out, go…
+    108|   expect(got.memory.id).toBe(before.memory.id);
+    109|   expect(got.memory.content.confirmation).toBe("confirmed");
+       |                                           ^
+    110|   expect(got.sourceSummaries.map((s: any) => s.sourceId)).toContain(co…
+    111| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  14:54:31
+   Duration  7.16s (transform 5.45s, setup 0ms, import 6.86s, tests 148ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o02-confirmation-followup-vitest.json

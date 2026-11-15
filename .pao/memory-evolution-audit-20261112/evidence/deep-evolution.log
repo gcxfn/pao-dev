@@ -1,0 +1,51 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ ↓ deep-audit.test.ts > D1：异地恢复后，原现场不可用仍可回读来源原文
+ ↓ deep-audit.test.ts > D2：旧备份重放最新删除记录后，按 ID 也不能恢复已删除正文
+ ↓ deep-audit.test.ts > D3：先选择改善方案再冻结三组样例，正常流程可以继续
+ × deep-audit.test.ts > D4：公开生成入口生成的候选，零验证结果不能发布并生效 80ms
+   → expected 'passed' not to be 'passed' // Object.is equality
+ × deep-audit.test.ts > D5：同一冻结输入的双侧执行，实际消费不同版本的技能 289ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  deep-audit.test.ts > D4：公开生成入口生成的候选，零验证结果不能发布并生效
+AssertionError: expected 'passed' not to be 'passed' // Object.is equality
+ ❯ deep-audit.test.ts:178:33
+    176|   const effective = getEffectiveVersion(f.store, resourceId, f.home);
+    177|   record("D4", { evaluated, published, activated, effective });
+    178|   expect(evaluated.verdict).not.toBe("passed");
+       |                                 ^
+    179| });
+    180|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  deep-audit.test.ts > D5：同一冻结输入的双侧执行，实际消费不同版本的技能
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ deep-audit.test.ts:194:31
+    192|   expect(before.result.passed).toBe(false);
+    193|   expect(before.result.exitCode).toBe(1);
+    194|   expect(after.result.passed).toBe(true);
+       |                               ^
+    195| });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 skipped (5)
+   Start at  16:15:40
+   Duration  18.32s (transform 16.02s, setup 0ms, import 17.81s, tests 369ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/deep-evolution-vitest.json

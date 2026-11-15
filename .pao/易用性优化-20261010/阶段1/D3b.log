@@ -1,0 +1,49 @@
+
+Running 1 test using 1 worker
+
+(node:25876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 (12.0s)
+
+
+  1) apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 ─────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('kanban-card-menu')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('kanban-card-menu')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      269 |     await expect(page.getByTestId("kanban-card-menu")).toBeVisible();
+      270 |     await page.keyboard.press("Escape");
+    > 271 |     await expect(page.getByTestId("kanban-card-menu")).toHaveCount(0);
+          |                                                        ^
+      272 |     await expect(more).toBeFocused();
+      273 |     await page.getByTestId("kanban-selection-toggle").click();
+      274 |     await page.getByTestId("kanban-card").first().click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:271:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\D3b\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\D3b\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\易用性优化-20261010\阶段1\D3b\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 ──────────────

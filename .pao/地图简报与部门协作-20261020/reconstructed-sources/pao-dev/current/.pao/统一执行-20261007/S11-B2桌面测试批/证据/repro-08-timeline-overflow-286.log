@@ -1,0 +1,47 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript
+[1A[2K  1) apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 900,[39m
+    [32m-   "width": 800,[39m
+    [31m+   "height": 864,[39m
+    [31m+   "width": 786,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:297:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+REPRO 08-timeline-overflow-286 EXIT=1

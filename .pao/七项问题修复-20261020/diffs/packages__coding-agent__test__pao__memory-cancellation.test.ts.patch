@@ -1,0 +1,123 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\memory-cancellation.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\memory-cancellation.test.ts"
+index 49dcd12..0e6c5b1 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\memory-cancellation.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\memory-cancellation.test.ts"
+@@ -12,9 +12,13 @@ import { tmpdir } from "node:os";
+ import { basename, join } from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
+-import { registerMemory } from "../../src/pao/memory/index.ts";
+-import type { MemoryHit, MemoryVendor } from "../../src/pao/memory/memory-vendor.ts";
+-import { registerMemoryVendor } from "../../src/pao/memory/memory-vendor.ts";
++import { createVendorRecall, registerMemory } from "../../src/pao/memory/index.ts";
++import {
++	type MemoryHit,
++	type MemoryVendor,
++	MemoryVendorManager,
++	registerMemoryVendor,
++} from "../../src/pao/memory/memory-vendor.ts";
+ import { sessionMemory } from "../../src/pao/memory/session.ts";
+ 
+ const tempDirs: string[] = [];
+@@ -197,3 +201,101 @@ describe("记忆工具取消（审查第 1 项）", () => {
+ 		expect(result.details?.cancelled).toBe(true);
+ 	});
+ });
++
++describe("自动查库语义召回取消（审查第 4 项）", () => {
++	it("等待管理器启动期间取消 → 立即返回取消原因，迟到启动仍完成并保留共享实例", async () => {
++		let releaseStart: () => void = () => {};
++		const startGate = new Promise<void>((resolve) => {
++			releaseStart = resolve;
++		});
++		const created = fakeVendor("查库取消-启动中", { 启动: () => startGate });
++		const name = "查库取消-启动中";
++		registerMemoryVendor(name, () => created.vendor);
++		const manager = new MemoryVendorManager({ 供应商: name, 参数: {} }, () => {});
++		const controller = new AbortController();
++		const recall = createVendorRecall(() => manager);
++		const pending = recall("任意", 3, controller.signal);
++
++		controller.abort(new Error("用户取消自动查库"));
++		await expect(pending).rejects.toMatchObject({ name: "Error", message: "用户取消自动查库" });
++		expect(created.calls.启动).toBe(1);
++		expect(created.calls.召回).toBe(0);
++
++		releaseStart();
++		await expect.poll(() => manager.status).toBe("已就绪");
++		expect(await manager.acquire()).toBe(created.vendor);
++		expect(created.calls.启动).toBe(1);
++		expect(created.calls.关闭).toBe(0);
++	});
++
++	it("取消前已触发召回时，不支持信号的供应商迟到成功被观察且不报未处理拒绝", async () => {
++		let releaseRecall: (hits: MemoryHit[]) => void = () => {};
++		const recallGate = new Promise<MemoryHit[]>((resolve) => {
++			releaseRecall = resolve;
++		});
++		const created = fakeVendor("查库取消-召回中");
++		let entered!: () => void;
++		const enteredRecall = new Promise<void>((resolve) => {
++			entered = resolve;
++		});
++		created.vendor.recall = async () => {
++			created.calls.召回++;
++			entered();
++			return recallGate;
++		};
++		const unhandled: unknown[] = [];
++		const onUnhandled = (reason: unknown) => unhandled.push(reason);
++		process.on("unhandledRejection", onUnhandled);
++		try {
++			const name = "查库取消-召回中";
++			registerMemoryVendor(name, () => created.vendor);
++			const manager = new MemoryVendorManager({ 供应商: name, 参数: {} }, () => {});
++			const controller = new AbortController();
++			const recall = createVendorRecall(() => manager);
++			const pending = recall("任意", 3, controller.signal);
++			await enteredRecall;
++
++			controller.abort(new Error("用户取消召回"));
++			await expect(pending).rejects.toThrow("用户取消召回");
++			releaseRecall([{ 内容: "迟到命中" }]);
++			await new Promise((resolve) => setTimeout(resolve, 0));
++
++			expect(unhandled).toEqual([]);
++			expect(created.calls.关闭).toBe(0);
++			expect(manager.status).toBe("已就绪");
++		} finally {
++			process.off("unhandledRejection", onUnhandled);
++		}
++	});
++
++	it("取消后到达的供应商失败被观察，不报未处理拒绝", async () => {
++		let rejectRecall: (error: Error) => void = () => {};
++		const recallGate = new Promise<MemoryHit[]>((_resolve, reject) => {
++			rejectRecall = reject;
++		});
++		const created = fakeVendor("查库取消-召回落败");
++		let entered!: () => void;
++		const enteredRecall = new Promise<void>((resolve) => {
++			entered = resolve;
++		});
++		created.vendor.recall = async () => {
++			created.calls.召回++;
++			entered();
++			return recallGate;
++		};
++		const name = "查库取消-召回落败";
++		registerMemoryVendor(name, () => created.vendor);
++		const manager = new MemoryVendorManager({ 供应商: name, 参数: {} }, () => {});
++		const controller = new AbortController();
++		const recall = createVendorRecall(() => manager);
++		const pending = recall("任意", 3, controller.signal);
++		await enteredRecall;
++
++		controller.abort("用户取消召回落败");
++		await expect(pending).rejects.toBe("用户取消召回落败");
++		rejectRecall(new Error("延迟失败"));
++		await new Promise((resolve) => setTimeout(resolve, 0));
++		expect(created.calls.关闭).toBe(0);
++		expect(manager.status).toBe("已就绪");
++	});
++});

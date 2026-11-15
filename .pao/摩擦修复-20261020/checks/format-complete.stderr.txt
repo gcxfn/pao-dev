@@ -1,0 +1,231 @@
+packages\coding-agent\src\pao\worker\index.ts:26:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━━━
+
+  ! All these imports are only used as types.
+  
+    24 │ import { type Static, Type } from "typebox";
+    25 │ 
+  > 26 │ import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+       │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │ import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+    28 │ import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Use import type.
+  
+      24   24 │   import { type Static, Type } from "typebox";
+      25   25 │   
+      26      │ - import·{·type·ExtensionAPI,·type·ToolDefinition·}·from·"../../core/extensions/types.ts";
+           26 │ + import·type·{·ExtensionAPI,·ToolDefinition·}·from·"../../core/extensions/types.ts";
+      27   27 │   import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+      28   28 │   import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+  
+
+packages\coding-agent\src\pao\worker\index.ts:27:90 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    26 │ import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+  > 27 │ import { CARD_PRIORITIES, CARD_TIERS, type CardBudget, type CardPriority, type CardTier, type ParsedCard, parseCardRef, readCard, routeFailure } from "../cards/index.ts";
+       │                                                                                          ^^^^^^^^^^^^^^^
+    28 │ import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+    29 │ import {
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    27 │ import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+       │                                                                                          -----------------                                                                
+
+packages\coding-agent\src\pao\worker\index.ts:44:10 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    42 │ } from "../host/index.ts";
+    43 │ import { nowString } from "../shared/time.ts";
+  > 44 │ import { BUDGET_LEDGER_FILENAME, inspectReservation } from "../usage/budget-ledger.ts";
+       │          ^^^^^^^^^^^^^^^^^^^^^^
+    45 │ import {
+    46 │ 	buildDispatchBudgetGate,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    44 │ import·{·BUDGET_LEDGER_FILENAME,·inspectReservation·}·from·"../usage/budget-ledger.ts";
+       │          ------------------------                                                      
+
+packages\coding-agent\src\pao\worker\index.ts:62:2 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    60 │ 	type DispatchBaseline,
+    61 │ 	type DispatchClaimInput,
+  > 62 │ 	type DispatchBudgetGateResult,
+       │ 	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    63 │ 	type DispatchPermission,
+    64 │ 	executeDispatch,
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+      60   60 │   	type DispatchBaseline,
+      61   61 │   	type DispatchClaimInput,
+      62      │ - → type·DispatchBudgetGateResult,
+      63   62 │   	type DispatchPermission,
+      64   63 │   	executeDispatch,
+  
+
+packages\coding-agent\src\pao\worker\index.ts:21:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    19 │  */
+    20 │ 
+  > 21 │ import { createHash } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    22 │ import { join, resolve } from "node:path";
+    23 │ 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      25   25 │   
+      26   26 │   import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+      27      │ - import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+      28      │ - import·{·loadCardBodyTemplate,·resolveCardTemplatePath·}·from·"../cards/cardfile.ts";
+      29      │ - import·{
+      30      │ - → acceptIntake,
+      31      │ - → isIntakeOutcomeStale,
+      32      │ - → type·IntakeOutcome,
+      33      │ - → type·IntakeRequest,
+      34      │ - → type·IntakeTemplateBody,
+      35      │ - }·from·"../intake/index.ts";
+      36      │ - import·{·DEFAULT_WORKER_SILENCE_MINUTES,·readWorkerSilenceMinutes·}·from·"../host/config.ts";
+           27 │ + import·{·loadCardBodyTemplate,·resolveCardTemplatePath·}·from·"../cards/cardfile.ts";
+           28 │ + import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+           29 │ + import·{·DEFAULT_WORKER_SILENCE_MINUTES,·readWorkerSilenceMinutes·}·from·"../host/config.ts";
+           30 │ + import·{
+           31 │ + → defaultMinisterHost,
+           32 │ + → globalHotSessionLimit,
+           33 │ + → type·MinisterHost,
+           34 │ + → renderMinisterInventoryLine,
+           35 │ + }·from·"../host/index.ts";
+      37   36 │   import {
+      38      │ - → defaultMinisterHost,
+      39      │ - → globalHotSessionLimit,
+      40      │ - → type·MinisterHost,
+      41      │ - → renderMinisterInventoryLine,
+      42      │ - }·from·"../host/index.ts";
+           37 │ + → acceptIntake,
+           38 │ + → type·IntakeOutcome,
+           39 │ + → type·IntakeRequest,
+           40 │ + → type·IntakeTemplateBody,
+           41 │ + → isIntakeOutcomeStale,
+           42 │ + }·from·"../intake/index.ts";
+      43   43 │   import { nowString } from "../shared/time.ts";
+      44   44 │   import { BUDGET_LEDGER_FILENAME, inspectReservation } from "../usage/budget-ledger.ts";
+    ········· │ 
+      59   59 │   	DEPT_CONCURRENCY_CONFIG_RELATIVE_PATH,
+      60   60 │   	type DispatchBaseline,
+      61      │ - → type·DispatchClaimInput,
+      62      │ - → type·DispatchBudgetGateResult,
+           61 │ + → type·DispatchBudgetGateResult,
+           62 │ + → type·DispatchClaimInput,
+      63   63 │   	type DispatchPermission,
+      64   64 │   	executeDispatch,
+  
+
+packages\coding-agent\src\pao\worker\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      25   25 │   
+      26   26 │   import { type ExtensionAPI, type ToolDefinition } from "../../core/extensions/types.ts";
+      27      │ - import·{·CARD_PRIORITIES,·CARD_TIERS,·type·CardBudget,·type·CardPriority,·type·CardTier,·type·ParsedCard,·parseCardRef,·readCard,·routeFailure·}·from·"../cards/index.ts";
+           27 │ + import·{
+           28 │ + → CARD_PRIORITIES,
+           29 │ + → CARD_TIERS,
+           30 │ + → type·CardBudget,
+           31 │ + → type·CardPriority,
+           32 │ + → type·CardTier,
+           33 │ + → type·ParsedCard,
+           34 │ + → parseCardRef,
+           35 │ + → readCard,
+           36 │ + → routeFailure,
+           37 │ + }·from·"../cards/index.ts";
+      28   38 │   import { loadCardBodyTemplate, resolveCardTemplatePath } from "../cards/cardfile.ts";
+      29   39 │   import {
+    ········· │ 
+     920  930 │   		parts.dept.trim(),
+     921  931 │   		parts.acceptance.trim(),
+     922      │ - → → [...(parts.dependsOn·??·[])].map((item)·=>·item.trim()).sort().join(","),
+          932 │ + → → [...(parts.dependsOn·??·[])]
+          933 │ + → → → .map((item)·=>·item.trim())
+          934 │ + → → → .sort()
+          935 │ + → → → .join(","),
+     923  936 │   	].join("\u0000");
+     924  937 │   	return `${AUTO_INTAKE_KEY_PREFIX}${createHash("sha256").update(normalized, "utf8").digest("hex").slice(0, 16)}`;
+    ········· │ 
+     931  944 │   	inputs: Type.Optional(Type.Array(Type.String(), { description: "输入指针列表(可空):文件路径、链接、上游产物" })),
+     932  945 │   	constraints: Type.Optional(Type.String({ description: "约束正文(可空):边界、不许做的事" })),
+     933      │ - → depends_on:·Type.Optional(Type.Array(Type.String(),·{·description:·"依赖卡号列表(可空):未放行时不派发(如实报推迟)"·})),
+          946 │ + → depends_on:·Type.Optional(
+          947 │ + → → Type.Array(Type.String(),·{·description:·"依赖卡号列表(可空):未放行时不派发(如实报推迟)"·}),
+          948 │ + → ),
+     934  949 │   	tier: Type.Optional(
+     935  950 │   		Type.String({
+    ········· │ 
+     971  986 │   		}),
+     972  987 │   	),
+     973      │ - → cards_dir:·Type.Optional(
+     974      │ - → → Type.String({·description:·"cards_dir(可空):任务工作区卡目录;已配置默认卡目录时可省略"·}),
+     975      │ - → ),
+          988 │ + → cards_dir:·Type.Optional(Type.String({·description:·"cards_dir(可空):任务工作区卡目录;已配置默认卡目录时可省略"·})),
+     976  989 │   });
+     977  990 │   
+    ········· │ 
+     984  997 │   	dispatchInBackground: DispatchInBackground;
+     985  998 │   	/** 模板正文解析（缺省用 cards 模板库；测试可注入） */
+     986      │ - → resolveTemplate?:·(request:·IntakeRequest)·=>·Promise<IntakeTemplateBody·|·undefined>·|·IntakeTemplateBody·|·undefined;
+          999 │ + → resolveTemplate?:·(
+         1000 │ + → → request:·IntakeRequest,
+         1001 │ + → )·=>·Promise<IntakeTemplateBody·|·undefined>·|·IntakeTemplateBody·|·undefined;
+     987 1002 │   }
+     988 1003 │   
+    ········· │ 
+    1021 1036 │   /** 问题项逐条一行（不吞问题、不概括成「有风险」）。 */
+    1022 1037 │   function problemLines(outcome: IntakeOutcome): string[] {
+    1023      │ - → return·outcome.problems.map((item)·=>·`····[${item.level}]·${item.subject}：${item.reason}${item.suggestion·?·`（建议：${item.suggestion}）`·:·""}`);
+         1038 │ + → return·outcome.problems.map(
+         1039 │ + → → (item)·=>
+         1040 │ + → → → `····[${item.level}]·${item.subject}：${item.reason}${item.suggestion·?·`（建议：${item.suggestion}）`·:·""}`,
+         1041 │ + → );
+    1024 1042 │   }
+    1025 1043 │   
+    ········· │ 
+    1053 1071 │   				lines.push(`首次受理身份：${identityLine(first ?? outcome)}`);
+    1054 1072 │   			} else {
+    1055      │ - → → → → lines.push("首次身份不可得：受理账里这条判据没有记下卡号（账可能被改坏或卡已被删），请用·pao_inventory·核对现场。");
+         1073 │ + → → → → lines.push(
+         1074 │ + → → → → → "首次身份不可得：受理账里这条判据没有记下卡号（账可能被改坏或卡已被删），请用·pao_inventory·核对现场。",
+         1075 │ + → → → → );
+    1056 1076 │   			}
+    1057 1077 │   			lines.push(`首次受理时间：${first?.acceptedAt ?? outcome.acceptedAt}`);
+    ········· │ 
+    1059 1079 │   				// §5.4 的同一条纪律也管重复提交：首次那张卡已被停/被重开，
+    1060 1080 │   				// 「已返回第一次的身份」就不再等于「它还在跑」——必须当场说清，否则等于用旧身份报成功。
+    1061      │ - → → → → lines.push("注意：首次那张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以·pao_inventory·的现场为准）。");
+         1081 │ + → → → → lines.push(
+         1082 │ + → → → → → "注意：首次那张卡已被停止或重开（旧受理结果不再有效，别把它当成功；以·pao_inventory·的现场为准）。",
+         1083 │ + → → → → );
+    1062 1084 │   			}
+    1063 1085 │   			lines.push("没有新建卡、没有重复派发；如果你要的是新任务，请换一条判据（request_key）。");
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

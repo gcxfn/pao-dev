@@ -1,0 +1,176 @@
+
+=== SS3 2026-10-06 09:35:48 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts apps/desktop/tests/core/terminal-diff-layout.spec.ts apps/desktop/tests/core/timeline-overflow.spec.ts apps/desktop/tests/core/timeline-pinning.spec.ts apps/desktop/tests/core/timeline-viewport.spec.ts apps/desktop/tests/core/todo-table.spec.ts apps/desktop/tests/core/tool-output-images.spec.ts
+
+Running 21 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\terminal-diff-layout.spec.ts:10:5 › Review and Terminal share one side workspace while the composer stays available (17.7s)
+  x   2 apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths (8.9s)
+  x   3 apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript (7.9s)
+  ok  4 apps\desktop\tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread (5.0s)
+  ok  5 apps\desktop\tests\core\timeline-pinning.spec.ts:362:5 › restores bottom pinning after leaving and returning to the thread surface (5.0s)
+  ok  6 apps\desktop\tests\core\timeline-pinning.spec.ts:414:5 › restores the true bottom when reopening a virtualized thread with oversized late rows (11.7s)
+  ok  7 apps\desktop\tests\core\timeline-pinning.spec.ts:475:5 › keeps a virtualized thread off-bottom after switching sessions (9.8s)
+  x   8 apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions (15.7s)
+  ok  9 apps\desktop\tests\core\timeline-pinning.spec.ts:601:5 › lands a reopened bottom-pinned thread without a smooth scroll from the top (6.7s)
+  ok 10 apps\desktop\tests\core\timeline-pinning.spec.ts:662:5 › keeps a reopened virtualized long transcript stable (1.0m)
+  x  11 apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom (11.0s)
+  ok 12 apps\desktop\tests\core\timeline-pinning.spec.ts:853:5 › keeps transcript pinning semantics while assistant deltas stream into the same row (6.8s)
+  ok 13 apps\desktop\tests\core\timeline-pinning.spec.ts:926:5 › lands an opened thread at the bottom without a smooth scroll from the top (7.7s)
+  ok 14 apps\desktop\tests\core\timeline-viewport.spec.ts:16:5 › long messages stay windowed and wheel scrolling preserves the visible row during streaming (10.6s)
+  ok 15 apps\desktop\tests\core\timeline-viewport.spec.ts:66:5 › clicks and downward wheel at the bottom do not stop following; search uses the same viewport (9.7s)
+Tall-row streaming frames {
+  frameCount: [33m4[39m,
+  p95: [33m1003.7999999999993[39m,
+  max: [33m1003.7999999999993[39m,
+  over33: [33m4[39m
+}
+  ok 16 apps\desktop\tests\core\timeline-viewport.spec.ts:118:5 › streaming inside a tall measured code row never substitutes estimated geometry (9.8s)
+  ok 17 apps\desktop\tests\core\timeline-viewport.spec.ts:187:5 › a layout clamp after user intent expires does not resume following (9.2s)
+  ok 18 apps\desktop\tests\core\timeline-viewport.spec.ts:224:5 › typing within a fixed-height multiline draft never shifts the chat (6.7s)
+  ok 19 apps\desktop\tests\core\timeline-viewport.spec.ts:255:5 › small upward wheel input escapes bottom while typing and streaming overlap (56.9s)
+  ok 20 apps\desktop\tests\core\todo-table.spec.ts:152:5 › TodoWrite tool calls render a task checklist table, live and after restart (15.9s)
+  ok 21 apps\desktop\tests\core\tool-output-images.spec.ts:26:5 › shows images a tool returned in its row, not their base64 text (11.8s)
+
+
+  1) apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 950,[39m
+    [32m-   "width": 1500,[39m
+    [31m+   "height": 914,[39m
+    [31m+   "width": 1486,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:248:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 900,[39m
+    [32m-   "width": 800,[39m
+    [31m+   "height": 864,[39m
+    [31m+   "width": 786,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-overflow.spec.ts:297:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m700[39m
+    Received:   [31m520.3330078125[39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      558 |
+      559 |     await window.getByTestId("timeline-pane").hover();
+    > 560 |     await expect
+          |     ^
+      561 |       .poll(async () => {
+      562 |         await window.mouse.wheel(0, -520);
+      563 |         return (await getTimelineScrollMetrics(window)).remainingFromBottom;
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-pinning.spec.ts:560:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      831 |     await streamAssistantDeltas(harness, window, ["WIDTH_REFLOW_NEW_ACTIVITY"]);
+      832 |     await expect(window.getByTestId("timeline-jump")).toBeVisible();
+    > 833 |     await expect
+          |     ^
+      834 |       .poll(() =>
+      835 |         sentinelRow.evaluate(async (row, expectedY) => {
+      836 |           let maximumDrift = 0;
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\timeline-pinning.spec.ts:833:5
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+    apps\desktop\tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+    apps\desktop\tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+    apps\desktop\tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+  17 passed (5.2m)
+SS3_EXIT=1

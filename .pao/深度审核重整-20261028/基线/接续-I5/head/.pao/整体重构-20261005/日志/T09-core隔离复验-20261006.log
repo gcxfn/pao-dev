@@ -1,0 +1,600 @@
+===== ISO new-thread-auto-title =====
+
+Running 7 tests using 1 worker
+
+  ok 1 tests\core\new-thread-auto-title.spec.ts:22:5 › auto-titles a brand-new local thread after showing the placeholder first (6.3s)
+  ok 2 tests\core\new-thread-auto-title.spec.ts:56:5 › auto-titles a brand-new worktree thread after showing the placeholder first (7.2s)
+  ok 3 tests\core\new-thread-auto-title.spec.ts:102:5 › switching away does not cancel a pending auto-title (12.4s)
+  ok 4 tests\core\new-thread-auto-title.spec.ts:141:5 › manual rename beats a delayed auto-title result (6.5s)
+  ok 5 tests\core\new-thread-auto-title.spec.ts:188:5 › manual rename applies after the run is aborted via Stop (6.5s)
+  ok 6 tests\core\new-thread-auto-title.spec.ts:235:5 › later sends do not retrigger auto-title generation (7.6s)
+  ok 7 tests\core\new-thread-auto-title.spec.ts:275:5 › reopen heals a stale placeholder catalog title after auto-title finished (9.7s)
+
+  7 passed (57.4s)
+EXIT=0
+===== ISO extensions-dialogs =====
+
+Running 2 tests using 1 worker
+
+  ok 1 tests\core\extensions-dialogs.spec.ts:141:5 › renders extension dialogs in the Electron surface and routes responses back to the session (17.9s)
+  ok 2 tests\core\extensions-dialogs.spec.ts:231:5 › loads a dialog-prompting third-party package without blocking session startup (8.4s)
+
+  2 passed (27.6s)
+EXIT=0
+===== ISO transcript-annotations =====
+
+Running 2 tests using 1 worker
+
+  x  1 tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message (1.5m)
+  ok 2 tests\core\transcript-annotations.spec.ts:239:5 › a multi-line drag that runs past the text still adds its lines (53.7s)
+
+
+  1) tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+
+    [31mTest timeout of 90000ms exceeded.[39m
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-transcript-annotation-a6c30-nds-them-before-the-message\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\transcript-annotations.spec.ts:76:5 › adds transcript selections to chat with comments and sends them before the message 
+  1 passed (2.4m)
+EXIT=1
+===== ISO timeline-overflow =====
+
+Running 2 tests using 1 worker
+
+  x  1 tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths (8.6s)
+  x  2 tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript (9.8s)
+
+
+  1) tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 950,[39m
+    [32m-   "width": 1500,[39m
+    [31m+   "height": 914,[39m
+    [31m+   "width": 1486,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:248:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-timeline-overflow-kee-659c9-t-at-wide-and-narrow-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "height": 900,[39m
+    [32m-   "width": 800,[39m
+    [31m+   "height": 864,[39m
+    [31m+   "width": 786,[39m
+    [2m  }[22m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      61 |   }, size);
+      62 |   expect(resized).toBe(true);
+    > 63 |   await expect
+         |   ^
+      64 |     .poll(() =>
+      65 |       window.evaluate(() => ({
+      66 |         width: globalThis.window.innerWidth,
+        at setElectronWindowSize (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:63:3)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-overflow.spec.ts:297:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-timeline-overflow-kee-8a309-the-composer-and-transcript\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    tests\core\timeline-overflow.spec.ts:224:5 › keeps long tool metadata and user rows inside the transcript at wide and narrow widths 
+    tests\core\timeline-overflow.spec.ts:286:5 › keeps a run error with a huge unbroken token inside the composer and transcript 
+EXIT=1
+===== ISO timeline-pinning =====
+
+Running 10 tests using 1 worker
+
+  ok  1 tests\core\timeline-pinning.spec.ts:278:5 › keeps the latest assistant content visible when the composer grows at the bottom of a thread (9.6s)
+  ok  2 tests\core\timeline-pinning.spec.ts:362:5 › restores bottom pinning after leaving and returning to the thread surface (7.8s)
+  ok  3 tests\core\timeline-pinning.spec.ts:414:5 › restores the true bottom when reopening a virtualized thread with oversized late rows (21.2s)
+  ok  4 tests\core\timeline-pinning.spec.ts:475:5 › keeps a virtualized thread off-bottom after switching sessions (17.9s)
+  x   5 tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions (15.9s)
+  ok  6 tests\core\timeline-pinning.spec.ts:601:5 › lands a reopened bottom-pinned thread without a smooth scroll from the top (6.8s)
+  ok  7 tests\core\timeline-pinning.spec.ts:662:5 › keeps a reopened virtualized long transcript stable (1.0m)
+  x   8 tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom (13.5s)
+  ok  9 tests\core\timeline-pinning.spec.ts:853:5 › keeps transcript pinning semantics while assistant deltas stream into the same row (7.1s)
+  ok 10 tests\core\timeline-pinning.spec.ts:926:5 › lands an opened thread at the bottom without a smooth scroll from the top (10.8s)
+
+
+  1) tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m700[39m
+    Received:   [31m520.3330078125[39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      558 |
+      559 |     await window.getByTestId("timeline-pane").hover();
+    > 560 |     await expect
+          |     ^
+      561 |       .poll(async () => {
+      562 |         await window.mouse.wheel(0, -520);
+      563 |         return (await getTimelineScrollMetrics(window)).remainingFromBottom;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-pinning.spec.ts:560:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-timeline-pinning-rest-7e6b7-on-after-switching-sessions\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+
+    Error: Timeout 5000ms exceeded while waiting on the predicate
+
+      831 |     await streamAssistantDeltas(harness, window, ["WIDTH_REFLOW_NEW_ACTIVITY"]);
+      832 |     await expect(window.getByTestId("timeline-jump")).toBeVisible();
+    > 833 |     await expect
+          |     ^
+      834 |       .poll(() =>
+      835 |         sentinelRow.evaluate(async (row, expectedY) => {
+      836 |           let maximumDrift = 0;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\timeline-pinning.spec.ts:833:5
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-timeline-pinning-keep-95983--grows-away-from-the-bottom\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    tests\core\timeline-pinning.spec.ts:517:5 › restores a thread's saved off-bottom scroll position after switching sessions 
+    tests\core\timeline-pinning.spec.ts:727:5 › keeps the mid-thread viewport stable when the composer grows away from the bottom 
+  8 passed (2.9m)
+EXIT=1
+===== ISO turn-changes-card =====
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff (22.4s)
+
+
+  1) tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })
+    Expected substring: [32m"line two"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('region', { name: 'Review', exact: true }).getByRole('region', { name: 'Diff', exact: true })[22m
+
+
+      139 |       panel.locator('.diff-panel__file--selected[data-file-path="src/nested/f.txt"]'),
+      140 |     ).toBeVisible();
+    > 141 |     await expect(panel.getByRole("region", { name: "Diff", exact: true })).toContainText(
+          |                                                                            ^
+      142 |       "line two",
+      143 |     );
+      144 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\turn-changes-card.spec.ts:141:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-turn-changes-card-a-t-a2266--rows-open-that-file-s-diff\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\turn-changes-card.spec.ts:69:5 › a turn that edits files gets a changes card whose rows open that file's diff 
+EXIT=1
+===== ISO workbench-tabs =====
+
+Running 8 tests using 1 worker
+
+  ok 1 tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser (50.5s)
+  ok 2 tests\core\workbench-tabs.spec.ts:187:5 › restores each task's tabs and draft through Settings, switching, and restart (44.9s)
+  ok 3 tests\core\workbench-tabs.spec.ts:250:5 › an invalid or orphaned task layout does not block other saved UI state (36.1s)
+  ok 4 tests\core\workbench-tabs.spec.ts:315:5 › assistant file links keep the opened document with their originating task (20.9s)
+  x  5 tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell (29.1s)
+  ok 6 tests\core\workbench-tabs.spec.ts:380:5 › two windows keep independent live tool selections for the same task (24.9s)
+  ok 7 tests\core\workbench-tabs.spec.ts:408:5 › keeps one resizable width across tools, chooser, tasks, and restart (1.0m)
+  ok 8 tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog (11.9s)
+
+
+  1) tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell ──
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"SHELL_retained"[39m
+    Received string:    [31m"ASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$ xport PI_GUI_WORKBENCH_CANARY=retained; printf 'SHELL_'\"READY\\n\"bash: xport: command not foundSHELL_READYASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$ printf 'SHELL_%s\\n' \"$PI_GUI_WORKBENCH_CANARY\"SHELL_ASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$  "[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    5 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "ASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$ xport PI_GUI_WORKBENCH_CANARY=retained; printf 'SHELL_'"READY\n"bash: xport: command not foundSHELL_READYASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$  "[22m
+    [2m    4 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "ASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$ xport PI_GUI_WORKBENCH_CANARY=retained; printf 'SHELL_'"READY\n"bash: xport: command not foundSHELL_READYASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$ printf 'SHELL_%s\n' "$PI_GUI_WORKBENCH_CANARY"SHELL_ASUS@LAPTOP-7HHARUTQ MINGW64 /tmp/pi-gui-workspace-dSUabZ/workbench-tabs (main)$  "[22m
+
+
+      371 |     await window.keyboard.type("printf 'SHELL_%s\\n' \"$PI_GUI_WORKBENCH_CANARY\"");
+      372 |     await window.keyboard.press("Enter");
+    > 373 |     await expect(terminal.locator(".xterm-rows")).toContainText("SHELL_retained");
+          |                                                   ^
+      374 |     await expect(window.getByTestId("terminal-tab")).toHaveCount(1);
+      375 |   } finally {
+      376 |     await harness.close();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workbench-tabs.spec.ts:373:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workbench-tabs-closin-b63d8-ew-preserves-its-live-shell\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workbench-tabs-closin-b63d8-ew-preserves-its-live-shell\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-workbench-tabs-closin-b63d8-ew-preserves-its-live-shell\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell ───
+  7 passed (4.7m)
+EXIT=1
+===== ISO workflow-canvas =====
+
+Running 6 tests using 1 worker
+
+  ok 1 tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 (57.8s)
+  ok 2 tests\core\workflow-canvas.spec.ts:103:5 › 导航、关闭窗口和退出程序均保留取消后的画布 (30.6s)
+  ok 3 tests\core\workflow-canvas.spec.ts:141:5 › 重命名节点保留位置和下游依赖，放弃后恢复 (20.8s)
+  ok 4 tests\core\workflow-canvas.spec.ts:182:5 › 拖动和连线保存后刷新保持相同图 (56.7s)
+  ok 5 tests\core\workflow-canvas.spec.ts:298:5 › 审核节点回边可以添加、编辑并真实保存 (32.9s)
+  x  6 tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 (54.1s)
+
+
+  1) tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────────────────
+
+    TimeoutError: locator.fill: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workflow-inspector').getByLabel('配方名称')[22m
+
+
+      380 |     expect(await readFile(join(home, "工作流", "另存验证.md"), "utf8")).toContain("真实保存验证");
+      381 |     await page.getByRole("button", { name: "新建工作流", exact: true }).click();
+    > 382 |     await page.getByTestId("workflow-inspector").getByLabel("配方名称").fill("新建验证");
+          |                                                                     ^
+      383 |     // 主控会话按标签页绑定（工作流标签契约）：同标签内新建配方复用已建立的主控，
+      384 |     // 按钮保持「已建立＋禁用」，不再按配方重复建立。
+      385 |     await expect(page.getByTestId("canvas-open-master-session")).toContainText("主控会话已建立");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:382:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\workflow-canvas.spec.ts:347:5 › 配方建立独立主控后真实保存并读回文件 ──────────────────────────────────
+  5 passed (4.2m)
+EXIT=1
+===== ISO workspace-file-lines =====
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external (56.5s)
+
+
+  1) tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.timeline-item--assistant').getByRole('button', { name: 'C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-WxIqKH\\file-line-workspace/src/app.ts:3', exact: true })[22m
+
+
+      170 |       "marker-3",
+      171 |     );
+    > 172 |     await fileButton(assistant, `${workspacePath}/src/app.ts:3`).click();
+          |                                                                  ^
+      173 |     await expect(window.locator('[data-testid="file-line-mark"][data-line="3"]')).toBeVisible();
+      174 |
+      175 |     await fileButton(assistant, "notes").click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workspace-file-lines.spec.ts:172:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-workspace-file-lines--982f5-and-web-links-stay-external\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\workspace-file-lines.spec.ts:72:5 › assistant file lines open in the Files panel and web links stay external 
+EXIT=1
+===== ISO workspace-files =====
+
+Running 2 tests using 1 worker
+
+  ok 1 tests\core\workspace-files.spec.ts:36:5 › Files workbench puts the explorer to the right of an open file pane (19.2s)
+  ok 2 tests\core\workspace-files.spec.ts:95:5 › Files explorer drops the previous workspace tree after a folder switch (30.3s)
+
+  2 passed (50.6s)
+EXIT=0
+===== ISO worktrees =====
+
+Running 5 tests using 1 worker
+
+  ok 1 tests\core\worktrees.spec.ts:54:5 › creates and selects a worktree-backed workspace from the desktop UI (16.6s)
+  x  2 tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile (7.5s)
+  ok 3 tests\core\worktrees.spec.ts:232:5 › shows a worktree icon in the sidebar without a local text badge (27.4s)
+  ok 4 tests\core\worktrees.spec.ts:284:5 › keeps orphaned worktree workspaces visible after removing the root workspace (16.4s)
+  ok 5 tests\core\worktrees.spec.ts:336:5 › a git worktree the user opens is its own folder and nests the worktrees made from it (25.4s)
+
+
+  1) tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"worktree"[39m
+    Received: [31m"primary"[39m
+
+      135 |       await addWorkspaceViaIpc(window, legacyWorktree);
+      136 |       const legacyWorkspace = await waitForWorkspaceByPath(window, canonicalLegacyWorktree);
+    > 137 |       expect(legacyWorkspace.kind).toBe("worktree");
+          |                                    ^
+      138 |
+      139 |       await window
+      140 |         .getByRole("button", { name: `Workspace actions for ${rootWorkspace.name}` })
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\worktrees.spec.ts:137:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-worktrees-scopes-work-6f3e5-ction-to-the-active-profile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\worktrees.spec.ts:113:5 › scopes worktree creation and startup collection to the active profile 
+  4 passed (1.6m)
+EXIT=1
+ISO_DONE
+===== ISO sidebar-folder-collapse =====
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart (26.9s)
+
+
+  1) tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-t7MFKX\\collapse-alpha"]').locator('.session-row__title')
+    Timeout: 5000ms
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "Alpha planning",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.workspace-group[data-workspace-id="C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-t7MFKX\\collapse-alpha"]').locator('.session-row__title')[22m
+    [2m    9 × locator resolved to 0 elements[22m
+
+
+      33 |     const group = window.locator(`.workspace-group[data-workspace-id="${workspaceId}"]`);
+      34 |     const folderRow = group.locator(".workspace-row__select");
+    > 35 |     await expect(group.locator(".session-row__title")).toHaveText(["Alpha planning"]);
+         |                                                        ^
+      36 |     await expect(folderRow).toHaveAttribute("aria-expanded", "true");
+      37 |     const selectedBefore = (await getDesktopState(window)).selectedSessionId;
+      38 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\sidebar-folder-collapse.spec.ts:35:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-sidebar-folder-collap-cf93b-ps-it-folded-across-restart\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\sidebar-folder-collapse.spec.ts:12:5 › folds a folder group from its row and keeps it folded across restart 
+EXIT=1
+===== ISO session-lease =====
+
+Running 2 tests using 1 worker
+
+  x  1 tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds (12.1s)
+  ok 2 tests\core\session-lease.spec.ts:88:5 › quitting releases the session lease of every open thread (3.1s)
+
+
+  1) tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m24144[39m
+    Received: [31m28260[39m
+
+      61 |     const [leasePath] = await findLeaseFiles(agentDir);
+      62 |     const firstPid = first.electronApp.process().pid;
+    > 63 |     expect(await leaseHolderPid(leasePath)).toBe(firstPid);
+         |                                             ^
+      64 |
+      65 |     // Once the holder quits its lease is dead, so the thread opens here and
+      66 |     // this process takes the lease over.
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\session-lease.spec.ts:63:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-session-lease-a-secon-c5e5e--thread-the-first-one-holds\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\session-lease.spec.ts:31:5 › a second pi-gui process cannot open a thread the first one holds 
+  1 passed (17.4s)
+EXIT=1
+===== ISO reopen-state =====
+
+Running 1 test using 1 worker
+
+  x  1 tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates (42.6s)
+[31mWorker teardown timeout of 60000ms exceeded.[39m
+
+[31mFailed worker ran 1 test:[39m
+tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates
+
+
+  1) tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [test quit] before-quit
+    Debugger ending on ws://127.0.0.1:63396/91da2a52-c665-41e0-984c-ddef5a07e232
+    For help, see: https://nodejs.org/en/docs/inspector
+
+       at helpers\electron-app.ts:359
+
+      357 |         appProcess.kill("SIGKILL");
+      358 |       }
+    > 359 |       throw new Error(
+          |             ^
+      360 |         [
+      361 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      362 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:359:13)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\reopen-state.spec.ts:158:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\core-reopen-state-reopens--06bd9-ion-keeps-streaming-updates\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\core\reopen-state.spec.ts:15:5 › reopens persisted folders and thread state while a saved running session keeps streaming updates 
+  1 error was not a part of any test, see above for details
+EXIT=1
+ISO2_DONE

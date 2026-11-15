@@ -1,0 +1,463 @@
+== per-fixture sha256sum before/after and cmp (shell, not python) ==
+--- 01-script-inline-body
+$ sha256sum cases/01-script-inline-body.html
+c8231364e4cf75dec920f9bead8c9b3d1e840c72d18ca656de5448c4e6977de0  cases/01-script-inline-body.html
+$ python3 /app/filter.py sh/01-script-inline-body.pass1
+exit=0
+$ sha256sum sh/01-script-inline-body.pass1
+58b9e0385e633686d1865163c51fba1908ef88508b719319f3d10cc106e7c2c5  /tmp/pf/final/sh/01-script-inline-body.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 02-script-external
+$ sha256sum cases/02-script-external.html
+ef40d90a29dee74ce8a55d986d0ae615810170257af1a02bf6c6f26fe0d83dd7  cases/02-script-external.html
+$ python3 /app/filter.py sh/02-script-external.pass1
+exit=0
+$ sha256sum sh/02-script-external.pass1
+c07e7f6e8f15a3b25bd374cdc6e268a95a000785a12751734a782b130fbe54df  /tmp/pf/final/sh/02-script-external.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 03-script-selfclose
+$ sha256sum cases/03-script-selfclose.html
+ec3569e255216bc9cd7f6dd4e725ae412c0d81757f6fd8dce4f12364312d3193  cases/03-script-selfclose.html
+$ python3 /app/filter.py sh/03-script-selfclose.pass1
+exit=0
+$ sha256sum sh/03-script-selfclose.pass1
+ffe3cdeefb7b469a385d57c571ad282dfa5abd15e360d2599d144fca7161a357  /tmp/pf/final/sh/03-script-selfclose.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 04-script-unclosed
+$ sha256sum cases/04-script-unclosed.html
+4b3ea6eac419ec8a1d9a9e21f300b6e674a0177eb91c2a44eff05465e407a626  cases/04-script-unclosed.html
+$ python3 /app/filter.py sh/04-script-unclosed.pass1
+exit=0
+$ sha256sum sh/04-script-unclosed.pass1
+6f123264b62042a8dc29c24e40354f3c800d68803218d72d1ca7df28b72792b1  /tmp/pf/final/sh/04-script-unclosed.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 05-script-in-table-cell
+$ sha256sum cases/05-script-in-table-cell.html
+acc829dffd2f575ecf3dd62656b50064807ceca133e4e883bb7fff46a16081a4  cases/05-script-in-table-cell.html
+$ python3 /app/filter.py sh/05-script-in-table-cell.pass1
+exit=0
+$ sha256sum sh/05-script-in-table-cell.pass1
+1260655785dfe7869241f6ffdae6d989dc62216088d09156be113c49ae89d13e  /tmp/pf/final/sh/05-script-in-table-cell.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 06-script-in-attr-value-only
+$ sha256sum cases/06-script-in-attr-value-only.html
+f273fa0aa19a32f088e9da45fa6bf28b185535241656481f2f71ca4346b40b3b  cases/06-script-in-attr-value-only.html
+$ python3 /app/filter.py sh/06-script-in-attr-value-only.pass1
+exit=0
+$ sha256sum sh/06-script-in-attr-value-only.pass1
+f273fa0aa19a32f088e9da45fa6bf28b185535241656481f2f71ca4346b40b3b  /tmp/pf/final/sh/06-script-in-attr-value-only.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 07-script-literal-in-text
+$ sha256sum cases/07-script-literal-in-text.html
+e852304c0c39474d50794f3b078782ce8264b58964e624ab4e17bc5d725d7780  cases/07-script-literal-in-text.html
+$ python3 /app/filter.py sh/07-script-literal-in-text.pass1
+exit=0
+$ sha256sum sh/07-script-literal-in-text.pass1
+e852304c0c39474d50794f3b078782ce8264b58964e624ab4e17bc5d725d7780  /tmp/pf/final/sh/07-script-literal-in-text.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 08-script-mixed-case
+$ sha256sum cases/08-script-mixed-case.html
+55ce83c0196e636cacb05ace4ef3ade8a5cabab10bd4c7df2b13eb231da055ca  cases/08-script-mixed-case.html
+$ python3 /app/filter.py sh/08-script-mixed-case.pass1
+exit=0
+$ sha256sum sh/08-script-mixed-case.pass1
+1ea56af68ae16433d1db4be43b0ed252341c9a117779bb26d2d92fcea75e90c7  /tmp/pf/final/sh/08-script-mixed-case.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 09-script-in-attribute-string
+$ sha256sum cases/09-script-in-attribute-string.html
+d6b2b62e18444eccb14193c4876a489312c59d6245d2650b129b247fe0c46af4  cases/09-script-in-attribute-string.html
+$ python3 /app/filter.py sh/09-script-in-attribute-string.pass1
+exit=0
+$ sha256sum sh/09-script-in-attribute-string.pass1
+266d378b3850fc23fec16775d21d7636d35f58139e74074942e10e419ceb4451  /tmp/pf/final/sh/09-script-in-attribute-string.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 10-events-basic
+$ sha256sum cases/10-events-basic.html
+eb8c839f793021acddc404f86b886416b02ff4f7103e7f9ec64cd0f9a2fd6246  cases/10-events-basic.html
+$ python3 /app/filter.py sh/10-events-basic.pass1
+exit=0
+$ sha256sum sh/10-events-basic.pass1
+e2c3f4d8d9cdcccb93814761cdb7606e4d52d9888065d1e95d7bbffdbb0dd25e  /tmp/pf/final/sh/10-events-basic.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 11-events-spaced-assignment
+$ sha256sum cases/11-events-spaced-assignment.html
+f02b324a74001f1fe1fc10c1002cd6b7ec43bcd378daa8999bb55360e07ca89f  cases/11-events-spaced-assignment.html
+$ python3 /app/filter.py sh/11-events-spaced-assignment.pass1
+exit=0
+$ sha256sum sh/11-events-spaced-assignment.pass1
+241608fad5b39ceef6a4637c4ef218daf2dcac12f45a292370ebd82bf975780c  /tmp/pf/final/sh/11-events-spaced-assignment.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 12-events-namespaced
+$ sha256sum cases/12-events-namespaced.html
+7663752bed63013bfe2793e17809e8481eac52b49fda9ea2f4eb37a0103f0702  cases/12-events-namespaced.html
+$ python3 /app/filter.py sh/12-events-namespaced.pass1
+exit=0
+$ sha256sum sh/12-events-namespaced.pass1
+a15254aba301da2882ca08b1927b8e2f542ceb484c8c96e3425dd4cf672aa90e  /tmp/pf/final/sh/12-events-namespaced.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 13-url-tab-scheme
+$ sha256sum cases/13-url-tab-scheme.html
+76a6fc70306cc97f8ff23b1e642ce5522b7287629f8b6b464ec66c5a8301974f  cases/13-url-tab-scheme.html
+$ python3 /app/filter.py sh/13-url-tab-scheme.pass1
+exit=0
+$ sha256sum sh/13-url-tab-scheme.pass1
+a397d0e65ad5578f017843c90b6bede51a098b8c360fa7527df1c250c2d469b0  /tmp/pf/final/sh/13-url-tab-scheme.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 14-url-entity-newline
+$ sha256sum cases/14-url-entity-newline.html
+5eb0ad2ec98a12beaead86ba83df59256af5e1bff06658965c295b0aad45a916  cases/14-url-entity-newline.html
+$ python3 /app/filter.py sh/14-url-entity-newline.pass1
+exit=0
+$ sha256sum sh/14-url-entity-newline.pass1
+eecfb3a7a385c7e57e105447f871010e715f6af09d4776f685fce7a069f6c59c  /tmp/pf/final/sh/14-url-entity-newline.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 15-url-entity-decimal
+$ sha256sum cases/15-url-entity-decimal.html
+b3dcd9c8ada877ab073830b4b01a1ff9614ebc2630399814d34fa13d0f8418a5  cases/15-url-entity-decimal.html
+$ python3 /app/filter.py sh/15-url-entity-decimal.pass1
+exit=0
+$ sha256sum sh/15-url-entity-decimal.pass1
+9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c  /tmp/pf/final/sh/15-url-entity-decimal.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 16-url-mixed-case
+$ sha256sum cases/16-url-mixed-case.html
+7e5f8520127fddc34b01745de2b1f1d57b344a3eb5ce5c8f3fb1e35d30e77d62  cases/16-url-mixed-case.html
+$ python3 /app/filter.py sh/16-url-mixed-case.pass1
+exit=0
+$ sha256sum sh/16-url-mixed-case.pass1
+ccf73102a1f14e9b086c90b2dc0189bdcfab4b0e3916968e348d7f9b91627923  /tmp/pf/final/sh/16-url-mixed-case.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 17-url-leading-space
+$ sha256sum cases/17-url-leading-space.html
+0ee067f7c8448d589dac8dde444bda903fe0d9b154fee1214032fe711b8f2f14  cases/17-url-leading-space.html
+$ python3 /app/filter.py sh/17-url-leading-space.pass1
+exit=0
+$ sha256sum sh/17-url-leading-space.pass1
+9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c  /tmp/pf/final/sh/17-url-leading-space.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 18-url-data-text-html
+$ sha256sum cases/18-url-data-text-html.html
+885601cf6487ed4070a4a18601c3a4abfb687fe99be3ee55e43db2058357a3f2  cases/18-url-data-text-html.html
+$ python3 /app/filter.py sh/18-url-data-text-html.pass1
+exit=0
+$ sha256sum sh/18-url-data-text-html.pass1
+b3188b07601172a44ad836105c52b5c3c842ab8a36c2721db8f02d9f8c440125  /tmp/pf/final/sh/18-url-data-text-html.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 19-url-vbscript
+$ sha256sum cases/19-url-vbscript.html
+54ad058119d45e5a48ab52b1fce76cc7088a151e22558f750cc6f8d181be4686  cases/19-url-vbscript.html
+$ python3 /app/filter.py sh/19-url-vbscript.pass1
+exit=0
+$ sha256sum sh/19-url-vbscript.pass1
+9fae7b6a7b52162e8ede67886b6259d7f5a9edaa01409d63f62c552c348b2f8c  /tmp/pf/final/sh/19-url-vbscript.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 20-url-all-url-attrs
+$ sha256sum cases/20-url-all-url-attrs.html
+99c1894baa097c9b744435ea7e5fd5f0e5b20cc70a221d8b42b1a365e5625e35  cases/20-url-all-url-attrs.html
+$ python3 /app/filter.py sh/20-url-all-url-attrs.pass1
+exit=0
+$ sha256sum sh/20-url-all-url-attrs.pass1
+be07adb118b4dcfadd4ccbc33d9b6c869939781d941d7b34d802515608055ed6  /tmp/pf/final/sh/20-url-all-url-attrs.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 21-srcdoc-nested
+$ sha256sum cases/21-srcdoc-nested.html
+fbded0623e5d034386328defb5ade47d99dca8df7335f003cbc2e5a59eabb4e0  cases/21-srcdoc-nested.html
+$ python3 /app/filter.py sh/21-srcdoc-nested.pass1
+exit=0
+$ sha256sum sh/21-srcdoc-nested.pass1
+362fe41052df32657187aeb0774902b5533af89a803abd4c5ff1c9b4384f16d6  /tmp/pf/final/sh/21-srcdoc-nested.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 22-meta-refresh-danger
+$ sha256sum cases/22-meta-refresh-danger.html
+4e45bdd93009d749eaa71ede7fb8af759ef797d3433f2da5331e3fb23628dac3  cases/22-meta-refresh-danger.html
+$ python3 /app/filter.py sh/22-meta-refresh-danger.pass1
+exit=0
+$ sha256sum sh/22-meta-refresh-danger.pass1
+cd0b9ec2ba4c405fe5c54c91508acd6a357e447df4525f45b06137f70a5aefdb  /tmp/pf/final/sh/22-meta-refresh-danger.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 23-meta-refresh-benign
+$ sha256sum cases/23-meta-refresh-benign.html
+bfcd22ce3f759095003450b35169801aa81196c70b11bf20828a9517ebd59938  cases/23-meta-refresh-benign.html
+$ python3 /app/filter.py sh/23-meta-refresh-benign.pass1
+exit=0
+$ sha256sum sh/23-meta-refresh-benign.pass1
+bfcd22ce3f759095003450b35169801aa81196c70b11bf20828a9517ebd59938  /tmp/pf/final/sh/23-meta-refresh-benign.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 24-base-href
+$ sha256sum cases/24-base-href.html
+9d44c532c01b45c360d1f46a0111973d1e55f091822d258bd47686c7382e4153  cases/24-base-href.html
+$ python3 /app/filter.py sh/24-base-href.pass1
+exit=0
+$ sha256sum sh/24-base-href.pass1
+803bc00ea3436d647c46d293e5d5e188aa9613033739af0a26bd4e97f6e81b55  /tmp/pf/final/sh/24-base-href.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 25-object-embed
+$ sha256sum cases/25-object-embed.html
+e4a48af3e24a84ece572ac701f35d4cc0953ec09fb1cefa6ccce77c295d36eef  cases/25-object-embed.html
+$ python3 /app/filter.py sh/25-object-embed.pass1
+exit=0
+$ sha256sum sh/25-object-embed.pass1
+95692e5b52991c9261c73dfa7338cdb1ee8e68c706ffd13b15c8a632d8ec87d4  /tmp/pf/final/sh/25-object-embed.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 26-style-attr-benign
+$ sha256sum cases/26-style-attr-benign.html
+4e3022377c2e49ad9c3c4f10e9e0ca873f99597564547da6e7a964fc14b23eec  cases/26-style-attr-benign.html
+$ python3 /app/filter.py sh/26-style-attr-benign.pass1
+exit=0
+$ sha256sum sh/26-style-attr-benign.pass1
+4e3022377c2e49ad9c3c4f10e9e0ca873f99597564547da6e7a964fc14b23eec  /tmp/pf/final/sh/26-style-attr-benign.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 27-style-attr-expression
+$ sha256sum cases/27-style-attr-expression.html
+fb293c4e5777c38e96f97989be8ec42882819cd3c0cb9b8759e5eabe433b6f0b  cases/27-style-attr-expression.html
+$ python3 /app/filter.py sh/27-style-attr-expression.pass1
+exit=0
+$ sha256sum sh/27-style-attr-expression.pass1
+468e1fc98ace2337e5535c9b5ba62431d9f8643715f10c74e019be4096cc3a5c  /tmp/pf/final/sh/27-style-attr-expression.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 28-style-element-benign
+$ sha256sum cases/28-style-element-benign.html
+14401e518c21cf5496521838786fc5154acd5e983162b3d9d812d429480a9d68  cases/28-style-element-benign.html
+$ python3 /app/filter.py sh/28-style-element-benign.pass1
+exit=0
+$ sha256sum sh/28-style-element-benign.pass1
+14401e518c21cf5496521838786fc5154acd5e983162b3d9d812d429480a9d68  /tmp/pf/final/sh/28-style-element-benign.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 29-style-element-danger
+$ sha256sum cases/29-style-element-danger.html
+97bbe54ba2e917b777b6ffc698473efe742df58462367ff456fd4044ed757287  cases/29-style-element-danger.html
+$ python3 /app/filter.py sh/29-style-element-danger.pass1
+exit=0
+$ sha256sum sh/29-style-element-danger.pass1
+aeb803294515923397575857f6e4cc9bc345975db680197ffac2ac7f1c7775b1  /tmp/pf/final/sh/29-style-element-danger.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 30-comment-danger
+$ sha256sum cases/30-comment-danger.html
+306cf291ba745fcd2bf0d575554b3c871d81a9630c99c34bf50c83a90ea1b9f3  cases/30-comment-danger.html
+$ python3 /app/filter.py sh/30-comment-danger.pass1
+exit=0
+$ sha256sum sh/30-comment-danger.pass1
+480d49480bd2f2cbbc98f42c4fbf99ebd3b2585a2afdb289d7a24c0e5993cd2c  /tmp/pf/final/sh/30-comment-danger.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 31-comment-benign
+$ sha256sum cases/31-comment-benign.html
+c34a77a687af2316fdf0f17c71dc7b2e5da519f0ffa99d31bac0192de355bb1a  cases/31-comment-benign.html
+$ python3 /app/filter.py sh/31-comment-benign.pass1
+exit=0
+$ sha256sum sh/31-comment-benign.pass1
+c34a77a687af2316fdf0f17c71dc7b2e5da519f0ffa99d31bac0192de355bb1a  /tmp/pf/final/sh/31-comment-benign.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 32-cdata-pseudo
+$ sha256sum cases/32-cdata-pseudo.html
+7642d776ec62e6477222f240671831dc84cc2baa1bbc0c6ee26a3b231083a44b  cases/32-cdata-pseudo.html
+$ python3 /app/filter.py sh/32-cdata-pseudo.pass1
+exit=0
+$ sha256sum sh/32-cdata-pseudo.pass1
+92edd69accc01b852c8e52a2ed75efd2e98ca17c1b1f0c341df0da58c69a4117  /tmp/pf/final/sh/32-cdata-pseudo.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 33-conditional-comment
+$ sha256sum cases/33-conditional-comment.html
+cbd11733ffb9d45fa3b19adacdddf93b2368cc880b1dcfc52f9f327b24ddc620  cases/33-conditional-comment.html
+$ python3 /app/filter.py sh/33-conditional-comment.pass1
+exit=0
+$ sha256sum sh/33-conditional-comment.pass1
+3b82429b471f2c3643799009f295bce9aebe9c580089963aae9f9477e19a2c31  /tmp/pf/final/sh/33-conditional-comment.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 34-svg-events
+$ sha256sum cases/34-svg-events.html
+f6b86a45279a691e582d249c6f95e80db7aca3f42366ff5535990ce64046c156  cases/34-svg-events.html
+$ python3 /app/filter.py sh/34-svg-events.pass1
+exit=0
+$ sha256sum sh/34-svg-events.pass1
+5b701af03a491f97b5ab297d617e96add5b896fa5fbc7c70b2dc8eb2c23fd965  /tmp/pf/final/sh/34-svg-events.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 35-svg-animate
+$ sha256sum cases/35-svg-animate.html
+2800bd37e8989bc3a1aeeb97bc22e0dc3eb6e973e43a6bd5a6b795c28f655d86  cases/35-svg-animate.html
+$ python3 /app/filter.py sh/35-svg-animate.pass1
+exit=0
+$ sha256sum sh/35-svg-animate.pass1
+c9a4fec14dd5cca5a4b460fc30b870bef6a459c649880e80a85cc1f43826d6bc  /tmp/pf/final/sh/35-svg-animate.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 36-mathml-events
+$ sha256sum cases/36-mathml-events.html
+93b8cec768859dbcb43bca1b153c760f403dcf7b69f43cac07eb9cd08ed3233d  cases/36-mathml-events.html
+$ python3 /app/filter.py sh/36-mathml-events.pass1
+exit=0
+$ sha256sum sh/36-mathml-events.pass1
+af9755d560d265a9bcf1eda8bdc5da5c82fece46aec95f7c3a83be2bcdbd6f41  /tmp/pf/final/sh/36-mathml-events.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 37-benign-complex
+$ sha256sum cases/37-benign-complex.html
+a9e62e5e1c6d3c28d4279193949327d1152f89c53b3976e47e982d6218e89a85  cases/37-benign-complex.html
+$ python3 /app/filter.py sh/37-benign-complex.pass1
+exit=0
+$ sha256sum sh/37-benign-complex.pass1
+a9e62e5e1c6d3c28d4279193949327d1152f89c53b3976e47e982d6218e89a85  /tmp/pf/final/sh/37-benign-complex.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 38-benign-prose-literal
+$ sha256sum cases/38-benign-prose-literal.html
+52bbd3bf7094bea803c4c96ab8ee3f953c7f858e120a52df89bdb761a4f0e7ac  cases/38-benign-prose-literal.html
+$ python3 /app/filter.py sh/38-benign-prose-literal.pass1
+exit=0
+$ sha256sum sh/38-benign-prose-literal.pass1
+52bbd3bf7094bea803c4c96ab8ee3f953c7f858e120a52df89bdb761a4f0e7ac  /tmp/pf/final/sh/38-benign-prose-literal.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=0
+--- 39-url-quoted-value
+$ sha256sum cases/39-url-quoted-value.html
+c3c3df62e25b7616b22d067afd8efee14b72f6125468bbbb34b9fe78169f7cbe  cases/39-url-quoted-value.html
+$ python3 /app/filter.py sh/39-url-quoted-value.pass1
+exit=0
+$ sha256sum sh/39-url-quoted-value.pass1
+c55b8b7e8d962ee5364bd058a1e84c18d6a285fe2efa1a3e66297e1c84489a95  /tmp/pf/final/sh/39-url-quoted-value.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 40-css-quoted-url
+$ sha256sum cases/40-css-quoted-url.html
+07dc5d7a6e1f84a67952e88926795b9d9732938390b76fef18bcb8a34ba020f7  cases/40-css-quoted-url.html
+$ python3 /app/filter.py sh/40-css-quoted-url.pass1
+exit=0
+$ sha256sum sh/40-css-quoted-url.pass1
+1835952b506a31632ddd5893f56363bece23a9ef4dbc99d71e8b44f46c3f18b4  /tmp/pf/final/sh/40-css-quoted-url.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 41-event-namespaced-colon
+$ sha256sum cases/41-event-namespaced-colon.html
+7e61275886adb81cb9ec7f18968948bc80489a6ee1c0721f3068e6737b5c386c  cases/41-event-namespaced-colon.html
+$ python3 /app/filter.py sh/41-event-namespaced-colon.pass1
+exit=0
+$ sha256sum sh/41-event-namespaced-colon.pass1
+03ca9f00e4e1604eca9c65a2bac028bfee743594d062e7e02db0f0180082268e  /tmp/pf/final/sh/41-event-namespaced-colon.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 42-smil-retarget
+$ sha256sum cases/42-smil-retarget.html
+12ce61d625838a65a177275b233e68e4ff8b38efae85d35ce20f6eaa9bee5723  cases/42-smil-retarget.html
+$ python3 /app/filter.py sh/42-smil-retarget.pass1
+exit=0
+$ sha256sum sh/42-smil-retarget.pass1
+b12e0d83ce2357d80b89c57694814d0a3abdaf8c40724f2049af8b7f01b7812b  /tmp/pf/final/sh/42-smil-retarget.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 43-srcset
+$ sha256sum cases/43-srcset.html
+76509c3a1d9fb08f6298f743f3667e08b25f61d45a7b8dfe31877eee0d445a3f  cases/43-srcset.html
+$ python3 /app/filter.py sh/43-srcset.pass1
+exit=0
+$ sha256sum sh/43-srcset.pass1
+de625994215845f5d6ea728380d4a84f04237de373eed1c55e1e4d2f03d55c95  /tmp/pf/final/sh/43-srcset.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 44-bogus-declaration
+$ sha256sum cases/44-bogus-declaration.html
+7cbcb18034d7495bf840455967b64e209063963f0d15c88d635d66fa055b6075  cases/44-bogus-declaration.html
+$ python3 /app/filter.py sh/44-bogus-declaration.pass1
+exit=0
+$ sha256sum sh/44-bogus-declaration.pass1
+82540ca8b6afa0d868019e4775d43ae614e8dd81852465e0a6094943aedfa617  /tmp/pf/final/sh/44-bogus-declaration.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 45-textarea-rcdata
+$ sha256sum cases/45-textarea-rcdata.html
+ced1d5e40efcd5eadeb403683974ab6e0a5b3afcea2fea38466bdcee65721697  cases/45-textarea-rcdata.html
+$ python3 /app/filter.py sh/45-textarea-rcdata.pass1
+exit=0
+$ sha256sum sh/45-textarea-rcdata.pass1
+bb561f07df5bd065691f9268845e4d01fd713f8131cd45ce6b6b71182f159119  /tmp/pf/final/sh/45-textarea-rcdata.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+--- 46-on-prefixed-benign-name
+$ sha256sum cases/46-on-prefixed-benign-name.html
+2024ff8f2eee3b47102deef384f82c12e5052bdceb71f9e62fa692c131d64a56  cases/46-on-prefixed-benign-name.html
+$ python3 /app/filter.py sh/46-on-prefixed-benign-name.pass1
+exit=0
+$ sha256sum sh/46-on-prefixed-benign-name.pass1
+ead7fe23046fb14ed8156eaffd3a2a59a08c905fbcce053d6d242c1265c0407e  /tmp/pf/final/sh/46-on-prefixed-benign-name.pass1
+second_run_exit=0
+idempotent_cmp_exit=0
+input_vs_output_cmp_exit=1
+
+cases=46 idempotency_failures=0

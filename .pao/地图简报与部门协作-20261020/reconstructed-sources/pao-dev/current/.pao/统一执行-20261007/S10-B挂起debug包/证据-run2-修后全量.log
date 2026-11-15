@@ -1,0 +1,167 @@
+
+Running 13 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\workflow-canvas.spec.ts:36:5 › 配方点击加载、拖动产生修改、放弃还原 (55.1s)
+  ok  2 apps\desktop\tests\core\workflow-canvas.spec.ts:103:5 › 导航、关闭窗口和退出程序均保留取消后的画布 (29.5s)
+  ok  3 apps\desktop\tests\core\workflow-canvas.spec.ts:141:5 › 节点改名：Esc 放弃、回车与失焦提交，重名保留原名 (25.6s)
+  ok  4 apps\desktop\tests\core\workflow-canvas.spec.ts:196:5 › 右键复制节点：重名派生、依赖不复制，保存后读回文件 (26.7s)
+  ok  5 apps\desktop\tests\core\workflow-canvas.spec.ts:245:5 › 连线模式建连与拖拽同判定：非法浮层、Esc 取消、审核回边右键直达 Inspector (1.1m)
+  ok  6 apps\desktop\tests\core\workflow-canvas.spec.ts:337:5 › 拖动和连线保存后刷新保持相同图 (53.6s)
+  ok  7 apps\desktop\tests\core\workflow-canvas.spec.ts:453:5 › 审核节点回边可以添加、编辑并真实保存 (32.8s)
+  x   8 apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件 (32.9s)
+  x   9 apps\desktop\tests\core\workflow-canvas.spec.ts:595:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 (30.0s)
+  x  10 apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 (24.9s)
+  x  11 apps\desktop\tests\core\workflow-canvas.spec.ts:727:5 › 保存后退出程序重开：坐标与连线一致，配方内容一致 (1.0m)
+  ok 12 apps\desktop\tests\core\workflow-canvas.spec.ts:876:5 › 删除工作流：确认弹窗含 .bak 说明，取消无副作用、标签不变 (19.0s)
+  ok 13 apps\desktop\tests\core\workflow-canvas.spec.ts:915:5 › 删除工作流：确认后 .bak 保留、冻结实例可读、对应标签关闭 (19.6s)
+
+
+  1) apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件 ────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('canvas-open-master-session')
+    Expected substring: [32m"主控会话[7m已建立[27m"[39m
+    Received string:    [31m"[7m建立[27m主控会话"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-open-master-session')[22m
+    [2m    9 × locator resolved to <button type="button" class="button" data-testid="canvas-open-master-session">建立主控会话</button>[22m
+    [2m      - unexpected value "建立主控会话"[22m
+
+
+      544 |     // 主控会话按标签页绑定（工作流标签契约）：同标签内新建配方复用已建立的主控，
+      545 |     // 按钮保持「已建立＋禁用」，不再按配方重复建立。
+    > 546 |     await expect(page.getByTestId("canvas-open-master-session")).toContainText("主控会话已建立");
+          |                                                                  ^
+      547 |     await expect(page.getByTestId("canvas-open-master-session")).toBeDisabled();
+      548 |     await page
+      549 |       .getByTestId("recipe-canvas-editor")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:546:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-配方建立独立主控后真实保存并读回文件\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workflow-canvas.spec.ts:595:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 ───────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('canvas-open-master-session')
+    Expected substring: [32m"主控会话[7m已建立[27m"[39m
+    Received string:    [31m"[7m建立[27m主控会话"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-open-master-session')[22m
+    [2m    9 × locator resolved to <button type="button" class="button" data-testid="canvas-open-master-session">建立主控会话</button>[22m
+    [2m      - unexpected value "建立主控会话"[22m
+
+
+      632 |     await page.getByTestId("workflow-inspector").getByLabel("工作流名称").fill("B独立配方");
+      633 |     // 主控按标签复用（同标签内新建不重复建立主控）。
+    > 634 |     await expect(page.getByTestId("canvas-open-master-session")).toContainText("主控会话已建立");
+          |                                                                  ^
+      635 |     await expect(page.getByTestId("canvas-open-master-session")).toBeDisabled();
+      636 |     await page
+      637 |       .getByTestId("recipe-canvas-editor")
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:634:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-两标签交替修改不串：A-修改保存、B-新建保存互不串写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ─────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('dialog').filter({ hasText: '保存工作流配方' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog').filter({ hasText: '保存工作流配方' })[22m
+
+
+      703 |     await guard.getByRole("button", { name: "保存并继续" }).click();
+      704 |     const saveConfirm = page.getByRole("dialog").filter({ hasText: "保存工作流配方" });
+    > 705 |     await expect(saveConfirm).toBeVisible();
+          |                               ^
+      706 |     await saveConfirm.getByRole("button", { name: /Confirm|确认/ }).click();
+      707 |     // 配方以新名真实落盘（保存链本身成功）。
+      708 |     expect(await readFile(join(home, "工作流", "改名验证.md"), "utf8")).toContain("改名目标");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:705:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\workflow-canvas.spec.ts:727:5 › 保存后退出程序重开：坐标与连线一致，配方内容一致 ──────────────
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-recipe-row').filter({ hasText: '编辑验证' })[22m
+
+
+      787 |     const reopened = await app.firstWindow();
+      788 |     await reopened.getByTestId("sidebar-canvas").click();
+    > 789 |     await reopened.getByTestId("canvas-recipe-row").filter({ hasText: "编辑验证" }).click();
+          |                                                                                 ^
+      790 |     const reopenedGraph = reopened.getByTestId("workflow-editor");
+      791 |     const reopenedNode = reopenedGraph.locator('.react-flow__node[data-id="开发"]');
+      792 |     await expect
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-canvas.spec.ts:789:81
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-保存后退出程序重开：坐标与连线一致，配方内容一致\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-保存后退出程序重开：坐标与连线一致，配方内容一致\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-保存后退出程序重开：坐标与连线一致，配方内容一致\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace C:\Users\ASUS\AppData\Local\Temp\s10b-out-run2\core-workflow-canvas-保存后退出程序重开：坐标与连线一致，配方内容一致\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\workflow-canvas.spec.ts:508:5 › 配方建立独立主控后真实保存并读回文件 ─────────────────────
+    apps\desktop\tests\core\workflow-canvas.spec.ts:595:5 › 两标签交替修改不串：A 修改保存、B 新建保存互不串写 ────────────
+    apps\desktop\tests\core\workflow-canvas.spec.ts:676:5 › 守卫保存并继续×骨架改名：标签保留新名，无死标签与误导横幅 ──────────
+    apps\desktop\tests\core\workflow-canvas.spec.ts:727:5 › 保存后退出程序重开：坐标与连线一致，配方内容一致 ───────────────
+  9 passed (8.0m)

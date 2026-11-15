@@ -1,0 +1,105 @@
+# S9-桌面包 旧名盘点基线（2026-10-08，改动前 grep 计数）
+范围：apps/desktop＋packages/pi-sdk-driver（extensions/src），不含 vendor/node_modules/dist
+
+## A. D7 IPC 键（§7：卡目标/派单理由/卡引用/依据）
+24
+sed: -e expression #1, char 15: unterminated `s' command
+
+## B. 五态值（接收/执行/停止中/已停止/验收通过 作为 ThreadControlState 值）
+39
+sed: -e expression #1, char 7: unterminated `s' command
+
+## C. 卡状态五值（待认领/进行中/已交付/失败/取消 字面量比较）
+28
+sed: -e expression #1, char 7: unterminated `s' command
+
+## D. 卡协议键消费（kanban-query/canvas-query/kanban-ops/driver 类型/kanban-board 回执行/desktop.ts 内 frontmatter·回执·卡号读点）
+4  apps/desktop/electron/platform/pao/kanban-query.ts
+2  apps/desktop/electron/platform/pao/kanban-ops.ts
+36  apps/desktop/electron/platform/pao/canvas-query.ts
+14  apps/desktop/src/features/workboard/kanban-board.tsx
+69  packages/pi-sdk-driver/src/pao-canvas.ts
+5  packages/pi-sdk-driver/src/pao-card-ops.ts
+11  packages/pi-sdk-driver/extensions/pao/desktop.ts
+0  packages/pi-sdk-driver/extensions/pao/flow-desktop.ts
+0  packages/pi-sdk-driver/extensions/pao/index.ts
+21  packages/pi-sdk-driver/src/pao-flow-control.ts
+
+## E. 运行控制动作值（确认/暂停/恢复/裁定 + 命令参数键）
+18
+
+## F. 测试面（unit/core 内活跃旧名行数）
+ugrep: warning: apps/desktop/tests/unit\canvas-node-detail.spec.ts: No such file or directory
+  apps/desktop/tests/unit\canvas-node-detail.spec.ts
+ugrep: warning: apps/desktop/tests/unit\canvas.spec.ts: No such file or directory
+  apps/desktop/tests/unit\canvas.spec.ts
+ugrep: warning: apps/desktop/tests/unit\flow-control-query.spec.ts: No such file or directory
+  apps/desktop/tests/unit\flow-control-query.spec.ts
+ugrep: warning: apps/desktop/tests/unit\kanban-activity.spec.ts: No such file or directory
+  apps/desktop/tests/unit\kanban-activity.spec.ts
+ugrep: warning: apps/desktop/tests/unit\ipc-request-validation.spec.ts: No such file or directory
+  apps/desktop/tests/unit\ipc-request-validation.spec.ts
+ugrep: warning: apps/desktop/tests/unit\kanban-command.spec.ts: No such file or directory
+  apps/desktop/tests/unit\kanban-command.spec.ts
+ugrep: warning: apps/desktop/tests/unit\kanban-ops.spec.ts: No such file or directory
+  apps/desktop/tests/unit\kanban-ops.spec.ts
+ugrep: warning: apps/desktop/tests/unit\kanban-query.spec.ts: No such file or directory
+  apps/desktop/tests/unit\kanban-query.spec.ts
+ugrep: warning: apps/desktop/tests/unit\session-control-queue-lane.spec.ts: No such file or directory
+  apps/desktop/tests/unit\session-control-queue-lane.spec.ts
+ugrep: warning: apps/desktop/tests/unit\session-control-request.spec.ts: No such file or directory
+  apps/desktop/tests/unit\session-control-request.spec.ts
+ugrep: warning: apps/desktop/tests/unit\thread-control-state.spec.ts: No such file or directory
+  apps/desktop/tests/unit\thread-control-state.spec.ts
+ugrep: warning: apps/desktop/tests/unit\session-control-coordinator.spec.ts: No such file or directory
+  apps/desktop/tests/unit\session-control-coordinator.spec.ts
+ugrep: warning: apps/desktop/tests/core\kanban-board.spec.ts: No such file or directory
+  apps/desktop/tests/core\kanban-board.spec.ts
+ugrep: warning: apps/desktop/tests/core\workflow-instance.spec.ts: No such file or directory
+  apps/desktop/tests/core\workflow-instance.spec.ts
+1  apps/desktop/tests/core\todo-table.spec.ts
+
+## A2. D7 IPC 键按文件明细
+apps/desktop/electron\ipc\session-control.ts:3
+apps/desktop/electron\ipc\request-validation.ts:6
+apps/desktop/contracts\ipc.ts:2
+
+## B2. 五态值按文件
+apps/desktop/src\features\conversation\composer-panel.tsx
+apps/desktop/src\features\conversation\hooks\use-session-composer.tsx
+apps/desktop/src\features\threads\sidebar.tsx
+apps/desktop/electron\platform\pao\canvas-query.ts
+apps/desktop/contracts\ipc.ts
+apps/desktop/contracts\i18n-zh.ts
+apps/desktop/contracts\thread-control-state.ts
+
+## C2. 卡状态五值按文件
+apps/desktop/src\features\canvas\canvas-model.ts
+apps/desktop/src\features\workboard\kanban-page.tsx
+apps/desktop/src\features\workboard\kanban-command.ts
+apps/desktop/src\features\workboard\kanban-board.tsx
+apps/desktop/electron\ipc\request-validation.ts
+apps/desktop/electron\platform\pao\kanban-query.ts
+apps/desktop/electron\platform\pao\kanban-ops.ts
+apps/desktop/contracts\kanban.ts
+apps/desktop/contracts\i18n-zh.ts
+apps/desktop/contracts\thread-control-state.ts
+packages/pi-sdk-driver/extensions\pao\flow-desktop.ts
+packages/pi-sdk-driver/extensions\pao\desktop.ts
+
+## F2. 测试面按文件
+apps/desktop/tests/unit\canvas-node-detail.spec.ts
+apps/desktop/tests/unit\flow-control-query.spec.ts
+apps/desktop/tests/unit\kanban-activity.spec.ts
+apps/desktop/tests/unit\ipc-request-validation.spec.ts
+apps/desktop/tests/unit\canvas.spec.ts
+apps/desktop/tests/unit\kanban-command.spec.ts
+apps/desktop/tests/unit\kanban-ops.spec.ts
+apps/desktop/tests/unit\thread-control-state.spec.ts
+apps/desktop/tests/unit\kanban-query.spec.ts
+apps/desktop/tests/unit\session-control-queue-lane.spec.ts
+apps/desktop/tests/unit\session-control-coordinator.spec.ts
+apps/desktop/tests/unit\session-control-request.spec.ts
+apps/desktop/tests/core\kanban-board.spec.ts
+apps/desktop/tests/core\workflow-instance.spec.ts
+apps/desktop/tests/core\todo-table.spec.ts

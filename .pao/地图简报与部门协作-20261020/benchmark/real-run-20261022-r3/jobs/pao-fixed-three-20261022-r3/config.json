@@ -1,0 +1,65 @@
+{
+    "job_name": "pao-fixed-three-20261022-r3",
+    "jobs_dir": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261022-r3/jobs",
+    "n_concurrent_trials": 1,
+    "quiet": true,
+    "environment": {
+        "type": "docker",
+        "force_build": true,
+        "delete": false,
+        "env": {
+            "PAO_HOME": "/tmp/harbor-pao-home",
+            "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+            "PI_SKIP_VERSION_CHECK": "1",
+            "TMP": "/tmp",
+            "TEMP": "/tmp",
+            "TMPDIR": "/tmp"
+        }
+    },
+    "agents": [
+        {
+            "import_path": "map_bench_pao_organized:OrganizedPAOAgent",
+            "model_name": "openai/group/deepseek",
+            "model_base_url": "http://host.docker.internal:3425/v1",
+            "model_api_key_name": "PAO_BENCH_API_KEY",
+            "model_api_format": "openai_chat_completions",
+            "kwargs": {
+                "profile": "post-pao",
+                "source_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261022-r3/source.zip",
+                "source_sha256": "b2cdf071001abb66936acb7f61d4ba52de110221199043b2f454107ee246c966",
+                "archive_format": "zip",
+                "thinking": "high",
+                "tools": "read,bash,edit,write",
+                "no_extensions": false,
+                "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+                "model_data_archive": "/run/desktop/mnt/host/d/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/build-data-freeze-20261021/model-data.zip",
+                "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a",
+                "organization_manifest_sha256": "a8ba0366cd14d39545f19ff46c571b4be63b718cc7ddc2ec48365dad83d9f3b9"
+            },
+            "env": {
+                "PAO_HOME": "/tmp/harbor-pao-home",
+                "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "TMP": "/tmp",
+                "TEMP": "/tmp",
+                "TMPDIR": "/tmp"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "name": "terminal-bench/html-js-filter",
+            "ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3"
+        },
+        {
+            "name": "terminal-bench/bun-sourcemap-leak",
+            "ref": "sha256:e55ae542f338f50f4468d940c7d7c93a45d34fd418dc6cc5883c1fedc753603a"
+        },
+        {
+            "name": "terminal-bench/nextjs-performance",
+            "ref": "sha256:81f8315fb984f91208c45b4ac153c8801d07d3beec5eb0f0d3fa9d49b6588fdd"
+        }
+    ]
+}

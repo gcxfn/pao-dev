@@ -1,0 +1,40 @@
+[I0-4a] cwd=D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+[I0-4a] PAO_HOME=D:\AI\workspace\临时文件夹\深度审核重整-20261028\i0-4a-behavior-groups\PAO_HOME
+[I0-4a] PI_OFFLINE=1
+[I0-4a] PI_NO_LOCAL_LLM=1
+[I0-4a] command=node ../../node_modules/vitest/vitest.mjs run test/pao/worker-budget.test.ts --maxWorkers=1 --reporter=verbose
+
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/worker-budget.test.ts > 父运行器与真实离线 AgentSession 接起来(审查第 2 项) > turns=1:首轮用工具、下一轮交最终回执,父层不再把回执轮当超限杀掉 2463ms
+ ✓ test/pao/worker-budget.test.ts > 父运行器与真实离线 AgentSession 接起来(审查第 2 项) > 提醒轮里再调普通工具仍被拦:子会话自己硬拒并停,父层如实报预算耗尽 2697ms
+{"type":"pao_worker_budget_exhausted","field":"cost","requests":0,"toolCalls":0}
+ ✓ test/pao/worker-budget.test.ts > 父运行器与真实离线 AgentSession 接起来(审查第 2 项) > 回执通道在提醒轮里放行且不计工具次数,父层不把它当额外普通工具杀掉 2549ms
+ ✓ test/pao/worker-budget.test.ts > 预算环境变量容错(R40 门禁不因坏配置崩扩展加载) > PAO_WORKER_BUDGET 非合法 JSON → 保留加载但阻止请求 3ms
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 辅助原生费用到成本线后阻止普通请求与摘要请求，不调用供应商 70ms
+{"type":"pao_worker_budget_exhausted","field":"cost","requests":0,"toolCalls":0}
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 辅助费用未知也关闭成本门，不能用零费用放行 34ms
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 1 轮允许本轮工具；到线先催回执——放行恰好一轮输出最终回执，自然收尾不 abort 69ms
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 第 N+1 次工具执行被拒（拒因即预算内唯一提醒），放行一轮输出回执后自然收尾 60ms
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":0}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":1,"toolCalls":0}
+{"type":"pao_worker_budget_exhausted","field":"提醒轮","requests":0,"toolCalls":1}
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 恰好 N 次工具后允许预算内的最终纯文本 JSON 回执 90ms
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > 0 轮在首次 provider 前停止，不把零调用 abort 算一次模型轮次 23ms
+ ✓ test/pao/worker-budget.test.ts > worker 预算在真实 AgentSession 中生效（离线假供应商） > provider 的 onPayload 重试触顶会收到真实取消信号 34ms
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":1}
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":1}
+ ✓ test/pao/worker-budget.test.ts > R40 催回执状态机（最多一次；交回执通道不掐死） > 提醒轮内再调非回执工具：硬拒并停（提醒只用一次），不再放行后续请求 52ms
+ ✓ test/pao/worker-budget.test.ts > R40 催回执状态机（最多一次；交回执通道不掐死） > 提醒轮里 pao_submit_receipt 放行且真正执行；交回执后再到线即停（不二次提醒） 47ms
+ ✓ test/pao/worker-budget.test.ts > R40 催回执状态机（最多一次；交回执通道不掐死） > 预算内先交回执再耗尽轮次：到线即停（无提醒轮——回执已在） 46ms
+{"type":"pao_worker_budget_exhausted","field":"turns","requests":0,"toolCalls":0}
+ ✓ test/pao/worker-budget.test.ts > R40 催回执状态机（最多一次；交回执通道不掐死） > PAO_SESSION_BUDGET 优先于 PAO_WORKER_BUDGET（全角色通用名） 26ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  02:07:10
+   Duration  19.92s (transform 9.01s, setup 0ms, import 11.36s, tests 8.27s, environment 0ms)
+
+
+[I0-4a] exitCode=0

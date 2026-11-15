@@ -1,0 +1,49 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 (40.6s)
+  ok 2 apps\desktop\tests\core\workflow-instance.spec.ts:229:5 › 同名配方的两个历史实例按路径分别打开冻结图 (15.2s)
+  x  3 apps\desktop\tests\core\workflow-instance.spec.ts:379:5 › S6-D1 执行中节点与入边动画＋实例失败可见＋未记录显示未知 (15.1s)
+  ok 4 apps\desktop\tests\core\workflow-instance.spec.ts:426:5 › S6-D1 运行图刷新不重置视口（坐标保持） (15.2s)
+
+
+  1) apps\desktop\tests\core\workflow-instance.spec.ts:379:5 › S6-D1 执行中节点与入边动画＋实例失败可见＋未记录显示未知 ─────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('canvas-dag').locator('.react-flow__node').filter({ hasText: '执行乙' }).locator('.canvas-flow-node--running')
+    Expected: [32m1[39m
+    Received: [31m0[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-dag').locator('.react-flow__node').filter({ hasText: '执行乙' }).locator('.canvas-flow-node--running')[22m
+    [2m    9 × locator resolved to 0 elements[22m
+    [2m      - unexpected value "0"[22m
+
+
+      400 |     // 执行乙＝六态蓝（进行中且无挂起）：带运行弧线类；进入乙的依赖边 animated 流动。
+      401 |     const nodeB = graph.locator(".react-flow__node").filter({ hasText: "执行乙" });
+    > 402 |     await expect(nodeB.locator(".canvas-flow-node--running")).toHaveCount(1);
+          |                                                               ^
+      403 |     await expect(graph.locator(".react-flow__edge.animated")).toHaveCount(1);
+      404 |     const animatedEdge = graph.locator(".react-flow__edge.animated");
+      405 |     await expect(animatedEdge).toHaveAttribute("data-id", JSON.stringify(["dependency", "执行甲", "执行乙"]));
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-instance.spec.ts:402:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-instance-S6-D1-执行中节点与入边动画＋实例失败可见＋未记录显示未知\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-workflow-instance-S6-D1-执行中节点与入边动画＋实例失败可见＋未记录显示未知\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-workflow-instance-S6-D1-执行中节点与入边动画＋实例失败可见＋未记录显示未知\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-instance.spec.ts:379:5 › S6-D1 执行中节点与入边动画＋实例失败可见＋未记录显示未知 ──────
+  3 passed (1.5m)

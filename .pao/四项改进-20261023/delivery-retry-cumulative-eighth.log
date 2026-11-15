@@ -1,0 +1,44 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+x·······x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：证据归属 > 真实历史回执与相邻基线 tree 对应时，第二次只读复验仍提交第一次成果
+AssertionError: expected '认领前已暂存' not to contain '认领前已暂存'
+ ❯ test/pao/delivery-retry-cumulative.test.ts:274:70
+    272|   expect(result.交卷, JSON.stringify(result)).toBe(true);
+    273|   expect(git(fixture.root, ["diff", "--cached", "--binary"])).toBe(fix…
+    274|   expect(git(fixture.root, ["show", `${result.提交哈希}:用户暂存.txt`])).not.t…
+       |                                                                      ^
+    275|   expect(git(fixture.root, ["show", `${result.提交哈希}:旧成果.txt`])).toCont…
+    276|   expect(git(fixture.root, ["diff-tree", "--no-commit-id", "--name-onl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/pao/delivery-retry-cumulative.test.ts > 重试累计交卷：当前尝试独立核验 > 真实受管 worktree 的重试链只交付已证明路径，宿主索引与成果保持原样
+AssertionError: expected '受管尝试一成果' to be '受管尝试一成果\n' // Object.is equality
+
+- Expected
++ Received
+
+  受管尝试一成果
+-
+
+ ❯ test/pao/delivery-retry-cumulative.test.ts:592:63
+    590|   const result = await deliverCard(cardsDir, 1, { executionKey: second…
+    591|   expect(result.交卷, JSON.stringify(result)).toBe(true);
+    592|   expect(git(secondRoot, ["show", `${result.提交哈希}:旧成果.txt`])).toBe("受管…
+       |                                                               ^
+    593|   expect(git(secondRoot, ["diff-tree", "--no-commit-id", "--name-only"…
+    594|    "旧成果.txt",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  09:40:26
+   Duration  92.80s (transform 254ms, setup 0ms, import 458ms, tests 92.18s, environment 0ms)
+

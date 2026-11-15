@@ -1,0 +1,177 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o05-deep-review.test.ts > O05 独立完成审核 > B1 history 仅有原文命中时，模型工具提供 sourceId 而非无命中 247ms
+   → expected '历史查询无命中(历史记忆为空;旧修订只用于追溯,不是当前依据)。' to contain 'src-discussion-entry-1-user'
+ × o05-deep-review.test.ts > O05 独立完成审核 > B2 history 原文遵循 taskId 为 NULL 或当前任务的范围 151ms
+   → expected true to be false // Object.is equality
+ × o05-deep-review.test.ts > O05 独立完成审核 > B3 已排除来源不占满原文候选截取位置 188ms
+   → expected false to be true // Object.is equality
+ × o05-deep-review.test.ts > O05 独立完成审核 > B4 封存发布期间的新采集另开段且最终可回读 288ms
+   → expected 'seg-7b56add7-6067-4c71-ac36-91efd15b2…' not to be 'seg-7b56add7-6067-4c71-ac36-91efd15b2…' // Object.is equality
+   → expected false to be true // Object.is equality
+ × o05-deep-review.test.ts > O05 独立完成审核 > B5 已注入记忆来源增加后，刷新文本仍不超过完整渲染预算 16ms
+   → expected 2398 to be less than or equal to 2000
+ × o05-deep-review.test.ts > O05 独立完成审核 > B6 可截断条目的截断提示本身计入完整渲染预算 4ms
+   → expected 2132 to be less than or equal to 2000
+ × o05-deep-review.test.ts > O05 独立完成审核 > B7 无项目绑定来源不默认成为任意项目的历史原文 149ms
+   → expected true to be false // Object.is equality
+ × o05-deep-review.test.ts > O05 独立完成审核 > B8 删除共享来源的一条记忆后，保留的原文仍可历史发现与展开 242ms
+   → expected undefined to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B1 history 仅有原文命中时，模型工具提供 sourceId 而非无命中
+AssertionError: expected '历史查询无命中(历史记忆为空;旧修订只用于追溯,不是当前依据)。' to contain 'src-discussion-entry-1-user'
+
+Expected: "src-discussion-entry-1-user"
+Received: "历史查询无命中(历史记忆为空;旧修订只用于追溯,不是当前依据)。"
+
+ ❯ o05-deep-review.test.ts:74:65
+     72|     const response = await registered.get("pao_memory_recall").execute…
+     73|     observations.B1 = { service: raw, tool: response };
+     74|     expect(response.content.map((c: any) => c.text).join("\n")).toCont…
+       |                                                                 ^
+     75|   });
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B2 history 原文遵循 taskId 为 NULL 或当前任务的范围
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ o05-deep-review.test.ts:84:49
+     82|     observations.B2 = { sid, own, other };
+     83|     expect(own.some(x => x.sourceId === sid)).toBe(true);
+     84|     expect(other.some(x => x.sourceId === sid)).toBe(false);
+       |                                                 ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B3 已排除来源不占满原文候选截取位置
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ o05-deep-review.test.ts:98:50
+     96|     observations.B3 = { sid, narrow, wide };
+     97|     expect(wide.some(x => x.sourceId === sid)).toBe(true);
+     98|     expect(narrow.some(x => x.sourceId === sid)).toBe(true);
+       |                                                  ^
+     99|   });
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B4 封存发布期间的新采集另开段且最终可回读
+AssertionError: expected 'seg-7b56add7-6067-4c71-ac36-91efd15b2…' not to be 'seg-7b56add7-6067-4c71-ac36-91efd15b2…' // Object.is equality
+ ❯ o05-deep-review.test.ts:125:36
+    123|     const read = await svc.readMemorySource({ sourceId: second, limit:…
+    124|     observations.B4 = { firstSegment, secondSegment, pending, read };
+    125|     expect.soft(secondSegment).not.toBe(firstSegment);
+       |                                    ^
+    126|     expect(read.ok).toBe(true);
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B4 封存发布期间的新采集另开段且最终可回读
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ o05-deep-review.test.ts:126:21
+    124|     observations.B4 = { firstSegment, secondSegment, pending, read };
+    125|     expect.soft(secondSegment).not.toBe(firstSegment);
+    126|     expect(read.ok).toBe(true);
+       |                     ^
+    127|   });
+    128|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B5 已注入记忆来源增加后，刷新文本仍不超过完整渲染预算
+AssertionError: expected 2398 to be less than or equal to 2000
+ ❯ o05-deep-review.test.ts:141:37
+    139|     const text = String((filtered[0] as any)?.content ?? "");
+    140|     observations.B5 = { renderedChars: Array.from(text).length, text };
+    141|     expect(Array.from(text).length).toBeLessThanOrEqual(2000);
+       |                                     ^
+    142|   });
+    143|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B6 可截断条目的截断提示本身计入完整渲染预算
+AssertionError: expected 2132 to be less than or equal to 2000
+ ❯ o05-deep-review.test.ts:149:37
+    147|     const text = selection.hits.length === 0 ? "" : [`[pao 自动召回] 当前可见 …
+    148|     observations.B6 = { budget: 2000, renderedChars: Array.from(text).…
+    149|     expect(Array.from(text).length).toBeLessThanOrEqual(2000);
+       |                                     ^
+    150|   });
+    151|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B7 无项目绑定来源不默认成为任意项目的历史原文
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ o05-deep-review.test.ts:157:49
+    155|     const other = sourceCandidates(f.store.db, { projectId: "entirely-…
+    156|     observations.B7 = { source: getSource(f.store.db, sid), other };
+    157|     expect(other.some(x => x.sourceId === sid)).toBe(false);
+       |                                                 ^
+    158|   });
+    159|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  o05-deep-review.test.ts > O05 独立完成审核 > B8 删除共享来源的一条记忆后，保留的原文仍可历史发现与展开
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ o05-deep-review.test.ts:183:77
+    181|     expect(result.isError).not.toBe(true);
+    182|     expect(result.content[0].text).toContain("SQLite");
+    183|     expect(history.ok && history.sourceHits?.some(x => x.sourceId === …
+       |                                                                             ^
+    184|   });
+    185| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  14:38:59
+   Duration  22.47s (transform 16.87s, setup 0ms, import 21.03s, tests 1.30s, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o05-deep-review-vitest.json

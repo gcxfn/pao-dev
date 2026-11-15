@@ -1,0 +1,72 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\usage-gate-coverage.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\usage-gate-coverage.test.ts"
+index 97b173e..1ad60de 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\usage-gate-coverage.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\usage-gate-coverage.test.ts"
+@@ -37,13 +37,16 @@ import {
+ 	readCard,
+ } from "../../src/pao/cards/index.ts";
+ import { executeFanout } from "../../src/pao/fanout/execute.ts";
+-import { buildDispatchBudgetGate } from "../../src/pao/usage/dispatch-gate.ts";
+ import {
+ 	BUDGET_LEDGER_FILENAME,
+ 	budgetLedgerPath,
+ 	grantBudget,
+ 	inspectReservation,
+ } from "../../src/pao/usage/budget-ledger.ts";
++import { buildDispatchBudgetGate } from "../../src/pao/usage/dispatch-gate.ts";
++import { registerWorkerTools } from "../../src/pao/worker/index.ts";
++import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
++import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+ import { runAutoChain } from "../../src/pao/workflow/auto.ts";
+ import {
+ 	addNodeCards,
+@@ -53,9 +56,6 @@ import {
+ 	startControl,
+ } from "../../src/pao/workflow/control.ts";
+ import { loadRecipe, type WorkflowRecipe } from "../../src/pao/workflow/recipe.ts";
+-import { registerWorkerTools } from "../../src/pao/worker/index.ts";
+-import type { WorkerReceipt } from "../../src/pao/worker/receipt.ts";
+-import { WorkerRunner, type WorkerRunOptions } from "../../src/pao/worker/runner.ts";
+ 
+ const dirs: string[] = [];
+ const runners: WorkerRunner[] = [];
+@@ -287,17 +287,11 @@ describe("扇出路径受总预算约束（H0 补上的缺口）", () => {
+ 		);
+ 
+ 		expect(summary.count.成功).toBe(1);
+-		// 扇出直调链路上没有完成回调，所以这里只证「预留发生过」，不证「结算完成」；
+-		// 结算由 worker 完成回调负责，见 usage-gate-wiring 的 settled 断言。
+-		// **不要因为这里看到 `reserved` 就判定扇出漏结算。**（分层事实：预留发生在派发这一刻、
+-		// 在 executeDispatch 内；结算发生在进程退出、回执落卡那一刻，在 worker 侧。）
+ 		const 记录 = inspectReservation(home, keyOf(created.card_no, 1));
+-		expect(记录.state).not.toBe("missing");
++		expect(记录.state).toBe("settled");
+ 		if (记录.state !== "missing") {
+ 			expect(记录.reservation.预留额).toBe(4);
+-			// 接线前扇出根本不碰账本，这里会停在 missing——所以「预留发生过」本身就是
+-			// H0 补上缺口的核心证据。至于为什么可能仍是 reserved：见上一条注释。
+-			expect(["reserved", "settled"]).toContain(记录.state);
++			expect(记录.reservation.已结算费用).toBe(1.25);
+ 		}
+ 	});
+ });
+@@ -340,6 +334,7 @@ describe("自动链路径受总预算约束（H0 补上的缺口）", () => {
+ 		await grant(home, 100);
+ 		const recipe = writeAutoRecipe(home, "预算充足链");
+ 		const runner = new FakeRunner();
++		runner.costs = [2];
+ 		runners.push(runner);
+ 		attachSuccessScript(runner, join(cardsDir, "..", ".."));
+ 		const options = { cardsDir, paoHome: home, ownerSessionId: "owner", 运行器: runner };
+@@ -348,9 +343,9 @@ describe("自动链路径受总预算约束（H0 补上的缺口）", () => {
+ 		await runAutoChain(recipe, options);
+ 
+ 		expect(runner.runs).toHaveLength(1);
+-		// 预留一定写过（门禁真的走了）：判据与单卡/扇出同形
+ 		const 记录 = inspectReservation(home, keyOf(runner.runs[0]!.卡号, runner.runs[0]!.尝试号 ?? 1));
+-		expect(记录.state).not.toBe("missing");
++		expect(记录.state).toBe("settled");
++		if (记录.state !== "missing") expect(记录.reservation.已结算费用).toBe(2);
+ 	});
+ });
+ 

@@ -1,0 +1,131 @@
+
+Running 3 tests using 1 worker
+
+
+
+[1A[2K(node:25036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:25036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[1/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:791:5 › 最终发行物 V08/V13：辅助问答与主控并行、连续记录和来源隔离
+[1A[2K  1) apps\desktop\tests\production\packaged-side-chat.spec.ts:791:5 › 最终发行物 V08/V13：辅助问答与主控并行、连续记录和来源隔离 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('side-chat-panel').locator('.side-chat__message[data-role="user"]').last()
+    Expected substring: [32m"PACKAGED_SIDE_[7m900X520[27m"[39m
+    Received string:    [31m"[7m你的追问2026/10/19 17:31:09[27mPACKAGED_SIDE_[7mA_FIRST[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('side-chat-panel').locator('.side-chat__message[data-role="user"]').last()[22m
+    [2m    9 × locator resolved to <article data-role="user" data-status="complete" class="side-chat__message">…</article>[22m
+    [2m      - unexpected value "你的追问2026/10/19 17:31:09PACKAGED_SIDE_A_FIRST"[22m
+
+
+      865 |     // 离线替身立即返回固定文本，不连接真实供应商；这里同时证明矮窗发送按钮可实际点击。
+      866 |     await compactSend.click();
+    > 867 |     await expect(panel.locator('.side-chat__message[data-role="user"]').last()).toContainText(
+          |                                                                                 ^
+      868 |       "PACKAGED_SIDE_900X520",
+      869 |     );
+      870 |     await expect(panel.locator('.side-chat__message[data-role="assistant"]').last()).toContainText(
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:867:81
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-f4507-V08-V13：辅助问答与主控并行、连续记录和来源隔离\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-f4507-V08-V13：辅助问答与主控并行、连续记录和来源隔离\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-packaged-side-c-f4507-V08-V13：辅助问答与主控并行、连续记录和来源隔离\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+[1A[2K(node:24500) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+
+[1A[2K(node:24500) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[2/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:1012:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录
+[1A[2K  2) apps\desktop\tests\production\packaged-side-chat.spec.ts:1012:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+
+    Error: page.evaluate: Error: Error invoking remote method 'pi-gui:get-side-chat': Error: Side chat source must be the selected session in this window.
+
+      1058 |
+      1059 |       // 正式 IPC 只允许读取当前选中来源；先在当前合法的甲来源取得快照。
+    > 1060 |       const snapshotA = await window.evaluate(async (target) => {
+           |                                      ^
+      1061 |         const app = (globalThis.window as PiAppWindow).piApp as PiDesktopApi | undefined;
+      1062 |         if (!app) throw new Error("piApp IPC bridge is unavailable");
+      1063 |         return app.getSideChat(target);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:1060:38
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-packaged-side-c-d4977-跨越-30-秒后可结束-loading-并显示恢复记录\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+[1A[2K(node:17904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:17904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K[3/3] apps\desktop\tests\production\packaged-side-chat.spec.ts:1191:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录
+[1A[2K  3) apps\desktop\tests\production\packaged-side-chat.spec.ts:1191:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('department-execution-panel').getByText('工人 1', { exact: true })
+    Expected: visible
+    Error: strict mode violation: getByTestId('department-execution-panel').getByText('工人 1', { exact: true }) resolved to 2 elements:
+        1) <strong>工人 1</strong> aka getByLabel('任务与真实工人状态').getByText('工人 1')
+        2) <strong>工人 1</strong> aka getByRole('button', { name: '工人 1 工人执行会话 查看会话 ↗' })
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('department-execution-panel').getByText('工人 1', { exact: true })[22m
+
+
+      1253 |       await expect(panel).toBeVisible();
+      1254 |       await expect(panel.getByRole("heading", { name: "审查部", exact: true })).toBeVisible();
+    > 1255 |       await expect(panel.getByText("工人 1", { exact: true })).toBeVisible();
+           |                                                              ^
+      1256 |       await expect(panel.getByText(DEPARTMENT_LONG_GOAL, { exact: true })).toBeVisible();
+      1257 |       expect(
+      1258 |         await panel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1),
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\production\packaged-side-chat.spec.ts:1255:62
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\production-packaged-side-c-b2191--V04-已读甲部门工人切乙部门或乙主控后不残留甲记录\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\production-packaged-side-c-b2191--V04-已读甲部门工人切乙部门或乙主控后不残留甲记录\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  3 failed
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:791:5 › 最终发行物 V08/V13：辅助问答与主控并行、连续记录和来源隔离 
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:1012:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 慢显式 get 跨越 30 秒后可结束 loading 并显示恢复记录 
+    apps\desktop\tests\production\packaged-side-chat.spec.ts:1191:7 › 发行物辅助对话 UI 模拟与真实 API fixture › V04 已读甲部门工人切乙部门或乙主控后不残留甲记录 

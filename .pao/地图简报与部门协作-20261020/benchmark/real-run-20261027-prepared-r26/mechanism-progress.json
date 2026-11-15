@@ -1,0 +1,34 @@
+{
+  "at": "2026-10-27T02:29:38.247205+00:00",
+  "instance": "824f00f2-1291-48de-83da-1e5438d29840",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "824f00f2-1291-48de-83da-1e5438d29840",
+      "owner": "01a17b16-371b-7527-afac-6142c036d91b",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "卡0001（实施节点第1轮）状态仍为 in_progress：机械条件 6 条已全过、/app/filter.py 存在且仅用标准库、良性样本逐字节保真，回执证据与实现一致；工人自报两项未达项（评测口径未知、人工审核项）并要求 owner（主控）逐项裁决。部长现场读取实现后另发现一处需裁定的边界行为：/app/filter.py 的 strip_javascript() 在遇到未闭合的 <script>（_find_script_end 返回 None）时执行 pos = length，会把该标签之后全部文件内容一并删除，可能丢失合法 HTML/文本，与卡面“输出仅少危险片段、保留尽可能多 HTML”的要求存在冲突；另有注释内 <script> 被 _strip_scripts_in 删除（改变注释内容）这一取舍需明确。部长已尝试对本卡做返修（pao_minister_rework_cards），被流程门拒绝：“当前节点已确认、判定或完成；原卡返修只修未完成节点的失败或验收缺陷，其它情况须走审核回边”。因此请求裁定并给出明确处理路径：1) 由审核节点（回边）核对上述两点后决定 pass/change，或由主控以 accepted_deviations 结案这两项自报未达项；2) 未闭合 <script> 截断问题应按缺陷返修还是作为已知边界接受，需给出结论；3) 若走返修，请明确由哪个节点/卡承载该返修（部长侧 rework 通道当前被门禁关闭）。部长不再新增卡，也不自行代为放行或改状态。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T02:18:10.928Z",
+    "事件": "自动链停因",
+    "理由": "等待部长拆卡、结束信号或节点判定"
+  },
+  "latest_business_event_at": "2026-10-27T02:18:10.928Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-27T02:18:10.928Z\", \"理由\": \"等待部长拆卡、结束信号或节点判定\"}",
+  "progress_observed_at": "2026-10-27T02:18:14.971249+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

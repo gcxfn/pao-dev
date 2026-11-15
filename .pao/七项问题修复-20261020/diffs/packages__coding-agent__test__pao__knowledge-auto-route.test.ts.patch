@@ -1,0 +1,80 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\knowledge-auto-route.test.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\knowledge-auto-route.test.ts"
+index bce9c55..c57c44f 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\test-pao\\knowledge-auto-route.test.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\test\\pao\\knowledge-auto-route.test.ts"
+@@ -480,4 +480,75 @@ describe("自动模式：语义库接缝（真·并行两路，§18.3）", () =>
+ 		expect(result.isError).toBeUndefined();
+ 		expect(textOf(result as never)).toContain("[语义库召回失败]");
+ 	});
++
++	test("只剩供应商召回未完成时取消 → 及时拒绝且不伪装成供应商失败", async () => {
++		const controller = new AbortController();
++		let completedSearches = 0;
++		const rows = defaultRows().map((row) => ({ ...row, 标签: ["连接池"] }));
++		for (const row of rows) makeDeptLib(home, row.名字);
++		let release!: (hits: MemoryHit[]) => void;
++		const pendingRecall = new Promise<MemoryHit[]>((resolve) => {
++			release = resolve;
++		});
++		let entered!: () => void;
++		const recallEntered = new Promise<void>((resolve) => {
++			entered = resolve;
++		});
++		const pending = autoPatrol({
++			查询: "mysql",
++			注册表行: rows,
++			paoHome目录: home,
++			embed: null,
++			signal: controller.signal,
++			searchImpl: async () => {
++				completedSearches++;
++				return {
++					hits: [],
++					riskHits: [],
++					degraded: true,
++					degradeReason: "文件检索先结束",
++				};
++			},
++			vendorRecall: async (_query, _limit, signal) => {
++				expect(signal).toBe(controller.signal);
++				entered();
++				return pendingRecall;
++			},
++		});
++		await recallEntered;
++		await expect.poll(() => completedSearches).toBe(rows.length);
++		controller.abort(new Error("用户取消自动查库"));
++		await expect(pending).rejects.toThrow("用户取消自动查库");
++		release([{ 内容: "迟到结果" }]);
++		await new Promise((resolve) => setTimeout(resolve, 0));
++	});
++
++	test("没有任何文件库、只剩供应商召回时取消 → 同样及时拒绝", async () => {
++		const controller = new AbortController();
++		let release!: (hits: MemoryHit[]) => void;
++		const pendingRecall = new Promise<MemoryHit[]>((resolve) => {
++			release = resolve;
++		});
++		let entered!: () => void;
++		const recallEntered = new Promise<void>((resolve) => {
++			entered = resolve;
++		});
++		const pending = autoPatrol({
++			查询: "mysql",
++			注册表行: [],
++			paoHome目录: home,
++			embed: null,
++			signal: controller.signal,
++			vendorRecall: async (_query, _limit, signal) => {
++				expect(signal).toBe(controller.signal);
++				entered();
++				return pendingRecall;
++			},
++		});
++		await recallEntered;
++		controller.abort(new Error("用户取消无库自动查库"));
++		await expect(pending).rejects.toThrow("用户取消无库自动查库");
++		release([{ 内容: "迟到结果" }]);
++		await new Promise((resolve) => setTimeout(resolve, 0));
++	});
+ });

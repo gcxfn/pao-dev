@@ -1,0 +1,57 @@
+{
+	"schemaVersion": 1,
+	"kind": "dispatch-input-snapshot",
+	"cardsDir": "/app/.pao/benchmark/卡",
+	"card": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardPath": "/app/.pao/benchmark/卡/卡0003-对照原始任务审计并实测appfilter.md",
+		"cardNo": 3,
+		"attempt": 1,
+		"owner": "主控",
+		"sourceHead": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6"
+	},
+	"execution": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardNo": 3,
+		"attempt": 1,
+		"projectRoot": "/app",
+		"repositoryRoot": "/app",
+		"executionRoot": "/app",
+		"commonGitDir": "/app/.git",
+		"versionControl": "git",
+		"baseHead": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"baseTreeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"inputVersion": "cfdb0d8168da9f69c1595df975baf7e8dfebb1b6",
+		"bindingDigest": "sha256:5026497eecb87ee799ad8730b4b8e2221cf6bd2347cac5703c402c6b46a5ef37"
+	},
+	"cardDefinition": {
+		"goal": "对照原始任务审计并实测 /app/filter.py（当前已存在一版实现，禁止推倒重写）：它必须能 `python3 filter.py <FILE>` 就地去除 HTML 中的 JavaScript，且除被删除的有害片段外逐字节保留其余内容（缩进、换行、属性顺序与引号风格、实体、注释、表格与标题结构、非危险属性）。步骤：①只读通读 /app/filter.py，核对其覆盖 <script>、on* 事件属性、javascript:/vbscript:/script 型 data: URL、style 与 <style> 中的 expression()、meta refresh、svg animate、srcdoc 等载体，以及 argv[1]/就地/标准库约束；②新建并维护回归自测脚本 /app/selfcheck_filter.py（纯标准库，夹具全部写入 tempfile 临时目录，不往 /app 直写测试数据），覆盖：无 JS 文档逐字节不变、各类 JS 载体被移除、合法结构与属性保留、重复运行幂等且不改 mtime、UTF-8 与 BOM 处理、输出可被 html.parser 解析、缺参/文件不存在的退出码；③对自测暴露的真实缺陷做最小必要修正；若全部通过则保持现有实现不动并在回执中说明。回执必须给出实际命令与真实回显、修改前后差异片段、以及未验证/存疑项。",
+		"dept": "实施",
+		"inputs": [],
+		"constraints": "只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high；保存节点地图时必须传 scope_confirmed=true 且 scope_review_required=false（覆盖范围已核对足以检出新增使用点），否则下游会以「交接地图未确认有效」停链。\n只用 Python 标准库与环境中已安装包，禁止联网安装依赖；只改 /app/filter.py，另可新增/维护 /app/selfcheck_filter.py，不得在 /app 留下一性垃圾文件；严禁读取 /tests、/solution、oracle 或任何基准答案，严禁上网搜题解；不得伪造任何运行输出，每条结论必须有真实命令回显；不得改变既有字节保真契约（除删除的 JS 片段外不得重排版/重序列化），不得改变调用约定（argv[1]、就地修改、成功 0）；不要为了让自测通过而写死用例或塞入基准特征串。",
+		"acceptance": "跑: python3 -m py_compile filter.py\n跑: python3 selfcheck_filter.py\n存在: filter.py\n存在: selfcheck_filter.py\n包含: filter.py::sys.argv\n包含: selfcheck_filter.py::fidelity\n人工审核: 部长核对工人回执：是否给出真实命令回显与修改前后 diff；实体编码/空白与控制字符折叠/大小写混淆的 javascript: 协议、on* 事件属性、style 与 <style> 的 expression()、meta refresh、iframe srcdoc、svg animate 等边界的实际覆盖；是否引入任务无关改动、新依赖或对已正确逻辑的重写；未验证项是否如实列出。质量与风格判断不由自动勾选代替。",
+		"depends_on": [],
+		"tier": "primary",
+		"priority": "medium",
+		"created": "2026-10-23 18:25",
+		"definitionDigest": "sha256:6266f54dde3da1361c66c8d9c3c66e21fb913de35c532e3b833ac127c869f7e6"
+	},
+	"briefMarkdown": "# 卡0003 执行简报\n\n## 任务目标\n对照原始任务审计并实测 /app/filter.py（当前已存在一版实现，禁止推倒重写）：它必须能 `python3 filter.py <FILE>` 就地去除 HTML 中的 JavaScript，且除被删除的有害片段外逐字节保留其余内容（缩进、换行、属性顺序与引号风格、实体、注释、表格与标题结构、非危险属性）。步骤：①只读通读 /app/filter.py，核对其覆盖 <script>、on* 事件属性、javascript:/vbscript:/script 型 data: URL、style 与 <style> 中的 expression()、meta refresh、svg animate、srcdoc 等载体，以及 argv[1]/就地/标准库约束；②新建并维护回归自测脚本 /app/selfcheck_filter.py（纯标准库，夹具全部写入 tempfile 临时目录，不往 /app 直写测试数据），覆盖：无 JS 文档逐字节不变、各类 JS 载体被移除、合法结构与属性保留、重复运行幂等且不改 mtime、UTF-8 与 BOM 处理、输出可被 html.parser 解析、缺参/文件不存在的退出码；③对自测暴露的真实缺陷做最小必要修正；若全部通过则保持现有实现不动并在回执中说明。回执必须给出实际命令与真实回显、修改前后差异片段、以及未验证/存疑项。\n\n- 部门：实施\n- owner：主控\n- 卡与尝试：/app/.pao/benchmark/卡/卡0003-对照原始任务审计并实测appfilter.md，尝试 1\n- 执行根：/app\n- 仓库根：/app\n\n## 范围与限制\n只处理原始公开任务，不读取 /tests、/solution、oracle 或在线基准答案；不伪造运行结果；所有角色均使用 DeepSeek high；保存节点地图时必须传 scope_confirmed=true 且 scope_review_required=false（覆盖范围已核对足以检出新增使用点），否则下游会以「交接地图未确认有效」停链。\n只用 Python 标准库与环境中已安装包，禁止联网安装依赖；只改 /app/filter.py，另可新增/维护 /app/selfcheck_filter.py，不得在 /app 留下一性垃圾文件；严禁读取 /tests、/solution、oracle 或任何基准答案，严禁上网搜题解；不得伪造任何运行输出，每条结论必须有真实命令回显；不得改变既有字节保真契约（除删除的 JS 片段外不得重排版/重序列化），不得改变调用约定（argv[1]、就地修改、成功 0）；不要为了让自测通过而写死用例或塞入基准特征串。\n输入入口：卡面未列输入。\n\n## 已确认事实\n- 卡面给出的目标、范围和验收视为已确认；地图未贡献额外事实。\n\n## 未知与待复核\n- 未列出的行为只能通过目标任务内定点核查确认，不能猜为事实。\n### 上游地图 wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc\n- 引用：`pao-map://wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc?digest=sha256%3Ae17c8a7cc18eb12a49ed10464150d063d49a062226b8e23ad6372df297199d0a&status=valid`\n- 覆盖：`filter.py`、`selftest/run_checks.py`\n- 排除：`.git`、`.pao`、`solution`、`tests`\n- 事实：任务契约（唯一需求来源）：/app/filter.py 必须 (a) 取 argv[1] 为 HTML 路径，(b) 就地改写该文件，(c) 移除全部 JavaScript 载体，(d) 除被移除的有害子串外与输入功能等价，(e) 不得改变 HTML 内容格式（仅允许解析过程自然产生的规范化），(f) 只用环境已装包——即标准库。\n- 事实：现状：/app/filter.py 存在且完整（793 行），仅 import codecs/html/os/re/sys/tempfile，无第三方依赖，满足约束 (f)；入口 main(argv) 校验 len(argv)<2、os.path.isfile，失败写 stderr 返回 2，成功返回 0，满足 (a)(b)。\n- 事实：实现架构：不重新序列化文档；用 TAGNAME_RE/parse_start_tag 容错词法化，定位需删除的源码区间后切片拼接，因此未触碰的字节（缩进、换行、属性顺序、引号风格、实体、注释、CRLF）逐字节保留，比任务要求的『仅允许解析规范化』更严格。\n- 事实：字节处理：decode_bytes/encode_text 走 BOM 探测 + utf-8 + surrogateescape；write_atomic 用 mkstemp + os.replace 原子替换并保留原 st_mode；清洗结果等于原文时直接 return False 不落盘（mtime 不变），这是保真与幂等的基础。\n- 事实：JS 载体覆盖面：strip_js 定点至多 8 轮至不动点；_strip_js_once 处理 <script>（含 svg:script、大小写、属性、自闭合、孤立 </script>、未闭合删至 EOF）、事件属性（classify_attr 的 base.startswith('on')）、URL 属性（URL_ATTRS: href/src/action/formaction/xlink:href/background/poster/data/cite/longdesc/codebase/profile/usemap）、多值 URL 容器（srcset/ping/archive/manifest/imagesrcset）、style 属性与 <style> 块的危险 CSS 声明（expression(/javascript:/vbscript:/behavior:/-moz-binding，含 _css_unescape 反混淆）、iframe[srcdoc] 递归清洗、meta[http-equiv=refresh][content]、SVG 动画元素（SVG_ANIM_TAGS + _svg_anim_targets_event）。\n- 事实：反混淆：_decode_entities_deep 最多 4 轮 html.unescape，_IGNORABLE_RE 剥除 C0/C1/DEL/Unicode 空白（含 U+00A0、U+2000-U+200F、U+FEFF）后小写比对，可识别 jav&#x61;script:、java<tab>script:、JaVaScRiPt: 等变形。\n- 事实：误删控制：URL 属性仅在值确为 javascript:/vbscript:/危险 data: 时整属性丢弃；data: 仅丢 media 含 html/svg 者，data:image/png 保留；style 只丢危险声明，删空才丢属性。\n- 事实：既有自测：/app/selftest/run_checks.py（577 行）提供 core/fidelity/edge/perf + all；含独立于实现的残留检测（_DEAD_PATTERNS/residual_js）、结构等价比较（html.parser 树 + drop_dangerous）、字节保真 10 例、幂等 7 例、边界 24 例、CLI 契约、py_compile、400 例固定种子 fuzz、8000 块性能用例；全部落 mkdtemp 临时目录。\n- 事实：计划 S1（实施·必做）：先跑真实基线再改代码——python3 -m py_compile /app/filter.py 与 python3 /app/selftest/run_checks.py all，记录退出码与失败项；崩溃优先于能力扩展。\n- 事实：计划 S2（实施）：按 R1/R2/R3 做定点修补（命名空间 script 的结束标签回退、data: 白名单化、on* 误删收敛到真实事件名），每项改完立即重跑 S1 两条命令并贴输出。\n- 事实：计划 S3（实施·独立黑盒）：用任务原文隐含判据自建一次性语料：(i) 纯 HTML（表格/标题/实体/CRLF/属性顺序/无尾换行）前后字节全等；(ii) 含 <script>/on*/javascript:/vbscript:/CSS expression/meta refresh 的语料处理后正则扫描 <script、\\son[a-z]+\\s*=、javascript\\s*:、vbscript\\s*:、expression\\s*\\( 全无命中；(iii) 同文件跑两遍第二遍 no-op；(iv) 表格/标题/图片/链接按原文保留。\n- 事实：计划 S4（实施）：把 S3 语料与断言固化为可复跑入口（复用或扩展 run_checks 的 core/fidelity/edge），让审核节点一条命令复现。\n- 事实：计划 S5（审核·独立）：审核不得以实施自报输出为证据，须在只读副本用自建语料复跑，至少覆盖实体/制表符/换行混淆的 javascript:、<SCRIPT SRC=...> 与 <script/> 变体、属性内含 > 的正常标签，并核对未改动区域逐字节相同。\n- 事实：计划 S6（交付判据）：仅当 py_compile 通过、自测 0 失败、独立黑盒扫描无残留、纯 HTML 字节全等、幂等成立 五条同时成立才判交付。\n- 事实：可复用验收命令：跑: python3 -m py_compile /app/filter.py；跑: python3 /app/selftest/run_checks.py all；跑: python3 -c \"import subprocess,sys;print(subprocess.run([sys.executable,'/app/filter.py'],capture_output=True).returncode)\"（期望非 0 且 stderr 非空）。\n- 事实：证据边界：本轮为只读规划节点，未执行任何 Python、未运行 filter.py、未修改 /app 任何文件；上述行为均来自逐行阅读源码，属静态证据，运行时结论待实施/审核实测。\n- 未知：运行时行为全部未验证：本轮只读，未执行 python3 /app/filter.py，py_compile、自测四子命令与 fuzz 的实际退出码/失败项均未知。\n- 未知：filter.py 是否能真正跑通未验证；代码用 from __future__ import annotations 与 dict[str, str] 注解，更早的 Python 版本需实测确认。\n- 未知：评分侧语料形态未知：是否含 SVG/MathML 或 srcdoc、是否要求 <script> 内部文本一并消失、是否允许注释内残留字面 <script>——决定 R4/R5 取舍方向。\n- 未知：/app 下是否还有其他文件（样例 HTML、配置、__pycache__、软链）未确认：本轮只读到两个文件，目录枚举受限，不能断言 /app 只有这两个文件。\n- 未知：评分是否对 stdout、多参数、相对路径调用有额外要求；任务原文只写 argv[1]，当前返回 2/1 的行为未被外部规范确认。\n- 未知：无历史运行证据可引用：仓库无 CI 日志、无上次自测输出，『曾经通过』不可采信。\n- 风险：R1 过度删除（高）：_strip_js_once 对 script 元素用 element_end(text, tag_end, name)，name 保留原始串（如 svg:script）；若文档以 <svg:script> 开、以普通 </script> 收，_endtag_re 找不到结束标签 → 返回 len(text)，把剩余整段文本删光，直接违反『保留尽量多 HTML』。修补方向：结束标签匹配回退到 base name（script）。\n- 风险：R2 漏删（中）：is_dangerous_url 对 data: 走黑名单（仅含 html/svg 才丢），data:text/javascript、data:application/javascript 会被保留；若进入可执行上下文即为真实 JS 载体。修补方向：改白名单，仅保留 data:image/(png|jpeg|gif|webp|bmp)。\n- 风险：R3 误删（中）：classify_attr 以 base.startswith('on') and len(base)>2 判事件属性，凡 on 开头且长度>2 的属性名都被整属性删除，违反保真。修补方向：仅在已知事件处理器名集合内删除，否则保守保留。\n- 风险：R4 内容改动（待裁定）：RAW_VERBATIM(textarea/title/xmp/plaintext) 内字面 <script>...</script> 文本会被切掉；浏览器中该处不执行，删除属内容变更。若评分用朴素 <script 子串扫描则保留会直接失败。需审核明确裁定并记录理由。\n- 风险：R5 内容改动（低-中）：HTML 注释逐字节保留，注释内字面 <script> 会留在输出中，朴素扫描器可能误判。与 R4 同一权衡轴，需一致裁定。\n- 风险：R6 自证风险（高）：selftest/run_checks.py 与 filter.py 同批产出，断言可能同源（residual_js 只扫已知模式、结构比较排除 style）。只复跑该自测等于用被检方的尺子量被检方，必须叠加独立语料与独立断言。\n- 风险：R7 格式改动（低）：_render_css_items 丢弃危险声明后会补插分号分隔符，仅发生在含危险 CSS 的 style 属性/<style> 内；需确认未波及安全 CSS 段。\n- 风险：R8 编码/文件属性（低）：write_atomic 用 os.replace，目标为符号链接时会被替换成普通文件；UTF-16 输入只解码正文不调整 meta charset。记录为已知边界。\n- 风险：R9 幂等上限（低）：strip_js 最多 8 轮，极端嵌套 srcdoc 理论上可能不达不动点；既有 fuzz 仅 400 例固定种子，不能证明全空间幂等。\n- 风险：R10 未跟踪产物（流程风险）：/app 下另有自建 selftest/ 目录，属任务未要求的附加产物，判定包已标注两文件变化未能归因；需核查其不夹带按路径特判、读环境变量或向项目外写盘等有害行为。\n\n## 按任务目的装配\n- 执行者携带本卡目标、范围、验收和必要事实，并允许读取目标代码及直接调用点核验。\n- 不得遍历整个目录，也不得把未知项当作既定事实。\n\n## 上游必要结论\n- 本卡没有声明已保存的上游简报。\n\n## 相关地图\n- 本卡没有声明结构化地图；以下按卡面任务和证据入口开工。\n\n- 本卡没有声明外部接口契约。\n\n## 前置成果\n- 本卡没有声明前置成果。\n\n## 验收\n- 卡面验收原文：跑: python3 -m py_compile filter.py\n跑: python3 selfcheck_filter.py\n存在: filter.py\n存在: selfcheck_filter.py\n包含: filter.py::sys.argv\n包含: selfcheck_filter.py::fidelity\n人工审核: 部长核对工人回执：是否给出真实命令回显与修改前后 diff；实体编码/空白与控制字符折叠/大小写混淆的 javascript: 协议、on* 事件属性、style 与 <style> 的 expression()、meta refresh、iframe srcdoc、svg animate 等边界的实际覆盖；是否引入任务无关改动、新依赖或对已正确逻辑的重写；未验证项是否如实列出。质量与风格判断不由自动勾选代替。\n- 执行者逐项给出 pass/fail/not_run 与证据；程序仍按机械验收规则复核。\n\n## 风险\n- 地图未另列风险；仍按卡面限制和未知项核查。\n\n## 证据入口\n- [upstream] `/app/.pao/benchmark/输入快照/map/wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc.json`；地图覆盖、事实、未知和影响范围\n\n## 整合责任\n由 owner 按任务卡和并行计划指定；worker 不自行整合其他任务成果。\n\n## 输入有效性\n- 启动前仍须由程序重核地图、契约和执行身份。\n",
+	"brief": {
+		"ref": "pao-brief://brief-card-0003-attempt-1?digest=sha256%3A6b3f50ce2d55b91bf633b12fd2397864d268629419120a23df9e0e0ec2c5a4f3",
+		"digest": "sha256:6b3f50ce2d55b91bf633b12fd2397864d268629419120a23df9e0e0ec2c5a4f3"
+	},
+	"evidence": [
+		{
+			"kind": "upstream",
+			"path": "/app/.pao/benchmark/输入快照/map/wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc.json",
+			"ref": "pao-map://wf-b5367981-cbaf-48a8-86a5-560458732f31----1-ffdce40c-4ea6-427c-80a9-7af73c2898fc?digest=sha256%3Ae17c8a7cc18eb12a49ed10464150d063d49a062226b8e23ad6372df297199d0a&status=valid",
+			"purpose": "地图覆盖、事实、未知和影响范围",
+			"digest": "sha256:e17c8a7cc18eb12a49ed10464150d063d49a062226b8e23ad6372df297199d0a"
+		}
+	],
+	"contracts": [],
+	"warnings": [],
+	"frozenAt": "2026-10-23T18:25:32.662Z",
+	"snapshotDigest": "sha256:325b701a48e50aa93de144a4513a4885c68bc383975e8cd5b3ad72b71c079068"
+}

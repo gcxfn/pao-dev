@@ -1,0 +1,80 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO
+
+ × packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 真实隔离 Git 排除认领前 dirty/untracked，并准确区分本次 created/modified/deleted；忽略模型 changes 5468ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > managed 执行根与任务根同名文件隔离，只读取绑定执行根 5166ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 旧 attempt 明确未知，不拿旧基线配新卡面 4177ms
+ × packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 基线缺失时明确未知，不返回空改动冒充可用 5027ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → EPERM, Permission denied: \\?\D:\AI\workspace\ÁÙÊ±ÎÄ¼þ¼Ð\Éî¶ÈÉóºËÖØÕû-20261028\i3-change-facts\PAO_HOME\.pao\tasks\i3-change-facts\case-GM08iI '\\?\D:\AI\workspace\��ʱ�ļ���\����������-20261028\i3-change-facts\PAO_HOME\.pao\tasks\i3-change-facts\case-GM08iI'
+ ✓ packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 基线损坏时明确未知，不返回空改动冒充可用 4472ms
+ ✓ packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 持久执行绑定损坏时明确未知，任务根同名文件也不能兜底 3380ms
+ ✓ packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 证据卡或 attempt 身份错配时明确未知 3333ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 真实隔离 Git 排除认领前 dirty/untracked，并准确区分本次 created/modified/deleted；忽略模型 changes
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/worker-change-facts.test.ts:214:2
+    212|
+    213| describe("worker 当前 attempt 文件改动事实", () => {
+    214|  it("真实隔离 Git 排除认领前 dirty/untracked，并准确区分本次 created/modified/deleted；忽…
+       |  ^
+    215|   const f = await primaryFixture();
+    216|   writeFileSync(join(f.executionRoot, "modified.txt"), "v2 worker\n", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > managed 执行根与任务根同名文件隔离，只读取绑定执行根
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/worker-change-facts.test.ts:244:2
+    242|  });
+    243|
+    244|  it("managed 执行根与任务根同名文件隔离，只读取绑定执行根", async () => {
+       |  ^
+    245|   const root = caseRoot();
+    246|   const taskRoot = join(root, "task");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 基线缺失时明确未知，不返回空改动冒充可用
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/coding-agent/test/pao/worker-change-facts.test.ts:361:31
+    359|  });
+    360|
+    361|  it.each(["缺失", "损坏"] as const)("基线%s时明确未知，不返回空改动冒充可用", async (failure…
+       |                               ^
+    362|   const f = await primaryFixture();
+    363|   if (failure === "缺失") unlinkSync(f.baselinePath);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  packages/coding-agent/test/pao/worker-change-facts.test.ts > worker 当前 attempt 文件改动事实 > 基线缺失时明确未知，不返回空改动冒充可用
+Error: EPERM, Permission denied: \\?\D:\AI\workspace\ÁÙÊ±ÎÄ¼þ¼Ð\Éî¶ÈÉóºËÖØÕû-20261028\i3-change-facts\PAO_HOME\.pao\tasks\i3-change-facts\case-GM08iI '\\?\D:\AI\workspace\��ʱ�ļ���\����������-20261028\i3-change-facts\PAO_HOME\.pao\tasks\i3-change-facts\case-GM08iI'
+ ❯ packages/coding-agent/test/pao/worker-change-facts.test.ts:33:37
+     31|
+     32| afterEach(() => {
+     33|  for (const dir of cases.splice(0)) rmSync(dir, { recursive: true, for…
+       |                                     ^
+     34| });
+     35| afterAll(() => rmSync(FIXTURE_PARENT, { recursive: true, force: true, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: 'EPERM', path: '\\?\D:\AI\workspace\\ufffd\ufffdʱ\ufffdļ\ufffd\ufffd\ufffd\\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd-20261028\i3-change-facts\PAO_HOME\.pao\tasks\i3-change-facts\case-GM08iI', syscall: 'rm' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+   Start at  01:01:31
+   Duration  32.35s (transform 699ms, setup 0ms, import 891ms, tests 31.06s, environment 0ms)
+
+EXIT_CODE=1

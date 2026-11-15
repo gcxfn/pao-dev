@@ -1,0 +1,23 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 追加与骨架 > 文件不存在时只建「# 摩擦日志＋## 草稿区」两级骨架，再追加草稿行 12ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 追加与骨架 > 草稿区标题缺失时在文件尾补标题，不破坏既有正文 8ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 追加与骨架 > 多行事实压成单行（一行一事不被破坏） 8ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 去重与周清 > 两个项目同号卡各留一行，重复事件只累加所属项目 16ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 去重与周清 > 同卡同场景去重：次数 +1、时间戳刷新、事实保留首次记录，不新增行 9ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 去重与周清 > 不同场景或不同卡号不去重，各占一行 14ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 去重与周清 > 周清：最后更新超 7 天的草稿行在下次追加时被清掉，7 天内保留 12ms
+ ✓ test/pao/friction-drafts.test.ts > appendFrictionDraft 去重与周清 > 并发安全：多次并发追加经锁内读改写全部落盘，无行丢失 19ms
+ ✓ test/pao/friction-drafts.test.ts > recordFrictionDraft 挂钩入口 > PAO_HOME 未配置＝机制未启用，静默跳过不落盘 1ms
+ ✓ test/pao/friction-drafts.test.ts > recordFrictionDraft 挂钩入口 > PAO_HOME 配置后写入草稿区；任何失败只警告不抛（草稿记不上不影响主流程） 8ms
+ ✓ test/pao/friction-drafts.test.ts > 挂钩点：pao_collab_relay（打回／升级人） > 打回：协作卡被机械校验拒绝 → 草稿区记「打回」行（原因入事实） 35ms
+ ✓ test/pao/friction-drafts.test.ts > 挂钩点：pao_collab_relay（打回／升级人） > 升级人：机械校验全过但带裁决标记转主控裁决 → 草稿区记「升级人」行（卡号取 parent） 23ms
+ ✓ test/pao/friction-drafts.test.ts > 挂钩点：changeCardStatus（重试到顶） > 重试到顶：失败→待认领尝试达上限被拒（ATTEMPT_EXCEEDED）→ 草稿区记「重试到顶」行 36ms
+ ✓ test/pao/friction-drafts.test.ts > 挂钩点：executeFanout 停止收尾（扇出取消） > 扇出被中途停止：在跑被杀＋排队未拉起的卡逐张记「扇出取消」草稿行 4316ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  03:08:57
+   Duration  7.08s (transform 1.70s, setup 0ms, import 2.35s, tests 4.52s, environment 0ms)
+

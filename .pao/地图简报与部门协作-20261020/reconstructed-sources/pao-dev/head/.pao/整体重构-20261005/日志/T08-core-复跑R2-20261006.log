@@ -1,0 +1,91 @@
+
+=== 复跑R2 2026-10-06 10:17:30 ===
+$ env PI_APP_TEST_LANE=core PI_APP_REAL_AUTH=0 PI_APP_TEST_MODE=background PI_APP_TEST_WORKERS=1 pnpm --dir /d/AI/workspace/pao-dev/桌面端 exec playwright test -c /d/AI/workspace/pao-dev/桌面端/apps/desktop/playwright.config.ts --output=/d/AI/workspace/pao-dev/桌面端/apps/desktop/test-results/重跑R2 apps/desktop/tests/core/composer-controls.spec.ts apps/desktop/tests/core/workbench-tabs.spec.ts apps/desktop/tests/core/skills-settings.spec.ts
+
+Running 13 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface (14.6s)
+  x   2 apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing (20.0s)
+  x   3 apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data (38.0s)
+  ok  4 apps\desktop\tests\core\skills-settings.spec.ts:78:5 › skills and extensions live inside settings as one tabbed page (11.0s)
+  ok  5 apps\desktop\tests\core\skills-settings.spec.ts:140:5 › matches skill slash commands by skill name aliases (8.0s)
+  ok  6 apps\desktop\tests\core\workbench-tabs.spec.ts:117:5 › adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser (50.0s)
+  ok  7 apps\desktop\tests\core\workbench-tabs.spec.ts:187:5 › restores each task's tabs and draft through Settings, switching, and restart (44.5s)
+  ok  8 apps\desktop\tests\core\workbench-tabs.spec.ts:250:5 › an invalid or orphaned task layout does not block other saved UI state (35.5s)
+  ok  9 apps\desktop\tests\core\workbench-tabs.spec.ts:315:5 › assistant file links keep the opened document with their originating task (20.3s)
+  ok 10 apps\desktop\tests\core\workbench-tabs.spec.ts:347:5 › closing the Terminal view preserves its live shell (24.4s)
+  ok 11 apps\desktop\tests\core\workbench-tabs.spec.ts:380:5 › two windows keep independent live tool selections for the same task (21.8s)
+  ok 12 apps\desktop\tests\core\workbench-tabs.spec.ts:408:5 › keeps one resizable width across tools, chooser, tasks, and restart (59.7s)
+  ok 13 apps\desktop\tests\core\workbench-tabs.spec.ts:504:5 › shows and selects GPT-6 Sol from the upgraded Pi model catalog (10.4s)
+
+
+  1) apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeEnabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('send')
+    Expected: enabled
+    Received: disabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeEnabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('send')[22m
+    [2m    9 × locator resolved to <button disabled type="button" data-testid="send" aria-label="Send message" class="button button--primary button--cta-icon">…</button>[22m
+    [2m      - unexpected value "disabled"[22m
+
+
+      239 |
+      240 |     await window.getByTestId("composer").fill("make the arrow visible");
+    > 241 |     await expect(sendButton).toBeEnabled();
+          |                              ^
+      242 |     await expect
+      243 |       .poll(async () => {
+      244 |         const styles = await sendButton.evaluate((button) => {
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\composer-controls.spec.ts:241:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R2\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R2\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R2\core-composer-controls-dar-bf5c0-ble-before-and-after-typing\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Skills', exact: true })[22m
+
+
+      38 |     await createNamedThread(window, "Skill test session");
+      39 |
+    > 40 |     await window.getByRole("button", { name: "Skills", exact: true }).click();
+         |                                                                       ^
+      41 |     await expect(window.getByTestId("skills-surface")).toBeVisible();
+      42 |     await expect(window.getByTestId("skills-list")).toContainText("Demo Skill");
+      43 |     await window.getByRole("button", { name: /Demo Skill/i }).click();
+        at D:\AI\workspace\pao-dev\桌面端\apps\desktop\tests\core\skills-settings.spec.ts:40:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R2\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\重跑R2\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\重跑R2\core-skills-settings-shows-b7bbf--surfaces-from-runtime-data\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing 
+    apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data 
+  11 passed (6.0m)
+复跑R2_EXIT=1

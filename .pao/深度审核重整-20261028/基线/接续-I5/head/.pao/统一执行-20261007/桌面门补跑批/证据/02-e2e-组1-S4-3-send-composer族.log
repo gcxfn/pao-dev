@@ -1,0 +1,80 @@
+
+Running 33 tests using 1 worker
+
+  ok  1 apps\desktop\tests\core\composer-controls.spec.ts:52:5 › supports keyboard shortcuts, slash menus, and topbar controls through the user surface (18.5s)
+  ok  2 apps\desktop\tests\core\composer-controls.spec.ts:196:5 › dark mode keeps the send button visible before and after typing (18.7s)
+  ok  3 apps\desktop\tests\core\composer-draft-flush.spec.ts:120:5 › keeps a draft typed just before quitting (18.6s)
+  ok  4 apps\desktop\tests\core\composer-draft-flush.spec.ts:134:5 › keeps a draft typed just before closing the last window (16.4s)
+  ok  5 apps\desktop\tests\core\composer-draft-flush.spec.ts:150:5 › keeps a draft when the window is closed while quit is saving drafts (18.2s)
+  ok  6 apps\desktop\tests\core\composer-draft-flush.spec.ts:169:5 › keeps an edit React has not committed yet when quitting (15.6s)
+  ok  7 apps\desktop\tests\core\composer-draft-flush.spec.ts:185:5 › keeps a draft when the thread is archived by shortcut straight after typing (26.6s)
+  ok  8 apps\desktop\tests\core\composer-draft-flush.spec.ts:214:5 › keeps the drafts of every window when quitting straight after typing (28.9s)
+  ok  9 apps\desktop\tests\core\composer-draft-flush.spec.ts:314:5 › keeps a draft when an extension card button opens another thread straight after typing (19.9s)
+  ok 10 apps\desktop\tests\core\composer-draft-flush.spec.ts:335:5 › keeps a draft when an extension view opens another thread straight after typing (24.7s)
+  ok 11 apps\desktop\tests\core\composer-draft-sync.spec.ts:19:5 › ignores stale persisted draft acknowledgements while typing (9.7s)
+  ok 12 apps\desktop\tests\core\composer-draft-sync.spec.ts:81:5 › adopts a persisted draft when no local edit is pending (8.5s)
+  ok 13 apps\desktop\tests\core\composer-draft-sync.spec.ts:120:5 › does not resurrect a cleared draft while an older write is in flight (10.1s)
+  ok 14 apps\desktop\tests\core\composer-draft-sync.spec.ts:206:5 › preserves a composer draft across a fast session switch (18.7s)
+  ok 15 apps\desktop\tests\core\composer-draft-sync.spec.ts:239:5 › applies explicit editor text replacements from the session host (8.5s)
+  ok 16 apps\desktop\tests\core\composer-draft-sync.spec.ts:278:7 › keeps a queued draft targeted at the session displayed at dispatch (16.5s)
+  ok 17 apps\desktop\tests\core\composer-draft-sync.spec.ts:278:7 › keeps a queued command targeted at the session displayed at dispatch (16.5s)
+  ok 18 apps\desktop\tests\core\composer-draft-sync.spec.ts:356:5 › Cmd/Ctrl+number keeps a draft typed just before switching on its own thread (14.3s)
+  x  19 apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments (21.6s)
+  ok 20 apps\desktop\tests\core\new-thread-composer.spec.ts:16:5 › new thread reuses composer behaviors for slash commands, image previews, and branding (10.8s)
+  ok 21 apps\desktop\tests\core\new-thread-composer.spec.ts:98:5 › new thread hides the onboarding notice after picking a thread model (12.9s)
+  ok 22 apps\desktop\tests\core\new-thread-composer.spec.ts:154:5 › new thread routes disabled-model recovery to settings models (10.4s)
+  ok 23 apps\desktop\tests\core\new-thread-composer.spec.ts:208:5 › refreshing after a provider becomes available auto-enables that provider's models (8.5s)
+  ok 24 apps\desktop\tests\core\new-thread-composer.spec.ts:267:5 › settings do not show stale enabled-model pills when no providers are connected (8.5s)
+  ok 25 apps\desktop\tests\core\new-thread-composer.spec.ts:310:5 › new thread starts once when Enter is pressed twice before it opens (8.8s)
+  ok 26 apps\desktop\tests\core\queued-messages.spec.ts:111:5 › shows queued messages while running and preserves attachments through inline edit (14.3s)
+  ok 27 apps\desktop\tests\core\queued-messages.spec.ts:220:5 › delineates queued follow-ups and submitted steers in the timeline (11.8s)
+  ok 28 apps\desktop\tests\core\queued-messages.spec.ts:331:5 › queued edit and cancel keep their original session when navigation is already queued (19.7s)
+  ok 29 apps\desktop\tests\core\queued-messages.spec.ts:408:5 › an unsaved keystroke does not overwrite a queued edit or its cancel (14.5s)
+  ok 30 apps\desktop\tests\core\queued-messages.spec.ts:500:5 › keeps a queued message with a huge unbroken token wrapped and the composer usable (10.4s)
+  ok 31 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (stop: Keep this prompt pending until Stop) (34.5s)
+  ok 32 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: Keep this prompt pending until Stop) (30.5s)
+  ok 33 apps\desktop\tests\core\stop-running-prompt.spec.ts:23:7 › Thread switching and pin controls stay responsive during a pending prompt (complete: /tmp/notes.md summarise this file) (30.5s)
+
+
+  1) apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.composer__bar').locator('.model-selector__badge').nth(1)
+    Expected: [32m"[7mh[27migh"[39m
+    Received: [31m"[7mH[27migh"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 5000ms[22m
+    [2m  - waiting for locator('.composer__bar').locator('.model-selector__badge').nth(1)[22m
+    [2m    2 × locator resolved to <button type="button" class="model-selector__badge">Medium</button>[22m
+    [2m      - unexpected value "Medium"[22m
+    [2m    7 × locator resolved to <button type="button" class="model-selector__badge">High</button>[22m
+    [2m      - unexpected value "High"[22m
+
+
+      50 |     await thinkingBadge.click();
+      51 |     await footer.getByRole("button", { name: new RegExp(`^${nextThinking}`) }).click();
+    > 52 |     await expect(thinkingBadge).toHaveText(nextThinking.toLowerCase());
+         |                                 ^
+      53 |     await expect(composer).toHaveValue(prompt);
+      54 |     await expect(attachment).toHaveCount(1);
+      55 |     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\model-change-keeps-draft.spec.ts:52:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-model-change-keeps-dr-199e3-yped-prompt-and-attachments\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\model-change-keeps-draft.spec.ts:15:5 › changing model or thinking from the composer footer keeps the typed prompt and attachments 
+  32 passed (9.3m)

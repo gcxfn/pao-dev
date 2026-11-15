@@ -1,0 +1,136 @@
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
+--- a/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
++++ b/.pao/地图简报与部门协作-20261020/benchmark/map_bench_pao/pao_agent.py
+@@ -51,6 +51,19 @@
+         min_length=1,
+         description="容器内的固定源码构建命令。",
+     )
++    configuration_root: str | None = Field(
++        default=None,
++        description="冻结运行目录的容器路径；只用于读取同目录的角色模型绑定。",
++    )
++    model_metadata_path: str | None = Field(
++        default=None,
++        description="可信模型元数据文件的本机绝对路径。",
++    )
++    model_metadata_sha256: str | None = Field(
++        default=None,
++        pattern=r"^[0-9a-f]{64}$",
++        description="可信模型元数据文件的 SHA-256。",
++    )
+ 
+     @model_validator(mode="after")
+     def validate_profile_boundary(self):
+@@ -62,6 +75,8 @@
+             raise ValueError('模型构建数据路径和摘要必须同时提供。')
+         if bool(self.system_dependencies_archive) != bool(self.system_dependencies_sha256):
+             raise ValueError('离线系统依赖归档路径和摘要必须同时提供。')
++        if bool(self.model_metadata_path) != bool(self.model_metadata_sha256):
++            raise ValueError("模型元数据路径和摘要必须同时提供。")
+         if self.profile == "pre-pao" and (self.archive_format != "zip" or not self.source_overlay_archive):
+             raise ValueError("pre-pao 必须使用主验的 tracked+untracked 两份 ZIP。")
+         if not self.tools:
+@@ -93,6 +108,41 @@
+     @override
+     def name() -> str:
+         return "pao"
++
++    def _configured_model_binding(self) -> tuple[str, dict[str, str]]:
++        """区分外部选定模型与本次自定义端点的实际运行别名。"""
++        if not self.options.configuration_root:
++            selected_model_name = self.model_name
++            provider, model_id = self._parse_model_name(selected_model_name)
++            runtime_model_name = selected_model_name
++        else:
++            binding_path = (
++                Path(self.options.configuration_root) / "role-model-binding.json"
++            )
++            if not binding_path.is_file():
++                raise FileNotFoundError("缺少角色模型绑定：" + str(binding_path))
++            binding = json.loads(binding_path.read_text(encoding="utf-8"))
++            selected_model_name = binding.get("selected_model_name")
++            provider = binding.get("provider")
++            model_id = binding.get("model")
++            if not isinstance(selected_model_name, str) or not isinstance(provider, str) or not isinstance(model_id, str):
++                raise ValueError("角色模型绑定缺少完整模型身份")
++            runtime_model_name = provider + "/" + model_id
++        expected = {
++            "model_name": runtime_model_name,
++            "selected_model_name": selected_model_name,
++            "provider": provider,
++            "model": model_id,
++            "thinking": self.options.thinking,
++        }
++        if self.options.configuration_root:
++            if binding != expected:
++                raise ValueError("角色模型绑定与选定模型不一致")
++            if self.model_name != runtime_model_name:
++                raise ValueError("运行模型别名与角色模型绑定不一致")
++        if self._parse_model_name(selected_model_name)[1] != model_id:
++            raise ValueError("外部选定模型与运行 model id 不一致")
++        return selected_model_name, expected
+ 
+     @override
+     async def install(self, environment: BaseEnvironment) -> None:
+@@ -200,6 +250,22 @@
+                 f"chmod 755 {self._REMOTE_LAUNCHER}"
+             ),
+         )
++        if self.options.model_metadata_path and self.options.model_metadata_sha256:
++            metadata_path = Path(self.options.model_metadata_path).expanduser().resolve()
++            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
++                raise ValueError("可信模型元数据摘要不符")
++            selected_model_name, binding = self._configured_model_binding()
++            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))["models"].get(selected_model_name)
++            if not isinstance(metadata, dict):
++                raise ValueError("可信模型元数据没有完整选定模型：" + selected_model_name)
++            if metadata.get("id") != binding["model"]:
++                raise ValueError("可信模型元数据的 id 与选定模型不一致")
++            await self._upload_config_text(
++                environment,
++                content=json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n",
++                remote_path="/tmp/benchmark-model-binding.json",
++                filename="benchmark-model-binding.json",
++            )
+ 
+     @override
+     @with_prompt_template
+@@ -213,20 +279,33 @@
+             raise ValueError("尚未固定实际模型；禁止运行占位符。")
+         if self._resume or self.mcp_servers or self.options.max_turns is not None:
+             raise ValueError("本次固定单题配置不支持 resume/MCP/max_turns 扩展。")
+-        provider, model_id = self._parse_model_name(self.model_name)
++        selected_model_name, binding = self._configured_model_binding()
++        provider, model_id = self._parse_model_name(selected_model_name)
+         access = self.model_connection
+         provider = access.provider or provider
+         models_json = self._build_custom_models_json(access, model_id)
+         if models_json is not None:
+-            # 本机已登记的 DeepSeek 组元数据；避免 Harbor 的通用默认窗口截短同一模型。
+             custom = models_json['providers']['harbor-endpoint']
+             custom['compat'] = {'sendSessionAffinityHeaders': True}
+-            custom['models'][0].update(contextWindow=1048576, maxTokens=384000,
+-                                        input=['text', 'image'], thinkingLevelMap={'high': 'high'})
++            metadata_path = Path(self.options.model_metadata_path or "").expanduser().resolve()
++            if not self.options.model_metadata_sha256:
++                raise ValueError("自定义端点缺少可信模型元数据")
++            if hashlib.sha256(metadata_path.read_bytes()).hexdigest() != self.options.model_metadata_sha256:
++                raise ValueError("可信模型元数据摘要不符")
++            metadata_root = json.loads(metadata_path.read_text(encoding="utf-8"))
++            metadata = metadata_root["models"][selected_model_name]
++            if metadata["id"] != binding["model"]:
++                raise ValueError("可信模型元数据的 id 与选定模型不一致")
++            custom['models'][0].update(
++                contextWindow=metadata["contextWindow"],
++                maxTokens=metadata["maxTokens"],
++                input=metadata["input"],
++                thinkingLevelMap=metadata["thinkingLevelMap"],
++            )
+             await self._write_custom_models_json(environment, models_json)
+             provider = "harbor-endpoint"
+-        # 主控、部长、worker 的默认档位都指向同一已授权模型；不读取正式 PAO_HOME。
+         await self.exec_as_agent(environment, command='mkdir -p /tmp/harbor-pao-home/pao配置 /tmp/harbor-pi-agent')
++        # 主控、部长和 worker 使用同一已选模型；setup.mjs 读取该绑定文件配置角色。
+         tiers = {'provider': 'pao', '档位': [
+             {'名': name, 'provider': provider, 'model': model_id, 'thinkingLevel': self.options.thinking}
+             for name in ('fast', 'primary')

@@ -1,0 +1,49 @@
+T06 缩减 pi 原有源码修改——处理与回归日志（2026-10-06，T06 实施子代理）
+代码根：D:\AI\workspace\pao-dev\PAO\packages\coding-agent（git 仓 pao-main，HEAD=70451fde0）
+纪律：ponytail（C:\Users\ASUS\.zcode\skills\ponytail\SKILL.md）；零代码改动；无 git 写操作；未运行 pao update/rebase。
+
+【一、调查命令实录（只读）】
+$ git diff v1.0.0..HEAD --stat -- <B/C/D 组各文件>                    退出码 0
+$ git diff v1.0.0..HEAD -- src/core/agent-session.ts src/core/sdk.ts src/core/tools/bash.ts src/core/extensions/loader.ts src/core/model-runtime.ts src/extensions/index.ts src/cli.ts  退出码 0
+$ git diff v1.0.0..v1.0.2 -- src/core/extensions/{loader,runner,types}.ts   退出码 0
+  → 发现：toolRenderers 扩展 API（registerToolRenderer/resolveToolRenderers）为上游 v1.0.2 自带，
+    T01 以 v1.0.0 为镜把 loader.ts/agent-session.ts 渲染 hunk、mcp registerToolRenderer 调用误记为 fork 差异。
+$ git diff v1.0.2..HEAD -- <fork 面逐文件>                            退出码 0（真实 fork 面以此为准）
+$ git diff v1.0.2..HEAD --stat -- packages/coding-agent ':!src/pao' ':!test/pao' ':!<已核 17 文件>'  退出码 0
+  → 扫尾结论：src 面无 T01 漏记项；其余差异全部为测试文件（多为保留修复的配套证据测试）与 lockfile。
+$ git status --short -- src/extensions/index.ts src/core/ src/cli.ts src/modes/ package.json scripts/ packages/agent/
+  → 全部干净（本任务范围内工作区零改动）。
+
+【二、回归命令实录】
+1) 定向证据测试（保留差异的配套测试）：
+$ npx vitest run test/sdk-stream-options.test.ts test/fork-update-notification.test.ts test/output-guard-shared.test.ts test/auth-storage.test.ts test/footer-width.test.ts --maxWorkers=4
+  → Test Files 5 passed (5)，Tests 51 passed | 2 skipped (53)，退出码 0
+2) tsc 类型门（第一次）：
+$ npx tsc -p tsconfig.build.json --noEmit
+  → 退出码 1：src/pao/index.ts(33,28) TS2305、src/pao/patrol/hook.ts(83,1) TS1184
+  定性：两文件均为并行 T07 未提交改动（git status M），不在 T06 范围，T06 零编辑。
+3) 全模块门：
+$ npx vitest run test/pao/ --maxWorkers=4
+  → Test Files 1 failed | 148 passed (149)，Tests 1 failed | 1388 passed (1389)，用时 193s
+  失败用例：test/pao/windows-shell-stop.test.ts > 实际Git bash工具取消等待Node停止写入，独立进程保持存活
+  断言差异：期望抛错含 'aborted'，实际 'Command failed: …powershell.exe（killTree 树杀脚本）'
+4) 失败隔离复验（按预案，windows-shell-stop 属已知负载敏感环境族）：
+$ npx vitest run test/pao/windows-shell-stop.test.ts --maxWorkers=1   → 1 failed（同断言）
+$ npx vitest run test/pao/windows-shell-stop.test.ts --maxWorkers=1   → 1 failed（同断言，取详情）
+$ npx vitest run test/pao/windows-shell-stop.test.ts --maxWorkers=1   → 1 passed，退出码 0
+  归因：该链路（src/core/tools/bash.ts → src/pao/worker/kill.ts）工作区干净、非 T07 改动文件
+  （kill.ts 仅导入 node 内建与 ./errors.ts，均未被并行修改）；killTree 的 PowerShell 树杀脚本在负载下
+  间歇报 Command failed，复跑即过 → 环境性 flake，与 T06 无关（T06 零代码改动）。
+5) tsc 类型门（复验，T07 收敛后）：
+$ npx tsc -p tsconfig.build.json --noEmit
+  → 退出码 0，零错误
+
+【三、处理结论（逐组，证据见汇报正文）】
+迁出：0 组。保留：B 组 9 项、C 组 4 项、D 组 6 项全部保留（其中 D 组 interactive-mode.ts 残留面
+已确认收窄至 32 行：品牌横幅/文案 + 两处防自更新提示守卫；/model 档位改道此前已回退）。
+关键修正：T01 b 节若干条目以 v1.0.0 为镜高估了 fork 面——toolRenderers API、agent-session 渲染 hunk、
+interactive-mode 彩蛋/transcoder/daxnuts 删减均属上游 v1.0.2 内容；后续升级对镜应为 v1.0.2（或更新同步点）。
+
+【四、遗留提示（不属 T06 改动）】
+sdk.ts 的 CreateAgentSessionOptions.experimentalPrecompaction 选项无任何调用方（仅 PAO_PRECOMPACTION=1
+env 路径存活）；因与 T07 的 context/装配整理并行且涉公共选项形状，本轮不动，建议 T07 收口时评估删除。

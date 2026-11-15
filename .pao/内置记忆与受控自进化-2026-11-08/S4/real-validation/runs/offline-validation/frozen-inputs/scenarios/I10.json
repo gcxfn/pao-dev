@@ -1,0 +1,66 @@
+{
+  "id": "I10",
+  "description": "嵌入端点不可用时关键词查",
+  "sessions": [
+    {
+      "sessionId": "sess-k",
+      "messages": [
+        {
+          "role": "user",
+          "content": "记忆供应商选哪个？",
+          "timestamp": "2026-11-08T21:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "gbrain（Docker 常驻服务）或内置 SQLite（无外部依赖）。",
+          "timestamp": "2026-11-08T21:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "用内置 SQLite，不依赖外部服务。",
+          "timestamp": "2026-11-08T21:01:00Z"
+        }
+      ],
+      "expectedMemories": [
+        {
+          "kind": "decision",
+          "conclusion": "记忆供应商使用内置 SQLite",
+          "confirmation": "confirmed",
+          "evidenceKind": "user_statement",
+          "conditions": "不依赖外部服务"
+        }
+      ],
+      "expectedSearchResults": [
+        {
+          "query": "记忆供应商",
+          "mustContain": ["mem-builtin-sqlite"],
+          "mustNotContain": []
+        },
+        {
+          "query": "sqlite 记忆",
+          "mustContain": ["mem-builtin-sqlite"],
+          "mustNotContain": [],
+          "note": "嵌入端点不可用时，关键词查询仍应命中"
+        }
+      ]
+    }
+  ],
+  "expectedFinalState": {
+    "memories": [
+      {
+        "id": "mem-builtin-sqlite",
+        "kind": "decision",
+        "conclusion": "记忆供应商使用内置 SQLite",
+        "confirmation": "confirmed",
+        "usageState": "active"
+      }
+    ],
+    "sources": [
+      {
+        "sourceId": "src-sess-k-001",
+        "sessionId": "sess-k",
+        "entryId": "entry-003"
+      }
+    ]
+  }
+}

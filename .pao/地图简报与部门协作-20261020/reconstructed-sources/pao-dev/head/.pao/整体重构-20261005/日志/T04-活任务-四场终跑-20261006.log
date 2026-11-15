@@ -1,0 +1,51 @@
+
+===== 场景 normal =====
+[driver] [driver] 活任务已登记,manifest 就绪
+[编排] 活任务确认在跑:worker=34628 孙=38928 对照=40584
+[driver] [driver] 收到退出触发(触发文件),执行 session_shutdown 钩子(真实停止链)
+[driver] [driver] session_shutdown 完成,result.json 已落,正常退出
+[编排] 驱动已死亡(normal)
+[编排] 场景 normal 结论:通过 — worker停=true 孙停=true 对照活=true 心跳冻结=w:true/g:true
+[编排] verdict: D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\normal\verdict.json
+
+===== 场景 sigint =====
+[编排] 活任务确认在跑:worker=39960 孙=19328 对照=7516
+[编排] Ctrl+C 投递:AttachConsole() 失败
+����λ�� D:\AI\workspace\��ʱ�ļ���\�����ع�-20261005\T04-��֤\send-ctrl-c.ps1:10 �ַ�: 62
++ ... onsole([
+[编排] 场景 sigint 结论:受阻 — 环境传输层:合成 CTRL_C_EVENT 不投递(GenerateConsoleCtrlEvent 返回成功但驱动未收到);pi Windows 无 SIGI...
+[编排] verdict: D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\sigint\verdict.json
+
+===== 场景 killparent =====
+[driver] [managed-driver] 受管 child+分离孙进程就绪,manifest 就绪
+[编排] 活任务确认在跑:worker=45796 孙=8372 对照=44180
+[编排] 仅强杀驱动(不带 /T):�ɹ�: ����ֹ PID Ϊ 8684 �Ľ��̡�
+[编排] 驱动已死亡(killparent)
+[编排] 场景 killparent 结论:未过 — worker停=false 孙停=true 对照活=true 心跳冻结=w:true/g:true
+[编排] verdict: D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\killparent\verdict.json
+
+===== 场景 console =====
+[编排] 活任务确认在跑:worker=45232 孙=37128 对照=43576
+[编排] 关闭控制台:
+[编排] 驱动已死亡(console)
+[编排] 场景 console 结论:通过 — worker停=true 孙停=true 对照活=true 心跳冻结=w:true/g:true
+[编排] verdict: D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\console\verdict.json
+
+===== T04 四场验证汇总:2/4 通过 =====
+汇总:D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\汇总.json
+  normal: 通过
+  sigint: 受阻(环境传输层,见 verdict.json)
+  killparent: 未过(见 verdict.json)
+  console: 通过
+
+===== 场景 killparent =====
+[driver] [managed-driver] 受管 child+分离孙进程就绪,manifest 就绪
+[编排] 活任务确认在跑:worker=16244 孙=30852 对照=35420
+[编排] 仅强杀驱动(不带 /T):�ɹ�: ����ֹ PID Ϊ 43200 �Ľ��̡�
+[编排] 驱动已死亡(killparent)
+[编排] 场景 killparent 结论:通过 — worker停=true 孙停=true 对照活=true 心跳冻结=w:true/g:true
+[编排] verdict: D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\killparent\verdict.json
+
+===== T04 四场验证汇总:1/1 通过 =====
+汇总:D:\AI\workspace\临时文件夹\整体重构-20261005\T04-验证\现场-2026-10-05\汇总.json
+  killparent: 通过

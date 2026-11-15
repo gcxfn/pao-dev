@@ -1,0 +1,74 @@
+{
+  "job_name": "f-map-pre-pao",
+  "jobs_dir": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/real-run-20261021/jobs",
+  "n_attempts": 1,
+  "n_concurrent_trials": 1,
+  "retry": {
+    "max_retries": 0
+  },
+  "environment": {
+    "type": "docker",
+    "force_build": true,
+    "delete": false,
+    "env": {
+      "PAO_HOME": "/tmp/harbor-pao-home",
+      "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+      "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+      "PI_SKIP_VERSION_CHECK": "1",
+      "TMP": "/tmp",
+      "TEMP": "/tmp",
+      "TMPDIR": "/tmp"
+    }
+  },
+  "verifier": {
+    "disable": false
+  },
+  "tasks": [
+    {
+      "name": "terminal-bench/html-js-filter",
+      "ref": "sha256:f211960f1f7c66ace91c3d079db073ed0f841d458db4cad1f2f943cba6cc79f3"
+    },
+    {
+      "name": "terminal-bench/bun-sourcemap-leak",
+      "ref": "sha256:e55ae542f338f50f4468d940c7d7c93a45d34fd418dc6cc5883c1fedc753603a"
+    },
+    {
+      "name": "terminal-bench/nextjs-performance",
+      "ref": "sha256:81f8315fb984f91208c45b4ac153c8801d07d3beec5eb0f0d3fa9d49b6588fdd"
+    }
+  ],
+  "agents": [
+    {
+      "import_path": "map_bench_pao:PAOAgent",
+      "model_name": "openai/group/deepseek",
+      "skills": [],
+      "mcp_servers": [],
+      "env": {
+        "PAO_HOME": "/tmp/harbor-pao-home",
+        "PI_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+        "PAO_CODING_AGENT_DIR": "/tmp/harbor-pi-agent",
+        "PI_SKIP_VERSION_CHECK": "1",
+        "TMP": "/tmp",
+        "TEMP": "/tmp",
+        "TMPDIR": "/tmp"
+      },
+      "kwargs": {
+        "profile": "pre-pao",
+        "source_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/baseline/PAO/tracked-current.zip",
+        "source_sha256": "1127a01e7aba02309291958fd25d9e583d743dcae72b6b8b3dba45a12ccf2b80",
+        "archive_format": "zip",
+        "thinking": "high",
+        "tools": "read,bash,edit,write",
+        "no_extensions": false,
+        "source_build_command": "npm ci --ignore-scripts --no-audit --no-fund && npm run build:offline",
+        "source_overlay_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/baseline/PAO/untracked-sources.zip",
+        "source_overlay_sha256": "bd4c76811efd005b9db54a8c3f4db771aeb8bc425ab12e275163cc9455f597d6",
+        "model_data_archive": "D:/AI/workspace/pao-dev/.pao/地图简报与部门协作-20261020/benchmark/build-data-freeze-20261021/model-data.zip",
+        "model_data_sha256": "ace6d3464075692b2b1df048b7494b7596db69ad18cbf815c7445924b7cfc87a"
+      },
+      "model_base_url": "http://host.docker.internal:3425/v1",
+      "model_api_key_name": "PAO_BENCH_API_KEY",
+      "model_api_format": "openai_chat_completions"
+    }
+  ]
+}

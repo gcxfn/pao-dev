@@ -1,0 +1,62 @@
+T08 修复 F7 · tsc 修复重跑 · 2026-10-06
+背景：T08-类型 log 注记失实（引用类型2 TSC_EXIT=0，实录类型2 结尾 TSC_EXIT=1，esbuild 审批门拦截，tsc 未执行）；本日志为 F7 用原始命令行的真实重跑。
+重跑命令行（引自 T08-类型-20261006.log 注记原文）：
+  pnpm --dir /d/AI/workspace/pao-dev/PAO exec tsc --noEmit
+完整输出如下：
+──────────
+[WARN] The "workspaces" field in package.json is not supported by pnpm. Create a "pnpm-workspace.yaml" file instead.
+[WARN] The "workspaces" field in package.json is not supported by pnpm. Create a "pnpm-workspace.yaml" file instead.
+? Verifying lockfile against supply-chain policies (117 entries)...
+Lockfile is up to date, resolution step is skipped
+Already up to date
+✓ Lockfile passes supply-chain policies (117 entries in 3.4s)
+
+$ husky
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.28.2
+
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+[ERROR] Command failed with exit code 1: "C:\Program Files\nodejs\node.exe" "C:\Users\ASUS\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.mjs" install
+
+pnpm: Command failed with exit code 1: "C:\Program Files\nodejs\node.exe" "C:\Users\ASUS\AppData\Roaming\npm\node_modules\pnpm\bin\pnpm.mjs" install
+    at getFinalError (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:88983:14)
+    at makeError (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:91290:21)
+    at getSyncResult (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:93134:10)
+    at spawnSubprocessSync (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:93094:14)
+    at execaCoreSync (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:93024:23)
+    at callBoundExeca (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:95552:23)
+    at boundExeca (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:95529:49)
+    at sync2 (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:95688:10)
+    at runPnpmCli (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:252070:5)
+    at runDepsStatusCheck (file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/pnpm/dist/pnpm.mjs:253836:7)
+──────────
+TSC_EXIT=1
+（重跑时点：2026-10-06 11:49:46；PAO src 零改动前提未变，仅 test/pao/desktop-read-model.test.ts 为本轮增量）
+
+═══ 补充跑（F7，2026-10-06 11:49，如实备案）═══
+上述原始命令的失败系 pnpm exec 触发 run 前依赖检查→自动 install→esbuild 审批门（ERR_PNPM_IGNORED_BUILDS），tsc 未被执行；该拦截与 lockfile 存否无关（类型2 当日亦无 lockfile 起跑、同路径失败），属 CP25 偏离③已移交 harness 方的同一问题。
+为落真实类型检查证据，另以下列命令重跑（同一 tsc，仅关闭 pnpm run 前依赖状态检查，不改任何代码/依赖）：
+  pnpm --dir /d/AI/workspace/pao-dev/PAO --config.verify-deps-before-run=false exec tsc --noEmit
+完整输出如下：
+──────────
+packages/ai/test/stream.test.ts(705,50): error TS2345: Argument of type '"claude-sonnet-4-5"' is not assignable to parameter of type '"claude-fable-5" | "claude-fable-5.1" | "claude-haiku-4.5" | "claude-opus-4.5" | "claude-opus-4.6" | "claude-opus-4.7" | "claude-opus-4.8" | "claude-opus-5" | "claude-opus-5.5" | ... 44 more ... | "workers-ai/@cf/zai-org/glm-5.3-flash"'.
+packages/coding-agent/test/pao/friction-drafts.test.ts(423,19): error TS2339: Property '尝试号' does not exist on type 'FanoutCardResult'.
+packages/coding-agent/test/pao/memory-vendor-contract.test.ts(218,17): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+packages/coding-agent/test/pao/memory-vendor-contract.test.ts(261,17): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+packages/coding-agent/test/pao/results-aggregate.test.ts(194,20): error TS2339: Property '原因' does not exist on type 'NodeDiffSection'.
+  Property '原因' does not exist on type '{ 可用: true; 摘要: string; 文件: ResultsDiffFile[]; 新增未跟踪: string[]; }'.
+packages/coding-agent/test/pao/results-aggregate.test.ts(305,20): error TS2339: Property '原因' does not exist on type 'NodeDiffSection'.
+  Property '原因' does not exist on type '{ 可用: true; 摘要: string; 文件: ResultsDiffFile[]; 新增未跟踪: string[]; }'.
+packages/coding-agent/test/pao/results-aggregate.test.ts(306,20): error TS2339: Property '原因' does not exist on type 'NodeDiffSection'.
+  Property '原因' does not exist on type '{ 可用: true; 摘要: string; 文件: ResultsDiffFile[]; 新增未跟踪: string[]; }'.
+──────────
+TSC_EXIT=1
+（补充跑时点：2026-10-06 11:51:07）
+
+═══ 7 错归因附录（F7，全部在 T08 增量面之外）═══
+T08 在 PAO 仓的增量仅 test/pao/desktop-read-model.test.ts（+1 钉测），下列 7 错无一涉及该文件：
+1) packages/ai/test/stream.test.ts(705,50) TS2345 —— 该文件及模型目录类型定义均为 HEAD 干净文件（git status 无改动），开工存量。
+2) packages/coding-agent/test/pao/friction-drafts.test.ts(423,19) TS2339 '尝试号' —— 系本轮 fanout 面把 FanoutCardResult.尝试号 改名 attempt（git diff HEAD 可证：'-	尝试号?: number; / +	attempt?: number;'），既有测试未同步；归属本轮其他任务面，非 T08。
+3) packages/coding-agent/test/pao/memory-vendor-contract.test.ts(218,17)(261,17) TS2722 —— 本轮新建未跟踪文件（git status ??），非 T08 创建。
+4) packages/coding-agent/test/pao/results-aggregate.test.ts(194,20)(305,20)(306,20) TS2339 '原因' —— 该测试与类型定义 packages/coding-agent/src/pao/status/results.ts 均为 HEAD 干净文件（git diff HEAD -- .../status/ 为空），开工存量。
+
+结论：以 T08-类型 log 原注记口径（PAO 根 tsconfig 全量 tsc --noEmit）无法落 TSC_EXIT=0 绿记录——该数字在本轮树态从未真实成立；T08 自身增量面零类型错误。原注记与 CP25 中「TSC_EXIT=0（类型2）」均按失实订正。

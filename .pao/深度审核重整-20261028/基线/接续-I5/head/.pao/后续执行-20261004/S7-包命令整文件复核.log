@@ -1,0 +1,109 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+Installing ./packages/local-package...
+Installing C:\Users\ASUS\AppData\Local\Temp\pi-package-commands-1791083480075-v8qo7h73mcd\local-package/...
+Removing C:\Users\ASUS\AppData\Local\Temp\pi-package-commands-1791083480075-v8qo7h73mcd\local-package/...
+Updating npm:fake-package...
+·········Installing C:\Users\ASUS\AppData\Local\Temp\pi-package-commands-1791083480260-ug1n70mbl6b\local-package...
+·······xxx···········x··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > cycles project package overrides in config local mode
+AssertionError: expected [ { source: 'npm:pi-tools', …(2) } ] to deeply equal [ { source: 'npm:pi-tools', …(2) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "autoload": false,
+      "extensions": [
+-       "-extensions/bar.ts",
++       "-extensions\\bar.ts",
+      ],
+      "source": "npm:pi-tools",
+    },
+  ]
+
+ ❯ test/package-command-paths.test.ts:516:57
+    514|
+    515|   selector.getResourceList().handleInput(" ");
+    516|   expect(settingsManager.getProjectSettings().packages).toEqual([
+       |                                                         ^
+    517|    { source: "npm:pi-tools", autoload: false, extensions: ["-extension…
+    518|   ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > toggles built-in extensions in config global mode
+AssertionError: expected undefined to deeply equal [ '-builtin:llama.cpp' ]
+
+- Expected:
+[
+  "-builtin:llama.cpp",
+]
+
++ Received:
+undefined
+
+ ❯ test/package-command-paths.test.ts:554:58
+    552|   expect(list.render(80).join("\n")).toContain("llama.cpp");
+    553|   list.handleInput(" ");
+    554|   expect(settingsManager.getGlobalSettings().extensions).toEqual(["-bu…
+       |                                                          ^
+    555|   list.handleInput(" ");
+    556|   expect(settingsManager.getGlobalSettings().extensions).toEqual(["+bu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > cycles project built-in extension overrides in config local mode
+AssertionError: expected undefined to deeply equal [ '+builtin:mcp' ]
+
+- Expected:
+[
+  "+builtin:mcp",
+]
+
++ Received:
+undefined
+
+ ❯ test/package-command-paths.test.ts:583:59
+    581|   const list = selector.getResourceList();
+    582|   list.handleInput(" ");
+    583|   expect(settingsManager.getProjectSettings().extensions).toEqual(["+b…
+       |                                                           ^
+    584|   list.handleInput(" ");
+    585|   expect(settingsManager.getProjectSettings().extensions).toEqual(["-b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/package-command-paths.test.ts > package commands > prints a pnpm metadata hint when self-update fails
+AssertionError: expected 'error: pao cannot self-update this in…' to contain 'exited with code 23'
+
+- Expected
++ Received
+
+- exited with code 23
++ error: pao cannot self-update this installation.
++ This installation is not managed by a global pnpm install. Update it with the package manager, wrapper, or source checkout that provides it.
++
++ Location of pao executable: D:\AI\workspace\pao-dev\PAO\node_modules\vitest\dist\workers\forks.js
+
+ ❯ test/package-command-paths.test.ts:949:19
+    947|    const stderr = errorSpy.mock.calls.map(([message]) => String(messag…
+    948|    expect(stdout).not.toContain(`Updated ${APP_NAME}`);
+    949|    expect(stderr).toContain("exited with code 23");
+       |                   ^
+    950|    expect(stderr).toContain("If pnpm reports missing package versions"…
+    951|    expect(stderr).toContain(`Run \`pnpm store prune\` and retry \`${AP…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 29 passed (33)
+   Start at  11:11:15
+   Duration  6.22s (transform 3.33s, setup 0ms, import 4.42s, tests 1.66s, environment 0ms)
+

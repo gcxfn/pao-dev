@@ -1,0 +1,49 @@
+
+Running 4 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 (18.8s)
+  ok 2 apps\desktop\tests\core\workflow-instance.spec.ts:229:5 › 同名配方的两个历史实例按路径分别打开冻结图 (14.4s)
+  ok 3 apps\desktop\tests\core\workflow-instance.spec.ts:379:5 › S6-D1 执行中节点与入边动画＋实例失败可见＋未记录显示未知 (12.8s)
+  ok 4 apps\desktop\tests\core\workflow-instance.spec.ts:426:5 › S6-D1 运行图刷新不重置视口（坐标保持） (15.6s)
+
+
+  1) apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 ────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('canvas-dag').locator('.react-flow__node').filter({ hasText: '冻结甲' })
+    Expected substring: [32m"进行中"[39m
+    Received string:    [31m"冻结甲工程 · in_progress"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('canvas-dag').locator('.react-flow__node').filter({ hasText: '冻结甲' })[22m
+    [2m    9 × locator resolved to <div tabindex="0" role="group" data-id="冻结甲" data-testid="rf__node-冻结甲" aria-roledescription="node" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-worker selectable">…</div>[22m
+    [2m      - unexpected value "冻结甲工程 · in_progress"[22m
+
+
+      181 |     await expect(frozenA.locator(".canvas-node--orange")).toHaveCount(1);
+      182 |     await expect(frozenB.locator(".canvas-node--orange")).toHaveCount(1);
+    > 183 |     await expect(frozenA).toContainText("进行中");
+          |                           ^
+      184 |
+      185 |     // 只读锁定：拖动节点后位置 transform 不变。
+      186 |     const beforeTransform = await frozenA.getAttribute("style");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-instance.spec.ts:183:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-instance\core-workflow-instance-实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    C:\Users\ASUS\AppData\Local\Temp\s10b-out-instance\core-workflow-instance-实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace C:\Users\ASUS\AppData\Local\Temp\s10b-out-instance\core-workflow-instance-实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\workflow-instance.spec.ts:134:5 › 实例运行图只读：冻结节点不同最新配方、不可拖不可连、点节点开详情 ─────
+  3 passed (1.1m)

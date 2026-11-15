@@ -1,0 +1,29 @@
+{
+  "卡号": "T1-C-审阅",
+  "尝试": 1,
+  "状态": "失败",
+  "产物路径": [],
+  "摘要": "无有效回执：最终输出缺少有效 JSON 回执（结果、产物路径、摘要）",
+  "失败类型": "结果未知",
+  "执行标识": "f4fa47f3-7987-4620-9024-c6f0dd88c45b",
+  "工具调用次数": 11,
+  "实际模型": "glm-5.3",
+  "用量": {
+    "input": 44911,
+    "output": 6426,
+    "cacheRead": 174720,
+    "cacheWrite": 0,
+    "cost": 0.136577,
+    "turns": 8
+  },
+  "缺用量轮次": 1,
+  "证据路径": "D:\\AI\\workspace\\pao-dev\\.pao\\后续执行-20261004\\真实对照\\T1-C\\审阅\\卡T1-C-审阅-尝试1-adc9e67e9030-f4fa47f3-7987-4620-9024-c6f0dd88c45b.jsonl",
+  "live证据路径": "D:\\AI\\workspace\\pao-dev\\.pao\\后续执行-20261004\\真实对照\\T1-C\\审阅\\卡T1-C-审阅-尝试1-adc9e67e9030-f4fa47f3-7987-4620-9024-c6f0dd88c45b.live.jsonl",
+  "liveStderr路径": "D:\\AI\\workspace\\pao-dev\\.pao\\后续执行-20261004\\真实对照\\T1-C\\审阅\\卡T1-C-审阅-尝试1-adc9e67e9030-f4fa47f3-7987-4620-9024-c6f0dd88c45b.live.stderr.log",
+  "exitCode": 0,
+  "stopReason": "stop",
+  "stderrTail": "Warning: No project session found with id 'dbc143fa-e01b-480b-8e9e-0d193dd2ade4'; creating a new session with that id.\n{\"type\":\"pao_usage_complete\",\"sessionId\":\"dbc143fa-e01b-480b-8e9e-0d193dd2ade4\"}\n",
+  "命令": "C:\\Program Files\\nodejs\\node.exe D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\bundle\\cli.js --mode json -p --no-extensions -e D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\dist\\pao\\index.js --no-skills --no-prompt-templates --session-id dbc143fa-e01b-480b-8e9e-0d193dd2ade4 --session-dir D:\\AI\\workspace\\pao-dev\\.pao\\后续执行-20261004\\真实对照\\T1-C\\审阅\\会话 --model 主力 --thinking high --tools read,grep,find,ls --append-system-prompt 仅在当前任务副本内工作；另允许只读本次任务明确给出的原始验收日志。禁止读取其他对照副本、联网找答案、提交、push、修改全局设置或共享记忆。保留真实失败输出。不修改原验收标准。先读现有代码，给出简短实施计划后执行；最终只输出JSON回执：{\"结果\":\"成功或失败或未知\",\"产物路径\":[\"实际存在的相对路径\"],\"摘要\":\"三行以内的实际结果\",\"失败类型\":\"失败或未知时从瞬时故障/缺输入/能力不足/结果未知选一\"}。 独立只读审阅，不写文件。原始需求：修复 workflow/recipe.ts 的 listRecipes：工作流目录中名字以 .md 结尾的目录不能被当成可用配方；保留正常 Markdown 配方列名、排序及不存在目录返回空的行为。不要改配方内容或引入新依赖。\n原始验收：真实临时文件目录包含 a.md 文件、z.md 文件、fake.md 目录、note.txt 文件；结果恰为 a、z 且有序。缺目录为空；真实读取错误不能吞掉。定向测试通过，diff 只含必要源码与测试；原配方解析测试通过。\n规则知识集 K1：卡是执行结果正本；复盘只读。缺项写未知，不把缺失费用填零。测试使用隔离目录，不污染 PAO_HOME。新增可选字段需覆盖缺省及序列化往返。保留原错误，不用默认值掩盖读取失败。\n实际已跟踪文件差异：\ndiff --git a/packages/coding-agent/src/pao/workflow/recipe.ts b/packages/coding-agent/src/pao/workflow/recipe.ts\nindex a7b693470..ff3b1bae2 100644\n--- a/packages/coding-agent/src/pao/workflow/recipe.ts\n+++ b/packages/coding-agent/src/pao/workflow/recipe.ts\n@@ -107,13 +107,13 @@ export function recipePath(paoHome: string, 名字: string): string {\n \treturn join(paoHome, \"工作流\", `${名字}.md`);\n }\n \n-/** 列出可用配方名字（文件名去 .md，按名字排序）。目录不存在视为空。 */\n+/** 列出可用配方名字（仅 .md 文件，文件名去 .md，按名字排序；名为 *.md 的目录不算）。目录不存在视为空。 */\n export function listRecipes(paoHome: string): string[] {\n \tconst dir = join(paoHome, \"工作流\");\n \tif (!existsSync(dir)) return [];\n-\treturn readdirSync(dir)\n-\t\t.filter((name) => name.endsWith(\".md\"))\n-\t\t.map((name) => name.slice(0, -3))\n+\treturn readdirSync(dir, { withFileTypes: true })\n+\t\t.filter((entry) => entry.isFile() && entry.name.endsWith(\".md\"))\n+\t\t.map((entry) => entry.name.slice(0, -3))\n \t\t.sort();\n }\n \ndiff --git a/packages/coding-agent/test/pao/workflow-recipe.test.ts b/packages/coding-agent/test/pao/workflow-recipe.test.ts\nindex 304f15a84..5852c235a 100644\n--- a/packages/coding-agent/test/pao/workflow-recipe.test.ts\n+++ b/packages/coding-agent/test/pao/workflow-recipe.test.ts\n@@ -83,6 +83,19 @@ describe(\"合法配方解析\", () => {\n \t\texpect(listRecipes(paoHome)).toEqual([\"大活流程\", \"小活流程\"]);\n \t});\n \n+\ttest(\"listRecipes：*.md 目录不算配方，非 .md 文件不算，结果有序\", () => {\n+\t\twriteFileSync(recipePath(paoHome, \"z\"), \"# z\\n\", \"utf8\");\n+\t\twriteFileSync(recipePath(paoHome, \"a\"), \"# a\\n\", \"utf8\");\n+\t\tmkdirSync(join(paoHome, \"工作流\", \"fake.md\"));\n+\t\twriteFileSync(join(paoHome, \"工作流\", \"note.txt\"), \"x\", \"utf8\");\n+\t\texpect(listRecipes(paoHome)).toEqual([\"a\", \"z\"]);\n+\t});\n+\n+\ttest(\"listRecipes：工作流目录不存在返回空\", () => {\n+\t\trmSync(join(paoHome, \"工作流\"), { recursive: true, force: true });\n+\t\texpect(listRecipes(paoHome)).toEqual([]);\n+\t});\n+\n \ttest(\"substituteParams：代入声明参数，缺值原样保留\", () => {\n \t\texpect(substituteParams(\"侦察 {仓库}（期限 {期限}）\", { 仓库: \"pao\" })).toBe(\"侦察 pao（期限 {期限}）\");\n \t});\n\n新增文件（须逐个读取）：\n执行原始日志位置：D:\\AI\\workspace\\pao-dev\\.pao\\后续执行-20261004\\真实对照\\T1-C\\执行\\卡T1-C-执行-尝试1-adc9e67e9030-32e4f6ad-cb83-4e9b-ad79-f0d519737fd6.jsonl\n独立读源码和测试，指出缺口及文件行号，不采信执行者自述。审阅意见写在最终JSON摘要中，产物路径明确[]。",
+  "pid": 29764,
+  "持续时间毫秒": 95178
+}

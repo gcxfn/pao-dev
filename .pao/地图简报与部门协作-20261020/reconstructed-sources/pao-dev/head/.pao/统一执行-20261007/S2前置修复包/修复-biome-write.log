@@ -1,0 +1,175 @@
+packages\coding-agent\src\pao\cards\baseline.ts:87:58 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    85 │ async function runGit(args: string[], cwd: string, signal?: AbortSignal): Promise<string> {
+    86 │ 	const result = await runCardProcess("git", ["-c", "core.quotepath=off", ...args], cwd, Infinity, undefined, signal);
+  > 87 │ 	if (result.code !== 0) throw new Error(result.stderr || "git exited with code " + result.code);
+       │ 	                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    88 │ 	return result.stdout;
+    89 │ }
+  
+  i Unsafe fix: Use a template literal.
+  
+     85  85 │   async function runGit(args: string[], cwd: string, signal?: AbortSignal): Promise<string> {
+     86  86 │   	const result = await runCardProcess("git", ["-c", "core.quotepath=off", ...args], cwd, Infinity, undefined, signal);
+     87     │ - → if·(result.code·!==·0)·throw·new·Error(result.stderr·||·"git·exited·with·code·"·+·result.code);
+         87 │ + → if·(result.code·!==·0)·throw·new·Error(result.stderr·||·`git·exited·with·code·${result.code}`);
+     88  88 │   	return result.stdout;
+     89  89 │   }
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:87:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    85 │ 		const file = writeConfig(tempDir("safe-ok"), "保温.json", WARM_SHAPE);
+    86 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+  > 87 │ 		expect(parsed["空闲分钟"]).toBe(30);
+       │ 		              ^^^^^^^^^^
+    88 │ 		expect(parsed["部门并发上限"]).toBe(5);
+    89 │ 	});
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     85  85 │   		const file = writeConfig(tempDir("safe-ok"), "保温.json", WARM_SHAPE);
+     86  86 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     87     │ - → → expect(parsed["空闲分钟"]).toBe(30);
+         87 │ + → → expect(parsed.空闲分钟).toBe(30);
+     88  88 │   		expect(parsed["部门并发上限"]).toBe(5);
+     89  89 │   	});
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:88:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    86 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+    87 │ 		expect(parsed["空闲分钟"]).toBe(30);
+  > 88 │ 		expect(parsed["部门并发上限"]).toBe(5);
+       │ 		              ^^^^^^^^^^^^^^
+    89 │ 	});
+    90 │ 
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     86  86 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     87  87 │   		expect(parsed["空闲分钟"]).toBe(30);
+     88     │ - → → expect(parsed["部门并发上限"]).toBe(5);
+         88 │ + → → expect(parsed.部门并发上限).toBe(5);
+     89  89 │   	});
+     90  90 │   
+  
+
+packages\coding-agent\test\pao\shared-json.test.ts:94:17 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    92 │ 		const file = writeConfig(tempDir("safe-bom"), "保温.json", `\uFEFF${WARM_SHAPE}`);
+    93 │ 		const parsed = readJsonSafe(file) as Record<string, unknown>;
+  > 94 │ 		expect(parsed["空闲分钟"]).toBe(30);
+       │ 		              ^^^^^^^^^^
+    95 │ 	});
+    96 │ 
+  
+  i Unsafe fix: Use a literal key instead.
+  
+     92  92 │   		const file = writeConfig(tempDir("safe-bom"), "保温.json", `\uFEFF${WARM_SHAPE}`);
+     93  93 │   		const parsed = readJsonSafe(file) as Record<string, unknown>;
+     94     │ - → → expect(parsed["空闲分钟"]).toBe(30);
+         94 │ + → → expect(parsed.空闲分钟).toBe(30);
+     95  95 │   	});
+     96  96 │   
+  
+
+packages\coding-agent\test\user-message.test.ts:61:16 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    59 │ 	test("preserves long Chinese multiline text while resizing and scrolling", () => {
+    60 │ 		initTheme("dark");
+  > 61 │ 		const text = "中文用户约束".repeat(15) + "\n第二行必须保留\n末行";
+       │ 		             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    62 │ 		const component = new UserMessageComponent(text);
+    63 │ 		for (const width of [80, 20, 8, 40]) {
+  
+  i Unsafe fix: Use a template literal.
+  
+    59 59 │   	test("preserves long Chinese multiline text while resizing and scrolling", () => {
+    60 60 │   		initTheme("dark");
+    61    │ - → → const·text·=·"中文用户约束".repeat(15)·+·"\n第二行必须保留\n末行";
+       61 │ + → → const·text·=·`${"中文用户约束".repeat(15)}\n第二行必须保留\n末行`;
+    62 62 │   		const component = new UserMessageComponent(text);
+    63 63 │   		for (const width of [80, 20, 8, 40]) {
+  
+
+packages\coding-agent\src\pao\index.ts:33:10 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    31 │ import { openPaoPanel } from "./panel/index.ts";
+    32 │ import { registerPanorama } from "./panorama/index.ts";
+  > 33 │ import { createPatrolHook, patrolAfterInspect } from "./patrol/hook.ts";
+       │          ^^^^^^^^^^^^^^^^
+    34 │ import { registerShellGuard } from "./patrol/wire.ts";
+    35 │ import { registerPreflight } from "./preflight/index.ts";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    33 │ import·{·createPatrolHook,·patrolAfterInspect·}·from·"./patrol/hook.ts";
+       │          ------------------                                             
+
+packages\coding-agent\test\pao\desktop-read-model.test.ts:278:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━
+
+  ! This variable outsider is unused.
+  
+    276 │ 		};
+    277 │ 		const origin = makeSession("origin-owner");
+  > 278 │ 		const outsider = makeSession("final-owner");
+        │ 		      ^^^^^^^^
+    279 │ 		const base = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查" };
+    280 │ 		// 非 owner 会话提交确认：trusted 终审拒绝，不进入命令执行。
+  
+  i Unused variables are often the result of an incomplete refactoring, typos, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend outsider with an underscore.
+  
+    276 276 │   		};
+    277 277 │   		const origin = makeSession("origin-owner");
+    278     │ - → → const·outsider·=·makeSession("final-owner");
+        278 │ + → → const·_outsider·=·makeSession("final-owner");
+    279 279 │   		const base = { 名字: recipe.名字, 卡目录: options.cardsDir, 实例: flow.实例, 节点: "审查" };
+    280 280 │   		// 非 owner 会话提交确认：trusted 终审拒绝，不进入命令执行。
+  
+
+packages\coding-agent\test\pao\memory-vendor-contract.test.ts:12:24 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    10 │  */
+    11 │ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+  > 12 │ import { createServer, type Server } from "node:http";
+       │                        ^^^^^^^^^^^
+    13 │ import { tmpdir } from "node:os";
+    14 │ import { join } from "node:path";
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    12 │ import·{·createServer,·type·Server·}·from·"node:http";
+       │                        ------------                   
+
+Skipped 8 suggested fixes.
+If you wish to apply the suggested (unsafe) fixes, use the command biome check --write --unsafe
+
+Checked 1775 files in 9s. Fixed 88 files.
+Found 3 warnings.
+Found 5 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+

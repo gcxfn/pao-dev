@@ -1,0 +1,34 @@
+{
+  "at": "2026-10-27T06:20:41.359618+00:00",
+  "instance": "b1702467-4da8-434e-9c82-cc49d73d7234",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "b1702467-4da8-434e-9c82-cc49d73d7234",
+      "owner": "01a17b88-e976-755b-bec1-20d79d8440e6",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "审核",
+    "轮次": 1,
+    "理由": "提交判定被流程门拦下：「审核证据不可放行：检查后 tree 已过期，当前成果须重新独立验证」。我需要裁定，因为重新验证所需的通道在审核节点已关闭。\n\n事实（均为实测，非回执宣称）：\n1) 业务成果自上一轮审核以来未变：/app/filter.py 的 sha256 仍为 24bb00cfb0505aec0a82e34f1446442c41b4afdecce12a3fd70cf36474e6aae7（卡0005 于 06:06、卡0006 于 06:10 分别实测，与副本同 sha256）；/app/.filter_checks/ 仍只有 check_core.py、check_rules.py、verify_filter.py（我实测 /app/.filter_checks/audit_integrity_report.md 为 ENOENT，审核产物只存在于受管副本）；/app/.pao/benchmark/黑板.md 仍以卡0003 便签结尾（45 行），卡0004/0005/0006 便签均写在副本内。\n2) 已有独立证据：卡0004 39 例差分（M3 子序列 39/39、M4 无 insert、M8 删除区间逐字重建 39/39、M5 逐片段命中危险规则，3 个变异体负控制全被捕获）；卡0005 37 条硬断言全过（16 良性样本字节不变含 latin-1 与 UTF-16/32 BOM、CLI 0/2/1/1/0、写入边界仅指定文件变更、三次运行同 sha256、import 全标准库、4 负控制 0/1/1/1）；卡0006 证实 check_core.py 与基线 blob 逐字节一致（0babe0cd…443c/9499B），即断言未被弱化。\n3) 阻塞点：本节点的拆解已在上一轮以 pao_breakdown_done 结束，现在 pao_minister_submit_cards 已被门拒绝（返回「拆解已结束或本批没有卡」），我无法自行派发「针对当前树重新独立验证」的验证卡；我也没有 pao_verify_card / pao_change_status 这类主控工具。\n\n请求裁定二选一：\nA. 重开本节点拆解（或由主控直接派发一张对当前树复验的验证卡）：在新受管副本内记录当前 tree 摘要，重算 /app/filter.py 与副本 sha256，并把 audit_removal.py、audit_preservation.py、audit_integrity.py 拷到新副本 .filter_checks/ 后逐个复跑，确认 39/39、37/37 与归属结论=一致，再据新证据出判定；这与我已拟好的卡面一致（三支先决脚本路径、sha256 期望值 24bb00cf…6aae7、tree 摘要、结论与未验证项分栏）。\nB. 认定 tree 过期仅源于 .pao/ 控制文件（卡文件、回执、黑板）在本轮持续变化，业务面未漂移，直接按现有三卡证据放行审核判定。\n\n补充说明：卡0006 仍为 in_progress（自报 not_run 项「check_core.py 删除/重建过程」、未生成部长审核请求），其 not_run 项在版本控制中不可重建（该路径从未进入任何 commit、无 stash/ORIG_HEAD），建议主控一并经 pao_change_status 以 accepted_deviations 接受；该项不影响交付面结论。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T06:11:22.191Z",
+    "事件": "自动链停因",
+    "理由": "等待部长拆卡、结束信号或节点判定"
+  },
+  "latest_business_event_at": "2026-10-27T06:11:22.191Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-27T06:11:22.191Z\", \"理由\": \"等待部长拆卡、结束信号或节点判定\"}",
+  "progress_observed_at": "2026-10-27T06:11:27.249142+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

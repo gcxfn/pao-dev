@@ -1,0 +1,37 @@
+## 非 UTF-8 字节往返（latin-1 高位字节应原样保留）
+$ python3 /app/filter.py /tmp/pf/latin1.html
+exit=0
+$ xxd /tmp/pf/latin1.html
+/bin/bash: line 8: xxd: command not found
+caf\xe9 bytes preserved: 2
+script removed: b'<html><body><p title="caf\xe9">caf\xe9</p></body></html>\n'
+
+## 大文件性能
+size=237000
+$ time python3 /app/filter.py /tmp/pf/big.html
+/bin/bash: line 19: /usr/bin/time: No such file or directory
+exit=127
+script_residue=3000
+
+## --check 只读模式
+$ python3 /app/filter.py --check /tmp/pf/checkme.html
+check: /tmp/pf/checkme.html: clean
+exit=0
+file unchanged: 26a86b007ae23a8b1e79bebd4d419fc1 vs 26a86b007ae23a8b1e79bebd4d419fc1
+## 大文件性能（bash time 内建）
+size=237000
+$ time python3 /app/filter.py /tmp/pf/big.html
+
+real	0m0.303s
+user	0m0.295s
+sys	0m0.008s
+exit=0
+size_after=132000
+script_residue=0
+onerror_residue=0
+div_count=3000
+$ od -An -tx1 /tmp/pf/latin1.html
+ 3c 68 74 6d 6c 3e 3c 62 6f 64 79 3e 3c 70 20 74
+ 69 74 6c 65 3d 22 63 61 66 e9 22 3e 63 61 66 e9
+ 3c 2f 70 3e 3c 2f 62 6f 64 79 3e 3c 2f 68 74 6d
+ 6c 3e 0a

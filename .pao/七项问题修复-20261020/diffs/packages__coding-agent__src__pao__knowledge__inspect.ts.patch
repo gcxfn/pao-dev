@@ -1,0 +1,35 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\inspect.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\inspect.ts"
+index e5ca891..57c2ea2 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\inspect.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\inspect.ts"
+@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
+ import { writeFileAtomic } from "../shared/atomic.ts";
+ import { withFileLock } from "../shared/lock.ts";
+-import { parseEntry, subindexRow } from "./entry.ts";
++import { isMarkdownEntryFile, parseEntry, subindexRow } from "./entry.ts";
+ import { subindexPath } from "./paths.ts";
+ import { ENTRY_TYPES, type EntryType } from "./types.ts";
+ 
+@@ -102,9 +102,7 @@ export function checkIndexConsistency(libRoot: string): IndexConsistency {
+ 	for (const type of ENTRY_TYPES) {
+ 		const dir = join(libRoot, type);
+ 		if (!existsSync(dir)) continue;
+-		const files = readdirSync(dir)
+-			.filter((f) => f.endsWith(".md") && f !== "子索引.md")
+-			.sort();
++		const files = readdirSync(dir).filter(isMarkdownEntryFile).sort();
+ 		const subindexFile = subindexPath(libRoot, type);
+ 		const lines = existsSync(subindexFile) ? readFileSync(subindexFile, "utf8").split(/\r?\n/) : [];
+ 		const area = areaConsistency(type, files, lines);
+@@ -126,9 +124,7 @@ export async function inspectLibrary(libRoot: string, opts: InspectionOptions =
+ 		if (!existsSync(dir)) continue;
+ 		const subindexFile = subindexPath(libRoot, type);
+ 		await withFileLock(subindexFile, () => {
+-			const files = readdirSync(dir)
+-				.filter((file) => file.endsWith(".md") && file !== "子索引.md")
+-				.sort();
++			const files = readdirSync(dir).filter(isMarkdownEntryFile).sort();
+ 			const lines = existsSync(subindexFile)
+ 				? readFileSync(subindexFile, "utf8").split(/\r?\n/)
+ 				: [`# ${type} 子索引`, ""];

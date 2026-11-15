@@ -1,0 +1,663 @@
+{
+  "schemaVersion": 1,
+  "name": "matrix-f3-F3-N-A",
+  "model": {
+    "provider": "harbor-endpoint",
+    "id": "minimax-code/MiniMax-M3.1-Flash"
+  },
+  "unmatched": "fail",
+  "timeoutMs": 600000,
+  "rules": [
+    {
+      "id": "main-final-done",
+      "match": {
+        "role": "main",
+        "promptIncludes": "PAO-MATRIX-FINAL",
+        "latestToolName": "pao_query_flow"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "最终状态已查询。"
+      }
+    },
+    {
+      "id": "main-final-query",
+      "match": {
+        "role": "main",
+        "promptIncludes": "PAO-MATRIX-FINAL"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_query_flow",
+          "arguments": {
+            "name": "文稿修订流水线"
+          }
+        }
+      }
+    },
+    {
+      "id": "main-start-flow",
+      "match": {
+        "role": "main",
+        "latestToolName": "",
+        "promptIncludes": "F3-P1"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_start_flow",
+          "arguments": {
+            "name": "文稿修订流水线",
+            "params": {
+              "任务": "按新规则修订 文稿/说明.md"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "main-p1-done",
+      "match": {
+        "role": "main",
+        "latestToolName": "pao_start_flow",
+        "promptExcludes": "F3-P2"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "已启动自动链，等待后台通知。"
+      }
+    },
+    {
+      "id": "minister-recon-map",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:侦察",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "文稿/说明.md"
+            ],
+            "facts": [
+              "文稿/说明.md 现有表述较旧，需按新规则修订",
+              "验收要求包含「矩阵文稿修订完成」"
+            ],
+            "scope_basis": [
+              "本实例只处理隔离临时项目"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-recon-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:侦察",
+        "latestToolName": "pao_minister_save_node_map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读侦察零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-recon-post-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:侦察",
+        "latestToolName": "pao_breakdown_done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "侦察节点完成。"
+      }
+    },
+    {
+      "id": "minister-plan-map",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:规划",
+        "latestToolName": "",
+        "afterRule": "minister-recon-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "文稿/说明.md"
+            ],
+            "facts": [
+              "修订方案：替换开头与正文为修订版表述",
+              "实施卡需改写 文稿/说明.md 并用 bash 核对"
+            ],
+            "scope_basis": [
+              "复用侦察结论"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:规划",
+        "latestToolName": "pao_minister_save_node_map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {
+            "zero_cards_reason": "只读规划零卡，结构化地图已保存。"
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-plan-post-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:规划",
+        "latestToolName": "pao_breakdown_done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "规划节点完成。"
+      }
+    },
+    {
+      "id": "minister-impl-cards",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:实施",
+        "latestToolName": "",
+        "afterRule": "minister-plan-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_submit_cards",
+          "arguments": {
+            "cards": [
+              {
+                "goal": "按方案修订 文稿/说明.md 并提交回执",
+                "acceptance": "存在: 文稿/说明.md\n包含: 文稿/说明.md :: 矩阵文稿修订完成",
+                "inputs": [
+                  "文稿/说明.md"
+                ],
+                "constraints": "只改 文稿/说明.md；改后用 bash 读取验证"
+              },
+              {
+                "goal": "只读复核 文稿/说明.md 的字节数与修订痕迹",
+                "acceptance": "存在: 文稿/说明.md\n包含: 文稿/说明.md :: 矩阵文稿修订完成",
+                "inputs": [
+                  "文稿/说明.md"
+                ],
+                "constraints": "只读；不得修改或新增文稿文件",
+                "depends_on": [
+                  "卡0001"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-impl-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:实施",
+        "latestToolName": "pao_minister_submit_cards"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-impl-post-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:实施",
+        "latestToolName": "pao_breakdown_done"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "实施节点拆卡完成，等待工人回执。"
+      }
+    },
+    {
+      "id": "worker-impl-card-1-write",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0001",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "write",
+          "arguments": {
+            "path": "文稿/说明.md",
+            "content": "# 协作规则说明（修订版）\n\n矩阵文稿修订完成：部门协作按「规划—实施—审核」流程执行，证据落卡、验收可复核。\n"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-1-bash",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0001",
+        "latestToolName": "write"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test -n \"$(grep -c '矩阵文稿修订完成' 文稿/说明.md)\""
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-1-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0001",
+        "latestToolName": "bash"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [
+              "文稿/说明.md"
+            ],
+            "summary": "真实 write 修订中文文稿，真实 bash 核对通过。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "bash 核对中文文稿内容",
+                "结论": "pass",
+                "证据": "真实 bash 命令退出成功"
+              }
+            ],
+            "changes": [
+              {
+                "路径": "文稿/说明.md",
+                "类型": "modified",
+                "说明": "按方案修订中文文稿"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-1-post-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0001",
+        "latestToolName": "pao_submit_receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "回执已提交，结束本轮。"
+      }
+    },
+    {
+      "id": "worker-impl-card-2-read",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0002",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "read",
+          "arguments": {
+            "path": "文稿/说明.md"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-2-bash",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0002",
+        "latestToolName": "read"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test -n \"$(wc -c < 文稿/说明.md)\""
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-2-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0002",
+        "latestToolName": "bash"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [],
+            "summary": "只读复核完成，未改动任何文稿。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "bash 核对中文文稿内容",
+                "结论": "pass",
+                "证据": "真实 bash 命令退出成功"
+              }
+            ],
+            "changes": []
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-impl-card-2-post-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "执行卡0002",
+        "latestToolName": "pao_submit_receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "回执已提交，结束本轮。"
+      }
+    },
+    {
+      "id": "minister-review-map",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:审核",
+        "latestToolName": "",
+        "afterRule": "minister-impl-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_save_node_map",
+          "arguments": {
+            "coverage": [
+              "文稿/说明.md"
+            ],
+            "facts": [
+              "实施节点已交付修订稿，需独立只读复核"
+            ],
+            "scope_basis": [
+              "历史交付证据来自实施节点"
+            ],
+            "scope_confirmed": true
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-cards",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:审核",
+        "latestToolName": "pao_minister_save_node_map"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_submit_cards",
+          "arguments": {
+            "cards": [
+              {
+                "goal": "在独立受管副本只读复核 文稿/说明.md 修订结果",
+                "acceptance": "存在: 文稿/说明.md\n包含: 文稿/说明.md :: 矩阵文稿修订完成",
+                "inputs": [
+                  "文稿/说明.md"
+                ],
+                "constraints": "只读；不得修改、删除或新增业务文件"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:审核",
+        "latestToolName": "pao_minister_submit_cards"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_breakdown_done",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-review-post-done",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:审核",
+        "latestToolName": "pao_breakdown_done",
+        "promptExcludes": "全部卡已经执行"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "审核复核卡已派出。"
+      }
+    },
+    {
+      "id": "worker-review-read",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "在独立受管副本只读复核",
+        "latestToolName": ""
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "read",
+          "arguments": {
+            "path": "文稿/说明.md"
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-bash",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "在独立受管副本只读复核",
+        "latestToolName": "read"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "bash",
+          "arguments": {
+            "command": "test -n \"$(grep -c '矩阵文稿修订完成' 文稿/说明.md)\""
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "在独立受管副本只读复核",
+        "latestToolName": "bash"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_receipt",
+          "arguments": {
+            "result": "success",
+            "artifact_path": [],
+            "summary": "独立副本只读复核完成，内容符合修订目标。",
+            "任务态": "completed",
+            "verification": [
+              {
+                "条件": "bash 核对中文文稿内容",
+                "结论": "pass",
+                "证据": "真实 bash 命令退出成功"
+              }
+            ],
+            "changes": []
+          }
+        }
+      }
+    },
+    {
+      "id": "worker-review-post-receipt",
+      "match": {
+        "role": "worker",
+        "promptIncludes": "在独立受管副本只读复核",
+        "latestToolName": "pao_submit_receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "复核回执已提交，结束本轮。"
+      }
+    },
+    {
+      "id": "minister-review-package",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "全部卡已经执行",
+        "latestToolName": "pao_breakdown_done",
+        "afterRule": "minister-review-done"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_minister_decision_pack",
+          "arguments": {}
+        }
+      }
+    },
+    {
+      "id": "minister-review-decision",
+      "match": {
+        "role": "minister",
+        "promptIncludes": "节点:审核",
+        "latestToolName": "pao_minister_decision_pack"
+      },
+      "respond": {
+        "kind": "tool_call",
+        "call": {
+          "name": "pao_submit_decision",
+          "arguments": {
+            "result": "pass",
+            "reason": "独立受管副本的真实读取与 bash 证据与当前修订稿一致。",
+            "references": [
+              "文稿/说明.md:1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "minister-review-decision-post",
+      "match": {
+        "role": "minister",
+        "latestToolName": "pao_submit_decision"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "审核判定已提交。"
+      }
+    },
+    {
+      "id": "main-ack-notify",
+      "match": {
+        "role": "main",
+        "promptIncludes": "有新的后台结果"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "收到后台结果通知；等待下一步指令。"
+      }
+    },
+    {
+      "id": "main-ack-notify-bg",
+      "match": {
+        "role": "main",
+        "promptIncludes": "后台通知"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "已读后台通知。"
+      }
+    },
+    {
+      "id": "worker-generic-fallback",
+      "match": {
+        "role": "worker",
+        "latestToolName": "pao_submit_receipt"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "回执已提交，结束本轮。"
+      }
+    },
+    {
+      "id": "minister-generic-fallback",
+      "match": {
+        "role": "minister"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "本轮无新增动作，等待下一步。"
+      }
+    },
+    {
+      "id": "main-generic-fallback",
+      "match": {
+        "role": "main"
+      },
+      "respond": {
+        "kind": "text",
+        "text": "待命，等待后台结果。"
+      }
+    }
+  ]
+}

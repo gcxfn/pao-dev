@@ -1,0 +1,75 @@
+# S9 迁移包·隔离副本演练 2026-10-07T18:36:21.633Z
+临时根：C:\Users\ASUS\AppData\Local\Temp\pao-s9-drill-I7lP0Q（正式现场 D:/AI/workspace/pao 全程未触碰）
+工具：D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\pao\migration\cli.ts
+
+## 定名表覆盖率自检（corpus-ok 每键正例数）
+  frontmatter 目标→goal: 17
+  frontmatter 部门→dept: 17
+  frontmatter 输入→inputs: 2
+  frontmatter 约束→constraints: 2
+  frontmatter 验收→acceptance: 17
+  frontmatter 档位→tier: 4
+  frontmatter 预算→budget: 1
+  frontmatter 优先级→priority: 5
+  frontmatter 尝试→attempt: 17
+  frontmatter 创建→created: 17
+  frontmatter 完成→completed: 2
+  frontmatter 状态→status: 17
+  预算.协作配额→collab_quota: 1
+  回执 留档→archive_flag: 2
+  回执 结果→result: 6
+  回执 摘要→summary: 2
+  回执 产物路径→artifact_path: 1
+  回执 证据→evidence: 2
+  回执 用量→usage: 2
+  回执 值得沉淀→worth_distilling: 1
+  回执 失败类型→failure_type: 6
+  值 状态.待认领→unclaimed: 7
+  值 状态.进行中→in_progress: 5
+  值 状态.已交付→delivered: 5
+  值 状态.失败→failed: 16
+  值 状态.取消→canceled: 2
+  值 优先级.高→high: 3
+  值 优先级.中→medium: 8
+  值 优先级.低→low: 2
+  值 档位.快→fast: 3
+  值 档位.主力→primary: 3
+  值 失败类型.瞬时故障→transient: 3
+  值 失败类型.缺输入→missing_input: 3
+  值 失败类型.能力不足→insufficient_capability: 2
+  值 失败类型.结果未知→unknown_outcome: 2
+  值 留档.旧尝试留档→old_attempt: 2
+  值 留档.迟到回执→late_receipt: 1
+
+## 面 1 dry-run 预览
+  PASS  corpus-ok dry-run 退出 0 且列出 would-migrate
+  PASS  corpus-ok dry-run 未写盘
+  PASS  corpus-bad dry-run 退出 1 且逐条列冲突 —— 冲突 9 条
+  PASS  corpus-bad dry-run 未写盘
+## 面 2 干净迁移与不丢
+  PASS  corpus-ok 实跑退出 0
+  PASS  前后键数与值逐对比对（独立断言表）全等
+  PASS  转换前备份存在且等于原件
+## 面 3 幂等
+  PASS  二次运行退出 0 且全部 unchanged —— unchanged=17/17
+  PASS  二次运行字节不变
+  PASS  首份备份未被覆盖
+## 面 4 原子写与中断恢复
+  PASS  杀进程成功（已见 ≥5 条逐文件结果后被杀） —— seen=5
+  PASS  无 .tmp 半成品残留
+  PASS  每个文件要么整旧要么整新（无半成品）
+  PASS  中断后重跑退出 0
+  PASS  参考运行退出 0
+  PASS  恢复结果与干净参考逐字节一致
+## 面 5 冲突拒绝
+  PASS  corpus-bad 实跑退出 1
+  PASS  冲突首文件原文未动
+  PASS  冲突理由含未知键名
+## list-sessions（合成会话根）
+  PASS  逐目录清单（3 目录×2 会话）
+  PASS  只列不删（现场原样）
+  PASS  缺 --root 一律拒跑（不猜默认）
+
+## 清理：已删除临时根 C:\Users\ASUS\AppData\Local\Temp\pao-s9-drill-I7lP0Q（存在=false），正式现场未触碰
+
+结果：全部面通过（0 FAIL）

@@ -1,0 +1,17 @@
+diff --git "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\entry.ts" "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\entry.ts"
+index a1a1e9f..eee77c5 100644
+--- "a/D:\\AI\\workspace\\pao-dev\\.pao\\\344\270\203\351\241\271\351\227\256\351\242\230\344\277\256\345\244\215-20261020\\baseline\\src\\pao\\knowledge\\entry.ts"
++++ "b/D:\\AI\\workspace\\pao-dev\\PAO\\packages\\coding-agent\\src\\pao\\knowledge\\entry.ts"
+@@ -7,6 +7,12 @@
+  */
+ import type { EntryMeta, EntryStatus } from "./types.ts";
+ 
++/** 入库允许 .MD；巡检、查库和索引修复共用同一条目文件识别规则。 */
++export function isMarkdownEntryFile(fileName: string): boolean {
++	const lower = fileName.toLowerCase();
++	return lower.endsWith(".md") && lower !== "子索引.md";
++}
++
+ export const DATE_RE = /20\d{2}-\d{2}-\d{2}/;
+ const VERSION_RE = /版本[:：]\s*([^\s，。；（）()]+)/;
+ const SCOPE_LINE_RE = /^适用范围[:：]\s*(.+)$/m;

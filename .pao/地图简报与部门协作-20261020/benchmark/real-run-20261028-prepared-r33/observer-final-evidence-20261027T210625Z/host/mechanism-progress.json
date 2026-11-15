@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-27T21:05:15.847214+00:00",
+  "instance": "7c70bd87-fe07-4edf-aa39-6a2fc175c087",
+  "observation": {
+    "status": "bound",
+    "reasons": [],
+    "observed": {
+      "instance_id": "7c70bd87-fe07-4edf-aa39-6a2fc175c087",
+      "owner": "01a17f21-3f83-700f-8238-c337d7d5f875",
+      "workflow": "基准开发流水线",
+      "control_path": "/app/.pao/benchmark",
+      "recipe_sha256": "11a61ee50e11a554a536e2a52f2841599367a022f4f56f71a996e136afd94a94"
+    }
+  },
+  "active_execution": null,
+  "active_execution_status": "unknown",
+  "blocker": {
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "请求主控在原实例开新一轮（action=reopen），以便本节点提交一张修正后的复验卡；当前轮的卡面验收定义本身有缺陷，无法靠重跑修好。\n\n事实核对（已读卡面与判定包）：\n1. 卡0001 尝试1 机械验收 12/19 未过，但 12 条失败全部是**验收命令写法**问题，不是实现缺陷：失败输出为 `File \"<string>\", line 1 / exec(\\ / SyntaxError: '(' was never closed`，说明执行器把命令里的嵌套引号与换行转义还原坏了（例如 `python3 -c \"exec(\\\"import shutil\\n...\\\")\"` 传给 python 后只剩 `exec(\\`）。其后 3 条依赖复制产物的 `python3 filter.py filter_test/_acc_*.html` 报 “No such file or directory” 属连锁失败。\n2. 机器实际跑通并通过的是：filter.py 存在且含 argv、语法编译 exit 0、filter_test/selftest.py、filter_test/benign.html、filter_test/malicious.html 三个文件存在、`python3 filter_test/selftest.py` exit 0（回执记录 98 项断言 0 失败，含良性样例逐字节相同、恶意样例 script/javascript:/onclick/onerror 清除且 before/after 保留、幂等、CLI 缺参退出 2 / 文件不存在退出 1、latin-1 与 BOM 保真、畸形输入不崩）。\n3. 已读实现源码（filter.py，纯标准库 html/re/sys，bytes 级切除，R1–R9 与卡面口径一致）与自测脚本、两个样例，未发现与口径冲突处；未由本节点实跑（本节点 bash 被禁）。\n\n请求：新开一轮后由本节点提交一张“复验/必要时返修”卡，验收命令改为无反斜杠、无分号、无嵌套引号的单表达式形式（已验证与跑通的 `python3 -c \"compile(open('filter.py').read(),'filter.py','exec')\"` 同一模式），内容为：\n- 复制：python3 -c \"open('filter_test/_acc_benign.html','wb').write(open('filter_test/benign.html','rb').read())\"\n- 过滤：python3 filter.py filter_test/_acc_benign.html\n- 字节相等：python3 -c \"open('filter_test/_acc_benign.html','rb').read()==open('filter_test/benign.html','rb').read() or (_ for _ in ()).throw(SystemExit(1))\"\n- 恶意件已清除：python3 -c \"open('filter_test/_acc_mal.html','rb').read().lower().find(bytes([60])+b'script')==-1 and b'javascript:' not in open('filter_test/_acc_mal.html','rb').read().lower() and b'onclick' not in open('filter_test/_acc_mal.html','rb').read().lower() and b'onerror' not in open('filter_test/_acc_mal.html','rb').read().lower() and b'before' in open('filter_test/_acc_mal.html','rb').read() and b'after' in open('filter_test/_acc_mal.html','rb').read() or (_ for _ in ()).throw(SystemExit(1))\"\n- 原样例含 JS：python3 -c \"bytes([60])+b'script' in open('filter_test/malicious.html','rb').read().lower() and b'javascript:' in open('filter_test/malicious.html','rb').read().lower() and b'onclick' in open('filter_test/malicious.html','rb').read().lower() or (_ for _ in ()).throw(SystemExit(1))\"\n- 幂等：python3 -c \"open('filter_test/_acc_mal.html','rb').read()==open('filter_test/_acc_mal2.html','rb').read() or (_ for _ in ()).throw(SystemExit(1))\"\n- CLI 非 0 退出码：python3 -c \"__import__('subprocess').run([__import__('sys').executable,'filter.py']).returncode!=0 or (_ for _ in ()).throw(SystemExit(1))\" 及 no_such_file_zz.html 同式\n该卡不新增功能需求，只做复验与真实缺陷返修。\n\n说明：已尝试直接提交该卡，被拦回「拆解已结束或本批没有卡」；若直接对 卡0001 做返修，卡面验收文本不变，重跑仍是同一批坏命令，只会再失败一次，故不采用。",
+    "通道": "人工"
+  },
+  "responsible_party": "人工",
+  "latest_business_event": {
+    "时间": "2026-10-27T21:01:54.595Z",
+    "事件": "自动链停因",
+    "节点": "实施",
+    "轮次": 1,
+    "理由": "卡卡0001 派发异常：派发交接的地图覆盖内容已变化，自动链停"
+  },
+  "latest_business_event_at": "2026-10-27T21:01:54.595Z",
+  "business_event_key": "{\"事件\": \"自动链停因\", \"时间\": \"2026-10-27T21:01:54.595Z\", \"理由\": \"卡卡0001 派发异常：派发交接的地图覆盖内容已变化，自动链停\", \"节点\": \"实施\", \"轮次\": 1}",
+  "progress_observed_at": "2026-10-27T21:01:58.347370+00:00",
+  "needs_manual_check": true,
+  "os_isolation_implemented": false
+}

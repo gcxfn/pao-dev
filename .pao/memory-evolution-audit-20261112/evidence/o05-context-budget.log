@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence
+
+ × o05-context-budget.test.ts > O05 最终上下文累计预算 > C3 上下文增长但记忆不变时，已有自动召回仍按本轮预算收紧 50ms
+   → expected 564 to be less than or equal to 271
+ × o05-context-budget.test.ts > O05 最终上下文累计预算 > C4 多轮召回均刷新时，共享最终上下文预算 18ms
+   → expected 442 to be less than or equal to 275
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  o05-context-budget.test.ts > O05 最终上下文累计预算 > C3 上下文增长但记忆不变时，已有自动召回仍按本轮预算收紧
+AssertionError: expected 564 to be less than or equal to 271
+ ❯ o05-context-budget.test.ts:50:19
+     48|     const chars = messages.reduce((n, m) => n + Array.from(m.content).…
+     49|     results.C3 = { budget, renderedChars: chars, messages };
+     50|     expect(chars).toBeLessThanOrEqual(budget);
+       |                   ^
+     51|   });
+     52|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  o05-context-budget.test.ts > O05 最终上下文累计预算 > C4 多轮召回均刷新时，共享最终上下文预算
+AssertionError: expected 442 to be less than or equal to 275
+ ❯ o05-context-budget.test.ts:64:19
+     62|     const chars = messages.reduce((n, m) => n + Array.from(m.content).…
+     63|     results.C4 = { budget, renderedChars: chars, eachChars: messages.m…
+     64|     expect(chars).toBeLessThanOrEqual(budget);
+       |                   ^
+     65|   });
+     66| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  16:20:05
+   Duration  5.25s (transform 4.03s, setup 0ms, import 4.99s, tests 79ms, environment 0ms)
+
+JSON report written to D:/AI/workspace/pao-dev/.pao/memory-evolution-audit-20261112/evidence/o05-context-budget-vitest.json

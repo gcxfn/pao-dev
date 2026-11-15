@@ -1,0 +1,115 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 apps\desktop\tests\core\kanban-board.spec.ts:239:5 › 看板五列、搜索筛选、详情回执、刷新读盘、坏卡显异常 (33.7s)
+  x  2 apps\desktop\tests\core\kanban-board.spec.ts:388:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 (12.7s)
+  x  3 apps\desktop\tests\core\kanban-board.spec.ts:430:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 (37.8s)
+  x  4 apps\desktop\tests\core\kanban-board.spec.ts:558:5 › 工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情 (10.8s)
+
+
+  1) apps\desktop\tests\core\kanban-board.spec.ts:388:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 ─────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('workboard-dept-row').filter({ hasText: '工程' })
+    Expected substring: [32m"1 条待验证（部门知识）"[39m
+    Received string:    [31m"工程1 张卡待验证教训：1 条警示"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workboard-dept-row').filter({ hasText: '工程' })[22m
+    [2m    9 × locator resolved to <li class="workboard-row" data-testid="workboard-dept-row">…</li>[22m
+    [2m      - unexpected value "工程1 张卡待验证教训：1 条警示"[22m
+
+
+      404 |     await expect(deptRow).toBeVisible();
+      405 |     // 口径对齐：计数源是部门知识库「待验证/」的条目数（.md 文件），不是待验证的卡数。
+    > 406 |     await expect(deptRow).toContainText("1 条待验证（部门知识）");
+          |                           ^
+      407 |     await expect(deptRow).toContainText("教训：1 条警示");
+      408 |
+      409 |     const pendingRow = page.getByTestId("workboard-pending-row").filter({ hasText: "丁卡失败" });
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:406:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-kanban-board-任务卡与部门／待处理入口同源：失败卡的部门可定位\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\kanban-board.spec.ts:430:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 ────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workboard-pending-row').filter({ hasText: '丁卡失败' }).getByTestId('workboard-open-card')[22m
+
+
+      455 |     const pendingRow = page.getByTestId("workboard-pending-row").filter({ hasText: "丁卡失败" });
+      456 |     await expect(pendingRow).toBeVisible();
+    > 457 |     await pendingRow.getByTestId("workboard-open-card").click();
+          |                                                         ^
+      458 |     await expect(page.getByTestId("kanban-view")).toBeVisible();
+      459 |     const detail = page.getByTestId("kanban-detail");
+      460 |     await expect(detail).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:457:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-kanban-board-积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\kanban-board.spec.ts:558:5 › 工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情 ───────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('kanban-workflows')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('kanban-workflows')[22m
+
+
+      588 |     // 节点→卡号映射全量列出：两张卡都在，不是只显示首卡。
+      589 |     const flows = page.getByTestId("kanban-workflows");
+    > 590 |     await expect(flows).toBeVisible();
+          |                         ^
+      591 |     await expect(flows.getByTestId("kanban-workflow")).toHaveCount(1);
+      592 |     await expect(flows).toContainText("多卡节点");
+      593 |     await expect(flows).toContainText("拆解甲");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:590:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-kanban-board-工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-kanban-board-工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\kanban-board.spec.ts:388:5 › 任务卡与部门／待处理入口同源：失败卡的部门可定位 ──────────────────
+    apps\desktop\tests\core\kanban-board.spec.ts:430:5 › 积压待处理行打开真实卡详情：回执用量如实、产物路径经主进程复核导航 ─────────
+    apps\desktop\tests\core\kanban-board.spec.ts:558:5 › 工作流节点多卡全量查看：节点卡映射全列出，点任一张开真实详情 ────────────
+  1 passed (1.6m)
+E2E_RED_EXIT=1

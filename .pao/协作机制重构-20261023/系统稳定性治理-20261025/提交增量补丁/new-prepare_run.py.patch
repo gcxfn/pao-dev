@@ -1,0 +1,434 @@
+diff --git a/.pao/地图简报与部门协作-20261020/benchmark/prepare_run.py b/.pao/地图简报与部门协作-20261020/benchmark/prepare_run.py
+new file mode 100644
+--- /dev/null
++++ b/.pao/地图简报与部门协作-20261020/benchmark/prepare_run.py
+@@ -0,0 +1,429 @@
++"""把明确来源组装成新的不可复用运行目录；纯离线，不启动 Docker 或模型。"""
++
++from __future__ import annotations
++
++import argparse
++import json
++from pathlib import Path, PurePosixPath
++import shutil
++
++import runner_common
++
++
++def copy_frozen_task(source: Path, destination: Path, source_manifest: dict) -> dict:
++    expected = {item["path"]: item["sha256"] for item in source_manifest["files"]}
++    actual = {
++        path.relative_to(source).as_posix()
++        for path in source.rglob("*")
++        if path.is_file()
++    }
++    if actual != set(expected):
++        raise ValueError("冻结原题文件集合与来源清单不一致")
++    for relative, sha256 in expected.items():
++        if runner_common.digest(source / relative) != sha256:
++            raise ValueError("冻结原题摘要不符：" + relative)
++    runner_common.copy_tree_files(source, destination)
++    return {
++        "source": str(source),
++        "destination": str(destination),
++        "ref": source_manifest["ref"],
++        "files": [
++            {"path": relative, "sha256": sha256}
++            for relative, sha256 in sorted(expected.items())
++        ],
++    }
++
++
++def configure_roles(
++    benchmark: Path,
++    sdk_host: Path,
++    destination: Path,
++    model: str,
++    thinking: str,
++) -> dict:
++    """按选定模型结构化覆盖角色与工作流配置。"""
++    manifest_path = benchmark / "organized-post" / "manifest.json"
++    manifest = runner_common.read_json(manifest_path)
++    for record in manifest["files"]:
++        relative = record["path"]
++        source = (
++            sdk_host / "benchmark-organized-adapter.py"
++            if relative == "map_bench_pao_organized.py"
++            else benchmark / relative
++        ).resolve()
++        if runner_common.digest(source) != record["sha256"]:
++            raise ValueError("组织配置来源摘要不符：" + relative)
++        if not relative.startswith("organized-post/"):
++            continue
++        runner_common.copy_file(source, destination / relative)
++
++    kit_path = destination / "organized-post" / "kit.json"
++    kit = runner_common.read_json(kit_path)
++    expected_model = "harbor-endpoint/" + model
++    for node in kit["workflow"]["节点"]:
++        node["模型"] = expected_model
++        node["思考强度"] = thinking
++        node["档位"] = "primary"
++    for department in kit["departments"]:
++        recipe = department.get("recipe")
++        if not isinstance(recipe, str):
++            raise ValueError("部门配方默认档位不是 primary：" + department.get("name", ""))
++        binding_line = f"模型名:{expected_model}"
++        thinking_line = f"思考强度:{thinking}"
++        if not recipe.endswith("\n"):
++            recipe += "\n"
++        recipe += binding_line + "\n" + thinking_line + "\n"
++        if "默认档位:primary" not in recipe:
++            raise ValueError("部门配方默认档位不是 primary：" + department.get("name", ""))
++        department["recipe"] = recipe
++    runner_common.write_json(kit_path, kit)
++
++    manifest["files"] = [
++        {
++            "path": row["path"],
++            "sha256": runner_common.digest(destination / row["path"]),
++        }
++        for row in manifest["files"]
++        if row["path"].startswith("organized-post/")
++    ]
++    runner_common.write_json(destination / "organized-post" / "manifest.json", manifest)
++    return kit
++
++
++def prepare(source_manifest_path: Path) -> dict:
++    manifest_path = source_manifest_path.resolve()
++    sources = runner_common.read_json(manifest_path)
++    run_parent = runner_common.absolute_path(sources["run_parent"], "run_parent")
++    run = runner_common.absolute_path(sources["run_dir"], "run_dir")
++    if run.parent != run_parent or run.exists():
++        raise ValueError("run_dir 必须尚不存在且直接位于 run_parent 下")
++
++    repository = runner_common.absolute_path(sources["pao_source"], "pao_source")
++    benchmark = runner_common.absolute_path(sources["benchmark_source"], "benchmark_source")
++    sdk_host = runner_common.absolute_path(sources["sdk_host_source"], "sdk_host_source")
++    task_source = runner_common.absolute_path(sources["task_source"], "task_source")
++    task_source_manifest = runner_common.absolute_path(
++        sources["task_source_manifest"], "task_source_manifest"
++    )
++    model_data = runner_common.absolute_path(sources["model_data_archive"], "model_data_archive")
++    node_archive = runner_common.absolute_path(sources["node_archive"], "node_archive")
++    dependencies = runner_common.absolute_path(
++        sources["system_dependencies_archive"], "system_dependencies_archive"
++    )
++    model_metadata = runner_common.absolute_path(
++        sources["model_metadata_path"], "model_metadata_path"
++    )
++    config_source = runner_common.absolute_path(
++        sources["config_source"], "config_source"
++    )
++    if runner_common.digest(config_source) != sources["config_source_sha256"]:
++        raise ValueError("配置来源摘要不符")
++    compose_source = None
++    compose_sha256 = None
++    if "extra_docker_compose_source" in sources:
++        compose_source = runner_common.absolute_path(
++            sources["extra_docker_compose_source"],
++            "extra_docker_compose_source",
++        )
++        compose_sha256 = sources.get("extra_docker_compose_sha256")
++        if not isinstance(compose_sha256, str):
++            raise ValueError("网络覆写来源缺少 SHA-256")
++        if runner_common.digest(compose_source) != compose_sha256:
++            raise ValueError("网络覆写来源摘要不符")
++    mounts = sources["container_mounts"]
++    model_name = sources["model_name"]
++    thinking = sources["thinking"]
++    authorization = sources["authorization"]
++
++    task_manifest = runner_common.read_json(task_source_manifest)
++    model_entry = runner_common.load_model_metadata(
++        model_metadata,
++        sources["model_metadata_sha256"],
++        model_name,
++        thinking,
++    )
++    for key in ("model_data_sha256", "node_sha256", "system_dependencies_sha256"):
++        if runner_common.digest(
++            {
++                "model_data_sha256": model_data,
++                "node_sha256": node_archive,
++                "system_dependencies_sha256": dependencies,
++            }[key]
++        ) != sources[key]:
++            raise ValueError("冻结件摘要不符：" + key)
++
++    temporary = runner_common.temporary_sibling(run)
++    try:
++        task_destination = temporary / "task-cache" / PurePosixPath(
++            PurePosixPath(task_source.as_posix()).name
++        )
++        task_record = copy_frozen_task(task_source, task_destination, task_manifest)
++
++        source_archive = temporary / "source.zip"
++        source_record = runner_common.build_source_archive(repository, source_archive)
++
++        adapter_records = []
++        for relative in (
++            "map_bench_pao",
++            "scripts",
++        ):
++            adapter_records.extend(
++                runner_common.copy_tree_files(benchmark / relative, temporary / relative)
++            )
++        model = runner_common.model_id(model_name)
++        runtime_model_name = "harbor-endpoint/" + model
++        organized = temporary / "organized-post"
++        organized.mkdir(parents=True)
++        configure_roles(benchmark, sdk_host, temporary, model, thinking)
++        for name in (
++            "benchmark-child-entry.mjs",
++            "benchmark-host-factories.mjs",
++            "benchmark-organized-entry.mjs",
++            "benchmark-worktree-host.mjs",
++            "probe-child-rpc.mjs",
++        ):
++            adapter_records.append(
++                runner_common.copy_file(sdk_host / name, organized / name)
++            )
++        for name, destination in (
++            ("preparation_agent.py", "preparation_agent.py"),
++            ("bench_controller.py", "bench_controller.py"),
++        ):
++            adapter_records.append(
++                runner_common.copy_file(benchmark / name, temporary / destination)
++            )
++        adapter_records.append(runner_common.copy_file(
++            sdk_host / "benchmark-organized-adapter.py",
++            temporary / "map_bench_pao_organized.py",
++        ))
++        adapter_records.append(
++            runner_common.copy_file(model_metadata, temporary / "model-metadata.json")
++        )
++        config = runner_common.read_json(config_source)
++        configured_tasks = config.get("tasks")
++        if not isinstance(configured_tasks, list) or len(configured_tasks) != 1:
++            raise ValueError("来源配置必须明确一道题目")
++        configured_task = configured_tasks[0]
++        if (
++            configured_task.get("name") != sources["task_name"]
++            or configured_task.get("ref") != task_manifest["ref"]
++        ):
++            raise ValueError("来源配置的题目范围与冻结原题不一致")
++        for source, destination in (
++            (model_data, "model-data.zip"),
++            (node_archive, node_archive.name),
++            (dependencies, "git-system-dependencies.zip"),
++        ):
++            shutil.copy2(source, temporary / destination)
++
++        kit_manifest = runner_common.file_records(
++            organized, exclude={"manifest.json"}
++        )
++        for record in kit_manifest:
++            record["path"] = "organized-post/" + record["path"]
++        runner_common.write_json(
++            organized / "manifest.json",
++            {
++                "at": runner_common.now(),
++                "files": kit_manifest,
++                "source": str(sdk_host),
++            },
++        )
++        binding = {
++            "model_name": runtime_model_name,
++            "selected_model_name": model_name,
++            "provider": "harbor-endpoint",
++            "model": model,
++            "thinking": thinking,
++        }
++        runner_common.write_json(
++            temporary / "role-model-binding.json", binding
++        )
++        configured_agents = config.get("agents")
++        if not isinstance(configured_agents, list) or len(configured_agents) != 1:
++            raise ValueError("来源配置必须明确一个主代理")
++        configured_agent = configured_agents[0]
++        if not isinstance(configured_agent, dict):
++            raise ValueError("来源配置的主代理必须是对象")
++        if isinstance(configured_agent.get("source_metadata"), dict):
++            stale_binding = configured_agent["source_metadata"]
++            if (
++                stale_binding.get("model_name") != runtime_model_name
++                or stale_binding.get("provider") != "harbor-endpoint"
++                or stale_binding.get("model") != model
++            ):
++                raise ValueError("运行配置的模型绑定与 harbor-endpoint 运行别名不一致")
++        configured_agent["source_metadata"] = binding
++        configured_agent["model_name"] = runtime_model_name
++
++        config["job_name"] = sources["job_name"]
++        config["jobs_dir"] = runner_common.container_path(run / "jobs", mounts)
++        config["tasks"] = [{"name": sources["task_name"], "ref": task_manifest["ref"]}]
++        config["environment"]["kwargs"]["keep_containers"] = True
++        if compose_source is not None:
++            compose_destination = temporary / "network-override.yaml"
++            runner_common.copy_file(compose_source, compose_destination)
++            if runner_common.digest(compose_destination) != compose_sha256:
++                raise ValueError("网络覆写副本摘要不符")
++            config["environment"]["kwargs"]["extra_docker_compose"] = [
++                runner_common.container_path(run / "network-override.yaml", mounts)
++            ]
++        agent = runner_common.validate_run_config(config)
++        agent["model_base_url"] = sources["model_base_url"]
++        agent["model_api_key_name"] = "PAO_BENCH_API_KEY"
++        agent["model_api_format"] = "anthropic_messages"
++        kwargs = agent["kwargs"]
++        kwargs.update(
++            configuration_root=runner_common.container_path(run, mounts),
++            source_archive=runner_common.container_path(run / "source.zip", mounts),
++            source_sha256=source_record["archive_sha256"],
++            model_data_archive=runner_common.container_path(run / "model-data.zip", mounts),
++            model_data_sha256=runner_common.digest(temporary / "model-data.zip"),
++            node_archive=runner_common.container_path(run / node_archive.name, mounts),
++            node_sha256=runner_common.digest(temporary / node_archive.name),
++            system_dependencies_archive=runner_common.container_path(
++                run / "git-system-dependencies.zip", mounts
++            ),
++            system_dependencies_sha256=runner_common.digest(
++                temporary / "git-system-dependencies.zip"
++            ),
++            organization_manifest_sha256=runner_common.digest(organized / "manifest.json"),
++            model_metadata_path=runner_common.container_path(
++                run / "model-metadata.json", mounts
++            ),
++            model_metadata_sha256=runner_common.digest(temporary / "model-metadata.json"),
++        )
++        runner_common.validate_run_config(config)
++        runner_common.write_json(temporary / "run-config.json", config)
++        runner_common.write_json(
++            temporary / "approved-launch.json",
++            {
++                "at": runner_common.now(),
++                "authorization": authorization,
++                "model": runner_common.model_id(model_name),
++                "thinking": thinking,
++                "tasks": [sources["task_name"]],
++                "attempts": 1,
++                "automatic_retries": 0,
++                "controller": sources["controller_name"],
++            },
++        )
++        runner_common.write_json(
++            temporary / "source-manifest.json",
++            {
++                **source_record,
++                "adapters": [
++                    {
++                        **record,
++                        "destination": str(
++                            run / Path(record["destination"]).relative_to(temporary)
++                        ),
++                    }
++                    for record in adapter_records
++                ],
++                "task": {
++                    **task_record,
++                    "destination": str(
++                        run / Path(task_record["destination"]).relative_to(temporary)
++                    ),
++                },
++                "model_metadata": {
++                    "source": str(model_metadata),
++                    "sha256": runner_common.digest(model_metadata),
++                    "model_name": model_name,
++                    "thinking": thinking,
++                    "entry": model_entry,
++                },
++                "extra_docker_compose": (
++                    {
++                        "source": str(compose_source),
++                        "sha256": compose_sha256,
++                        "destination": str(run / "network-override.yaml"),
++                    }
++                    if compose_source is not None
++                    else None
++                ),
++            },
++        )
++        runner_common.write_json(
++            temporary / "run-sources.json",
++            {
++                "at": runner_common.now(),
++                "source_manifest": str(manifest_path),
++                "source_manifest_sha256": runner_common.digest(manifest_path),
++                "task": {
++                    **task_record,
++                    "destination": str(
++                        run / Path(task_record["destination"]).relative_to(temporary)
++                    ),
++                },
++                "current_sources": {
++                    "pao": str(repository),
++                    "benchmark": str(benchmark),
++                    "sdk_host": str(sdk_host),
++                },
++                "container_mounts": mounts,
++                "config_source": str(config_source),
++                "config_source_sha256": sources["config_source_sha256"],
++                "harbor_cache": str(
++                    runner_common.absolute_path(sources["harbor_cache"], "harbor_cache")
++                ),
++                "model_name": model_name,
++                "runtime_model_name": runtime_model_name,
++                "thinking": thinking,
++                "automatic_retries": 0,
++                "extra_docker_compose": (
++                    {
++                        "source": str(compose_source),
++                        "sha256": compose_sha256,
++                        "path": str(run / "network-override.yaml"),
++                    }
++                    if compose_source is not None
++                    else None
++                ),
++            },
++        )
++        runner_common.write_json(
++            temporary / "run-freeze.json",
++            {
++                "files": runner_common.file_records(
++                    temporary, exclude={"run-freeze.json"}
++                )
++            },
++        )
++        runner_common.validate_run_references(
++            config, temporary, run, mounts
++        )
++        import bench_controller
++
++        bench_controller.validate(
++            temporary, final_run=run, container_mounts=mounts
++        )
++        temporary.replace(run)
++        bench_controller.validate(
++            run, final_run=run, container_mounts=mounts
++        )
++    except BaseException:
++        if temporary.exists():
++            shutil.rmtree(temporary)
++        raise
++    return {
++        "run": str(run),
++        "task": sources["task_name"],
++        "model": model_name,
++        "thinking": thinking,
++        "source_sha256": source_record["archive_sha256"],
++        "model_calls": 0,
++        "docker_calls": 0,
++    }
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--sources", type=Path, required=True)
++    args = parser.parse_args()
++    print(json.dumps(prepare(args.sources), ensure_ascii=False))
++
++
++if __name__ == "__main__":
++    main()

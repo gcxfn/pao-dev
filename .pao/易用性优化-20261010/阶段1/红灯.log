@@ -1,0 +1,126 @@
+
+Running 3 tests using 1 worker
+
+(node:22180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\kanban-board.spec.ts:243:5 › D1 外部卡更新自动同步并保留筛选与详情 (16.6s)
+(node:9360) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9360) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 (37.5s)
+(node:19092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 (27.4s)
+
+
+  1) apps\desktop\tests\core\kanban-board.spec.ts:243:5 › D1 外部卡更新自动同步并保留筛选与详情 ─────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('kanban-card')
+    Expected: [32m"in_progress"[39m
+    Received: [31m"unclaimed"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('kanban-card')[22m
+    [2m    9 × locator resolved to <button type="button" aria-pressed="true" data-status="unclaimed" data-testid="kanban-card" class="kanban-card kanban-card--selected" data-path="D:\AI\workspace\临时文件夹\PAO易用性优化-20261010\pi-gui-workspace-bUkMZe\kanban-project-a\.pao\卡\卡0001-甲卡待认领.md">…</button>[22m
+    [2m      - unexpected value "unclaimed"[22m
+
+
+      251 |     await runFixture(fixtureScript, home, projectA, projectB, "advance");
+      252 |     await page.clock.runFor(30_100);
+    > 253 |     await expect(page.getByTestId("kanban-card")).toHaveAttribute("data-status", "in_progress");
+          |                                                   ^
+      254 |     await expect(page.getByTestId("kanban-search")).toHaveValue("甲卡");
+      255 |     await expect(page.getByTestId("kanban-detail")).toContainText("甲卡待认领");
+      256 |     await page.screenshot({ path: test.info().outputPath("D1-自动刷新.png") });
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:253:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D1-外部卡更新自动同步并保留筛选与详情\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D1-外部卡更新自动同步并保留筛选与详情\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D1-外部卡更新自动同步并保留筛选与详情\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 ─────────────
+
+    TimeoutError: locator.focus: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('kanban-card-more').first()[22m
+
+
+      265 |     await expect(page.getByTestId("kanban-card")).toHaveCount(6);
+      266 |     const more = page.getByTestId("kanban-card-more").first();
+    > 267 |     await more.focus();
+          |                ^
+      268 |     await more.press("Enter");
+      269 |     await expect(page.getByTestId("kanban-card-menu")).toBeVisible();
+      270 |     await page.keyboard.press("Escape");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\kanban-board.spec.ts:267:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\易用性优化-20261010\阶段1\红灯\core-kanban-board-D3-可见菜单、显式多选、Escape焦点和复制失败反馈\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('workflow-runtime-controls').getByLabel('控制节点')
+    Expected substring: [32m"第 [7m2[27m 轮"[39m
+    Received string:    [31m"[7m任务 · [27m第 [7m1[27m 轮[7m · 等待部长会话绑定[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-runtime-controls').getByLabel('控制节点')[22m
+    [2m    9 × locator resolved to <select aria-label="控制节点">…</select>[22m
+    [2m      - unexpected value "任务 · 第 1 轮 · 等待部长会话绑定"[22m
+
+
+      316 |     expect(await readFile(controlPath, "utf8")).toBe(bumped);
+      317 |     await page.getByTestId("canvas-refresh").click();
+    > 318 |     await expect(controls.getByLabel("控制节点")).toContainText("第 2 轮");
+          |                                               ^
+      319 |     await expect(controls.getByTestId("workflow-control-hints")).toContainText("说明");
+      320 |   } finally {
+      321 |     await app.close();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-control.spec.ts:318:47
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\易用性优化-20261010\阶段1\红灯\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\易用性优化-20261010\阶段1\红灯\core-workflow-control-旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\kanban-board.spec.ts:243:5 › D1 外部卡更新自动同步并保留筛选与详情 ──────────────────────
+    apps\desktop\tests\core\kanban-board.spec.ts:260:5 › D3 可见菜单、显式多选、Escape焦点和复制失败反馈 ──────────────
+    apps\desktop\tests\core\workflow-control.spec.ts:250:5 › 旧请求：另一入口推进轮次后，过期提交被请求关联拒绝且不落写 ─────────

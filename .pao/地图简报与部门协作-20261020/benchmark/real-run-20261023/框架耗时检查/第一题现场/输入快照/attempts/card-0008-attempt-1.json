@@ -1,0 +1,80 @@
+{
+	"schemaVersion": 1,
+	"kind": "dispatch-input-snapshot",
+	"cardsDir": "/app/.pao/benchmark/卡",
+	"card": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardPath": "/app/.pao/benchmark/卡/卡0008-修复appfilter.py的两处审核缺.md",
+		"cardNo": 8,
+		"attempt": 1,
+		"owner": "主控",
+		"sourceHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b"
+	},
+	"execution": {
+		"cardsDir": "/app/.pao/benchmark/卡",
+		"cardNo": 8,
+		"attempt": 1,
+		"projectRoot": "/app",
+		"repositoryRoot": "/app",
+		"executionRoot": "/app",
+		"commonGitDir": "/app/.git",
+		"versionControl": "git",
+		"baseHead": "f480feb62392fc1e0c87e2506c14ecdd37e2fa5b",
+		"baseTreeId": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"inputVersion": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+		"bindingDigest": "sha256:b8bca25f69037306eb624854a6dd04b428d51b20cffb7a2947c297e76349067a"
+	},
+	"cardDefinition": {
+		"goal": "修复 /app/filter.py 的两处审核缺陷：B-1 raw-text 元素（iframe/xmp/noembed/noframes/plaintext）实体重复转义导致非幂等与格式破坏；B-2 无害注释因 on...= 裸子串误删。修复后保持既有清洗效果不回退。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。",
+		"dept": "实施",
+		"inputs": [
+			"/app/.pao/benchmark/审核报告.md",
+			"/app/filter.py"
+		],
+		"constraints": "只修两处缺陷，不重构、不放宽清洗口径；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；夹具只放 /tmp。\n\n缺陷 B-1（阻断，必须修）：raw-text 元素 iframe/xmp/noembed/noframes/plaintext 的文本含 & 或实体时，str(soup) 会再次转义，且 filter_html 的 settle 循环每轮把转义放大，导致输出字节无界增长、非幂等。\n要求：任一文件跑两次必须字节完全相同（cmp 通过），且 iframe 内 a &amp; b 语义与文本形态稳定不变。注意：审核已实测「给文本节点换 Script 类」的补丁无效，需在序列化环节介入（例如序列化后对 raw-text 元素的原始文本区间做还原，或改为不重复经过 settle 的定点策略）。修完必须给出连跑两次 cmp 的真实输出。\n\n缺陷 B-2（一般，必须修）：_ON_PAYLOAD_RE = r\"on[a-z0-9_:-]+=\" 在注释全文上裸子串匹配，导致 <!-- options=1 controls the menu --> 被误删。要求改为要求 on 前是词边界/空白/引号，如 (?:^|[\\s\"'])on[a-z0-9_:-]+=；修完确认 buttons=/icons=/lessons= 一类无害注释保留，同时 <!-- onclick=x() --> 这类真载荷仍被删除。",
+		"acceptance": "1. 包含:/app/filter.py :: _ON_PAYLOAD_RE\n2. 自查：/tmp 夹具 <!DOCTYPE html><html><body><iframe>a &amp; b</iframe></body></html> 连跑两次后 cmp 相同，且 iframe 内文本仍为 a &amp; b\n3. 自查：/tmp 夹具 <p>a</p><!-- options=1 controls the menu --><p>b</p> 运行后注释原样保留\n4. 自查：<script>/on* 事件属性/javascript: 载荷的原有清除效果不回退",
+		"depends_on": [
+			"卡0007"
+		],
+		"tier": "primary",
+		"budget": {
+			"toolCalls": 100,
+			"turns": 100
+		},
+		"priority": "high",
+		"created": "2026-10-23 05:26",
+		"definitionDigest": "sha256:837d2362e7e4671f38b92009429d48ef7d5c64f95227b7a686ce762db72630c2"
+	},
+	"briefMarkdown": "# 卡0008 执行简报\n\n## 任务目标\n修复 /app/filter.py 的两处审核缺陷：B-1 raw-text 元素（iframe/xmp/noembed/noframes/plaintext）实体重复转义导致非幂等与格式破坏；B-2 无害注释因 on...= 裸子串误删。修复后保持既有清洗效果不回退。原始任务：创建 Python 脚本 filter.py，接收 HTML 文件路径参数，就地移除其中全部 JavaScript 以防 XSS，尽量保留原有 HTML 结构与格式（仅允许解析带来的规范化），只能使用已安装的 Python 包。\n\n- 部门：实施\n- owner：主控\n- 卡与尝试：/app/.pao/benchmark/卡/卡0008-修复appfilter.py的两处审核缺.md，尝试 1\n- 执行根：/app\n- 仓库根：/app\n\n## 范围与限制\n只修两处缺陷，不重构、不放宽清洗口径；不读取 tests、solution、oracle 或在线基准答案；不伪造运行结果；夹具只放 /tmp。\n\n缺陷 B-1（阻断，必须修）：raw-text 元素 iframe/xmp/noembed/noframes/plaintext 的文本含 & 或实体时，str(soup) 会再次转义，且 filter_html 的 settle 循环每轮把转义放大，导致输出字节无界增长、非幂等。\n要求：任一文件跑两次必须字节完全相同（cmp 通过），且 iframe 内 a &amp; b 语义与文本形态稳定不变。注意：审核已实测「给文本节点换 Script 类」的补丁无效，需在序列化环节介入（例如序列化后对 raw-text 元素的原始文本区间做还原，或改为不重复经过 settle 的定点策略）。修完必须给出连跑两次 cmp 的真实输出。\n\n缺陷 B-2（一般，必须修）：_ON_PAYLOAD_RE = r\"on[a-z0-9_:-]+=\" 在注释全文上裸子串匹配，导致 <!-- options=1 controls the menu --> 被误删。要求改为要求 on 前是词边界/空白/引号，如 (?:^|[\\s\"'])on[a-z0-9_:-]+=；修完确认 buttons=/icons=/lessons= 一类无害注释保留，同时 <!-- onclick=x() --> 这类真载荷仍被删除。\n输入入口：`/app/.pao/benchmark/审核报告.md`、`/app/filter.py`\n\n## 已确认事实\n- 卡面给出的目标、范围和验收视为已确认；地图未贡献额外事实。\n\n## 未知与待复核\n- 未列出的行为只能通过目标任务内定点核查确认，不能猜为事实。\n\n## 按任务目的装配\n- 执行者携带本卡目标、范围、验收和必要事实，并允许读取目标代码及直接调用点核验。\n- 不得遍历整个目录，也不得把未知项当作既定事实。\n\n## 上游必要结论\n本节面向实现所需结论；只按保存时的显式 category 归类，不补写未保存的语义。\n\n### worker 直接注入的冻结执行简报\n来源：`pao-brief://brief-card-0007-attempt-1?digest=sha256%3A2ea7a04ea8067d47d351b4491b9123977947ca969b9949f4e47946cb4fcf2106`（attempt 1）\n\n保存时未提供结构化分类。本节不内联历史简报正文；按需读取上面的精确引用，并以当前尝试回执核对实际结果。\n\n\n## 相关地图\n- 本卡没有声明结构化地图；以下按卡面任务和证据入口开工。\n\n- 本卡没有声明外部接口契约。\n\n## 前置成果\n### 卡0007（attempt 1）\n- 卡面结果：delivered\n- 当前尝试回执：9 项逐项核查：6 pass / 3 fail（格式保持、幂等性、保留性），总体判定不通过。\n阻断级缺陷 B-1：iframe/xmp/noembed/noframes/plaintext 五类 raw-text 元素文本含 & 或实体时被反复转义，settle 8 轮每轮再添一个 amp;，字节无界增长（67→105→141），cmp 必失败；一般级缺陷 B-2：注释内 on…= 裸子串误判，options=/buttons=/icons= 等无害注释被整条删除。\n已过项：CLI 退出码 2/1/0 且错误路径不误改文件、就地改写 inode 不变无 .bak、九类危险面 DOM 零残留、空文件/GBK/BOM/2000 层嵌套/不可解码字节均行为可解释、依赖仅 stdlib+bs4、py_compile 通过。\n- 自报改动：created .pao/benchmark/审核报告.md（本次审核报告，含判定总表、9 项逐项证据、缺陷清单（B-1 阻断 / B-2 一般）、未验证清单 9 条）；modified .pao/benchmark/黑板.md（追加一条指向审核报告的便签，含 B-1 最小复现与 B-2 根因提示）\n- 自报验收：存在:/app/.pao/benchmark/审核报告.md=pass（ls -la .pao/benchmark/审核报告.md → -rw-r--r-- 35769 bytes）；包含:审核报告.md :: 判定=pass（grep -n '判定总表' → 第12行『## 0. 判定总表』；全文『判定』出现16次，逐项 9 条均有 pass/fail）；包含:审核报告.md :: 未验证=pass（grep -n '## 11. 未验证' → 第636行；全文『未验证』出现12次，含 9 条诚实清单）；报告对每条需求给出通过/不通过判定并附 file:line 或测试命令与真实输出；不通过的必须给出可复现的输入与期望/实际=pass（9 项逐一给出判定+真实命令输出；B-1 附 /tmp/audit/bugA/repro.sh 全流程输出与期望/实际对照，B-2 附 fp3 夹具 10 例输入/输出对照并标严重级别（阻断/一般））；本次尝试 1 相对认领基线的程序候选改动=pass（基线 /app/.pao/benchmark/基线/卡0007-尝试1-基线.json；无候选改动）\n- 证据入口：/app/.pao/benchmark/worker-evidence/卡0007-尝试1-9d66cf4cc4cf-2b1d0c7e-cd0e-4f2d-a5b4-529b71695bdc.live.jsonl.gz\n\n\n## 验收\n- 卡面验收原文：1. 包含:/app/filter.py :: _ON_PAYLOAD_RE\n2. 自查：/tmp 夹具 <!DOCTYPE html><html><body><iframe>a &amp; b</iframe></body></html> 连跑两次后 cmp 相同，且 iframe 内文本仍为 a &amp; b\n3. 自查：/tmp 夹具 <p>a</p><!-- options=1 controls the menu --><p>b</p> 运行后注释原样保留\n4. 自查：<script>/on* 事件属性/javascript: 载荷的原有清除效果不回退\n- 执行者逐项给出 pass/fail/not_run 与证据；程序仍按机械验收规则复核。\n\n## 风险\n- 地图未另列风险；仍按卡面限制和未知项核查。\n\n## 证据入口\n- [input] `/app/.pao/benchmark/审核报告.md`；任务输入或证据入口\n- [input] `/app/filter.py`；任务输入或证据入口\n- [upstream] `/app/.pao/benchmark/输入快照/brief/brief-card-0007-attempt-1.json`；worker 直接注入的冻结执行简报\n\n## 整合责任\n由 owner 按任务卡和并行计划指定；worker 不自行整合其他任务成果。\n\n## 输入有效性\n- 上游简报 brief-card-0007-attempt-1 的内容已作为卡片输入引用，本简报保留其结论入口。\n",
+	"brief": {
+		"ref": "pao-brief://brief-card-0008-attempt-1?digest=sha256%3A7c3e0302e3893c5463ac901a20fef5ea6f15711dcdd10c2c5966a9cc31d38d85",
+		"digest": "sha256:7c3e0302e3893c5463ac901a20fef5ea6f15711dcdd10c2c5966a9cc31d38d85"
+	},
+	"evidence": [
+		{
+			"kind": "input",
+			"path": "/app/.pao/benchmark/审核报告.md",
+			"ref": "/app/.pao/benchmark/审核报告.md",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "input",
+			"path": "/app/filter.py",
+			"ref": "/app/filter.py",
+			"purpose": "任务输入或证据入口"
+		},
+		{
+			"kind": "upstream",
+			"path": "/app/.pao/benchmark/输入快照/brief/brief-card-0007-attempt-1.json",
+			"ref": "pao-brief://brief-card-0007-attempt-1?digest=sha256%3A2ea7a04ea8067d47d351b4491b9123977947ca969b9949f4e47946cb4fcf2106",
+			"purpose": "worker 直接注入的冻结执行简报",
+			"digest": "sha256:2ea7a04ea8067d47d351b4491b9123977947ca969b9949f4e47946cb4fcf2106"
+		}
+	],
+	"contracts": [],
+	"warnings": [
+		"上游简报 brief-card-0007-attempt-1 的内容已作为卡片输入引用，本简报保留其结论入口。"
+	],
+	"frozenAt": "2026-10-23T05:26:33.751Z",
+	"snapshotDigest": "sha256:eb0ffbd07b7b3a9bd6ca2bc660a3cda02261989aa45f2b849759e146b2aa2044"
+}

@@ -1,0 +1,33 @@
+packages:
+  - apps/*
+  - packages/*
+  - video
+  - examples/desktop-extensions/*
+
+# PAO 桌面复用并列开发仓的锁版本地内核；先在 PAO/ 完成 build:offline。
+# link 保留内核自己的依赖解析，不复制第二份运行时状态或内核源码。
+overrides:
+  '@earendil-works/pi-coding-agent': link:../PAO/packages/coding-agent
+  '@earendil-works/pi-ai': link:../PAO/packages/ai
+  # D6：fork 内核锁 undici 8.10.2，桌面仓原解析的旧版会打进错版运行时；全仓对齐。
+  # 下面三条同因：pi-ai/内核精确锁版与桌面仓 hoisted 解析错位（打包断言 fail-closed 报出）。
+  undici: 8.10.2
+  '@anthropic-ai/sdk': 0.129.0
+  '@smithy/node-http-handler': 4.12.1
+  hosted-git-info: 9.0.3
+
+onlyBuiltDependencies:
+  - electron
+  - electron-winstaller
+  - esbuild
+  - koffi
+  - node-pty
+  - protobufjs
+  - sharp
+
+# Backport https://github.com/electron-userland/electron-builder/pull/10172.
+# Also repair NSIS per-user path handling (upstream issue #7921 System.dll crash).
+# 26.16.1 regresses hoisted runtime dependency packaging; keep 26.8.1 until
+# a newer release passes packaged-runtime-deps and the packaged Electron smoke.
+patchedDependencies:
+  app-builder-lib@26.8.1: patches/app-builder-lib@26.8.1.patch
