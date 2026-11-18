@@ -15,6 +15,7 @@ PAO 的开发源码与工程文档仓。PAO 是以 [pi](https://github.com/earen
 - 新安装默认数据目录和覆盖优先级见[架构 §27.3](plans/v2-ARCHITECTURE.md#273-内核--cli--桌面宿主关系2026-10-05-用户定案2026-10-06-已实施)。本机现有现场截至 2026-10-20 仍为 `D:\AI\workspace\pao`，已保存设置继续生效，本轮不迁移正式数据。
 - 模型凭证：用户级 `~/.pi/agent/auth.json`（zai-coding-cn OAuth），CLI 与
   桌面共用，随用户目录走、不随仓库分发。
+- 已知问题：截至 2026-11-17，现有 Windows 发行包的旧内核创建记忆备份会报错，见[审核报告 AF13](.pao/memory-evolution-audit-20261112/审核报告.md#1-主要问题)。
 
 ## 仓库结构
 
@@ -40,23 +41,29 @@ pnpm --dir desktop install
 
 ## 开发与检查命令
 
-以下命令均为本仓实际使用的检查入口（最近一次复核 2026-11-01，复核范围见 `.pao/协作规则统一-20261030/S7/` 验收记录与各批交付记录；标「已验证」的命令曾在该复核日或注明日期实际执行通过）：
+开发与检查入口如下；历史验收结果见 `.pao/协作规则统一-20261030/S7/` 及各批交付记录。
+
+运行桌面单元抽样前，先新建一个临时空目录，并在 PowerShell 中设置 `PAO_HOME`，否则测试会读写默认数据目录：
+
+```powershell
+$env:PAO_HOME = "D:\AI\workspace\临时文件夹\pao-test-home-YYYYMMDD"
+```
 
 ```bash
 # PAO 内核（cwd 任意，命令内已含路径）
 cd PAO
-node node_modules/typescript/bin/tsc --noEmit    # 构建级类型门（已验证 2026-11-01，exit 0）
-npm run check:types:integration                  # 集成类型门（已验证 2026-11-01，exit 0）
+node node_modules/typescript/bin/tsc --noEmit    # 构建级类型门
+npm run check:types:integration                  # 集成类型门
 cd packages/coding-agent
 node ../../node_modules/vitest/vitest.mjs run test/pao/<测试文件> --maxWorkers=2  # 定向行为测试（隔离 PAO_HOME + PI_OFFLINE=1 + PI_NO_LOCAL_LLM=1）
 node ../../node_modules/vitest/vitest.mjs run test/pao/ --maxWorkers=2            # 模块门（全套，改动面大时跑）
 
 # 桌面（desktop/ 根执行）
-pnpm run build:shared                          # 先建 workspace 共享包（已验证，exit 0）
-pnpm --dir apps/desktop run typecheck          # renderer + electron 类型门（已验证，exit 0）
-pnpm --dir apps/desktop run build              # 完整应用构建（2026-10-06 迁移后已验证，exit 0）
+pnpm run build:shared                          # 先建 workspace 共享包
+pnpm --dir apps/desktop run typecheck          # renderer + electron 类型门
+pnpm --dir apps/desktop run build              # 完整应用构建
 pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts \
-  apps/desktop/tests/unit/<spec>               # 单元抽样（已验证，8/8 过）
+  apps/desktop/tests/unit/<spec>               # 单元抽样
 pnpm test:baseline                             # 桌面基线检查（不启动真实 Electron）
 pnpm e2e                                       # 真实 Electron core 车道：会真的弹出 Electron 窗口（重，按需）
 ```
