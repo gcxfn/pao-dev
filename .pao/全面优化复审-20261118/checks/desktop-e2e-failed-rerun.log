@@ -1,0 +1,153 @@
+
+Running 7 tests using 1 worker
+
+  x  1 apps\desktop\tests\core\memory-deletion-host.spec.ts:617:5 › S4-10 真实删除闭环：跨会话、CLI closed、共享策略与外部 writer 恢复 (1.3m)
+  ok 2 apps\desktop\tests\core\memory-deletion-host.spec.ts:1000:5 › S4-10 无活动聊天：页面 preview-confirm 独立创建并完成删除作业 (15.0s)
+  x  3 apps\desktop\tests\core\memory-management.spec.ts:181:5 › 记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态 (28.1s)
+  x  4 apps\desktop\tests\core\memory-usage-panels.spec.ts:217:5 › S7-10 上下文用量两 requestId 切换、退出重开一致、整理状态与队列一致、任务用量 (1.2m)
+  x  5 apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 (1.3m)
+  ok 6 apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 (1.0m)
+  ok 7 apps\desktop\tests\core\memory.spec.ts:1262:5 › S5-11 任务接续：worktree 删除后从主仓查看历史、回原会话并保持只读 (26.8s)
+
+
+  1) apps\desktop\tests\core\memory-deletion-host.spec.ts:617:5 › S4-10 真实删除闭环：跨会话、CLI closed、共享策略与外部 writer 恢复 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[data-testid="memory-delete-recovery-item"][data-operation-id="del-c185cddd-a16e-415e-be05-1f7f8923d36e"]')
+    Expected substring: [32m"等待[7m恢复[27m"[39m
+    Received string:    [31m"等待[7m继续处理记忆库记录技术信息对象类型记忆库记录原因数据库清理尚未完成归档文件技术信息对象类型归档文件会话 IDs4-foreign-active-source原因归档段尚未重写会话文件技术信息对象类型会话文件会话 IDs4-foreign-active-source原因会话仍由活动或外部 writer 占用，未进入删除执行:同会话已有控制方，拒绝同时驱动任务详情任务编号: del-c185cddd-a16e-415e-be05-1f7f8923d36e更新时间 2026/11/18 17:20继续删除[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="memory-delete-recovery-item"][data-operation-id="del-c185cddd-a16e-415e-be05-1f7f8923d36e"]')[22m
+    [2m    9 × locator resolved to <li data-status="pending" data-testid="memory-delete-recovery-item" data-operation-id="del-c185cddd-a16e-415e-be05-1f7f8923d36e" class="memory-delete-recovery__item memory-delete-recovery__item--pending">…</li>[22m
+    [2m      - unexpected value "等待继续处理记忆库记录技术信息对象类型记忆库记录原因数据库清理尚未完成归档文件技术信息对象类型归档文件会话 IDs4-foreign-active-source原因归档段尚未重写会话文件技术信息对象类型会话文件会话 IDs4-foreign-active-source原因会话仍由活动或外部 writer 占用，未进入删除执行:同会话已有控制方，拒绝同时驱动任务详情任务编号: del-c185cddd-a16e-415e-be05-1f7f8923d36e更新时间 2026/11/18 17:20继续删除"[22m
+
+
+      872 |     );
+      873 |     await expect(recoveryItem).toHaveAttribute("data-status", "pending");
+    > 874 |     await expect(recoveryItem).toContainText("等待恢复");
+          |                                ^
+      875 |     writer.stdin.write("release\n");
+      876 |     await waitForExit(writer);
+      877 |     writer = undefined;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory-deletion-host.spec.ts:874:32
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-deletion-host--85fca-LI-closed、共享策略与外部-writer-恢复\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-deletion-host--85fca-LI-closed、共享策略与外部-writer-恢复\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-memory-deletion-host--85fca-LI-closed、共享策略与外部-writer-恢复\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\memory-management.spec.ts:181:5 › 记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态 ───────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoHaveLength[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected length: [32m1[39m
+    Received length: [31m2[39m
+    Received array:  [31m[{"capturedAt": "2026-11-01T00:00:00.000Z", "entryId": "entry-correction-old", "eventType": "user", "readable": true, "sessionId": "desktop-fixture-operation", "sourceId": "src-desktop-fixture-operation-entry-correction-old-user"}, {"capturedAt": "2026-11-18T09:21:18.228Z", "entryId": "page-operation-c2bf35ad-cf7c-40df-a005-16912d67b624", "eventType": "user", "readable": true, "sessionId": "desktop-page-operations", "sourceId": "src-desktop-page-operations-page-operation-c2bf35ad-cf7c-40df-a005-16912d67b624-user"}][39m
+
+      332 |     expect(corrected.memories.correctionId?.revision).toBe(3);
+      333 |     expect(corrected.memories.correctionId?.conclusion).toBe(correctedConclusion);
+    > 334 |     expect(corrected.memories.correctionId?.sources).toHaveLength(1);
+          |                                                      ^
+      335 |     expect(corrected.memories.correctionId?.sources?.[0]?.sessionId).toBe(
+      336 |       "desktop-page-operations",
+      337 |     );
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory-management.spec.ts:334:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-management-记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-management-记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-memory-management-记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\memory-usage-panels.spec.ts:217:5 › S7-10 上下文用量两 requestId 切换、退出重开一致、整理状态与队列一致、任务用量 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"failed"[39m
+    Received: [31m"done"[39m
+
+    Call Log:
+    - Timeout 60000ms exceeded while waiting on the predicate
+
+      329 |       timeout: 60_000,
+      330 |     });
+    > 331 |     await expect
+          |     ^
+      332 |       .poll(
+      333 |         async () => {
+      334 |           const statuses = readJobStatuses(home);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory-usage-panels.spec.ts:331:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-usage-panels-S-1e160-Id-切换、退出重开一致、整理状态与队列一致、任务用量\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-usage-panels-S-1e160-Id-切换、退出重开一致、整理状态与队列一致、任务用量\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-memory-usage-panels-S-1e160-Id-切换、退出重开一致、整理状态与队列一致、任务用量\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 ─────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 0[39m
+    [31m+ Received  + 1[39m
+
+    [2m  Object {[22m
+    [2m    "conclusion": "当前结论：界面主决定改用方案乙并保留来源。",[22m
+    [2m    "selectedRevision": 2,[22m
+    [2m    "sources": Array [[22m
+    [31m+     "src-01a1edf7-2089-760d-9fe7-2ea680a8b555-entry-old-user",[39m
+    [2m      "src-01a1edf7-2089-760d-9fe7-2ea680a8b555-entry-long-0-user",[22m
+    [2m      "src-desktop-page-operations-entry-page-operation-page_operation",[22m
+    [2m    ],[22m
+    [2m  }[22m
+
+      618 |       { memoryId: ids.mainMemoryId },
+      619 |     );
+    > 620 |     expect(ipcState).toEqual({
+          |                      ^
+      621 |       conclusion: "当前结论：界面主决定改用方案乙并保留来源。",
+      622 |       selectedRevision: 2,
+      623 |       sources: [ids.longSourceId, ids.archiveSourceId],
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory.spec.ts:620:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-memory-独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-memory-独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\memory-deletion-host.spec.ts:617:5 › S4-10 真实删除闭环：跨会话、CLI closed、共享策略与外部 writer 恢复 
+    apps\desktop\tests\core\memory-management.spec.ts:181:5 › 记忆管理：纠正冲突、来源回读、合并、停用恢复与真实删除三态 ────────
+    apps\desktop\tests\core\memory-usage-panels.spec.ts:217:5 › S7-10 上下文用量两 requestId 切换、退出重开一致、整理状态与队列一致、任务用量 
+    apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 ──────────────────
+  3 passed (6.0m)

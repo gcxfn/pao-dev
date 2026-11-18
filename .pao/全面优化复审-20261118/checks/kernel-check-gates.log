@@ -1,0 +1,36 @@
+
+> @pao/coding-agent@1.0.2 check:gates
+> npm --prefix ../.. run check:types:integration && node scripts/gate-kernel-import.mjs && node scripts/gate-boundary.mjs && node scripts/gate-path-probe.mjs
+
+
+> pi-monorepo@0.0.3 check:types:integration
+> tsc --noEmit -p tsconfig.integration.json
+
+[PASS] root(.) — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/desktop — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] ./pao/todo — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] vendor ./pao/desktop — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] vendor ./pao/todo — 导入自然退出，无新增宿主监听、写出或stdin变化（非TTY不证明真实终端raw模式）
+[PASS] B1: CLI 源闭包 555 文件无 electron/react/ink（裸外部依赖 1019 条全为包依赖）
+[PASS] B2: bundle cli.js（0.0 MB）无 electron/react 引用
+[PASS] B3: 宿主闭包 123 文件无 CLI 入口引用、无全局 pao/pi spawn
+[PASS] B4: 宿主闭包 46 文件无 CLI 入口引用、无全局 pao/pi spawn
+[FAIL] B5(pao/index.ts): 内核公开导出闭包引 CLI 入口: index.ts -> D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\main.ts; extensions\mcp\cli.lazy.ts -> D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\extensions\mcp\cli.ts
+[FAIL] B5(pao/desktop/index.ts): 内核公开导出闭包引 CLI 入口: index.ts -> D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\main.ts; extensions\mcp\cli.lazy.ts -> D:\AI\workspace\pao-dev\PAO\packages\coding-agent\src\extensions\mcp\cli.ts
+[PASS] B5(pao/todo/summary.ts): 公开导出闭包无 CLI 入口引用
+[PASS] B6: exports ., ./rpc-entry, ./pao, ./pao/desktop, ./pao/todo, ./client, ./experimental/plugin 均不含 cli 目标
+[PASS] B7: worker/**/fanout/** 执行侧不 import src/pao/workflow（含 type-only）
+[PASS] B7自检: 故意违规样例已拦截（worker type-only）
+[PASS] B7自检: 故意违规样例已拦截（worker require）
+[PASS] B7自检: 故意违规样例已拦截（worker import-equals）
+[PASS] B7自检: 故意违规样例已拦截（worker triple-slash）
+[PASS] B7自检: 故意违规样例已拦截（worker dynamic-template）
+[PASS] B7自检: 故意违规样例已拦截（fanout type-only）
+npm error Lifecycle script `check:gates` failed with error:
+npm error code 1
+npm error path D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+npm error workspace @pao/coding-agent@1.0.2
+npm error location D:\AI\workspace\pao-dev\PAO\packages\coding-agent
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c npm --prefix ../.. run check:types:integration && node scripts/gate-kernel-import.mjs && node scripts/gate-boundary.mjs && node scripts/gate-path-probe.mjs
