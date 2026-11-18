@@ -1,0 +1,108 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 18 tests using 1 worker
+
+[1A[2K[1/18] tests\core\department-workspace.spec.ts:63:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口
+[1A[2K  1) tests\core\department-workspace.spec.ts:63:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口 ────────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workflow-view-list')[22m
+    [2m    - locator resolved to <button type="button" class="button" aria-pressed="true" data-testid="workflow-view-list">列表</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    58 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      179 |     await page.getByRole("button", { name: "计划历史", exact: true }).click();
+      180 |     await expect(page.getByTestId("plans-list")).toBeVisible();
+    > 181 |     await page.getByTestId("workflow-view-list").click();
+          |                                                  ^
+      182 |     await expect(page.getByTestId("workflow-cards-title")).toContainText("工作台定稿");
+      183 |     await app.electronApp.evaluate(({ BrowserWindow }) => {
+      184 |       const win = BrowserWindow.getAllWindows()[0]!;
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\department-workspace.spec.ts:181:50
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-department-workspace-定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[2/18] tests\core\workflow-cards.spec.ts:553:5 › 步骤卡工作台按真实计划渲染，步骤状态、人工门与真实产物都来自磁盘
+[1A[2K[3/18] tests\core\workflow-cards.spec.ts:627:5 › 检查器按需打开，关闭按钮与 Escape 都把焦点还给原入口
+[1A[2K[4/18] tests\core\workflow-cards.spec.ts:653:5 › 耗时只报卡面 created→completed；没卡就说「暂无卡」，不拿轮次或会话时长顶替
+[1A[2K[5/18] tests\core\workflow-cards.spec.ts:676:5 › 搜索与筛选只在界面上收窄，不改写计划；人工门确认在无 owner 会话时如实报失败
+[1A[2K[6/18] tests\core\workflow-cards.spec.ts:728:5 › 单卡停止入口只出现在执行中的步骤，点了只把指令交给主控，不动计划
+[1A[2K[7/18] tests\core\workflow-cards.spec.ts:757:5 › 三种窗口宽度与 125% 缩放下不横向溢出，键盘与读屏语义可用
+[1A[2K[8/18] tests\core\workflow-cards.spec.ts:823:5 › 同路径多轮次：新版只提示不抢换，用户主动切换后正文与意见跟到同一版本
+[1A[2K[9/18] tests\core\workflow-cards.spec.ts:915:5 › 并行分组只认真并行：同前置异部门只读成组，同部门只读不成组，多前置写全「等待第 N、M 步」
+[1A[2K[10/18] tests\core\workflow-cards.spec.ts:972:5 › 状态不只靠颜色：12 个细分状态各自成键，未知不译成成功，取消与失败分开
+[1A[2K  2) tests\core\workflow-cards.spec.ts:972:5 › 状态不只靠颜色：12 个细分状态各自成键，未知不译成成功，取消与失败分开 ────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('workflow-cards-summary-canceled')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('workflow-cards-summary-canceled')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      1028 |
+      1029 |     // 没有取消／失败时不占摘要位置，不能拿其他状态凑数。
+    > 1030 |     await expect(page.getByTestId("workflow-cards-summary-canceled")).toHaveCount(0);
+           |                                                                       ^
+      1031 |     await expect(page.getByTestId("workflow-cards-summary-failed")).toHaveCount(0);
+      1032 |     // 待办区只列真待办：第 1 步的人工门没确认 → 有一条 confirm 待办。
+      1033 |     await page.getByTestId("workflow-cards-overview").locator(":scope > summary").click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-cards.spec.ts:1030:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\core-workflow-cards-状态不只靠颜色：12-个细分状态各自成键，未知不译成成功，取消与失败分开\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\core-workflow-cards-状态不只靠颜色：12-个细分状态各自成键，未知不译成成功，取消与失败分开\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\core-workflow-cards-状态不只靠颜色：12-个细分状态各自成键，未知不译成成功，取消与失败分开\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[11/18] tests\core\workflow-cards.spec.ts:1057:5 › 看板与步骤卡切换：选卡片同步右栏且不丢上下文，查看步骤与改发言对象分开
+[1A[2K[12/18] tests\core\workflow-cards.spec.ts:1115:5 › 右栏两态分工：步骤详情可改字段、文件预览只读且返回步骤详情不丢文件版本
+[1A[2K[13/18] tests\core\workflow-cards.spec.ts:1178:5 › U11 节点详情按需出现，关闭清除选择并保护注入草稿
+[1A[2K[14/18] tests\core\workflow-cards.spec.ts:1222:5 › U12 图与列表对应同一运行记录并保留意见草稿
+[1A[2K[15/18] tests\core\workflow-cards.spec.ts:1256:5 › U13 深色主题的图与列表状态截图
+[1A[2K[16/18] tests\core\workflow-cards.spec.ts:1278:7 › U10—U14 最终整合截图：1280
+[1A[2K[17/18] tests\core\workflow-cards.spec.ts:1278:7 › U10—U14 最终整合截图：900
+[1A[2K[18/18] tests\core\workflow-cards.spec.ts:1278:7 › U10—U14 最终整合截图：1280-dark
+[1A[2K  2 failed
+    tests\core\department-workspace.spec.ts:63:5 › 定稿工作台：主控分组、四列部门与真实会话读取、返回和旧计划入口 ─────────────────
+    tests\core\workflow-cards.spec.ts:972:5 › 状态不只靠颜色：12 个细分状态各自成键，未知不译成成功，取消与失败分开 ─────────────────
+  16 passed (7.7m)
