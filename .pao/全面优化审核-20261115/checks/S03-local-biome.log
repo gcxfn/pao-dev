@@ -1,0 +1,247 @@
+packages\coding-agent\src\pao\host\host-types.ts:4:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━
+
+  ! All these imports are only used as types.
+  
+    2 │ import { createHash } from "node:crypto";
+    3 │ import { resolve } from "node:path";
+  > 4 │ import { killTree } from "../../utils/kill-tree.ts";
+      │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    5 │ import type { SupervisionKind, SupervisionProgress, SupervisionRoute, SupervisionWorkInput } from "../supervision/index.ts";
+    6 │ import type { DispatchNotifyCategory } from "../worker/notify.ts";
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Use import type.
+  
+    4 │ import·type·{·killTree·}·from·"../../utils/kill-tree.ts";
+      │        +++++                                             
+
+packages\coding-agent\src\pao\host\host-types.ts:7:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━
+
+  ! All these imports are only used as types.
+  
+    5 │ import type { SupervisionKind, SupervisionProgress, SupervisionRoute, SupervisionWorkInput } from "../supervision/index.ts";
+    6 │ import type { DispatchNotifyCategory } from "../worker/notify.ts";
+  > 7 │ import { ProcessRegistry } from "../worker/registry.ts";
+      │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    8 │ import type { WarmConfig } from "./config.ts";
+    9 │ import type { MinisterEventState } from "./events.ts";
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Use import type.
+  
+    7 │ import·type·{·ProcessRegistry·}·from·"../worker/registry.ts";
+      │        +++++                                                 
+
+packages\coding-agent\src\pao\host\host-types.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      3   3 │   import { resolve } from "node:path";
+      4   4 │   import { killTree } from "../../utils/kill-tree.ts";
+      5     │ - import·type·{·SupervisionKind,·SupervisionProgress,·SupervisionRoute,·SupervisionWorkInput·}·from·"../supervision/index.ts";
+          5 │ + import·type·{
+          6 │ + → SupervisionKind,
+          7 │ + → SupervisionProgress,
+          8 │ + → SupervisionRoute,
+          9 │ + → SupervisionWorkInput,
+         10 │ + }·from·"../supervision/index.ts";
+      6  11 │   import type { DispatchNotifyCategory } from "../worker/notify.ts";
+      7  12 │   import { ProcessRegistry } from "../worker/registry.ts";
+    ······· │ 
+     10  15 │   import type { MinisterHandle } from "./handle.ts";
+     11  16 │   
+     12     │ - 
+     13  17 │   /**
+     14  18 │    * 部长会话在线宿主(M2-01 设计包 §2/§4,S2)。
+    ······· │ 
+     83  87 │   	本地通知?: (body: string, category: DispatchNotifyCategory) => void;
+     84  88 │   }
+     85     │ - 
+     86  89 │   
+     87  90 │   export interface SpawnOptions {
+    ······· │ 
+    102 105 │   }
+    103 106 │   
+    104     │ - 
+    105 107 │   export type SpawnResult =
+    106 108 │   	| { ok: true; handle: MinisterHandle /** 同 key 已有热会话时 true(不双开,返回既有句柄) */; 已有热会话: boolean }
+    107 109 │   	| { ok: false; 原因: string };
+    108     │ - 
+    109 110 │   
+    110 111 │   export interface TeardownRecord {
+    ······· │ 
+    122 123 │   }
+    123 124 │   
+    124     │ - 
+    125 125 │   export interface HostEntry {
+    126 126 │   	createdBefore: number;
+    ······· │ 
+    156 156 │   	结果由调用方汇总?: boolean;
+    157 157 │   }
+    158     │ - 
+    159 158 │   
+    160 159 │   export interface PendingResultDelivery {
+    ······· │ 
+    166 165 │   	works?: readonly SupervisionWorkInput[];
+    167 166 │   }
+    168     │ - 
+    169 167 │   
+    170 168 │   /** 一次真实 RPC prompt 的结算范围;只在该 episode 的 agent_settled 时投递最终结果。 */
+    ······· │ 
+    177 175 │   }
+    178 176 │   
+    179     │ - 
+    180 177 │   export interface SupervisionDeliveryTask extends Promise<boolean> {}
+    181     │ - 
+    182 178 │   
+    183 179 │   export interface HostToolEndEvent {
+    ······· │ 
+    192 188 │   }
+    193 189 │   
+    194     │ - 
+    195 190 │   export interface HostActivity {
+    196 191 │   	department: string;
+    ······· │ 
+    206 201 │   	readonly?: boolean;
+    207 202 │   }
+    208     │ - 
+    209 203 │   
+    210 204 │   /**
+    ······· │ 
+    216 210 │   export type MinisterInjectMode = "steer" | "followUp";
+    217 211 │   
+    218     │ - 
+    219 212 │   export interface MinisterInjectResult {
+    220 213 │   	ok: boolean;
+    ······· │ 
+    225 218 │   	处置?: string;
+    226 219 │   }
+    227     │ - 
+    228 220 │   
+    229 221 │   /** 部门名同时是 部门/<名>/ 目录名(交接页/配方都在其下):带路径成分一律拒,防越出 PAO_HOME */
+    ······· │ 
+    231 223 │   	return /[\\/:]/.test(dept) || dept.includes("..");
+    232 224 │   }
+    233     │ - 
+    234 225 │   
+    235 226 │   /** 部门监督对象使用可打印稳定键;活动源与真实部长记录用 digest 合并。 */
+  
+
+packages\coding-agent\src\pao\host\host.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { spawn } from "node:child_process";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { randomUUID } from "node:crypto";
+    3 │ import { mkdirSync, writeFileSync } from "node:fs";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      19   19 │   import { assessLiveness, bindingKeyValue, type MinisterHandle, type MinisterInventoryLine, PAO_DEPT_ENV, projectName, renderSupervisionSnapshot } from "./handle.ts";
+      20   20 │   import { richHandoffPointerText, writeHandoffPage } from "./handoff.ts";
+      21      │ - import·{·buildMinisterLedgerLine,·ministerLedgerPath,·type·SupervisionAuditRecord,·supervisionAuditPath,·writeMinisterLedger,·writeSupervisionAudit·}·from·"./ledger.ts";
+      22      │ - import·type·{·MinisterHostOptions,·SpawnOptions,·SpawnResult,·TeardownRecord,·HostEntry,·PendingResultDelivery,·SupervisionDeliveryTask,·HostToolEndEvent,·HostActivity,·MinisterInjectMode,·MinisterInjectResult·}·from·"./host-types.ts";
+      23      │ - export·type·{·MinisterHostOptions,·SpawnOptions,·SpawnResult,·TeardownRecord,·HostToolEndEvent,·HostActivity,·MinisterInjectMode,·MinisterInjectResult·}·from·"./host-types.ts";
+      24      │ - import·{·deptNameOutOfRange,·departmentSupervisionKey·}·from·"./host-types.ts";
+           21 │ + import·type·{·HostActivity,·HostEntry,·HostToolEndEvent,·MinisterHostOptions,·MinisterInjectMode,·MinisterInjectResult,·PendingResultDelivery,·SpawnOptions,·SpawnResult,·SupervisionDeliveryTask,·TeardownRecord·}·from·"./host-types.ts";
+           22 │ + import·{·buildMinisterLedgerLine,·ministerLedgerPath,·type·SupervisionAuditRecord,·supervisionAuditPath,·writeMinisterLedger,·writeSupervisionAudit·}·from·"./ledger.ts";
+           23 │ + 
+           24 │ + export·type·{·HostActivity,·HostToolEndEvent,·MinisterHostOptions,·MinisterInjectMode,·MinisterInjectResult,·SpawnOptions,·SpawnResult,·TeardownRecord·}·from·"./host-types.ts";
+           25 │ + 
+           26 │ + import·{·departmentSupervisionKey,·deptNameOutOfRange·}·from·"./host-types.ts";
+      25   27 │   
+      26   28 │   
+  
+
+packages\coding-agent\src\pao\host\host.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+       9    9 │   import { backupTimestamp } from "../routing/config.ts";
+      10   10 │   import { logError, logWarn } from "../shared/log.ts";
+      11      │ - import·{·renderSupervisionWork,·type·SupervisionKind,·type·SupervisionOutcome,·type·SupervisionProgress,·type·SupervisionRoute,·SupervisionState,·type·SupervisionWake·}·from·"../supervision/index.ts";
+           11 │ + import·{
+           12 │ + → renderSupervisionWork,
+           13 │ + → type·SupervisionKind,
+           14 │ + → type·SupervisionOutcome,
+           15 │ + → type·SupervisionProgress,
+           16 │ + → type·SupervisionRoute,
+           17 │ + → SupervisionState,
+           18 │ + → type·SupervisionWake,
+           19 │ + }·from·"../supervision/index.ts";
+      12   20 │   import { usageStreamComplete } from "../worker/native-usage.ts";
+      13   21 │   import type { DispatchNotifyCategory } from "../worker/notify.ts";
+    ········· │ 
+      15   23 │   import { ProcessRegistry } from "../worker/registry.ts";
+      16   24 │   import { defaultInvocation } from "../worker/runner.ts";
+      17      │ - import·{·readDepartmentSupervisionMinutes,·readWarmConfig,·readWorkerSupervisionMinutes,·WARM_DEFAULTS,·type·WarmConfig·}·from·"./config.ts";
+           25 │ + import·{
+           26 │ + → readDepartmentSupervisionMinutes,
+           27 │ + → readWarmConfig,
+           28 │ + → readWorkerSupervisionMinutes,
+           29 │ + → WARM_DEFAULTS,
+           30 │ + → type·WarmConfig,
+           31 │ + }·from·"./config.ts";
+      18   32 │   import { absorbMinisterEvent, createMinisterEventState, type EventDelta, type MinisterEventState } from "./events.ts";
+      19      │ - import·{·assessLiveness,·bindingKeyValue,·type·MinisterHandle,·type·MinisterInventoryLine,·PAO_DEPT_ENV,·projectName,·renderSupervisionSnapshot·}·from·"./handle.ts";
+           33 │ + import·{
+           34 │ + → assessLiveness,
+           35 │ + → bindingKeyValue,
+           36 │ + → type·MinisterHandle,
+           37 │ + → type·MinisterInventoryLine,
+           38 │ + → PAO_DEPT_ENV,
+           39 │ + → projectName,
+           40 │ + → renderSupervisionSnapshot,
+           41 │ + }·from·"./handle.ts";
+      20   42 │   import { richHandoffPointerText, writeHandoffPage } from "./handoff.ts";
+      21      │ - import·{·buildMinisterLedgerLine,·ministerLedgerPath,·type·SupervisionAuditRecord,·supervisionAuditPath,·writeMinisterLedger,·writeSupervisionAudit·}·from·"./ledger.ts";
+      22      │ - import·type·{·MinisterHostOptions,·SpawnOptions,·SpawnResult,·TeardownRecord,·HostEntry,·PendingResultDelivery,·SupervisionDeliveryTask,·HostToolEndEvent,·HostActivity,·MinisterInjectMode,·MinisterInjectResult·}·from·"./host-types.ts";
+      23      │ - export·type·{·MinisterHostOptions,·SpawnOptions,·SpawnResult,·TeardownRecord,·HostToolEndEvent,·HostActivity,·MinisterInjectMode,·MinisterInjectResult·}·from·"./host-types.ts";
+           43 │ + import·{
+           44 │ + → buildMinisterLedgerLine,
+           45 │ + → ministerLedgerPath,
+           46 │ + → type·SupervisionAuditRecord,
+           47 │ + → supervisionAuditPath,
+           48 │ + → writeMinisterLedger,
+           49 │ + → writeSupervisionAudit,
+           50 │ + }·from·"./ledger.ts";
+           51 │ + import·type·{
+           52 │ + → MinisterHostOptions,
+           53 │ + → SpawnOptions,
+           54 │ + → SpawnResult,
+           55 │ + → TeardownRecord,
+           56 │ + → HostEntry,
+           57 │ + → PendingResultDelivery,
+           58 │ + → SupervisionDeliveryTask,
+           59 │ + → HostToolEndEvent,
+           60 │ + → HostActivity,
+           61 │ + → MinisterInjectMode,
+           62 │ + → MinisterInjectResult,
+           63 │ + }·from·"./host-types.ts";
+           64 │ + export·type·{
+           65 │ + → MinisterHostOptions,
+           66 │ + → SpawnOptions,
+           67 │ + → SpawnResult,
+           68 │ + → TeardownRecord,
+           69 │ + → HostToolEndEvent,
+           70 │ + → HostActivity,
+           71 │ + → MinisterInjectMode,
+           72 │ + → MinisterInjectResult,
+           73 │ + }·from·"./host-types.ts";
+      24   74 │   import { deptNameOutOfRange, departmentSupervisionKey } from "./host-types.ts";
+      25      │ - 
+      26   75 │   
+      27   76 │   export class MinisterHost {
+  
+
+Checked 2 files in 207ms. No fixes applied.
+Found 3 errors.
+Found 2 warnings.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

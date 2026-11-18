@@ -1,0 +1,96 @@
+
+Running 5 tests using 1 worker
+
+(node:44168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\integrated-terminal.spec.ts:30:5 › opens task terminals with persistent output and independent shell tabs (30.2s)
+(node:34824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 apps\desktop\tests\core\integrated-terminal.spec.ts:124:5 › persists the integrated terminal shell setting (4.7s)
+  ok 3 apps\desktop\tests\core\integrated-terminal.spec.ts:150:5 › pastes clipboard text into the integrated terminal once (15.5s)
+  x  4 apps\desktop\tests\core\integrated-terminal.spec.ts:191:5 › writes an oversized terminal paste in chunks instead of dropping it (32.4s)
+(node:81704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 5 apps\desktop\tests\core\terminal-diff-layout.spec.ts:10:5 › Review and Terminal share one side workspace while the composer stays available (16.6s)
+
+
+  1) apps\desktop\tests\core\integrated-terminal.spec.ts:30:5 › opens task terminals with persistent output and independent shell tabs 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"PI_TERMINAL_OK"[39m
+    Received string:    [31m"[7mWindows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-onBaU2\\terminal-root> echo PI_TERM^INAL_OK & for %I in (\"%CD%\") do @echo TERMINAL_CWD=%~nxI所在位置 行:1 字符: 22+ echo [27mPI_TERM[7m^[27mINAL_OK[7m & for %I in (\"%CD%\") do @echo TERMINAL_CWD=%~nxI+                      ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来(\"&\")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-onBaU2\\terminal-root>  [27m"[39m
+    Timeout: 15000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 15000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    4 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-onBaU2\terminal-root>  "[22m
+    [2m    14 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m       - unexpected value "Windows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-onBaU2\terminal-root> echo PI_TERM^INAL_OK & for %I in ("%CD%") do @echo TERMINAL_CWD=%~nxI所在位置 行:1 字符: 22+ echo PI_TERM^INAL_OK & for %I in ("%CD%") do @echo TERMINAL_CWD=%~nxI+                      ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来("&")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-onBaU2\terminal-root>  "[22m
+
+
+      55 |     );
+      56 |     await window.keyboard.press("Enter");
+    > 57 |     await expect(terminal.locator(".xterm-rows")).toContainText("PI_TERMINAL_OK", {
+         |                                                   ^
+      58 |       timeout: 15_000,
+      59 |     });
+      60 |     await expect(terminal.locator(".xterm-rows")).toContainText(basename(workspacePath), {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\integrated-terminal.spec.ts:57:51
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-integrated-terminal-o-17a8f--and-independent-shell-tabs\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-integrated-terminal-o-17a8f--and-independent-shell-tabs\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\integrated-terminal.spec.ts:191:5 › writes an oversized terminal paste in chunks instead of dropping it 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('integrated-terminal').locator('.xterm-rows')
+    Expected substring: [32m"PI_TERMINAL_RECEIVER_READY"[39m
+    Received string:    [31m"Windows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace> node -e \"const fs = require('node:fs');const output = fs.createWriteStream('payload.txt');process.stdin.pipe(output);process.stdout.write('PI_TERMINAL_RECEIVER_' + 'READY\\n')\" & echo PI_TERMINAL_^RECEIVER_DONE所在位置 行:1 字符: 177+ ... ;process.stdout.write('PI_TERMINAL_RECEIVER_' + 'READY\\n')\" & echo PI ...+               ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来(\"&\")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\\Users\\ASUS\\AppData\\Local\\Temp\\pi-gui-workspace-imLsl0\\terminal-paste-large>  "[39m
+    Timeout: 15000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 15000ms[22m
+    [2m  - waiting for getByTestId('integrated-terminal').locator('.xterm-rows')[22m
+    [2m    4 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m      - unexpected value "Windows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace> node -e "const fs = require('node:fs');const output = fs.createWriteStream('payload.txt');process.stdin.pipe(output);process.stdout.write('PI_ "[22m
+    [2m    14 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m       - unexpected value "Windows PowerShell 5.1版权所有 (C) Microsoft Corporation。保留所有权利。  PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace> node -e "const fs = require('node:fs');const output = fs.createWriteStream('payload.txt');process.stdin.pipe(output);process.stdout.write('PI_TERMINAL_RECEIVER_' + 'READY\n')" & echo PI_TERMINAL_^RECEIVER_DONE所在位置 行:1 字符: 177+ ... ;process.stdout.write('PI_TERMINAL_RECEIVER_' + 'READY\n')" & echo PI ...+               ~不允许使用与号(&)。& 运算符是为将来使用而保留的；请用双引号将与号引起来("&")，以将其作为字符串的一部分传递。    + CategoryInfo          : ParserError: (:) [],     ParentContainsErrorRecordException    + FullyQualifiedErrorId : AmpersandNotAllowed PS C:\Users\ASUS\AppData\Local\Temp\pi-gui-workspace-imLsl0\terminal-paste-large>  "[22m
+
+
+      236 |     );
+      237 |     await window.keyboard.press("Enter");
+    > 238 |     await expect(terminal.locator(".xterm-rows")).toContainText(receiverReady, { timeout: 15_000 });
+          |                                                   ^
+      239 |
+      240 |     await harness.electronApp.evaluate(({ clipboard }, text) => {
+      241 |       clipboard.writeText(text);
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\integrated-terminal.spec.ts:238:51
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-integrated-terminal-w-e8093-unks-instead-of-dropping-it\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-integrated-terminal-w-e8093-unks-instead-of-dropping-it\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    apps\desktop\tests\core\integrated-terminal.spec.ts:30:5 › opens task terminals with persistent output and independent shell tabs 
+    apps\desktop\tests\core\integrated-terminal.spec.ts:191:5 › writes an oversized terminal paste in chunks instead of dropping it 
+  3 passed (1.7m)

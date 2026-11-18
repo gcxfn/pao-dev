@@ -1,0 +1,66 @@
+
+Running 19 tests using 1 worker
+
+(node:38836) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38836) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x   1 apps\desktop\tests\core\mcp-settings.spec.ts:42:5 › adds, switches and removes an MCP server from Settings, editing mcp.json in place (13.2s)
+(node:45504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  2 apps\desktop\tests\core\mcp-settings.spec.ts:215:5 › rejects a server Settings cannot run and leaves mcp.json alone (9.6s)
+  ok  3 apps\desktop\tests\core\notification-settings.spec.ts:14:5 › shows not enabled yet and enables via Ask macOS (8.6s)
+  ok  4 apps\desktop\tests\core\notification-settings.spec.ts:56:5 › shows turned off and opens System Settings when macOS notifications are denied (8.4s)
+  ok  5 apps\desktop\tests\core\provider-settings.spec.ts:16:5 › settings lets the user save an API key for a built-in provider (19.7s)
+  ok  6 apps\desktop\tests\core\provider-settings.spec.ts:79:5 › settings shows environment-configured providers as managed externally (5.0s)
+  ok  7 apps\desktop\tests\core\provider-settings.spec.ts:118:5 › settings keeps models.json provider overrides in the external-config state (7.0s)
+  ok  8 apps\desktop\tests\core\provider-settings.spec.ts:182:5 › opening the first workspace from the empty state hydrates provider and model settings without refresh (10.8s)
+  ok  9 apps\desktop\tests\core\provider-settings.spec.ts:244:5 › providers flags the default model's provider when it is not connected (8.5s)
+  ok 10 apps\desktop\tests\core\settings-appearance.spec.ts:21:5 › toggles and restores window transparency (13.0s)
+  ok 11 apps\desktop\tests\core\settings-appearance.spec.ts:72:5 › selects and restores theme presets (16.1s)
+  ok 12 apps\desktop\tests\core\settings-appearance.spec.ts:134:5 › every preset recolours the same design instead of restyling it (1.8m)
+  ok 13 apps\desktop\tests\core\settings-general.spec.ts:15:5 › ignores persisted multiple app instance opt-in and hides the setting (5.5s)
+  ok 14 apps\desktop\tests\core\settings-general.spec.ts:71:5 › settings nav search filters sections, opens the first match and clears on Escape (3.0s)
+  ok 15 apps\desktop\tests\core\settings-general.spec.ts:109:5 › close window behavior setting persists and round-trips (8.3s)
+  ok 16 apps\desktop\tests\core\settings-general.spec.ts:148:5 › general settings name the PAO home actually in use, not just the stored setting (4.6s)
+  ok 17 apps\desktop\tests\core\skills-settings.spec.ts:12:5 › shows skills and settings surfaces from runtime data (27.0s)
+  ok 18 apps\desktop\tests\core\skills-settings.spec.ts:81:5 › skills and extensions live inside settings as one tabbed page (10.5s)
+  ok 19 apps\desktop\tests\core\skills-settings.spec.ts:143:5 › matches skill slash commands by skill name aliases (7.3s)
+
+
+  1) apps\desktop\tests\core\mcp-settings.spec.ts:42:5 › adds, switches and removes an MCP server from Settings, editing mcp.json in place 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('settings-surface').locator('[data-testid="mcp-server-row"][data-server-name="project-docs"]')
+    Expected substring: [32m"This project · http://127.0.0.1:9/mcp"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('settings-surface').locator('[data-testid="mcp-server-row"][data-server-name="project-docs"]')[22m
+
+
+      79 |
+      80 |     await expect(row("existing")).toContainText("existing-server --port 1");
+    > 81 |     await expect(row("project-docs")).toContainText("This project · http://127.0.0.1:9/mcp");
+         |                                       ^
+      82 |     await expect(row("project-docs").getByRole("button", { name: "Remove" })).toHaveCount(0);
+      83 |     await expect(surface).not.toContainText("do-not-show-this");
+      84 |
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\mcp-settings.spec.ts:81:39
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U03-settings-results\core-mcp-settings-adds-swi-df076-s-editing-mcp-json-in-place\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U03-settings-results\core-mcp-settings-adds-swi-df076-s-editing-mcp-json-in-place\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\mcp-settings.spec.ts:42:5 › adds, switches and removes an MCP server from Settings, editing mcp.json in place 
+  18 passed (4.9m)

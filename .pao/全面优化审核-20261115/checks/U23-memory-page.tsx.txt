@@ -1,0 +1,985 @@
+import type { ComponentProps } from "react";
+import { revisionLabel } from "./memory-labels";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  PaoDesktopEvolutionProblemItem,
+  PaoDesktopEvolutionSourceLink,
+  PaoMemoryKind,
+  PaoMemoryDeletionOperation,
+  PaoMemoryListItem,
+  PaoMemorySourceSummary,
+  PaoMemoryUsageState,
+  PaoReadDesktopEvolutionProblemsResult,
+  PaoReadDesktopMemoryDetailResult,
+  PaoReadDesktopMemoryListResult,
+} from "@pao/sdk-driver";
+import type { PiDesktopApi } from "../../../contracts/ipc";
+import type { MemoryMutationResult } from "../../../contracts/memory";
+import { useI18n } from "../../i18n/react";
+import { MemoryTabs, type MemoryTab } from "./memory-tabs";
+import { SearchIcon } from "../../ui/icons";
+import { MemoryDetail } from "./memory-detail";
+import {
+  EvolutionDetail,
+  EvolutionProblemList,
+  type EvolutionProblemSelection,
+} from "./evolution-detail";
+import { MemoryList, type MemorySelection } from "./memory-list";
+import { MemoryDeletionRecovery, MemoryManagement, useMemoryManagement } from "./memory-management";
+import { MemoryProjectContext } from "./memory-project-context";
+import { MemoryTaskContinuation } from "./memory-task-continuation";
+import { ArtifactDetail, type ArtifactDetailSelection } from "./artifact-detail";
+import { MemoryArtifacts } from "./artifacts-panel";
+import {
+  forgetMemoryDeletionOperationId,
+  mutationRevision,
+  readMemoryDeletionOperationIds,
+  sameMemoryDeletionOperationIds,
+  saveMemoryDeletionOperationId,
+  shouldReloadAfterMemoryMutation,
+} from "./memory-management-model";
+import { MemorySourcePanel } from "./memory-source";
+import { MemoryUsagePanel } from "./memory-usage";
+import { MemoryActivityPanel } from "./memory-activity";
+import { MemoryContextUsagePanel } from "./memory-context-usage";
+import { MemoryTaskUsagePanel } from "./memory-task-usage";
+import { isCurrentMemoryRequest } from "./memory-request-guard";
+
+interface MemoryFilters {
+  readonly query: string;
+  readonly status: "all" | PaoMemoryUsageState;
+  /** artifact/evolution 不是记忆类型；选中时换成对应列表，不把该值传给记忆检索。 */
+  readonly kind: "all" | PaoMemoryKind | "artifact" | "evolution";
+  readonly mode: "current" | "history";
+}
+
+interface SourceSelection {
+  readonly memoryId: string;
+  readonly revision: number;
+  readonly source: PaoMemorySourceSummary;
+}
+
+type EditorFocusTarget = "correct" | "merge";
+
+export interface TrustedMemorySession {
+  readonly workspaceId: string;
+  readonly sessionId: string;
+  readonly title: string;
+}
+
+const PAGE_SIZE = 20;
+
+export function MemoryPage({
+  api,
+  workspaceId,
+  workspaceName,
+  sessionId,
+  sessionTitle,
+  taskId,
+  trustedSessions,
+  onOpenSession,
+  onOpenFile,
+}: {
+  readonly api: PiDesktopApi;
+  readonly workspaceId?: string;
+  readonly workspaceName?: string;
+  readonly sessionId?: string;
+  readonly sessionTitle?: string;
+  readonly taskId?: string;
+  readonly trustedSessions: readonly TrustedMemorySession[];
+  readonly onOpenSession: (target: { workspaceId: string; sessionId: string }) => void;
+  readonly onOpenFile?: (path: string) => Promise<void>;
+}) {
+  const { language, t } = useI18n();
+  const copy = (zh: string, en: string) => (language === "zh" ? zh : en);
+  const [tab, setTab] = useState<MemoryTab>("memories");
+  const [draftQuery, setDraftQuery] = useState("");
+  const [searchGeneration, setSearchGeneration] = useState(0);
+  const [filters, setFilters] = useState<MemoryFilters>({
+    query: "",
+    status: "all",
+    kind: "all",
+    mode: "current",
+  });
+  const [listResult, setListResult] = useState<PaoReadDesktopMemoryListResult | null>(null);
+  const [items, setItems] = useState<readonly PaoMemoryListItem[]>([]);
+  const [listPage, setListPage] = useState(1);
+  const [listLoading, setListLoading] = useState(false);
+  const [listLoadingMore, setListLoadingMore] = useState(false);
+  const [listError, setListError] = useState<string>();
+  const [selection, setSelection] = useState<MemorySelection | null>(null);
+  const [artifactSelection, setArtifactSelection] = useState<ArtifactDetailSelection | null>(null);
+  const [evolutionSelection, setEvolutionSelection] = useState<EvolutionProblemSelection | null>(
+    null,
+  );
+  const [evolutionListResult, setEvolutionListResult] =
+    useState<PaoReadDesktopEvolutionProblemsResult | null>(null);
+  const [evolutionItems, setEvolutionItems] = useState<readonly PaoDesktopEvolutionProblemItem[]>(
+    [],
+  );
+  const [evolutionListLoading, setEvolutionListLoading] = useState(false);
+  const [evolutionListError, setEvolutionListError] = useState<string>();
+  const [detail, setDetail] = useState<PaoReadDesktopMemoryDetailResult | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string>();
+  const [sourceSelection, setSourceSelection] = useState<SourceSelection | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [pageNotice, setPageNotice] = useState<string>();
+  const [deletionOperationIds, setDeletionOperationIds] = useState<readonly string[]>([]);
+  const listRequestId = useRef(0);
+  const detailRequestId = useRef(0);
+  const evolutionListRequestId = useRef(0);
+  const pendingEditorFocusRef = useRef<EditorFocusTarget | undefined>(undefined);
+  const workspaceKeyRef = useRef(workspaceId);
+
+  const listKey = `${workspaceId ?? ""}:${filters.query}:${filters.status}:${filters.kind}:${filters.mode}:${searchGeneration}`;
+  const listKeyRef = useRef(listKey);
+  listKeyRef.current = listKey;
+  const detailKey = selection
+    ? `${workspaceId ?? ""}:${selection.memoryId}:${selection.revision}`
+    : "";
+  const detailKeyRef = useRef(detailKey);
+  detailKeyRef.current = detailKey;
+  const evolutionListKey = `${workspaceId ?? ""}:evolution:${searchGeneration}`;
+  const evolutionListKeyRef = useRef(evolutionListKey);
+  evolutionListKeyRef.current = evolutionListKey;
+
+  useEffect(() => {
+    if (workspaceKeyRef.current === workspaceId) return;
+    workspaceKeyRef.current = workspaceId;
+    setTab("memories");
+    setSelection(null);
+    setArtifactSelection(null);
+    setEvolutionSelection(null);
+    setEvolutionItems([]);
+    setEvolutionListResult(null);
+    setDetail(null);
+    setDetailError(undefined);
+    setSourceSelection(null);
+    setDetailOpen(false);
+    setFiltersOpen(false);
+    setListPage(1);
+    setListResult(null);
+    setItems([]);
+    setPageNotice(undefined);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    setDeletionOperationIds(workspaceId ? readMemoryDeletionOperationIds(workspaceId) : []);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    const currentRequest = ++listRequestId.current;
+    setListPage(1);
+    setListError(undefined);
+    if (!workspaceId) {
+      setItems([]);
+      setListResult(null);
+      setListLoading(false);
+      setSelection(null);
+      return;
+    }
+    setListLoading(true);
+    void api
+      .listMemory({
+        workspaceId,
+        query: filters.query,
+        ...(filters.status === "all" ? {} : { status: filters.status }),
+        ...(filters.kind === "all" || filters.kind === "artifact" || filters.kind === "evolution"
+          ? {}
+          : { kind: filters.kind }),
+        mode: filters.mode,
+        page: 1,
+        pageSize: PAGE_SIZE,
+      })
+      .then((result) => {
+        if (
+          !isCurrentMemoryRequest(
+            currentRequest,
+            listRequestId.current,
+            listKey,
+            listKeyRef.current,
+          )
+        )
+          return;
+        if (!result.ok) {
+          setListError(result.error.message);
+          return;
+        }
+        setItems([...result.items]);
+        setListResult(result);
+      })
+      .catch((reason: unknown) => {
+        if (
+          isCurrentMemoryRequest(currentRequest, listRequestId.current, listKey, listKeyRef.current)
+        ) {
+          setListError(reason instanceof Error ? reason.message : String(reason));
+        }
+      })
+      .finally(() => {
+        if (
+          isCurrentMemoryRequest(currentRequest, listRequestId.current, listKey, listKeyRef.current)
+        ) {
+          setListLoading(false);
+        }
+      });
+    return () => {
+      listRequestId.current += 1;
+    };
+  }, [api, filters, listKey, workspaceId]);
+
+  useEffect(() => {
+    if (!selection && items[0]) {
+      setSelection({ memoryId: items[0].memoryId, revision: items[0].revision });
+    }
+  }, [items, selection]);
+
+  // kind=evolution 时改拉进化问题列表（readDesktopEvolutionProblems），不走记忆检索。
+  useEffect(() => {
+    const currentRequest = ++evolutionListRequestId.current;
+    if (filters.kind !== "evolution" || !workspaceId) {
+      setEvolutionItems([]);
+      setEvolutionListResult(null);
+      setEvolutionListLoading(false);
+      setEvolutionListError(undefined);
+      return;
+    }
+    setEvolutionListLoading(true);
+    setEvolutionListError(undefined);
+    void api
+      .listMemoryEvolutionProblems({ workspaceId, page: 1, pageSize: 200 })
+      .then((result) => {
+        if (
+          !isCurrentMemoryRequest(
+            currentRequest,
+            evolutionListRequestId.current,
+            evolutionListKey,
+            evolutionListKeyRef.current,
+          )
+        )
+          return;
+        if (!result.ok) {
+          setEvolutionListError(result.error.message);
+          return;
+        }
+        setEvolutionItems([...result.items]);
+        setEvolutionListResult(result);
+      })
+      .catch((reason: unknown) => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            evolutionListRequestId.current,
+            evolutionListKey,
+            evolutionListKeyRef.current,
+          )
+        ) {
+          setEvolutionListError(reason instanceof Error ? reason.message : String(reason));
+        }
+      })
+      .finally(() => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            evolutionListRequestId.current,
+            evolutionListKey,
+            evolutionListKeyRef.current,
+          )
+        ) {
+          setEvolutionListLoading(false);
+        }
+      });
+    return () => {
+      evolutionListRequestId.current += 1;
+    };
+  }, [api, evolutionListKey, filters.kind, workspaceId]);
+
+  useEffect(() => {
+    const currentRequest = ++detailRequestId.current;
+    setSourceSelection(null);
+    setDetailError(undefined);
+    if (!workspaceId || !selection) {
+      setDetail(null);
+      setDetailLoading(false);
+      return;
+    }
+    setDetail(null);
+    setDetailLoading(true);
+    void api
+      .getMemoryDetail({
+        workspaceId,
+        id: selection.memoryId,
+        revision: selection.revision,
+      })
+      .then((result) => {
+        if (
+          !isCurrentMemoryRequest(
+            currentRequest,
+            detailRequestId.current,
+            detailKey,
+            detailKeyRef.current,
+          )
+        )
+          return;
+        if (!result.ok) {
+          setDetailError(result.error.message);
+          return;
+        }
+        setDetail(result);
+      })
+      .catch((reason: unknown) => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            detailRequestId.current,
+            detailKey,
+            detailKeyRef.current,
+          )
+        ) {
+          setDetailError(reason instanceof Error ? reason.message : String(reason));
+        }
+      })
+      .finally(() => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            detailRequestId.current,
+            detailKey,
+            detailKeyRef.current,
+          )
+        ) {
+          setDetailLoading(false);
+        }
+      });
+    return () => {
+      detailRequestId.current += 1;
+    };
+  }, [api, detailKey, selection, workspaceId]);
+
+  useEffect(() => {
+    const pendingEditorFocus = pendingEditorFocusRef.current;
+    if (!pendingEditorFocus || !detail || detailLoading) return;
+    const frame = requestAnimationFrame(() => {
+      const trigger = document.querySelector<HTMLButtonElement>(
+        `[data-testid="memory-action-${pendingEditorFocus}"]`,
+      );
+      if (!trigger || trigger.disabled) return;
+      trigger.focus();
+      if (document.activeElement === trigger) pendingEditorFocusRef.current = undefined;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [detail, detailLoading]);
+
+  const replaceListState = (nextFilters: MemoryFilters) => {
+    setFilters(nextFilters);
+    setTab(nextFilters.kind === "artifact" ? "artifacts" : "memories");
+    setSelection(null);
+    setArtifactSelection(null);
+    setEvolutionSelection(null);
+    setDetail(null);
+    setSourceSelection(null);
+    setDetailOpen(false);
+    setPageNotice(undefined);
+  };
+
+  const selectMemory = (next: MemorySelection) => {
+    setSelection(next);
+    setArtifactSelection(null);
+    setSourceSelection(null);
+    setDetailOpen(true);
+  };
+
+  const selectArtifact = (next: ArtifactDetailSelection) => {
+    setArtifactSelection(next);
+    setDetailOpen(true);
+  };
+
+  const selectEvolutionProblem = (next: EvolutionProblemSelection) => {
+    setEvolutionSelection(next);
+    setDetailOpen(true);
+  };
+
+  const openRevision = (memoryId: string, revision: number) => {
+    setTab("memories");
+    if (filters.kind === "evolution" || filters.kind === "artifact") {
+      setFilters((current) => ({ ...current, kind: "all" }));
+    }
+    selectMemory({ memoryId, revision });
+  };
+
+  const loadMore = () => {
+    if (!workspaceId || !listResult?.hasMore || listLoadingMore) return;
+    const currentRequest = ++listRequestId.current;
+    const requestedKey = listKey;
+    const nextPage = listPage + 1;
+    setListLoadingMore(true);
+    setListError(undefined);
+    void api
+      .listMemory({
+        workspaceId,
+        query: filters.query,
+        ...(filters.status === "all" ? {} : { status: filters.status }),
+        ...(filters.kind === "all" || filters.kind === "artifact" || filters.kind === "evolution"
+          ? {}
+          : { kind: filters.kind }),
+        mode: filters.mode,
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+      })
+      .then((result) => {
+        if (
+          !isCurrentMemoryRequest(
+            currentRequest,
+            listRequestId.current,
+            requestedKey,
+            listKeyRef.current,
+          )
+        )
+          return;
+        if (!result.ok) {
+          setListError(result.error.message);
+          return;
+        }
+        setItems((current) => [...current, ...result.items]);
+        setListResult(result);
+        setListPage(nextPage);
+      })
+      .catch((reason: unknown) => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            listRequestId.current,
+            requestedKey,
+            listKeyRef.current,
+          )
+        ) {
+          setListError(reason instanceof Error ? reason.message : String(reason));
+        }
+      })
+      .finally(() => {
+        if (
+          isCurrentMemoryRequest(
+            currentRequest,
+            listRequestId.current,
+            requestedKey,
+            listKeyRef.current,
+          )
+        ) {
+          setListLoadingMore(false);
+        }
+      });
+  };
+
+  const handleDeletionOperation = useCallback(
+    (operation: PaoMemoryDeletionOperation) => {
+      if (!workspaceId) return;
+      const next =
+        operation.status === "complete"
+          ? forgetMemoryDeletionOperationId(workspaceId, operation.operationId)
+          : saveMemoryDeletionOperationId(workspaceId, operation.operationId);
+      setDeletionOperationIds((current) =>
+        sameMemoryDeletionOperationIds(current, next) ? current : next,
+      );
+    },
+    [workspaceId],
+  );
+
+  const handleRecoveredDeletionCompleted = useCallback(
+    (operation: PaoMemoryDeletionOperation) => {
+      if (!workspaceId) return;
+      const next = forgetMemoryDeletionOperationId(workspaceId, operation.operationId);
+      setDeletionOperationIds((current) =>
+        sameMemoryDeletionOperationIds(current, next) ? current : next,
+      );
+      setPageNotice(
+        language === "zh" ? "删除作业已恢复并完成。" : "The deletion job resumed and completed.",
+      );
+      setSearchGeneration((current) => current + 1);
+      setSelection(null);
+      setDetail(null);
+      setSourceSelection(null);
+      setDetailOpen(false);
+    },
+    [language, workspaceId],
+  );
+
+  const handleMutationComplete = (result: MemoryMutationResult, memoryId: string) => {
+    if ("op" in result && result.op === "deleteConfirm" && result.ok) {
+      handleDeletionOperation(result);
+    }
+    if (!shouldReloadAfterMemoryMutation(result) || !("op" in result)) return;
+    if (!result.ok) return;
+    if (result.op === "deleteConfirm") {
+      setPageNotice(
+        copy(
+          "删除已完成，条目已从当前列表移除。",
+          "Deletion completed and the item was removed from this list.",
+        ),
+      );
+      setSearchGeneration((current) => current + 1);
+      setSelection(null);
+      setDetail(null);
+      setSourceSelection(null);
+      setDetailOpen(false);
+      return;
+    }
+    if (
+      result.op === "setUsage" &&
+      result.usageState === "stopped" &&
+      filters.status === "active"
+    ) {
+      setPageNotice(
+        copy(
+          "已停用该记忆。当前筛选只显示使用中条目，可在“已停用”筛选中恢复。",
+          "Memory stopped. Restore it from the Stopped filter.",
+        ),
+      );
+      setSearchGeneration((current) => current + 1);
+      setSelection(null);
+      setDetail(null);
+      setSourceSelection(null);
+      setDetailOpen(false);
+      return;
+    }
+    const revision = mutationRevision(result);
+    if (result.op === "merge") {
+      setPageNotice(
+        copy(
+          `合并已完成，保留项当前为版本 ${revisionLabel(result.keepRevision)}。`,
+          `Merge completed; the retained item is now revision ${revisionLabel(result.keepRevision)}.`,
+        ),
+      );
+    } else if (result.op === "setUsage") {
+      setPageNotice(
+        result.usageState === "stopped"
+          ? copy(
+              `已停用，当前版本为 ${revisionLabel(result.revision)}。`,
+              `Stopped at revision ${revisionLabel(result.revision)}.`,
+            )
+          : copy(
+              `已恢复使用，当前版本为 ${revisionLabel(result.revision)}。`,
+              `Restored at revision ${revisionLabel(result.revision)}.`,
+            ),
+      );
+    } else if (result.op === "correct") {
+      setPageNotice(
+        copy(
+          `纠正已保存，当前版本为 ${revisionLabel(result.revision)}。`,
+          `Correction saved at revision ${revisionLabel(result.revision)}.`,
+        ),
+      );
+    } else {
+      return;
+    }
+    if (revision !== undefined) {
+      if (result.op === "correct" || result.op === "merge") {
+        pendingEditorFocusRef.current = result.op;
+      }
+      setSelection({ memoryId, revision });
+    }
+    setSourceSelection(null);
+    setSearchGeneration((current) => current + 1);
+  };
+
+  /**
+   * 进化来源跳转：link 带 memoryId+revision 时按记忆详情回查该版本的来源摘要，
+   * 找到同一 sourceId 的条目后复用 MemorySourcePanel 打开原文；
+   * 找不到（未挂记忆或已不可读）时只给页面提示，不静默失败。
+   */
+  const openEvolutionSource = useCallback(
+    (link: PaoDesktopEvolutionSourceLink) => {
+      if (!workspaceId) return;
+      if (!link.memoryId || link.revision === null) {
+        // O12/E13：区分两种 memory_id NULL 形态——src- 前缀是纯来源引用
+        // （真 sources 行，未挂记忆版本），其他引用（friction:/toolcall: 等）
+        // 只有去重键意义；统一明示「纯来源引用，未挂记忆版本」。
+        setPageNotice(
+          language === "zh"
+            ? `该来源 ${link.sourceId} 是纯来源引用，未挂记忆版本，无可回读原文。`
+            : `Source ${link.sourceId} is a bare source reference with no memory revision attached; nothing to reopen.`,
+        );
+        return;
+      }
+      void api
+        .getMemoryDetail({ workspaceId, id: link.memoryId, revision: link.revision })
+        .then((result) => {
+          if (!result.ok) {
+            setPageNotice(result.error.message);
+            return;
+          }
+          const source = result.sources.find((entry) => entry.sourceId === link.sourceId);
+          if (!source) {
+            setPageNotice(
+              language === "zh"
+                ? "该版本下找不到这条来源，原文可能已归档。"
+                : "That source is not attached to this revision; its archive may be missing.",
+            );
+            return;
+          }
+          setSourceSelection({
+            memoryId: link.memoryId!,
+            revision: link.revision!,
+            source,
+          });
+        })
+        .catch((reason: unknown) => {
+          setPageNotice(reason instanceof Error ? reason.message : String(reason));
+        });
+    },
+    [api, workspaceId, language],
+  );
+
+  const selectTab = (next: MemoryTab | "evolution") => {
+    setFiltersOpen(false);
+    if (next === "evolution") {
+      setFilters((current) => ({ ...current, kind: "evolution" }));
+      setTab("memories");
+    } else {
+      setTab(next);
+      if (next === "memories" && (filters.kind === "evolution" || filters.kind === "artifact")) {
+        setFilters((current) => ({ ...current, kind: "all" }));
+      }
+    }
+  };
+
+  const sourcePanel =
+    sourceSelection && workspaceId ? (
+      <MemorySourcePanel
+        api={api}
+        workspaceId={workspaceId}
+        memoryId={sourceSelection.memoryId}
+        revision={sourceSelection.revision}
+        source={sourceSelection.source}
+        sessionId={sessionId}
+        taskId={taskId}
+        trustedSessions={trustedSessions}
+        onOpenSession={onOpenSession}
+        onClose={() => setSourceSelection(null)}
+      />
+    ) : null;
+
+  const memoryDetailProps: ComponentProps<typeof MemoryDetail> = {
+    result: detail,
+    loading: detailLoading,
+    error: detailError,
+    sourceId: sourceSelection?.source.sourceId,
+    sourcePanel: sourcePanel,
+    workspaceName: workspaceName,
+    sessionTitle: sessionTitle,
+    activeSessionId: sessionId,
+    onBack: () => setDetailOpen(false),
+    onSelectRevision: (revision) => {
+      if (!selection) return;
+      setSelection({ memoryId: selection.memoryId, revision });
+      setSourceSelection(null);
+    },
+    onSelectSource: (source) => {
+      if (!detail) return;
+      setSourceSelection({
+        memoryId: detail.memory.id,
+        revision: detail.selectedRevision,
+        source,
+      });
+    },
+  };
+  const activeFilterCount =
+    Number(Boolean(filters.query)) +
+    Number(filters.status !== "all") +
+    Number(filters.kind !== "all") +
+    Number(filters.mode !== "current");
+
+  return (
+    <div
+      className={`memory-page${filtersOpen ? " memory-page--filters-open" : ""}${detailOpen ? " memory-page--detail-open" : ""}`}
+      data-testid="memory-page"
+    >
+      <MemoryTabs
+        selected={tab === "memories" && filters.kind === "evolution" ? "evolution" : tab}
+        onSelect={selectTab}
+      />
+      <div className="memory-page-alerts">
+        {" "}
+        {pageNotice ? (
+          <div className="memory-page-notice" role="status" data-testid="memory-page-notice">
+            {pageNotice}
+          </div>
+        ) : null}
+        {workspaceId ? (
+          <MemoryDeletionRecovery
+            api={api}
+            workspaceId={workspaceId}
+            operationIds={deletionOperationIds}
+            onOperationUpdate={handleDeletionOperation}
+            onCompleted={handleRecoveredDeletionCompleted}
+          />
+        ) : null}
+      </div>
+      <div className="memory-page-content">
+        <div className="memory-browser" hidden={tab !== "memories"}>
+          <div className="memory-list-column">
+            <aside className="memory-filters" aria-label={t("Memory filters")}>
+              <div className="memory-filters__head">
+                <div>
+                  <span className="memory-page__eyebrow">{t("Built-in memory")}</span>
+                  <h1>{t("Memory")}</h1>
+                  <p>{workspaceName || t("No project selected")}</p>
+                </div>
+                <button
+                  type="button"
+                  className="button memory-filters__close"
+                  onClick={() => setFiltersOpen(false)}
+                >
+                  {t("Close filters")}
+                </button>
+              </div>
+              <form
+                className="memory-search"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  replaceListState({ ...filters, query: draftQuery.trim() });
+                  setSearchGeneration((current) => current + 1);
+                }}
+              >
+                <label>
+                  <span>{t("Search")}</span>
+                  <span className="memory-search__field">
+                    <SearchIcon />
+                    <input
+                      aria-label={t("Search memories")}
+                      type="search"
+                      value={draftQuery}
+                      placeholder={t("Search decisions and experience")}
+                      onChange={(event) => setDraftQuery(event.currentTarget.value)}
+                    />
+                  </span>
+                </label>
+                <button type="submit" className="button button--primary">
+                  {t("Search")}
+                </button>
+              </form>
+              <label className="memory-filter-field">
+                <span>{t("Usage state")}</span>
+                <select
+                  aria-label={t("Usage state")}
+                  value={filters.status}
+                  onChange={(event) =>
+                    replaceListState({
+                      ...filters,
+                      status: event.currentTarget.value as MemoryFilters["status"],
+                    })
+                  }
+                >
+                  <option value="all">{t("All states")}</option>
+                  <option value="active">{t("Active")}</option>
+                  <option value="stopped">{t("Stopped")}</option>
+                </select>
+              </label>
+              <label className="memory-filter-field">
+                <span>{t("Kind")}</span>
+                <select
+                  aria-label={t("Kind")}
+                  value={filters.kind}
+                  onChange={(event) =>
+                    replaceListState({
+                      ...filters,
+                      kind: event.currentTarget.value as MemoryFilters["kind"],
+                    })
+                  }
+                >
+                  <option value="all">{t("All kinds")}</option>
+                  <option value="decision">{t("Decision")}</option>
+                  <option value="experience">{t("Experience")}</option>
+                  <option value="lesson">{t("Lesson")}</option>
+                  <option value="commitment">{t("Commitment")}</option>
+                  <option value="artifact">{t("Artifact")}</option>
+                  <option value="evolution">{t("Evolution")}</option>
+                </select>
+              </label>
+              <label className="memory-filter-field">
+                <span>{t("Revision scope")}</span>
+                <select
+                  aria-label={t("Revision scope")}
+                  value={filters.mode}
+                  onChange={(event) =>
+                    replaceListState({
+                      ...filters,
+                      mode: event.currentTarget.value as MemoryFilters["mode"],
+                    })
+                  }
+                >
+                  <option value="current">{t("Current only")}</option>
+                  <option value="history">{t("Include history")}</option>
+                </select>
+              </label>
+              <p className="memory-filters__note">
+                {t("History exposes superseded revisions and archived sources.")}
+              </p>
+            </aside>
+            <button
+              type="button"
+              className="button memory-filters-toggle"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((current) => !current)}
+            >
+              {t("Filters")}
+              {activeFilterCount ? `（${activeFilterCount}）` : ""}
+            </button>
+            {filters.kind === "evolution" ? (
+              <EvolutionProblemList
+                result={evolutionListResult}
+                items={evolutionItems}
+                selected={evolutionSelection}
+                loading={evolutionListLoading}
+                error={evolutionListError}
+                onSelect={selectEvolutionProblem}
+              />
+            ) : filters.kind !== "artifact" ? (
+              <MemoryList
+                result={listResult}
+                items={items}
+                selected={selection}
+                loading={listLoading}
+                loadingMore={listLoadingMore}
+                error={listError}
+                onSelect={selectMemory}
+                onLoadMore={loadMore}
+              />
+            ) : null}
+          </div>
+
+          <div className="memory-detail-column">
+            {filters.kind === "evolution" ? (
+              <EvolutionDetail
+                api={api}
+                workspaceId={workspaceId ?? ""}
+                selection={evolutionSelection}
+                onBack={() => setDetailOpen(false)}
+                onOpenSource={openEvolutionSource}
+              />
+            ) : detail && workspaceId ? (
+              <ManagedMemoryDetail
+                detailProps={memoryDetailProps}
+                api={api}
+                workspaceId={workspaceId}
+                detail={detail}
+                mergeCandidates={filters.mode === "current" ? items : []}
+                allowMerge={filters.mode === "current"}
+                onMutationComplete={handleMutationComplete}
+                onDeletionOperation={handleDeletionOperation}
+              />
+            ) : (
+              <MemoryDetail {...memoryDetailProps} />
+            )}
+
+            {filters.kind === "evolution" ? sourcePanel : null}
+          </div>
+        </div>
+        <div className="memory-tab-content" hidden={tab !== "project"}>
+          {" "}
+          {workspaceId ? (
+            <MemoryProjectContext
+              expanded={tab === "project"}
+              api={api}
+              workspaceId={workspaceId}
+              onOpenRevision={openRevision}
+              onOpenFile={onOpenFile}
+              onGoalSaved={(memoryId, revision) => {
+                setSearchGeneration((current) => current + 1);
+                setSelection({ memoryId, revision });
+                setDetailOpen(true);
+                setPageNotice(
+                  copy(
+                    `项目目标已保存为版本 ${revisionLabel(revision)}。`,
+                    `Project goal saved at revision ${revisionLabel(revision)}.`,
+                  ),
+                );
+              }}
+            />
+          ) : null}
+        </div>
+        <div className="memory-tab-content" hidden={tab !== "tasks"}>
+          {" "}
+          {workspaceId ? (
+            <MemoryTaskContinuation
+              expanded={tab === "tasks"}
+              api={api}
+              workspaceId={workspaceId}
+              trustedSessions={trustedSessions}
+              onOpenSession={onOpenSession}
+              onOpenFile={onOpenFile}
+            />
+          ) : null}
+        </div>
+        <div className="memory-artifact-browser" hidden={tab !== "artifacts"}>
+          <div className="memory-list-column">
+            {" "}
+            {workspaceId ? (
+              <MemoryArtifacts
+                expanded={tab === "artifacts"}
+                api={api}
+                workspaceId={workspaceId}
+                selected={artifactSelection}
+                onSelect={selectArtifact}
+              />
+            ) : null}
+          </div>
+          <div className="memory-detail-column">
+            {" "}
+            <ArtifactDetail
+              api={api}
+              workspaceId={workspaceId ?? ""}
+              selection={artifactSelection}
+              workspaceName={workspaceName}
+              onBack={() => setDetailOpen(false)}
+              onSelectVersion={(versionId) =>
+                setArtifactSelection((current) => (current ? { ...current, versionId } : current))
+              }
+              onOpenFile={onOpenFile}
+            />
+          </div>
+        </div>
+        <div className="memory-tab-content memory-usage-content" hidden={tab !== "usage"}>
+          {" "}
+          {workspaceId ? (
+            <MemoryUsagePanel
+              api={api}
+              workspaceId={workspaceId}
+              sessionId={sessionId}
+              taskId={taskId}
+              onOpenRevision={openRevision}
+            />
+          ) : null}
+          {workspaceId ? <MemoryActivityPanel api={api} workspaceId={workspaceId} /> : null}
+          {workspaceId ? (
+            <MemoryTaskUsagePanel
+              api={api}
+              workspaceId={workspaceId}
+              taskId={taskId}
+              sourceSessionId={sessionId}
+            />
+          ) : null}
+          {workspaceId ? (
+            <MemoryContextUsagePanel api={api} workspaceId={workspaceId} sessionId={sessionId} />
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ManagedMemoryDetail({
+  detailProps,
+  ...props
+}: Parameters<typeof useMemoryManagement>[0] & {
+  readonly detailProps: ComponentProps<typeof MemoryDetail>;
+}) {
+  const state = useMemoryManagement(props);
+  return (
+    <MemoryDetail
+      {...detailProps}
+      actions={<MemoryManagement state={state} placement="header-actions" />}
+      forms={<MemoryManagement state={state} placement="forms" />}
+    />
+  );
+}

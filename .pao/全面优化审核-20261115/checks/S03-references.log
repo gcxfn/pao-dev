@@ -1,0 +1,111 @@
+PAO/packages\coding-agent\src\utils\child-process.ts:6:	type SpawnOptions,
+PAO/packages\coding-agent\src\utils\child-process.ts:7:	type SpawnOptionsWithStdioTuple,
+PAO/packages\coding-agent\src\utils\child-process.ts:21:	options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>,
+PAO/packages\coding-agent\src\utils\child-process.ts:23:export function spawnProcess(command: string, args: string[], options: SpawnOptions): ChildProcess;
+PAO/packages\coding-agent\src\utils\child-process.ts:24:export function spawnProcess(command: string, args: string[], options: SpawnOptions): ChildProcess {
+PAO/packages\coding-agent\test\pao\f-novel-loop.test.ts:24:import { type HostToolEndEvent, MinisterHost } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\f-novel-loop.test.ts:319:} /** * 宿主替身：只钉 `spawn` / `executeTask` 两个 RPC 边界，其余（渲染、拆卡归属、判定、回边、人工门）全真跑。 * spawn 的返回值形状与 `host/spawn.ts` 的 `SpawnResult` 一致，上下文原样回显，好让部长「记得自己是哪个节点」。 */
+PAO/packages\coding-agent\test\pao\f-novel-loop.test.ts:409:	let toolEndListener: ((event: HostToolEndEvent) => void) | undefined;
+PAO/packages\coding-agent\test\pao\host-supervision.test.ts:7:import { type HostActivity, MinisterHost } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\host-supervision.test.ts:299:		let active: readonly HostActivity[];
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:5: * MinisterHostOptions.活动 负责把快照送进宿主的 SupervisionState；20 秒扫描、
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:17:import type { HostActivity } from "../host/host.ts";
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:218:const progressFrom = (entry: ProcessEntry): NonNullable<HostActivity["progress"]> => ({
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:244:): HostActivity {
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:272:): HostActivity[] {
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:283:	const unknown: HostActivity[] = [];
+PAO/packages\coding-agent\src\pao\worker\supervision.ts:320:	const activities: HostActivity[] = entries.map((entry) => {
+PAO/packages\coding-agent\src\pao\host\host.ts:75:export interface MinisterHostOptions {
+PAO/packages\coding-agent\src\pao\host\host.ts:105:	活动?: () => readonly HostActivity[];
+PAO/packages\coding-agent\src\pao\host\host.ts:126:export interface SpawnOptions {
+PAO/packages\coding-agent\src\pao\host\host.ts:143:export type SpawnResult =
+PAO/packages\coding-agent\src\pao\host\host.ts:147:export interface TeardownRecord {
+PAO/packages\coding-agent\src\pao\host\host.ts:161:interface HostEntry {
+PAO/packages\coding-agent\src\pao\host\host.ts:168:	停止?: Promise<TeardownRecord>;
+PAO/packages\coding-agent\src\pao\host\host.ts:180:	注入待决?: Map<string, { 模式: MinisterInjectMode; resolve: (result: MinisterInjectResult) => void }>;
+PAO/packages\coding-agent\src\pao\host\host.ts:190:	当前任务?: MinisterEpisode;
+PAO/packages\coding-agent\src\pao\host\host.ts:195:interface PendingResultDelivery {
+PAO/packages\coding-agent\src\pao\host\host.ts:205:interface MinisterEpisode {
+PAO/packages\coding-agent\src\pao\host\host.ts:213:interface SupervisionDeliveryTask extends Promise<boolean> {}
+PAO/packages\coding-agent\src\pao\host\host.ts:215:export interface HostToolEndEvent {
+PAO/packages\coding-agent\src\pao\host\host.ts:226:export interface HostActivity {
+PAO/packages\coding-agent\src\pao\host\host.ts:246:export type MinisterInjectMode = "steer" | "followUp";
+PAO/packages\coding-agent\src\pao\host\host.ts:248:export interface MinisterInjectResult {
+PAO/packages\coding-agent\src\pao\host\host.ts:252:	模式?: MinisterInjectMode;
+PAO/packages\coding-agent\src\pao\host\host.ts:258:function deptNameOutOfRange(dept: string): boolean {
+PAO/packages\coding-agent\src\pao\host\host.ts:263:function departmentSupervisionKey(input: { department: string; projectRoot: string; context?: string }): string {
+PAO/packages\coding-agent\src\pao\host\host.ts:273:	#options: MinisterHostOptions;
+PAO/packages\coding-agent\src\pao\host\host.ts:274:	#entries = new Map<string, HostEntry>();
+PAO/packages\coding-agent\src\pao\host\host.ts:281:	#活动源 = new Map<symbol, () => readonly HostActivity[]>();
+PAO/packages\coding-agent\src\pao\host\host.ts:289:	#监督任务 = new Map<string, SupervisionDeliveryTask>();
+PAO/packages\coding-agent\src\pao\host\host.ts:290:	#结果待投递 = new Map<string, PendingResultDelivery>();
+PAO/packages\coding-agent\src\pao\host\host.ts:293:	#结果投递已取消 = new Set<PendingResultDelivery>();
+PAO/packages\coding-agent\src\pao\host\host.ts:294:	#工具结束监听 = new Set<(event: HostToolEndEvent) => void>();
+PAO/packages\coding-agent\src\pao\host\host.ts:299:	constructor(options: MinisterHostOptions = {}) {
+PAO/packages\coding-agent\src\pao\host\host.ts:385:	#工具结束(event: Omit<HostToolEndEvent, "type">): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:396:	subscribeToolEnd(listener: (event: HostToolEndEvent) => void): () => void {
+PAO/packages\coding-agent\src\pao\host\host.ts:435:	#后台清空(entry: HostEntry): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:461:	#活动(): HostActivity[] {
+PAO/packages\coding-agent\src\pao\host\host.ts:462:		const merged = new Map<string, HostActivity>();
+PAO/packages\coding-agent\src\pao\host\host.ts:479:	observeActivity(source: () => readonly HostActivity[]): () => void {
+PAO/packages\coding-agent\src\pao\host\host.ts:498:	#部门仍工作(entry: HostEntry): boolean {
+PAO/packages\coding-agent\src\pao\host\host.ts:556:			const key = departmentSupervisionKey({ department, projectRoot, context });
+PAO/packages\coding-agent\src\pao\host\host.ts:572:				nowKeys.add(departmentSupervisionKey(item));
+PAO/packages\coding-agent\src\pao\host\host.ts:644:	async #投递结果(delivery: PendingResultDelivery): Promise<boolean> {
+PAO/packages\coding-agent\src\pao\host\host.ts:814:	 * 已知缺口：置位后、树杀完成前进程自死且 stderr 尾为空 → 该次零留证（亚秒窗口），散场原因仍在审计日志与 TeardownRecord。
+PAO/packages\coding-agent\src\pao\host\host.ts:817:	#留证(entry: HostEntry, 原因: string, 类别: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:863:	async spawn(options: SpawnOptions): Promise<SpawnResult> {
+PAO/packages\coding-agent\src\pao\host\host.ts:866:		if (deptNameOutOfRange(dept)) {
+PAO/packages\coding-agent\src\pao\host\host.ts:940:		const entry: HostEntry = {
+PAO/packages\coding-agent\src\pao\host\host.ts:1002:	#记录费用缺口(entry: HostEntry): string | undefined {
+PAO/packages\coding-agent\src\pao\host\host.ts:1015:	#握手(entry: HostEntry): Promise<void> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1036:	#记录任务受理(entry: HostEntry, id: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1046:	#后台转入运行(entry: HostEntry, id: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1063:	#开始待启动窗口(entry: HostEntry, id: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1068:	#记录任务结算(entry: HostEntry, id: string, failure?: Error): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1077:	#尝试投递任务结果(entry: HostEntry): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1096:	#完成任务(entry: HostEntry, id: string, reason?: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1109:	#写命令(entry: HostEntry, command: object): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1114:	#attachPump(entry: HostEntry): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1130:	#吃事件行(entry: HostEntry, line: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1300:	#事件边界(entry: HostEntry, delta: Pick<EventDelta, "轮完成" | "辅助成本">): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1320:	#落账(entry: HostEntry, roundCost: number): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1361:	#核对监督唤醒(entry: HostEntry, warmth: WarmConfig): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1463:		mode: MinisterInjectMode = "steer",
+PAO/packages\coding-agent\src\pao\host\host.ts:1464:	): Promise<MinisterInjectResult> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1477:		return await new Promise<MinisterInjectResult>((resolve) => {
+PAO/packages\coding-agent\src\pao\host\host.ts:1483:			const settle = (result: MinisterInjectResult): void => {
+PAO/packages\coding-agent\src\pao\host\host.ts:1503:	#结算注入(entry: HostEntry, 原因: string): void {
+PAO/packages\coding-agent\src\pao\host\host.ts:1519:	async checkFuse(): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1525:		const fuse: TeardownRecord[] = [];
+PAO/packages\coding-agent\src\pao\host\host.ts:1540:	#有匹配运行活动(entry: HostEntry): boolean {
+PAO/packages\coding-agent\src\pao\host\host.ts:1579:	): Promise<TeardownRecord | undefined> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1587:	async #散场Entry(entry: HostEntry, reason: string): Promise<TeardownRecord> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1598:	async #执行散场(entry: HostEntry, reason: string): Promise<TeardownRecord> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1601:		const record: TeardownRecord = {
+PAO/packages\coding-agent\src\pao\host\host.ts:1646:	async stopAll(reason = "主会话关闭全停"): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1647:		const record: TeardownRecord[] = [];
+PAO/packages\coding-agent\src\pao\host\host.ts:1814:	markSupervisionHandledFrom(event: HostToolEndEvent, key: string, receiptSessionId?: string): boolean {
+PAO/packages\coding-agent\src\pao\host\host.ts:1846:	}): Promise<MinisterInjectResult | { ok: true }> {
+PAO/packages\coding-agent\src\pao\host\host.ts:1862:		const category: PendingResultDelivery["category"] =
+PAO/packages\coding-agent\src\pao\host\host.ts:1925:	async shutdown(reason = "主会话关闭全停"): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\src\pao\worker\runner.ts:191:/** worker 注入子端回执（批3a）；处置三态对齐 MinisterInjectResult 的投递语义。 */
+PAO/packages\coding-agent\src\pao\worker\runner.ts:199: * worker 注入结果（批3a）：与 MinisterInjectResult 同构——ok/原因/处置。
+PAO/packages\coding-agent\src\pao\worker\runner.ts:481:	 * 返回与部长 MinisterInjectResult 对齐：ok/原因/模式/处置。
+PAO/packages\coding-agent\test\pao\workflow-host-bridge.test.ts:20:import { type HostToolEndEvent, MinisterHost } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\workflow-host-bridge.test.ts:1433:			let listener: ((event: HostToolEndEvent) => void) | undefined;
+PAO/packages\coding-agent\test\pao\workflow-four-department-real.test.ts:44:import { MinisterHost, type SpawnOptions } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\workflow-four-department-real.test.ts:147:	override async spawn(options: SpawnOptions) {
+PAO/packages\coding-agent\test\pao\runtime-shutdown-window.test.ts:17:import { MinisterHost, type TeardownRecord } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\runtime-shutdown-window.test.ts:116:			override async stopAll(_reason?: string): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\test\pao\runtime-shutdown-window.test.ts:146:			override async stopAll(_reason?: string): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\test\pao\runtime-shutdown-window.test.ts:180:			override async stopAll(_reason?: string): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\test\pao\w2-dual-session-isolation.test.ts:18:import { MinisterHost, type TeardownRecord } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\w2-dual-session-isolation.test.ts:102:	override async stopAll(reason?: string): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\test\pao\w2-background-shutdown.test.ts:17:import { MinisterHost, type TeardownRecord } from "../../src/pao/host/host.ts";
+PAO/packages\coding-agent\test\pao\w2-background-shutdown.test.ts:97:			override async stopAll(reason?: string): Promise<TeardownRecord[]> {
+PAO/packages\coding-agent\src\pao\worker\index.ts:790:	const unsubscribeHostActivity = runner.registry.subscribe(() => host.refreshActivity());
+PAO/packages\coding-agent\src\pao\worker\index.ts:1146:		unsubscribeHostActivity();
+PAO/packages\coding-agent\src\pao\desktop\owners.ts:14:/** worker 注入返回（批3a）：与 MinisterInjectResult 同构，处置＝started/queued/rejected。 */
+PAO/packages\coding-agent\src\experimental\process.ts:35:export interface InternalProcessSpawnOptions {
+PAO/packages\coding-agent\src\experimental\process.ts:44:	options: InternalProcessSpawnOptions = {},

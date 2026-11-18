@@ -1,0 +1,129 @@
+
+Running 6 tests using 1 worker
+
+(node:48396) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48396) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 apps\desktop\tests\core\batch3bu-script-editor.spec.ts:269:5 › 批3b-U 配方编辑器：执行方式切脚本、脚本字段组、切离确认/取消、中文界面、主控会话、两档截图 (32.9s)
+  ok 2 apps\desktop\tests\core\plan-recovery.spec.ts:260:5 › 强杀应用后重开，现场仍一致，在途卡没有被静默重派 (45.0s)
+  x  3 apps\desktop\tests\core\workflow-cards.spec.ts:1166:5 › U11 节点详情按需出现，关闭清除选择并保护注入草稿 (47.1s)
+(node:48040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 apps\desktop\tests\core\workflow-cards.spec.ts:1201:5 › U12 图与列表对应同一运行记录并保留意见草稿 (41.5s)
+(node:20840) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20840) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 apps\desktop\tests\core\workflow-cards.spec.ts:1235:5 › U13 深色主题的图与列表状态截图 (43.1s)
+(node:66732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  6 apps\desktop\tests\core\workflow-cards.spec.ts:1252:5 › U10—U14 最终整合三档截图 (41.2s)
+
+
+  1) apps\desktop\tests\core\workflow-cards.spec.ts:1166:5 › U11 节点详情按需出现，关闭清除选择并保护注入草稿 ────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-instance-row').first()[22m
+
+
+      1170 |     await openWorkflowCards(page);
+      1171 |     await openGraphLibrary(page);
+    > 1172 |     await page.getByTestId("canvas-instance-row").first().click();
+           |                                                           ^
+      1173 |     await expect(page.getByTestId("canvas-node-detail")).toHaveCount(0);
+      1174 |     const node = page.getByTestId("workflow-node").first();
+      1175 |     await node.click();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-cards.spec.ts:1172:59
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U11-节点详情按需出现，关闭清除选择并保护注入草稿\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U11-节点详情按需出现，关闭清除选择并保护注入草稿\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\workflow-cards.spec.ts:1201:5 › U12 图与列表对应同一运行记录并保留意见草稿 ───────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-instance-row').filter({ hasText: '临时-p-20261014-f87e0f' }).first()[22m
+
+
+      1206 |     await openGraphLibrary(page);
+      1207 |     const run = page.getByTestId("canvas-instance-row").filter({ hasText: fixture.配方名 }).first();
+    > 1208 |     await run.click();
+           |               ^
+      1209 |     await expect(run).toHaveClass(/canvas-row--active/);
+      1210 |     await page.getByTestId("workflow-view-list").click();
+      1211 |     await expect(page.getByTestId("workflow-cards-title")).toHaveText("小说首章");
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-cards.spec.ts:1208:15
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U12-图与列表对应同一运行记录并保留意见草稿\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U12-图与列表对应同一运行记录并保留意见草稿\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\workflow-cards.spec.ts:1235:5 › U13 深色主题的图与列表状态截图 ─────────────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-instance-row').first()[22m
+
+
+      1242 |     await page.screenshot({ path: test.info().outputPath("U13-list-dark.png") });
+      1243 |     await openGraphLibrary(page);
+    > 1244 |     await page.getByTestId("canvas-instance-row").first().click();
+           |                                                           ^
+      1245 |     await expect(page.getByTestId("workflow-node").first()).toBeVisible();
+      1246 |     await page.screenshot({ path: test.info().outputPath("U13-graph-dark.png") });
+      1247 |   } finally {
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-cards.spec.ts:1244:59
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U13-深色主题的图与列表状态截图\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U13-深色主题的图与列表状态截图\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) apps\desktop\tests\core\workflow-cards.spec.ts:1252:5 › U10—U14 最终整合三档截图 ──────────────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('canvas-instance-row').filter({ hasText: '临时-p-20261014-6cf3ef' })[22m
+
+
+      1262 |     await page.setViewportSize({ width: 1280, height: 800 });
+      1263 |     await openGraphLibrary(page);
+    > 1264 |     await page.getByTestId("canvas-instance-row").filter({ hasText: fixture.配方名 }).click();
+           |                                                                                    ^
+      1265 |     await expect(page.getByTestId("canvas-dag")).toBeVisible();
+      1266 |     for (const display of [
+      1267 |       { width: 1280, height: 800, theme: "light", suffix: "1280" },
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\workflow-cards.spec.ts:1264:84
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U10—U14-最终整合三档截图\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-workflow-refined-results\core-workflow-cards-U10—U14-最终整合三档截图\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    apps\desktop\tests\core\workflow-cards.spec.ts:1166:5 › U11 节点详情按需出现，关闭清除选择并保护注入草稿 ─────────────
+    apps\desktop\tests\core\workflow-cards.spec.ts:1201:5 › U12 图与列表对应同一运行记录并保留意见草稿 ────────────────
+    apps\desktop\tests\core\workflow-cards.spec.ts:1235:5 › U13 深色主题的图与列表状态截图 ──────────────────────
+    apps\desktop\tests\core\workflow-cards.spec.ts:1252:5 › U10—U14 最终整合三档截图 ───────────────────────
+  2 passed (4.3m)

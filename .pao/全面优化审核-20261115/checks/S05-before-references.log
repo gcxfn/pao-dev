@@ -1,0 +1,128 @@
+PAO\scripts\diff-model-catalog.mjs:93:const THINKING_LEVEL_ORDER = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+PAO\scripts\diff-model-catalog.mjs:94:const THINKING_LEVEL_RANKS = new Map(THINKING_LEVEL_ORDER.map((key, index) => [key, index]));
+PAO\packages\ai\CHANGELOG.md:1050:- Removed `supportsXhigh()`. Migration: use `getSupportedThinkingLevels(model).includes("xhigh")` or `clampThinkingLevel(model, requestedLevel)` instead ([#3208](https://github.com/badlogic/pi-mono/issues/3208)).
+PAO\packages\ai\CHANGELOG.md:1055:- Added `Model.thinkingLevelMap`, `getSupportedThinkingLevels()`, and `clampThinkingLevel()` so model metadata can describe supported thinking levels and provider-specific level values ([#3208](https://github.com/badlogic/pi-mono/issues/3208)).
+PAO\packages\coding-agent\src\pao\context\precompaction-adapter.ts:4:import { clampThinkingLevel } from "@pao/ai/compat";
+PAO\packages\coding-agent\src\pao\context\precompaction-adapter.ts:37:			const thinkingLevel = clampThinkingLevel(model, agent.state.thinkingLevel);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:808:    assertReadableSessionJsonl(content, sessionFile);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1362:    readonly branch: readonly SessionBranchEntry[];
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1363:    readonly selectedEntry: SessionMessageBranchEntry;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1376:    const selectedEntry = resolveForkSourceEntry(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1596:          entry: queuedMessageFromInput(input, record.updatedAt),
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1773:      entry: queuedMessageFromInput({ ...input, deliverAs: "followUp" }, nowIso()),
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1816:      forgetDeliveredQueuedMessages(record, session);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1819:        .map((message) => cloneQueuedMessage(message));
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1913:          const pending = forgetDeliveredQueuedMessages(record, session);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:1919:          // Shown in the transcript when pi starts it (see takeStartingQueuedMessage).
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:2060:      : (session.settingsManager.getDefaultThinkingLevel() ?? DEFAULT_SESSION_THINKING_LEVEL);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:2264:      nodes: toSessionTreeNodeSnapshots(session.sessionManager.getTree()),
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:3148:    const effectiveLevel = clampThinkingLevel(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:3480:            takeStartingQueuedMessage(record, timestamp) ??
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:3481:            reconcileQueuedMessagesForStartedUserMessage(record, event.message, timestamp);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:3716:        ? findCustomMessageEntryId(sessionManager, message, record.appendedCustomEntryIds, depth)
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4028:const DEFAULT_SESSION_THINKING_LEVEL = "medium";
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4029:const THINKING_LEVEL_ORDER = ["off", "low", "medium", "high", "xhigh", "max"] as const;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4030:type SessionTreeNodeRecord = ReturnType<SessionManager["getTree"]>[number];
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4031:type SessionBranchEntry = ReturnType<SessionManager["getBranch"]>[number];
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4032:type SessionMessageBranchEntry = Extract<SessionBranchEntry, { type: "message" }>;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4034:function resolveForkSourceEntry(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4035:  branch: readonly SessionBranchEntry[],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4038:): SessionMessageBranchEntry | undefined {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4040:    (entry): entry is SessionMessageBranchEntry => entry.type === "message",
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4051:    return findBranchEntryForRenderedMessageIndex(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4072:    : findBranchEntryForRenderedMessageIndex(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4079:function findBranchEntryForRenderedMessageIndex(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4080:  branch: readonly SessionBranchEntry[],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4083:): SessionMessageBranchEntry | undefined {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4088:    (entry): entry is SessionMessageBranchEntry => entry.type === "message",
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4135:function clampThinkingLevel(level: string, availableLevels: readonly string[]): string {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4137:  const requestedIndex = THINKING_LEVEL_ORDER.indexOf(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4138:    level as (typeof THINKING_LEVEL_ORDER)[number],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4143:  for (let index = requestedIndex; index < THINKING_LEVEL_ORDER.length; index += 1) {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4144:    const candidate = THINKING_LEVEL_ORDER[index];
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4150:    const candidate = THINKING_LEVEL_ORDER[index];
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4176:function assertReadableSessionJsonl(content: string, sessionFile: string): void {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4221:interface TreeToolCallRecord {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4226:function toSessionTreeNodeSnapshots(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4227:  roots: readonly SessionTreeNodeRecord[],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4231:    readonly node: SessionTreeNodeRecord;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4232:    readonly toolCalls: ReadonlyMap<string, TreeToolCallRecord>;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4238:    snapshots.push(toSessionTreeNodeSnapshot(node, toolCalls));
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4239:    const childToolCalls = extendTreeToolCalls(toolCalls, node.entry);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4247:function toSessionTreeNodeSnapshot(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4248:  node: SessionTreeNodeRecord,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4249:  toolCalls: ReadonlyMap<string, TreeToolCallRecord>,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4251:  const role = treeNodeRole(node.entry);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4252:  const customType = treeNodeCustomType(node.entry);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4253:  const preview = treeNodePreview(node.entry, toolCalls);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4262:    title: treeNodeTitle(node.entry),
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4267:function extendTreeToolCalls(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4268:  toolCalls: ReadonlyMap<string, TreeToolCallRecord>,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4269:  entry: SessionTreeNodeRecord["entry"],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4270:): ReadonlyMap<string, TreeToolCallRecord> {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4280:  let nextToolCalls: Map<string, TreeToolCallRecord> | undefined;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4307:function treeNodeRole(entry: SessionTreeNodeRecord["entry"]): string | undefined {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4314:function treeNodeCustomType(entry: SessionTreeNodeRecord["entry"]): string | undefined {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4321:function treeNodeTitle(entry: SessionTreeNodeRecord["entry"]): string {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4364:function treeNodePreview(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4365:  entry: SessionTreeNodeRecord["entry"],
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4366:  toolCalls: ReadonlyMap<string, TreeToolCallRecord>,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4370:      return previewForTreeMessage(entry.message as unknown as Record<string, unknown>, toolCalls);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4372:      return previewForTreeContent(entry.content);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4396:function previewForTreeMessage(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4398:  toolCalls: ReadonlyMap<string, TreeToolCallRecord>,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4401:    return previewForTreeToolResult(message, toolCalls);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4434:function previewForTreeToolResult(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4436:  toolCalls: ReadonlyMap<string, TreeToolCallRecord>,
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4443:    return formatTreeToolCall(toolCall.name, toolCall.arguments);
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4453:function formatTreeToolCall(name: string, args: Readonly<Record<string, unknown>>): string {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4456:      const path = shortenHomePath(String(args.path ?? args.file_path ?? ""));
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4468:      return `[write: ${shortenHomePath(String(args.path ?? args.file_path ?? ""))}]`;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4470:      return `[edit: ${shortenHomePath(String(args.path ?? args.file_path ?? ""))}]`;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4478:      return `[grep: /${String(args.pattern ?? "")}/ in ${shortenHomePath(String(args.path ?? "."))}]`;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4480:      return `[find: ${String(args.pattern ?? "")} in ${shortenHomePath(String(args.path ?? "."))}]`;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4482:      return `[ls: ${shortenHomePath(String(args.path ?? "."))}]`;
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4490:function shortenHomePath(path: string): string {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4498:function previewForTreeContent(content: unknown): string | undefined {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4537:function cloneQueuedMessage(message: SessionQueuedMessage): SessionQueuedMessage {
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4552:function queuedMessageFromInput(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4576:function forgetDeliveredQueuedMessages(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4594:function takeStartingQueuedMessage(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4605:function reconcileQueuedMessagesForStartedUserMessage(
+desktop\packages\pi-sdk-driver\src\session-supervisor.ts:4644:function findCustomMessageEntryId(
+PAO\packages\ai\src\models.ts:1228:export function clampThinkingLevel<TApi extends Api>(
+PAO\packages\coding-agent\src\experimental\vacation\runtime.ts:1:import { clampThinkingLevel, getSupportedThinkingLevels, type ModelThinkingLevel } from "@pao/ai";
+PAO\packages\coding-agent\src\experimental\vacation\runtime.ts:294:					await current.configure({ model: ref, thinkingLevel: clampThinkingLevel(model, thinking) }, context);
+PAO\packages\coding-agent\src\experimental\services\models-provider.ts:1:import { clampThinkingLevel, getSupportedThinkingLevels, type ModelThinkingLevel } from "@pao/ai";
+PAO\packages\coding-agent\src\experimental\services\models-provider.ts:90:			const thinkingLevel = clampThinkingLevel(selected, agent.value?.thinkingLevel ?? "off");
+PAO\packages\ai\test\max-thinking.test.ts:3:import { clampThinkingLevel, getModel, getSupportedThinkingLevels, normalizeContext } from "../src/compat.ts";
+PAO\packages\ai\test\max-thinking.test.ts:30:		expect(clampThinkingLevel(model, "max")).toBe("high");
+PAO\packages\ai\test\max-thinking.test.ts:67:		expect(clampThinkingLevel(model, "xhigh")).toBe("max");
+PAO\packages\ai\src\api\simple-options.ts:1:import { clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\simple-options.ts:29:	const effectiveThinkingLevel = clampThinkingLevel(model, thinkingLevel);
+PAO\packages\ai\src\api\openai-responses.ts:3:import { clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\openai-responses.ts:249:	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
+PAO\packages\coding-agent\src\experimental\durable\runtime.ts:1:import { clampThinkingLevel, getSupportedThinkingLevels, type ModelThinkingLevel } from "@pao/ai";
+PAO\packages\coding-agent\src\experimental\durable\runtime.ts:297:					await current.configure({ model: ref, thinkingLevel: clampThinkingLevel(model, thinking) }, context);
+PAO\packages\ai\src\api\openai-completions.ts:14:import { calculateCost, clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\openai-completions.ts:747:	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
+PAO\packages\ai\src\api\openai-codex-responses.ts:9:import { clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\openai-codex-responses.ts:514:	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
+PAO\packages\ai\src\api\mistral-conversations.ts:1:import { calculateCost, clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\mistral-conversations.ts:200:	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
+PAO\packages\ai\src\api\google-vertex.ts:9:import { calculateCost, clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\google-vertex.ts:329:	const clampedReasoning = clampThinkingLevel(model, options.reasoning);
+PAO\packages\ai\src\api\google-shared.ts:13:import { clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\google-shared.ts:105:	const fallback = clampThinkingLevel(model, "off");
+PAO\packages\ai\src\api\google-generative-ai.ts:7:import { calculateCost, clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\google-generative-ai.ts:323:	const clampedReasoning = clampThinkingLevel(model, options.reasoning);
+PAO\packages\ai\src\api\azure-openai-responses.ts:3:import { clampThinkingLevel } from "../models.ts";
+PAO\packages\ai\src\api\azure-openai-responses.ts:182:	const clampedReasoning = options?.reasoning ? clampThinkingLevel(model, options.reasoning) : undefined;
+PAO\packages\coding-agent\src\core\sdk.ts:4:import { clampThinkingLevel, type Message, type Model, streamSimple } from "@pao/ai/compat";
+PAO\packages\coding-agent\src\core\sdk.ts:269:		thinkingLevel = clampThinkingLevel(model, thinkingLevel) as ThinkingLevel;
+PAO\packages\coding-agent\src\core\model-runtime.ts:23:	clampThinkingLevel,
+PAO\packages\coding-agent\src\core\model-runtime.ts:1038:		return { model: target, thinkingLevel: clampThinkingLevel(target, route.thinkingLevel), state: route.state };
+PAO\packages\coding-agent\src\core\agent-session.ts:47:	clampThinkingLevel,
+PAO\packages\coding-agent\src\core\agent-session.ts:2689:		const effectiveLevel = availableLevels.includes(level) ? level : this._clampThinkingLevel(level, availableLevels);
+PAO\packages\coding-agent\src\core\agent-session.ts:2758:	private _clampThinkingLevel(level: ThinkingLevel, _availableLevels: ThinkingLevel[]): ThinkingLevel {
+PAO\packages\coding-agent\src\core\agent-session.ts:2759:		return this.model ? (clampThinkingLevel(this.model, level) as ThinkingLevel) : "off";

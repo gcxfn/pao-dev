@@ -1,0 +1,111 @@
+{
+  "S04": {
+    "file": "desktop/apps/desktop/electron/application/app-store.ts",
+    "testCwd": "desktop",
+    "tests": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/unit/app-store-workspace-select apps/desktop/tests/unit/app-store-scheduled-tasks apps/desktop/tests/unit/app-store-worktree-remove apps/desktop/tests/unit/persisted-data apps/desktop/tests/unit/workspace-relocate apps/desktop/tests/unit/changed-files apps/desktop/tests/unit/todo-write-compat apps/desktop/tests/unit/transcript- apps/desktop/tests/unit/extension-; node --test scripts/state-owner-boundary.test.mjs",
+    "groups": [
+      ["app-store-model-settings.ts", "readProjectModelSettingsFile,mergeModelSettingsSnapshot,hasStoredModelSettings,modelSettingsEqual,applyModelSettingsSnapshot"],
+      ["app-store-selection.ts", "resolveSelectedWorkspaceIdFromCatalog,resolveSelectedSessionIdFromCatalog,reconcilePinnedSessionOrder"],
+      ["app-store-utils.ts", "cloneWorkflowTabs,updateRecordValue,describeStoreError,isSessionLeasedError,statMtimeMs,withHomeAsTilde,formatCapabilityLabel"]
+    ]
+  },
+  "S05": {
+    "file": "desktop/packages/pi-sdk-driver/src/session-supervisor.ts",
+    "testCwd": "desktop",
+    "tests": "pnpm --filter @pao/sdk-driver test",
+    "groups": [
+      ["session-tree-format.ts", "SessionTreeNodeRecord,TreeToolCallRecord,toSessionTreeNodeSnapshots,toSessionTreeNodeSnapshot,extendTreeToolCalls,treeNodeRole,treeNodeCustomType,treeNodeTitle,treeNodePreview,previewForTreeMessage,previewForTreeToolResult,formatTreeToolCall,shortenHomePath,previewForTreeContent"],
+      ["queued-messages.ts", "cloneQueuedMessage,queuedMessageFromInput,forgetDeliveredQueuedMessages,takeStartingQueuedMessage,reconcileQueuedMessagesForStartedUserMessage,findCustomMessageEntryId", "ManagedSessionRecord"],
+      ["session-fork.ts", "SessionBranchEntry,SessionMessageBranchEntry,assertReadableSessionJsonl,resolveForkSourceEntry,findBranchEntryForRenderedMessageIndex"],
+      ["session-thinking.ts", "DEFAULT_SESSION_THINKING_LEVEL,THINKING_LEVEL_ORDER,clampThinkingLevel"]
+    ]
+  },
+  "S06": {
+    "file": "desktop/apps/desktop/electron/main.ts",
+    "testCwd": "desktop",
+    "tests": "pnpm exec playwright test -c apps/desktop/playwright.config.ts apps/desktop/tests/unit/attachment apps/desktop/tests/unit/provider apps/desktop/tests/unit/login apps/desktop/tests/unit/external",
+    "bodyExceptions": ["createRuntimeLoginCallbacks", "showLoginInstructions", "promptForText"],
+    "groups": [
+      ["platform/provider-probe.ts", "probeCustomProviderModels,describeProbeError"],
+      ["platform/composer-attachments.ts", "SUPPORTED_IMAGE_TYPES,SUPPORTED_IMAGE_MIME_TYPES,readComposerAttachmentsFromPaths,readComposerAttachment,readComposerImageAttachment,mimeTypeForPath,validateComposerAttachmentPayload"],
+      ["platform/login-prompts.ts", "createRuntimeLoginCallbacks,showLoginInstructions,promptForText,promptDataUrl,escapeHtml"]
+    ]
+  },
+  "S10": {
+    "file": "PAO/packages/coding-agent/src/pao/cards/delivery.ts",
+    "tests": "npx vitest --run test/pao/delivery-commit.test.ts test/pao/delivery-retry-cumulative.test.ts test/pao/delivery-wakeup.test.ts test/pao/integration.test.ts test/pao/memory-artifact-card-hooks.test.ts test/pao/verifier-attempt-baseline.test.ts test/pao/verifier-parse.test.ts test/pao/workflow-auto-chain.test.ts test/pao/s5p1-verify-gate.test.ts",
+    "groups": [
+      ["delivery-git.ts", "runGit,runGitWithRetry,runGitWithEnv,gitObject,gitCommonDir,controlledDeliveryRef,controlledBaselineRef,deliveryResultPath,treeForPaths,pathsAlreadyCommitted,publishDeliveryRef"],
+      ["delivery-evidence.ts", "AttemptBaselineEvidence,CumulativeDeliveryEvidence,samePath,repoPath,entryPaths,declarationMatches,pathClaimedByChange,readAttemptBaseline,bindingBelongsToRepository,treeChanges,validateBaselineObjects,latestAttemptReceipt,inspectCumulativeDelivery,noWorkerChangesSubmission,cumulativeFailure"],
+      ["controlled-delivery.ts", "ControlledDeliveryResult,PersistedDeliveryResult,parseLatestExecutionVerdict,assertDeliveryContentMatchesVerification,createControlledDeliveryCommit,createControlledDeliveryCommitLocked"]
+    ]
+  },
+  "S01": {
+    "file": "PAO/packages/coding-agent/src/pao/worker/dispatch-core.ts",
+    "tests": "npx vitest --run test/pao/worker-dispatch.test.ts test/pao/worker-dispatch-guards test/pao/worker-dispatch-background test/pao/worker-dispatch-managed-real test/pao/worker-dispatch-nongit-real test/pao/dispatch-cleanup test/pao/dispatch-fault-injection test/pao/dispatch-workflow-check test/pao/dispatch-workflow-skills test/pao/worker-script-run test/pao/worker-budget test/pao/f-budget-concurrency test/pao/s5-06-project-dispatch test/pao/worker-bridge-settlement test/pao/worker-execution-root-guard",
+    "groups": [
+      ["dispatch-budget.ts", "receiptBudgetTotal,budgetOwners,remainingDispatchBudget,projectQueues,queueProjectWrite"],
+      ["dispatch-quota.ts", "DispatchPermission,checkDispatchPermission,DEFAULT_DEPT_CONCURRENCY,readDeptConcurrencyCap,readUpstreamConcurrencyCap,readDispatchTimeoutMs,DEFAULT_DISPATCH_TIMEOUT_MS"],
+      ["dispatch-params.ts", "recipeField,SKILL_ALLOW_LIST_RELATIVE_PATH,loadSkillAllowList,RECIPE_METHOD_HEADING,resolveDispatchParameters"],
+      ["dispatch-prompt.ts", "buildWorkerPrompt,classifyWorkerFailure,taskStateRoutingLine,OWNER_DISPATCH_DISCIPLINES,claimRefusalDetail,buildClaimLease", "claimRefusalReason"],
+      ["dispatch-tx-helpers.ts", "releaseGateQuietly,errorMessage,rollbackPreStartClaim,upstreamBriefReferences,settleGateOnce,errorWithSettlementNote", "locateDispatchCard"]
+    ]
+  },
+  "S02": {
+    "file": "PAO/packages/coding-agent/src/pao/workflow/control.ts",
+    "tests": "npx vitest --run test/pao/workflow-control.test.ts test/pao/workflow-control-action-contract test/pao/workflow-control-resolve-tool test/pao/control-hold-kind test/pao/workflow-pause-completion test/pao/workflow-pending test/pao/workflow-pending-resolution test/pao/workflow-independent-review test/pao/workflow-save test/pao/workflow-stop test/pao/workflow-reopen test/pao/workflow-decision-facts test/pao/workflow-migration-compat test/pao/workflow-driver test/pao/runtime-control test/pao/deadline-lifecycle",
+    "groups": [
+      ["control-types.ts", "WORKFLOW_NODE_MAP_EVENT,WORKFLOW_WORKER_REVIEW_RESULT_EVENT,NodeControl,Decision,FlowControl,ControlRecord,NodeIdentity,NodeCardInput,PendingResolutionInput,PendingResolutionResult"],
+      ["decision-package.ts", "gitOutput,buildDecisionPackage", "identify,cardStates,currentContentTree,assertOwner,canonical"],
+      ["review-evidence.ts", "ReviewEvidence,reviewEvidence,reviewEvidenceHold"],
+      ["control-io.ts", "controlPath,readControl,saveControl,validateControlStop,decodeControlStop,attachControlProjections,projectControlForHost,fail,canonical"]
+    ]
+  },
+  "S11": {
+    "file": "PAO/packages/coding-agent/src/pao/worker/runner.ts",
+    "tests": "npx vitest --run test/pao/worker-run.test.ts test/pao/worker-cancel.test.ts test/pao/worker-stoptree.test.ts test/pao/worker-dispatch.test.ts test/pao/worker-dispatch-guards.test.ts test/pao/worker-script-run.test.ts test/pao/worker-stream.test.ts test/pao/worker-evidence-archive.test.ts test/pao/worker-result-channel.test.ts test/pao/worker-receipt-retry.test.ts test/pao/worker-bridge-settlement.test.ts test/pao/worker-lock-boundaries.test.ts test/pao/worker-listactive.test.ts test/pao/worker-sdk-entry.test.ts test/pao/worker-session-bridge.test.ts test/pao/w2-runner-shutdown-state.test.ts",
+    "groups": [
+      ["runner-evidence.ts", "resolveEvidenceDir,evidenceBase,buildEvidenceTrailer,writeEvidence,LiveCapture,openLiveCapture"],
+      ["runner-binding.ts", "assertExecutionBindingIdentity,executionBindingLiveMismatch"],
+      ["runner-invocation.ts", "defaultInvocation,buildArgs"],
+      ["runner-types.ts", "WorkerRunOptions,WorkerRunnerOptions,WorkerInjectResult,WORKER_STREAM_TAIL_CHARS"]
+    ]
+  },
+  "S12": {
+    "file": "PAO/packages/coding-agent/src/pao/worker/index.ts",
+    "tests": "npx vitest --run test/pao/worker-tools.test.ts test/pao/worker-dispatch.test.ts test/pao/worker-dispatch-guards.test.ts test/pao/worker-dispatch-background.test.ts test/pao/intake-tool.test.ts test/pao/intake-completion-real.test.ts test/pao/worker-notify-sdk.test.ts test/pao/worker-notify.test.ts test/pao/s5-06-project-dispatch.test.ts test/pao/s5p4-roles-supervision.test.ts test/pao/usage-gate-wiring.test.ts test/pao/usage-gate-coverage.test.ts test/pao/host-inventory-dispatch.test.ts test/pao/dispatch-fault-injection.test.ts test/pao/blackboard-upstream.test.ts test/pao/f-reopen-kill.test.ts",
+    "groups": [
+      ["tool-shared.ts", "InFlightDispatch,DispatchToolReply,toolError,DispatchInBackground"],
+      ["intake-tool.ts", "AUTO_INTAKE_KEY_PREFIX,buildAutoIntakeKey,AcceptTaskParams,AcceptTaskParamsShape,AcceptTaskToolDeps,templateResolver,identityLine,problemLines,formatIntakeOutcome,buildAcceptTaskTool"],
+      ["inventory-tool.ts", "InventoryParams,truncateReason,formatProcessLines,formatInventory,buildInventoryTool"],
+      ["terminate-tool.ts", "TerminateParams,TerminateParamsShape,buildTerminateTool"],
+      ["stop-tool.ts", "StopParams,buildStopTool"],
+      ["dispatch-result-format.ts", "DispatchOutcome,formatDispatchResult"]
+    ]
+  },
+  "S14": {
+    "file": "PAO/packages/coding-agent/src/pao/workflow/tools.ts",
+    "tests": "npx vitest --run test/pao/workflow-tools.test.ts test/pao/workflow-auto-chain.test.ts test/pao/workflow-run-policy.test.ts test/pao/workflow-control-resolve-tool.test.ts test/pao/workflow-deviation-registration.test.ts test/pao/workflow-pending.test.ts test/pao/deadline-lifecycle.test.ts test/pao/s7-boundary-b20-cli.test.ts test/pao/s7-boundary-shutdown-race.test.ts test/pao/collaboration-baseline.test.ts test/pao/workflow-plan-tools.test.ts",
+    "groups": [["workflow-cores.ts", "startWorkflowCore,tickWorkflowCore,queryWorkflowCore,confirmWorkflowCore,runAutoChainPhase,withHint,autoChainCardIdentity,autoChainNoticeKey,activeWorkerLines,toastIfHeld,WorkflowCommon,AutoChainBackground"]]
+  },
+  "S13": {
+    "file": "PAO/packages/coding-agent/src/pao/workflow/plan.ts",
+    "tests": "npx vitest --run test/pao/workflow-plan.test.ts test/pao/workflow-plan-tools.test.ts test/pao/workflow-plan-feedback-consistency.test.ts test/pao/desktop-plans.test.ts test/pao/desktop-status-fresh.test.ts test/pao/f-results-files.test.ts test/pao/results-aggregate.test.ts test/pao/status-agent-recall.test.ts test/pao/workflow-tools.test.ts",
+    "groups": [["plan-template.ts", "PlanTemplateInput,PlanTemplateResult,PROJECT_PATH_PATTERN,PARAM_NAME_PATTERN,TEMPLATE_TEXT_FIELDS,parameterizeSteps,findTemplatePaths,buildPlanTemplateContent,savePlanAsTemplate", "stepToNode,throwIfPlanAborted,assertPlanProject,assertPlanOwnership"]]
+  },
+  "S03": {
+    "file": "PAO/packages/coding-agent/src/pao/host/host.ts",
+    "tests": "npx vitest --run test/pao/host-lifecycle test/pao/host-fuse test/pao/host-supervision test/pao/host-config-supervision test/pao/host-events-wire test/pao/host-ledger test/pao/host-handoff test/pao/host-handoff-gate test/pao/host-inventory-dispatch test/pao/host-tools test/pao/host-child-environment test/pao/host-rpc-background-real test/pao/host-rpc-retry-real",
+    "groups": [["host-types.ts", "MinisterHostOptions,SpawnOptions,SpawnResult,TeardownRecord,HostEntry,PendingResultDelivery,MinisterEpisode,SupervisionDeliveryTask,HostToolEndEvent,HostActivity,MinisterInjectMode,MinisterInjectResult,deptNameOutOfRange,departmentSupervisionKey"]]
+  },
+  "S09": {
+    "file": "PAO/packages/coding-agent/src/pao/cards/verifier.ts",
+    "tests": "npx vitest --run test/pao/verifier-run.test.ts test/pao/verifier-parse.test.ts test/pao/verifier-attempt-baseline.test.ts test/pao/verifier-owner-record.test.ts test/pao/s5p1-verify-gate.test.ts test/pao/card-process-stop.test.ts test/pao/delivery-commit.test.ts test/pao/delivery-wakeup.test.ts test/pao/integration.test.ts test/pao/workflow-control.test.ts test/pao/workflow-independent-review-pending.test.ts",
+    "groups": [
+      ["command-safety.ts", "concatSymbol,deleteVerb,shellCommandHead,shellEnvExpansionMarker,SecurityVerdict,ShellSyntaxInspection,InspectedCommand,inspectShellSyntax,isAbsolutePath,tokenizeSafetyWords,addWordSafetyViolations,inspectCommand,checkCommandSafety"],
+      ["acceptance-parse.ts", "CardEntryType,MechanicalEntry,ParseEntry,entryPrefix,parseAcceptance,validateAcceptance,checkReadPath"],
+      ["verifier-sandbox.ts", "VerificationCommandRunner,SandboxOptions,SandboxBuildResult,scanSkipDirs,copyExcludeDirs,findExternalLinks,sanitizeProjectName,isSymlinkLike,removeSandboxSafe,rmdirOrUnlink,copyWithNodeFallback,refreshShadowSandbox,settleSandbox,sanitizedEnv"],
+      ["verdict-record.ts", "VERDICT_HEADING_PATTERN,CardAcceptanceRecord,readLatestVerdict,serializeVerdictSection,nextVerdictTime,verdictIdentity,storedVerdictIdentity,appendVerdict"]
+    ]
+  }
+}

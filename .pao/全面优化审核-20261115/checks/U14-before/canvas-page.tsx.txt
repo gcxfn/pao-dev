@@ -1,0 +1,2983 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject, ReactNode } from "react";
+import { createPortal } from "react-dom";
+import type {
+  DesktopAppState,
+  WorkflowTabRecord,
+  WorkspaceRecord,
+  WorkspaceSessionTarget,
+} from "../../../contracts/desktop-state";
+import { workflowTabForSession } from "../../../contracts/desktop-state";
+import { WorkflowTabs } from "./workflow-tabs";
+import { EmbeddedChat } from "../conversation/embedded-chat";
+import { Group, Panel, Separator } from "react-resizable-panels";
+import type { WorkflowCatalogSnapshot } from "../../../contracts/workflow-wizard";
+import {
+  RecipeCanvasEditor,
+  type ApplyResult,
+  type RecipeEditorActions,
+  type RecipeEditorEntry,
+} from "./recipe-canvas-editor";
+import type {
+  CanvasInstanceRow,
+  CanvasNodeDetailData,
+  CanvasNodeExecutionRef,
+  CanvasResult,
+  CanvasScriptInterpreter,
+  CanvasSnapshot,
+} from "../../../contracts/canvas";
+import type { WorkboardSessionInput } from "../../../contracts/kanban";
+import type { WorkflowControlCommandInput } from "../../../contracts/workflow-control";
+import type { PiDesktopApi } from "../../../contracts/ipc";
+import { useI18n } from "../../i18n/react";
+import { useViewAutoRefresh } from "../../ui/view-auto-refresh";
+import { trapDialogFocus } from "../../ui/dialog-focus";
+import { EmptyState } from "../../ui/empty-state";
+import { ForkIcon, RefreshIcon, MoreIcon } from "../../ui/icons";
+import {
+  AMBIGUOUS_INSTANCE_MESSAGE,
+  canvasArrivalPlan,
+  canvasBaselineOf,
+  canvasDetailFetchPlan,
+  type CanvasEnvelopeBaseline,
+  cardStatusLabel,
+  instanceDagNodes,
+  locateNewInstances,
+  recipeDagNodes,
+  recipeForInstance,
+  resolveInstance,
+  resolveRecipeJump,
+  workspaceIdForInstancePath,
+  type CanvasNodeView,
+} from "./canvas-model";
+import { WorkflowWizard, type WorkflowWizardIdentity } from "./workflow-wizard";
+import { WorkboardSessionBody } from "../workboard/session-body";
+import { InstanceWorkflowView } from "./instance-workflow-view";
+import { WorkflowRuntimeControls } from "./workflow-runtime-controls";
+import {
+  NodeRuntimeDetails,
+  type CanvasDetailSectionId,
+  type CanvasDetailSectionState,
+  type CanvasInjectionSectionProps,
+  type CanvasInjectionTargetKind,
+  type CanvasSessionReason,
+  type CanvasScriptSectionProps,
+  type CanvasSessionSectionProps,
+  type CanvasSupervisionSectionProps,
+} from "./node-runtime-details";
+import { RecipeLibrary } from "./recipe-library";
+import { WorkflowEditor } from "./workflow-editor";
+import { readCanvasViewPreference, saveCanvasViewPreference } from "./canvas-view-preferences";
+
+/**
+ * 工作流画布整页视图 v1（只读，P4-2；P4-4 增 D8d 节点详情＋主控跳转）：打开视图拉一次
+ * ＋手动刷新＋打开期间 30s 静默轮询（波3 §2a，卸载即停），不缓存。三区布局：左＝工作流列表（配方库校验态＋实例＋异常行），
+ * 中＝画布 DAG（分层布局，节点框名字/部门/状态着色，depends_on 边，回边虚线），
+ * 右＝节点详情（实例节点＝D8d 深读：模板值 vs 卡面实际值/回执轮次/执行锚点/升档理由；
+ * 配方节点＝模板摘要）。unavailable 显示主进程给出的中文原因横幅。
+ */
+
+/** 左侧列表的选中源：配方（模板视图）或实例（清单＋卡现读）。 */
+export interface CanvasSelection {
+  readonly kind: "recipe" | "instance";
+  readonly name: string;
+  readonly path?: string;
+}
+
+/** 未保存新配方骨架的解析顺序（显式化，S3-1）：①当前标签自己的骨架 ②同名骨架兜底
+ *  （标签切换竞态、无标签上下文；骨架名按新建避让规则全局唯一，同名即同物）③目录配方。
+ *  骨架命中前不得退到目录，否则未保存草稿被旧配方顶掉（T08/T09）。 */
+export function resolveEditorEntry(input: {
+  readonly selection: CanvasSelection | null;
+  readonly newEntries: Readonly<Record<string, RecipeEditorEntry>>;
+  readonly activeTabId?: string;
+  readonly catalog?: WorkflowCatalogSnapshot;
+}): RecipeEditorEntry | undefined {
+  if (input.selection?.kind !== "recipe") return undefined;
+  const owned = input.activeTabId ? input.newEntries[input.activeTabId] : undefined;
+  if (owned?.name === input.selection.name) return owned;
+  const byName = Object.values(input.newEntries).find((row) => row.name === input.selection?.name);
+  if (byName) return byName;
+  return input.catalog?.recipes.find((row) => row.name === input.selection?.name);
+}
+
+/** 启动后补拉＋定位新运行记录（S6-D1/S6-D2；提为导出函数供守卫语义单测，行为同内联版）。
+ * 数据面走 applyCanvasResult（requestId 竞速＋指纹去重），命中单个新实例自动开运行标签，
+ * 0/多匹配如实报错不猜选。 */
+export async function pullCanvasAfterStart(input: {
+  readonly currentRequest: number;
+  readonly requestId: { current: number };
+  readonly getCanvas: () => Promise<CanvasResult>;
+  readonly applyCanvasResult: (currentRequest: number, value: CanvasResult) => void;
+  readonly name: string;
+  readonly project?: string;
+  readonly workspaceId?: string;
+  readonly beforeStartPaths: { current: ReadonlySet<string> };
+  readonly workflowTabs: readonly WorkflowTabRecord[];
+  readonly changeTabs: (tabs: readonly WorkflowTabRecord[], activeId: string) => Promise<void>;
+  readonly setLoadError: (message: string) => void;
+  readonly setLoading: (loading: boolean) => void;
+}): Promise<void> {
+  try {
+    const value = await input.getCanvas();
+    input.applyCanvasResult(input.currentRequest, value);
+    if (value.state !== "available" || !input.project || !input.workspaceId) return;
+    const instances = locateNewInstances(
+      value.instances,
+      input.name,
+      input.beforeStartPaths.current,
+      input.project,
+    );
+    if (instances.length > 1) {
+      input.setLoadError(
+        "工作流已启动，请在左侧选择此次运行记录；发现多个同名运行记录，未自动猜选。",
+      );
+      return;
+    }
+    if (instances.length === 0) {
+      // 0 匹配＝此次实例没进画布读模型（如 v1 旧版配方实例按契约不展示，
+      // 读模型只认带冻结配方的 v2 实例）；如实告知，不能谎报同名冲突。
+      input.setLoadError(
+        "工作流已启动，但画布暂未读到此次运行记录；旧版工作流的运行记录不在画布展示范围，可在主控对话查看启动报告。",
+      );
+      return;
+    }
+    const instance = instances[0];
+    if (!instance) return;
+    // S4-1 唯一性：运行标签不继承编辑标签的 controller（同会话不绑两标签）。
+    const tab: WorkflowTabRecord = {
+      id: crypto.randomUUID(),
+      workspaceId: input.workspaceId,
+      title: instance.name,
+      instanceName: instance.name,
+      instancePath: instance.path,
+      mode: "runtime",
+    };
+    await input.changeTabs([...input.workflowTabs, tab], tab.id);
+  } catch (error: unknown) {
+    // 与 refresh 守卫同款（波审 P2-1）：被更新请求取代的迟到失败不覆写新视图的错误态。
+    if (input.requestId.current !== input.currentRequest) return;
+    input.setLoadError(error instanceof Error ? error.message : String(error));
+  } finally {
+    if (input.requestId.current === input.currentRequest) input.setLoading(false);
+  }
+}
+
+export interface CanvasPageViewProps {
+  readonly viewMode?: "graph" | "list";
+  readonly onViewModeChange?: (mode: "graph" | "list") => void;
+  readonly listView?: ReactNode;
+  readonly onInstanceFocusChange?: (
+    focus: { instanceId: string; nodeName?: string } | undefined,
+  ) => void;
+
+  readonly catalog?: WorkflowCatalogSnapshot;
+  readonly projectTabs?: readonly WorkflowTabRecord[];
+  readonly activeTab?: WorkflowTabRecord;
+  readonly onInstallTemplate?: (id: string, name?: string) => void;
+  readonly canInstallTemplate?: boolean;
+  /** 删除配方（S3-3）：父层负责离开守卫、内核确认与成功后的刷新/关标签。 */
+  readonly onDeleteRecipe?: (name: string) => void;
+  /** 「在新标签中打开」显式入口（S4-1⑤）：配方库行右键；不传则菜单项不显示。 */
+  readonly onOpenInNewTab?: (name: string) => void;
+  /** S4-2 单工作流嵌入视图：隐藏左侧工作流库（标签栏由不传 tabs 隐藏）。 */
+  readonly hideLibrary?: boolean;
+  /** 「返回工作流中心」退出嵌入视图；仅在嵌入视图时传入。 */
+  readonly onExitSingleView?: () => void;
+  readonly tabs?: ReactNode;
+  readonly recipeEditor?: ReactNode;
+  readonly runtimeInfo?: ReactNode;
+  readonly canSelect?: (selection: CanvasSelection) => boolean;
+  readonly result: CanvasResult;
+  readonly loading: boolean;
+  readonly loadError?: string;
+  readonly onRefresh: () => void;
+  /** 打开启流向导（P4-3）；画布页受控/组件测试可不传。 */
+  readonly onStartWorkflow?: () => void;
+  readonly onNewRecipe?: () => void;
+  /** 打开主控会话（P4-4）：存在＝跳当前主控线程，不存在＝App 侧新建＋预填主控提示词。 */
+  readonly onOpenMasterSession?: () => void;
+  readonly masterSessionLabel?: string;
+  readonly masterSessionDisabled?: boolean;
+  /** 节点→会话跳转（P4-4）：返回是否在应用工作区里找到该会话。 */
+  readonly onOpenSessionThread?: (sessionId: string) => boolean;
+  /** 节点动作指令上交主控输入框（批3c：讨论这一步/停止这张卡）。 */
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  /** 详情深读通道（P4-4）；受控组件测试可不传，右栏退化为 v1 摘要字段。 */
+  readonly api?: PiDesktopApi;
+  /** 当前工作区标识（批2 会话分区 WorkboardSessionInput 必填）；缺省＝会话区显示不可定位。 */
+  readonly workspaceId?: string;
+  /**
+   * 已登记工作区全表（归属标注数据源）：实例/异常全局列出，行内反查所属工作区显示登记名；
+   * 缺省＝配方库不显示归属标注（受控组件测试）。
+   */
+  readonly workspaces?: readonly WorkspaceRecord[];
+  /** 画布快照最近读取时间（批2 监督分区状态读取时间展示）。 */
+  readonly snapshotReadAt?: string;
+  /** 选中态受控 props（组件测试用）；缺省时内部自持状态。 */
+  readonly selection?: CanvasSelection | null;
+  readonly onSelectionChange?: (selection: CanvasSelection) => void;
+  /** 批4：实例「编辑此配方」跳转；父层按四路判定执行并透出提示。 */
+  readonly onEditRecipe?: (instanceName: string, nodeName?: string) => void;
+  /**
+   * 批 D：点实例行的「先判所属工作区再打开」前置（跨区先 selectWorkspace、未登记提示）；
+   * 缺省时实例行退回普通 onSelectionChange 直开（受控组件测试）。
+   */
+  readonly onOpenInstance?: (instance: CanvasInstanceRow) => void;
+  readonly selectedNode?: string | null;
+  /** 非静默刷新代际（手动刷新/初载）：详情懒加载按它清缓存；30s 轮询不增加。 */
+  readonly manualRefreshToken?: number;
+  readonly onSelectedNodeChange?: (name: string | null) => void;
+  /**
+   * 批3a 注入的发起会话标识（＝本标签绑定的主控 owner sessionId）。
+   * 缺省＝注入分区显示「无发起会话身份」不发命令——controlWorkflow 的 sessionId
+   * 必须是发起者（owner 分支内核核「发起者属于 owner」），不能借用实例 ownerSessionId
+   * 或随机会话顶替。
+   */
+  readonly sessionId?: string;
+  /**
+   * 批3a 注入草稿离开守卫：注入区有未发送正文时切节点/切选择先经此守卫
+   * （＝CanvasPage 的 requestAction 确认流）；缺省＝直接放行（受控直测兜底）。
+   */
+  readonly guardLeave?: (action: () => void) => void;
+  /** 批3a 注入草稿脏位上报：透传到页级 dirty 守卫（切选择/关窗并联拦截）。 */
+  readonly onInjectionDirtyChange?: (dirty: boolean) => void;
+}
+
+/** 对话修改 pending 候选（批3b-U）：发起时绑定配方/节点/草稿脚本，
+ *  「应用到草稿」时用它做冲突判定（当前稿已变→conflict）。 */
+export interface ScriptCandidate {
+  readonly nodeName: string;
+  readonly recipeName: string;
+  readonly draftScriptAtLaunch: string;
+  readonly candidateText: string;
+}
+
+export function CanvasPage({
+  viewMode,
+  onViewModeChange,
+  listView,
+  onInstanceFocusChange,
+  api,
+  project,
+  workspaceId,
+  workspaces,
+  onSelectWorkspace,
+  workflowTabs = [],
+  activeWorkflowTabId,
+  onUpdateTabs,
+  onActivateController,
+  embeddedChat,
+  chatTarget,
+  onCreateController,
+  onOpenSessionThread,
+  onRequestMainControl,
+  workflowEntryNonce,
+  onOpenSideChat,
+  applyCandidateRef,
+}: {
+  readonly viewMode?: "graph" | "list";
+  readonly onViewModeChange?: (mode: "graph" | "list") => void;
+  readonly listView?: ReactNode;
+  readonly onInstanceFocusChange?: (
+    focus: { instanceId: string; nodeName?: string } | undefined,
+  ) => void;
+  readonly api: PiDesktopApi;
+  /** 标签所属项目；不能借用当前随机选中的普通会话。 */
+  readonly project?: string;
+  readonly workspaceId?: string;
+  /**
+   * 批 D：已登记工作区全表（实例→所属工作区反查的数据源）；缺省＝无表可查，
+   * 实例行退回同区直开（受控组件测试）。
+   */
+  readonly workspaces?: readonly WorkspaceRecord[];
+  /**
+   * 批 D：切到指定工作区且留在画布（父层实现＝api.selectWorkspace(id,{stayInView:true})
+   * ＋快照回写），返回落地后的应用状态；守卫取消时 selectedWorkspaceId 仍指向原工作区。
+   */
+  readonly onSelectWorkspace?: (workspaceId: string) => Promise<DesktopAppState>;
+  readonly workflowTabs?: readonly WorkflowTabRecord[];
+  readonly activeWorkflowTabId?: string;
+  readonly onUpdateTabs?: (tabs: readonly WorkflowTabRecord[], activeId: string) => Promise<void>;
+  readonly onActivateController?: (target: WorkspaceSessionTarget) => Promise<void>;
+  readonly embeddedChat?: ReactNode;
+  readonly chatTarget?: WorkspaceSessionTarget;
+  /** 建立属于此工作流的新主控会话，保持画布页面。 */
+  readonly onCreateController?: (title: string, tabId?: string) => Promise<WorkflowWizardIdentity>;
+  /** 节点→会话跳转；App 在全部工作区里解析会话标识。 */
+  readonly onOpenSessionThread?: (sessionId: string) => boolean;
+  /** 节点动作指令上交主控输入框（批3c）。 */
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  /**
+   * sidebar 工作流入口信号（S4-2）：每次点击自增。当前会话已绑定标签时消费该信号
+   * 进入单工作流嵌入视图；未绑定为 no-op（完整中心是缺省形态）。
+   */
+  readonly workflowEntryNonce?: number;
+  /** 打开 side-chat 工具面板（批3b-U）：App 层调用 workbench.openTool({kind:"side-chat"}) 并预填文本。 */
+  readonly onOpenSideChat?: (prefillText: string) => void;
+  /** 「应用到草稿」回调注册（批3b-U）：App 层注册后由 SideChatPanel 经此 ref 调回。 */
+  readonly applyCandidateRef?: MutableRefObject<
+    ((text: string, force?: boolean) => { result: ApplyResult; currentScript?: string }) | null
+  >;
+}) {
+  const [result, setResult] = useState<CanvasResult | undefined>();
+  const [loadError, setLoadError] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
+  /** 只在非静默刷新（手动/初载/变更后重读）时自增：节点详情懒加载按它清缓存，
+   *  30s 轮询不再触发详情重拉（批1 §4 L96）。 */
+  const [manualRefreshToken, setManualRefreshToken] = useState(0);
+  const [readAt, setReadAt] = useState<string>();
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const beforeStartPaths = useRef<ReadonlySet<string>>(new Set());
+  const [catalog, setCatalog] = useState<WorkflowCatalogSnapshot>();
+  /** 未保存新配方骨架，按所属标签 id 存（无标签上下文用 "draft" 槽）；保存/关标签只删自己的。 */
+  const [newEntries, setNewEntries] = useState<Record<string, RecipeEditorEntry>>({});
+  const [selection, setSelection] = useState<CanvasSelection | null>(null);
+  /** 编辑器上报的「有未保存内容或未落盘」（editorUnsaved 口径，与徽章同源）；
+   *  离开守卫、标签圆点、activeTab 同步让位都用这一个值。 */
+  const [dirty, setDirty] = useState(false);
+
+  /**
+   * 批3a 注入草稿脏位（L168「切节点离开有正文时沿已有草稿离开守卫」）：
+   * 详情栏注入区上报「有未发送正文」；守卫判定与编辑器 dirty 并联（任一即拦）。
+   * 守卫对话框的「保存并继续」是编辑器专有路径——injection 触发的守卫不显示它。
+   */
+  const [injectionDirty, setInjectionDirty] = useState(false);
+  /** 本次 pendingAction 守卫的触发源：editor＝默认（保存/放弃/取消），injection＝注入正文（放弃/取消）。 */
+  const [guardSource, setGuardSource] = useState<"editor" | "injection">("editor");
+  const [controllerBusy, setControllerBusy] = useState(false);
+  const activeTab = workflowTabs.find(
+    (tab) => tab.id === activeWorkflowTabId && tab.workspaceId === workspaceId,
+  );
+  const focusedInstanceId =
+    selection?.kind === "instance" && result?.state === "available"
+      ? resolveInstance(result.instances, selection).instance?.instanceId
+      : undefined;
+  const focusedNodeName = activeTab?.selectedElementId;
+  useEffect(() => {
+    onInstanceFocusChange?.(
+      focusedInstanceId ? { instanceId: focusedInstanceId, nodeName: focusedNodeName } : undefined,
+    );
+  }, [focusedInstanceId, focusedNodeName, onInstanceFocusChange]);
+
+  const projectTabs = workflowTabs.filter((tab) => tab.workspaceId === workspaceId);
+  // S4-1③：主控身份只从标签绑定派生（单源）。曾有 controllers 内存回退——controller 被归档/
+  // 删除对账剥离后它仍供身份，导致「建立主控会话」保持禁用、保存用失效会话，无法重建；已删。
+  const identity =
+    activeTab?.controller && project
+      ? { sessionId: activeTab.controller.sessionId, project }
+      : undefined;
+  const [tabBusy, setTabBusy] = useState(false);
+  const tabSelectionRef = useRef({ workflowTabs, activeTab, onUpdateTabs, tabBusy });
+  tabSelectionRef.current = { workflowTabs, activeTab, onUpdateTabs, tabBusy };
+  /**
+   * 批3a 注入草稿脏位镜像（页级）：详情栏经 onInjectionDirtyChange 上报后，这里同步 ref；
+   * 所有切节点入口（画布点选、运行控制面板下拉）共用它拦「切节点离开」，与编辑器 dirty 并联。
+   * 守卫走 requestAction 确认流（L168）。
+   */
+  const pageInjectionDirtyRef = useRef(false);
+  const handleInjectionDirty = useCallback((next: boolean) => {
+    pageInjectionDirtyRef.current = next;
+    setInjectionDirty(next);
+  }, []);
+  const updateSelectedElement = useCallback((id: string | undefined) => {
+    const current = tabSelectionRef.current;
+    // 标签整表写入进行中时 props 必然滞后：这里再做一次全表写会把并行的新增/改名标签覆掉
+    // （S3-1：新标签被骨架编辑器挂载时的 selectedElementId 上报整表覆写而消失）。选中恢复
+    // 只是锦上添花，这次上报直接丢弃，等下一次选中变化再持久化。
+    if (!current.activeTab || !current.onUpdateTabs || current.tabBusy) return;
+    const tab = current.activeTab;
+    if (tab.selectedElementId === id) return;
+    const tabs = current.workflowTabs.map((row) =>
+      row.id === tab.id ? { ...row, selectedElementId: id } : row,
+    );
+    void current
+      .onUpdateTabs(tabs, tab.id)
+      .catch((error: unknown) =>
+        setLoadError(error instanceof Error ? error.message : String(error)),
+      );
+  }, []);
+  useEffect(() => {
+    const controller = activeTab?.controller;
+    if (
+      !controller ||
+      !onActivateController ||
+      tabBusy ||
+      (chatTarget?.workspaceId === controller.workspaceId &&
+        chatTarget.sessionId === controller.sessionId)
+    )
+      return;
+    void onActivateController(controller).catch((error: unknown) =>
+      setLoadError(error instanceof Error ? error.message : String(error)),
+    );
+  }, [activeTab?.controller, chatTarget, onActivateController, tabBusy]);
+  const changeTabs = async (tabs: readonly WorkflowTabRecord[], activeId: string) => {
+    if (!onUpdateTabs) return;
+    setTabBusy(true);
+    try {
+      await onUpdateTabs(tabs, activeId);
+      const tab = tabs.find((row) => row.id === activeId);
+      if (tab?.controller) await onActivateController?.(tab.controller);
+      setSelection(
+        tab?.instanceName
+          ? { kind: "instance", name: tab.instanceName, path: tab.instancePath }
+          : tab?.recipeName
+            ? { kind: "recipe", name: tab.recipeName }
+            : null,
+      );
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setTabBusy(false);
+    }
+  };
+  /** 选中新工作流/运行记录：默认去重（edit 同配方/同实例路径复用既有标签）；
+   *  forceNewTab＝「在新标签中打开」显式入口（S4-1⑤），同配方多标签各自独立。
+   *  workspaceOverride＝批 D 跨区跳转：selectWorkspace 落地后 props 的 workspaceId
+   *  尚未重渲染，打开的标签与去重口径都按目标工作区记，不用滞后值。 */
+  const openSelection = (
+    next: CanvasSelection,
+    forceNewTab = false,
+    workspaceOverride?: string,
+  ) => {
+    const targetWorkspaceId = workspaceOverride ?? workspaceId;
+    if (!targetWorkspaceId || !onUpdateTabs) {
+      setSelection(next);
+      return;
+    }
+    // 标签表取 ref 最新值：本函数会经守卫挂起后执行（requestAction 闭包），彼时 props
+    // 可能滞后于刚落地的整表写入（如保存改名），闭包捕获的旧表会整表覆掉新名。
+    const currentTabs = tabSelectionRef.current.workflowTabs;
+    const existing = forceNewTab
+      ? undefined
+      : currentTabs.find(
+          (tab) =>
+            tab.workspaceId === targetWorkspaceId &&
+            (next.kind === "recipe"
+              ? tab.recipeName === next.name && tab.mode === "edit"
+              : next.path
+                ? tab.instancePath === next.path
+                : tab.instanceName === next.name),
+        );
+    const tab: WorkflowTabRecord = existing ?? {
+      id: crypto.randomUUID(),
+      workspaceId: targetWorkspaceId,
+      title: next.name,
+      mode: next.kind === "recipe" ? "edit" : "runtime",
+      ...(next.kind === "recipe"
+        ? { recipeName: next.name }
+        : { instanceName: next.name, instancePath: next.path }),
+    };
+    // 批4：复用标签时把「来源实例」清掉——从库/向导打开不是实例跳转，横幅不能残留。
+    // 字段变更才重写整表，避免普通切换制造多余持久化写。
+    const cleared =
+      existing && next.kind === "recipe" && existing.recipeSourceInstance !== undefined;
+    const nextTabs = cleared
+      ? currentTabs.map((row) =>
+          row.id === existing.id ? { ...row, recipeSourceInstance: undefined } : row,
+        )
+      : currentTabs;
+    void changeTabs(existing ? nextTabs : [...nextTabs, tab], tab.id).catch((error: unknown) =>
+      setLoadError(error instanceof Error ? error.message : String(error)),
+    );
+  };
+  useEffect(() => {
+    if (!activeTab || dirty || tabBusy) return;
+    if (activeTab.instanceName)
+      setSelection({
+        kind: "instance",
+        name: activeTab.instanceName,
+        path: activeTab.instancePath,
+      });
+    else if (activeTab.recipeName) setSelection({ kind: "recipe", name: activeTab.recipeName });
+  }, [activeTab, dirty, tabBusy]);
+  const editorRef = useRef<RecipeEditorActions>(null);
+  /** 当前编辑条目（配方名用于「应用到草稿」的跨配方核对）；计算上移以早于此后的回调定义。 */
+  const editorEntry = resolveEditorEntry({
+    selection,
+    newEntries,
+    activeTabId: activeTab?.id,
+    catalog,
+  });
+  /** 对话修改 pending 候选（批3b-U）：发起时绑定配方/节点/草稿脚本，应用到草稿时做冲突判定。 */
+  const [pendingCandidate, setPendingCandidate] = useState<ScriptCandidate | null>(null);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const pendingCancelRef = useRef<() => void>(() => {});
+  const cancelPendingAction = () => {
+    pendingCancelRef.current();
+    pendingCancelRef.current = () => {};
+    setPendingAction(null);
+  };
+  useEffect(
+    () =>
+      api.onWorkflowLeaveRequest(() => {
+        if (!dirty && !injectionDirty) return Promise.resolve(true);
+        // 已显示的保存选择继续处理原动作；后来的关窗请求先取消，不能覆盖回执。
+        if (pendingAction) return Promise.resolve(false);
+        return new Promise<boolean>((resolve) => {
+          pendingCancelRef.current = () => resolve(false);
+          setGuardSource(dirty ? "editor" : "injection");
+          setPendingAction(() => () => resolve(true));
+        });
+      }),
+    [api, dirty, injectionDirty, pendingAction],
+  );
+  useEffect(() => () => pendingCancelRef.current(), []);
+  const [resolving, setResolving] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!pendingAction) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    return () => {
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [pendingAction]);
+  /** 批4：实例→配方编辑的提示（非阻断）：打开但节点已不存在、无法定位、解析错误。 */
+  const [jumpNotice, setJumpNotice] = useState<string>();
+  const { t } = useI18n();
+  const requestAction = (action: () => void) => {
+    // 未保存修改的确认框在途时再点「编辑此配方」：不吞点击，提示用户先处理该确认框。
+    if (pendingAction) {
+      setJumpNotice(
+        t("Resolve the unsaved-changes dialog first, then open the recipe for editing."),
+      );
+      return;
+    }
+    if (dirty || injectionDirty) {
+      pendingCancelRef.current = () => {};
+      // 「保存并继续」只对编辑器草稿成立；纯注入正文触发的守卫不显示保存按钮。
+      setGuardSource(dirty ? "editor" : "injection");
+      setPendingAction(() => action);
+    } else action();
+  };
+
+  /**
+   * 批 D 实例→所属工作区跳转（规格 §4 批 D，App.tsx onOpenWorkflow 两段式先例）：
+   * 点实例行先反查所属工作区——当前区直接开；跨区先 selectWorkspace（IPC 走
+   * runLeavingWorkflow 守卫防画布丢草稿，stayInView 留在画布）再 openSelection；
+   * 所属文件夹未登记为工作区时如实提示，不静默登记（渲染层无 addWorkspace 通道是刻意的）。
+   * 未保存改动与左侧普通选中同口径先过 requestAction 守卫；守卫取消（onSelectWorkspace
+   * 落地态 selectedWorkspaceId 不是目标）则不打开，让用户先处理草稿。
+   * workspaces/onSelectWorkspace 缺省（受控组件测试）＝无可查表/无切换通道，退同区直开。
+   */
+  const openInstanceSelection = (instance: CanvasInstanceRow) => {
+    const next: CanvasSelection = { kind: "instance", name: instance.name, path: instance.path };
+    const ownerId = workspaces ? workspaceIdForInstancePath(instance.path, workspaces) : undefined;
+    if (workspaces && !ownerId) {
+      setJumpNotice(t("The folder this run record belongs to is not registered as a workspace."));
+      return;
+    }
+    const proceed = () => {
+      if (!ownerId || ownerId === workspaceId || !onSelectWorkspace) {
+        openSelection(next);
+        return;
+      }
+      void onSelectWorkspace(ownerId)
+        .then((state) => {
+          if (state.lastError) throw new Error(state.lastError);
+          // 守卫取消：落地态仍停在原工作区，不打开（留在原画布让用户处理草稿）。
+          if (state.selectedWorkspaceId !== ownerId) return;
+          // selectWorkspace 落地态就是最新标签事实：同步登记进 ref，整表写不基于滞后 props
+          // （与 onSaved 同一口径，避免旧闭包表整表覆写主进程侧的最新状态）。
+          tabSelectionRef.current = {
+            ...tabSelectionRef.current,
+            workflowTabs: state.workflowTabs,
+          };
+          openSelection(next, false, ownerId);
+        })
+        .catch((error: unknown) =>
+          setLoadError(error instanceof Error ? error.message : String(error)),
+        );
+    };
+    const sameRow =
+      selection?.kind === "instance" &&
+      selection.name === next.name &&
+      selection.path === next.path;
+    if ((dirty || injectionDirty) && !sameRow) requestAction(proceed);
+    else proceed();
+  };
+
+  /**
+   * 批3b-U 「对话修改」入口：激活主控 + 打开 side-chat 预填脚本上下文。
+   * 无 identity 时提示建立主控会话，不选最近其他会话（规格 L241）。
+   */
+  const handleOpenScriptChat = useCallback(
+    (nodeName: string, scriptText: string) => {
+      const controller = activeTab?.controller;
+      if (!controller || !identity) {
+        // 无主控身份（含 project 缺失）一律提示建立主控，不挑别的最近会话。
+        setJumpNotice(t("Create a master session first, then use chat to modify the script."));
+        return;
+      }
+      // 绑定 pending 候选（含发起时草稿脚本，应用到草稿时做冲突判定）。
+      setPendingCandidate({
+        nodeName,
+        recipeName: selection?.name ?? "",
+        draftScriptAtLaunch: scriptText,
+        candidateText: "",
+      });
+      // 组预填文本：节点上下文 + 当前脚本 + 修改意图占位。
+      const prefill =
+        `${t("Node")}: ${nodeName}\n` +
+        `${t("Current script")}:\n` +
+        "```powershell\n" +
+        scriptText +
+        "\n```\n" +
+        `${t("Modification intent")}: ${t("(describe what you want changed)")}`;
+      // onActivateController 可选且可能同步返回 undefined：包 Promise.resolve 防御，
+      // 激活失败时清掉 pendingCandidate（不残留一个无主控对话可回的候选）。
+      void Promise.resolve(onActivateController?.(controller))
+        .then(() => {
+          onOpenSideChat?.(prefill);
+        })
+        .catch((error: unknown) => {
+          setPendingCandidate(null);
+          setLoadError(error instanceof Error ? error.message : String(error));
+        });
+    },
+    [activeTab?.controller, identity, selection?.name, onActivateController, onOpenSideChat, t],
+  );
+
+  /**
+   * 「应用到草稿」：经 editorRef 调 applyScriptCandidate；结果带回冲突判定。
+   * force=true 跳过冲突判定直接写入（用户在冲突 UI 选「替换为候选」后再次调用），
+   * force 会一路透传到 planScriptCandidateApply，确保真正落草稿而非二次 conflict。
+   */
+  const handleApplyCandidate = useCallback(
+    (text: string, force = false): { result: ApplyResult; currentScript?: string } => {
+      if (!pendingCandidate) return { result: "nodeGone" };
+      // 跨配方同名节点防护：发起对话时绑定的配方与当前编辑配方不一致时拒应用。
+      if (pendingCandidate.recipeName !== editorEntry?.name) return { result: "nodeGone" };
+      const probe = editorRef.current?.currentScript?.(pendingCandidate.nodeName);
+      // 节点已删/改名或非脚本 → nodeGone；脚本节点但正文为空仍属可应用（script=""）。
+      if (!probe?.found) return { result: "nodeGone" };
+      if (!force && probe.script !== pendingCandidate.draftScriptAtLaunch) {
+        return { result: "conflict", currentScript: probe.script };
+      }
+      const applied = editorRef.current?.applyScriptCandidate?.(
+        pendingCandidate.nodeName,
+        text,
+        force,
+      );
+      return { result: applied ?? "nodeGone" };
+    },
+    [pendingCandidate, editorEntry?.name],
+  );
+
+  // 注册 applyCandidate 回调给 App 层（SideChatPanel 经此调回）。
+  useEffect(() => {
+    if (!applyCandidateRef) return;
+    applyCandidateRef.current = handleApplyCandidate;
+    return () => {
+      applyCandidateRef.current = null;
+    };
+  }, [applyCandidateRef, handleApplyCandidate]);
+
+  /**
+   * 批4 实例→配方编辑跳转（四路判定在 canvas-model.resolveRecipeJump）：
+   * 可用配方走 requestAction 守卫打开编辑标签并记入来源实例；同名节点存在则选中；
+   * 节点已改名 → 打开＋提示；配方已删/改名 → 留实例视图＋提示；解析错误 → 提示坏配方出口。
+   */
+  const jumpToRecipeEdit = (instanceName: string, nodeName?: string) => {
+    if (result?.state !== "available") return;
+    const { instance, ambiguous } = resolveInstance(result.instances, {
+      kind: "instance",
+      name: instanceName,
+      ...(selection?.kind === "instance" && selection.name === instanceName && selection.path
+        ? { path: selection.path }
+        : {}),
+    });
+    if (!instance) {
+      // 同名多实例（无路径可精确定位）：如实提示去列表选择，不静默吞掉。
+      if (ambiguous) {
+        setJumpNotice(
+          t(
+            "Several instances share this name; pick the exact run record in the workflow library before editing its recipe.",
+          ),
+        );
+      }
+      return;
+    }
+    const plan = resolveRecipeJump(result, instance, nodeName);
+    if (plan.kind === "missing") {
+      setJumpNotice(
+        t("The recipe {name} no longer exists under that name; staying on this instance.", {
+          name: plan.recipeName,
+        }),
+      );
+      return;
+    }
+    if (plan.kind === "broken") {
+      setJumpNotice(
+        t("The recipe {name} has a parse error ({code}); fix it from the workflow library row.", {
+          name: plan.recipeName,
+          code: plan.error.code,
+        }),
+      );
+      return;
+    }
+    requestAction(() => {
+      const currentTabs = tabSelectionRef.current.workflowTabs;
+      const existing = currentTabs.find(
+        (tab) =>
+          tab.workspaceId === workspaceId &&
+          tab.recipeName === plan.recipeName &&
+          tab.mode === "edit",
+      );
+      const tab: WorkflowTabRecord = existing
+        ? {
+            ...existing,
+            recipeSourceInstance: instanceName,
+            // 节点存在则选中；节点已不存在（notice）或无选中需求时清掉旧选中，
+            // 不让过期节点名冒充当前选中。
+            selectedElementId: plan.nodeName,
+          }
+        : {
+            id: crypto.randomUUID(),
+            workspaceId: workspaceId ?? "",
+            title: plan.recipeName,
+            recipeName: plan.recipeName,
+            mode: "edit",
+            recipeSourceInstance: instanceName,
+            ...(plan.nodeName ? { selectedElementId: plan.nodeName } : {}),
+          };
+      setJumpNotice(
+        plan.notice === "node-missing"
+          ? t("The node no longer exists in recipe {name}; it may have been renamed.", {
+              name: plan.recipeName,
+            })
+          : undefined,
+      );
+      void changeTabs(
+        existing
+          ? currentTabs.map((row) => (row.id === existing.id ? tab : row))
+          : [...currentTabs, tab],
+        tab.id,
+      ).catch((error: unknown) =>
+        setLoadError(error instanceof Error ? error.message : String(error)),
+      );
+    });
+  };
+
+  /** 底部主控面板的渲染条件：身份在、活动标签绑有主控、全局当前会话就是这个主控
+   *  （寄生激活模型：激活＝改写全局选择，画布内显示的必是标签主控）。 */
+  const chatLive = Boolean(
+    identity &&
+    activeTab?.controller &&
+    chatTarget?.workspaceId === activeTab.controller.workspaceId &&
+    chatTarget.sessionId === identity.sessionId,
+  );
+  /** S4-2 单工作流嵌入视图：sidebar 入口且主控面板在位时隐藏标签栏与工作流库；
+   *  「返回工作流中心」退出。嵌入态随画布卸载重置，重启/其他入口恢复完整中心。 */
+  const [embedded, setEmbedded] = useState(false);
+  const singleView = embedded && chatLive;
+  const lastEntryNonceRef = useRef(0);
+  useEffect(() => {
+    if (!workflowEntryNonce || workflowEntryNonce === lastEntryNonceRef.current) return;
+    lastEntryNonceRef.current = workflowEntryNonce;
+    if (!workspaceId || !onUpdateTabs) return;
+    // 反查索引（S4-1②）：当前会话绑定到哪个标签。未绑定＝完整中心，不动。
+    const bound = chatTarget ? workflowTabForSession(workflowTabs, chatTarget) : undefined;
+    if (!bound || bound.workspaceId !== workspaceId) return;
+    if (activeTab?.id === bound.id) {
+      setEmbedded(true);
+      return;
+    }
+    // 绑定标签不是活动标签：经离开守卫（未保存内容仍受保护）切回绑定标签再进嵌入视图；
+    // 守卫取消＝留在完整中心，不强行切换。
+    requestAction(() => {
+      void changeTabs(tabSelectionRef.current.workflowTabs, bound.id)
+        .then(() => setEmbedded(true))
+        .catch((error: unknown) =>
+          setLoadError(error instanceof Error ? error.message : String(error)),
+        );
+    });
+  }, [workflowEntryNonce, chatTarget, workflowTabs, activeTab?.id, workspaceId, onUpdateTabs]);
+
+  // 刷新竞速守卫（kanban/workboard 同款 requestId 语义）＋视图信封消费（S6-D2）：
+  // 旧 requestId 响应作废不覆新（换代际后的旧请求迟到同此作废）；同代际同 revision
+  // 跳过提交不触发渲染更新；新代际随最新请求接管基准——拉模式下「切会话/工作流重置
+  //  generation」即此形态：切作用域后新查询永远可采纳，事件通道落地后再叠加拒旧过滤
+  // （canvasEventStale，K4 契约：消费方切换后以新查询的代际为基准）。
+  const requestId = useRef(0);
+  const baselineRef = useRef<CanvasEnvelopeBaseline>({});
+  const applyCanvasResult = useCallback((currentRequest: number, value: CanvasResult) => {
+    const arrival = canvasBaselineOf(value);
+    const plan = canvasArrivalPlan({
+      requestId: currentRequest,
+      latestRequestId: requestId.current,
+      arrival,
+      baseline: baselineRef.current,
+    });
+    if (plan === "drop") return;
+    if (value.state === "unavailable") {
+      setLoadError(value.message);
+      setResult((previous) => (previous?.state === "available" ? previous : value));
+      return;
+    }
+    setRefreshToken((current) => current + 1);
+    setReadAt(new Date().toLocaleTimeString());
+    if (plan === "commit") {
+      setResult(value);
+      baselineRef.current = arrival;
+    }
+  }, []);
+
+  // silent＝30s 轮询（波3 §2a）：不闪 Loading，结果与错误照常走竞速守卫；同 revision
+  // 由 canvasArrivalPlan 指纹去重跳过提交，不触发渲染跳动。.then 补齐 requestId 守卫
+  // ——轮询与手动刷新并行后，迟到响应不得覆写目录/错误态。
+  const runRefresh = useCallback(
+    (silent: boolean) => {
+      const currentRequest = ++requestId.current;
+      if (!silent) {
+        setLoading(true);
+        setManualRefreshToken((token) => token + 1);
+      }
+      Promise.all([api.getCanvas(), api.getWorkflowCatalog()])
+        .then(([value, nextCatalog]) => {
+          if (requestId.current !== currentRequest) return;
+          applyCanvasResult(currentRequest, value);
+          if (nextCatalog.state === "available") {
+            setCatalog(nextCatalog);
+            if (value.state === "available") setLoadError(undefined);
+          } else setLoadError(nextCatalog.message);
+        })
+        .catch((error: unknown) => {
+          if (requestId.current !== currentRequest) return;
+          setLoadError(error instanceof Error ? error.message : String(error));
+        })
+        .finally(() => {
+          if (requestId.current === currentRequest) setLoading(false);
+        });
+    },
+    [api, applyCanvasResult],
+  );
+  const refresh = useCallback(() => runRefresh(false), [runRefresh]);
+  const refreshSilently = useCallback(() => runRefresh(true), [runRefresh]);
+  useViewAutoRefresh(refreshSilently);
+
+  useEffect(() => {
+    refresh();
+    // 卸载（切视图/切会话）后旧响应不得再落状态：本地代际基准随组件重置，
+    // 重挂后的首次拉取以新代际接管基准（K4：切换后以新查询的代际为基准）。
+    return () => {
+      requestId.current++;
+    };
+  }, [refresh]);
+  const createNewRecipe = () =>
+    requestAction(() => {
+      let index = 1;
+      while (
+        catalog?.recipes.some((row) => row.name === `新工作流${index}`) ||
+        projectTabs.some((tab) => tab.title === `新工作流${index}`) ||
+        Object.values(newEntries).some((row) => row.name === `新工作流${index}`)
+      )
+        index++;
+      const name = `新工作流${index}`;
+      const entry: RecipeEditorEntry = {
+        name,
+        revision: null,
+        recipe: { 版本: 2, 名字: name, 自动执行: false, 参数: [], 节点: [], ui: { positions: {} } },
+      };
+      setSelection({ kind: "recipe", name });
+      if (workspaceId && onUpdateTabs) {
+        // S4-1 唯一性：新标签不继承旧标签的 controller——同一会话不得绑两个标签，
+        // 各标签需要主控时各自「建立主控会话」。
+        const tab: WorkflowTabRecord = {
+          id: crypto.randomUUID(),
+          workspaceId,
+          title: name,
+          recipeName: name,
+          mode: "edit",
+        };
+        setNewEntries((current) => ({ ...current, [tab.id]: entry }));
+        // 同上：整表写基于 ref 最新表，避免守卫保存改名后被旧闭包表覆写（P3-1）。
+        void changeTabs([...tabSelectionRef.current.workflowTabs, tab], tab.id).catch(
+          (error: unknown) => setLoadError(error instanceof Error ? error.message : String(error)),
+        );
+      } else {
+        setNewEntries((current) => ({ ...current, draft: entry }));
+      }
+    });
+
+  /** 删除工作流（S3-3）：走内核删除入口；确认弹窗在内核 ui.confirm（说明含 .bak 备份
+   *  与冻结运行记录不受影响）。不进离开守卫（S12 故障②）：删除是配方库目录操作，不切走
+   *  画布——活动标签是未保存骨架时「保存并继续」存不了盘，用户被三选循环卡死；被删配方
+   *  的未保存修改随删除丢弃（文件已删，事后保存反而会重建文件），无关标签不受影响。
+   *  确认会话取本工作区任一标签绑定的主控（内核只校验会话已注册＋项目相符），不要求
+   *  活动标签；一个主控都没有时（刚开应用，标签绑定是内存态不随重启恢复）自动建一个
+   *  再删（故障③续：删除确认需要会话通道，不能让用户先手动建主控）。
+   *  失败如实透出不关标签；成功关闭对应编辑标签并刷新目录。 */
+  const deleteRecipe = (name: string) => {
+    const deleteWith = (sessionId: string, project: string) => {
+      void (async () => {
+        // 用目录最新指纹做乐观锁：期间被其他入口改动时由内核守卫拒绝删除。
+        const nextCatalog = await api.getWorkflowCatalog();
+        const revision =
+          nextCatalog.state === "available"
+            ? (nextCatalog.recipes.find((row) => row.name === name)?.revision ?? null)
+            : null;
+        const result = await api.deleteWorkflowRecipe({
+          sessionId,
+          project,
+          name,
+          revision,
+        });
+        if (result.state === "error") throw new Error(result.message);
+        // 删除经内核确认后执行：标签表取 ref 最新值（执行时 props 可能滞后，同 P3-1 口径）。
+        const currentTabs = tabSelectionRef.current.workflowTabs;
+        const doomed = currentTabs.filter(
+          (row) => row.workspaceId === workspaceId && row.recipeName === name,
+        );
+        if (doomed.length > 0 && workspaceId && onUpdateTabs) {
+          const doomedIds = new Set(doomed.map((tab) => tab.id));
+          setNewEntries((current) => {
+            const next = { ...current };
+            for (const id of doomedIds) delete next[id];
+            return next;
+          });
+          const tabs = currentTabs.filter((row) => !doomedIds.has(row.id));
+          const activeId = doomedIds.has(activeWorkflowTabId ?? "")
+            ? (tabs.find((row) => row.workspaceId === workspaceId)?.id ?? "")
+            : (activeWorkflowTabId ?? "");
+          await changeTabs(tabs, activeId);
+        }
+        refresh();
+      })().catch((error: unknown) =>
+        setLoadError(error instanceof Error ? error.message : String(error)),
+      );
+    };
+    const controller = projectTabs.find((tab) => tab.controller)?.controller;
+    if (controller && project) {
+      deleteWith(controller.sessionId, project);
+      return;
+    }
+    if (!onCreateController || !project) {
+      setLoadError("请先建立主控会话，再删除工作流。");
+      return;
+    }
+    setControllerBusy(true);
+    void onCreateController("主控", activeTab?.id)
+      .then((identity) => deleteWith(identity.sessionId, project))
+      .catch((error: unknown) =>
+        setLoadError(error instanceof Error ? error.message : String(error)),
+      )
+      .finally(() => setControllerBusy(false));
+  };
+
+  return (
+    <Group orientation="vertical" className="workflow-surface">
+      <Panel id="workflow-surface-graph" defaultSize="70%" minSize="300px">
+        {!loading && selection?.kind === "recipe" && !editorEntry && catalog ? (
+          <p className="error-banner" role="alert">
+            当前工作流尚未保存或已被移除。未保存的画布草稿不会在重启后恢复，请新建或从工作流库选择已有工作流。
+          </p>
+        ) : null}
+        {jumpNotice ? (
+          <p className="canvas-status" role="alert" data-testid="canvas-jump-notice">
+            {jumpNotice}
+            <button
+              className="button"
+              type="button"
+              data-testid="canvas-jump-notice-dismiss"
+              onClick={() => setJumpNotice(undefined)}
+            >
+              {t("Dismiss")}
+            </button>
+          </p>
+        ) : null}
+        {/* 「保存并继续」会让内核确认框（扩展会话确认，z-index 30）叠在本守卫之上，
+            守卫背景层必须低于它（26，向导 25 之上），否则确认框被压住点不到＝保存死锁（S3-1）。 */}
+        {pendingAction
+          ? createPortal(
+              <div className="tree-modal-backdrop tree-modal-backdrop--guard">
+                <section
+                  className="tree-modal tree-modal--compact"
+                  ref={dialogRef}
+                  tabIndex={-1}
+                  onKeyDown={(event) => {
+                    if (event.key === "Tab") trapDialogFocus(event, dialogRef.current);
+                    if (event.key === "Escape" && !resolving) {
+                      event.preventDefault();
+                      cancelPendingAction();
+                    }
+                  }}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="未保存修改"
+                >
+                  <h2>当前工作流有未保存修改</h2>
+                  <p>
+                    {guardSource === "injection"
+                      ? "注入区还有未发送的正文，离开当前目标会丢弃它。取消会保留当前画布。"
+                      : "保存后继续，或放弃本次修改。取消会保留当前画布。"}
+                  </p>
+                  <div className="wizard-actions">
+                    <button
+                      className="button"
+                      disabled={resolving}
+                      type="button"
+                      onClick={cancelPendingAction}
+                    >
+                      取消
+                    </button>
+                    <button
+                      className="button"
+                      disabled={resolving}
+                      type="button"
+                      onClick={() => {
+                        editorRef.current?.discard();
+                        // 不在此强设 dirty=false：未落盘骨架 discard 后 editorUnsaved 仍为 true，
+                        // 编辑器会按值变化自行上报；强设会把骨架的二次切走保护悄悄拆掉（S3-1）。
+                        setPendingAction(null);
+                        pendingAction();
+                      }}
+                    >
+                      放弃并继续
+                    </button>
+                    {/* 「保存并继续」只对编辑器草稿成立；注入正文触发的守卫无可保存对象，不显示。 */}
+                    {guardSource === "editor" ? (
+                      <button
+                        className="button button--primary"
+                        disabled={resolving}
+                        type="button"
+                        onClick={() => {
+                          setResolving(true);
+                          const actions = editorRef.current;
+                          if (!actions) {
+                            setResolving(false);
+                            setLoadError("编辑器尚未就绪，请取消后重试。");
+                            return;
+                          }
+                          void actions
+                            .save()
+                            .then((saved) => {
+                              if (saved) {
+                                setDirty(false);
+                                setPendingAction(null);
+                                pendingAction();
+                              } else cancelPendingAction();
+                            })
+                            .catch((error: unknown) => {
+                              setLoadError(error instanceof Error ? error.message : String(error));
+                              cancelPendingAction();
+                            })
+                            .finally(() => setResolving(false));
+                        }}
+                      >
+                        保存并继续
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+              </div>,
+              document.body,
+            )
+          : null}
+        {wizardOpen ? (
+          <WorkflowWizard
+            api={api}
+            identity={identity}
+            onClose={() => setWizardOpen(false)}
+            onStarted={(name) => {
+              setWizardOpen(false);
+              setLoading(true);
+              // 与 refresh 同一 requestId 守卫：启动后补拉不得被先前的刷新响应覆盖，
+              // 也不能反过来覆盖随后的一次显式刷新（同代际同 revision 去重同款生效）。
+              const currentRequest = ++requestId.current;
+              void pullCanvasAfterStart({
+                currentRequest,
+                requestId,
+                getCanvas: () => api.getCanvas(),
+                applyCanvasResult,
+                name,
+                project,
+                workspaceId,
+                beforeStartPaths,
+                workflowTabs,
+                changeTabs,
+                setLoadError,
+                setLoading,
+              }).catch((error: unknown) =>
+                setLoadError(error instanceof Error ? error.message : String(error)),
+              );
+            }}
+            initialRecipeName={selection?.kind === "recipe" ? selection.name : undefined}
+          />
+        ) : null}
+        <CanvasPageView
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          listView={listView}
+          runtimeInfo={
+            selection?.kind === "instance" && workspaceId ? (
+              <WorkflowRuntimeControls
+                key={JSON.stringify([workspaceId, selection.name, selection.path])}
+                api={api}
+                workspaceId={workspaceId}
+                instanceName={selection.name}
+                instancePath={selection.path}
+                sessionId={identity?.sessionId}
+                refreshToken={refreshToken}
+                selectedNode={activeTab?.selectedElementId}
+                onSelectNode={(name) => {
+                  // 注入草稿未发送时切节点先经守卫（与画布点选同口径），避免 detailKey 变化
+                  // 导致 injectionState 静默丢草稿（M2）。
+                  const apply = () => updateSelectedElement(name);
+                  if (pageInjectionDirtyRef.current) requestAction(apply);
+                  else apply();
+                }}
+                // 批2 片D：主控身份取实例行字段（快照总有，control 未读到也能展示）。
+                ownerSessionId={
+                  result?.state === "available"
+                    ? resolveInstance(result.instances, selection).instance?.ownerSessionId
+                    : undefined
+                }
+                onOpenSessionThread={
+                  onOpenSessionThread
+                    ? (sessionId) => {
+                        // 与详情栏同一守卫：编辑器有未保存改动或注入草稿未发送时先走确认流，
+                        // 再跳主控线程（m2，与 dirty 并联）。
+                        if (dirty || injectionDirty) {
+                          requestAction(() => {
+                            onOpenSessionThread(sessionId);
+                          });
+                          return true;
+                        }
+                        return onOpenSessionThread(sessionId);
+                      }
+                    : undefined
+                }
+                // 批2 F-minor4：control 读不出来时 owner 区仍显示快照读取时间（身份可显示的兜底）。
+                snapshotReadAt={readAt}
+                onChanged={refresh}
+                onEdit={(_name) =>
+                  jumpToRecipeEdit(
+                    selection.name,
+                    // selectedElementId 可能是 edge: 编码的连线选中；连线不是节点名，不带入选中。
+                    activeTab?.selectedElementId?.startsWith("edge:")
+                      ? undefined
+                      : activeTab?.selectedElementId,
+                  )
+                }
+                onOpenOwner={async (sessionId) => {
+                  if (!onActivateController || !activeTab || !onUpdateTabs)
+                    throw new Error("当前标签无法绑定主控。");
+                  const controller = { workspaceId, sessionId };
+                  // S4-1：同一主控会话只绑一个标签。会话已绑到别的标签时做「迁绑」——旧标签
+                  // 解绑、本标签绑定，一次整表写入，唯一性任意瞬间都成立；直接二次绑定会被
+                  // 主进程守卫拒绝，按钮从此永久灰死（S11-B2⑧）。「激活已绑定标签」的纯导航
+                  // 方案与运行控制面板的选中同步打架：离开本标签即卸载面板，回到本标签又是
+                  // 无绑定态（死循环），故弃（详见 S11-尾批实施记录）。
+                  const bound = workflowTabForSession(workflowTabs, controller);
+                  await onUpdateTabs(
+                    workflowTabs.map((tab) => {
+                      if (bound && bound.id !== activeTab.id && tab.id === bound.id) {
+                        const { controller: _dropped, ...unbound } = tab;
+                        return unbound;
+                      }
+                      return tab.id === activeTab.id ? { ...tab, controller } : tab;
+                    }),
+                    activeTab.id,
+                  );
+                }}
+              />
+            ) : null
+          }
+          catalog={catalog}
+          projectTabs={projectTabs}
+          activeTab={activeTab}
+          canInstallTemplate={!!identity && !controllerBusy}
+          onDeleteRecipe={deleteRecipe}
+          onOpenInNewTab={(name) =>
+            requestAction(() => openSelection({ kind: "recipe", name }, true))
+          }
+          hideLibrary={singleView}
+          onExitSingleView={singleView ? () => setEmbedded(false) : undefined}
+          onInstallTemplate={(templateId, name) =>
+            requestAction(() => {
+              if (!identity) {
+                setLoadError("请先建立主控会话，再安装模板。");
+                return;
+              }
+              setControllerBusy(true);
+              void api
+                .installWorkflowTemplate({ ...identity, templateId, name })
+                .then((value) => {
+                  if (value.state === "error") throw new Error(value.message);
+                  refresh();
+                })
+                .catch((error: unknown) =>
+                  setLoadError(error instanceof Error ? error.message : String(error)),
+                )
+                .finally(() => setControllerBusy(false));
+            })
+          }
+          tabs={
+            !singleView && workspaceId && onUpdateTabs ? (
+              <WorkflowTabs
+                tabs={projectTabs}
+                activeId={activeTab?.id}
+                dirty={dirty}
+                disabled={tabBusy}
+                onNew={createNewRecipe}
+                onSelect={(id) =>
+                  requestAction(() => {
+                    // 切换型 pendingAction：整表取 ref 最新值（守卫保存改名后旧闭包表
+                    // 会整表覆写新名，后到者胜，P3-1）。
+                    void changeTabs(tabSelectionRef.current.workflowTabs, id).catch(
+                      (error: unknown) =>
+                        setLoadError(error instanceof Error ? error.message : String(error)),
+                    );
+                  })
+                }
+                onClose={(id) =>
+                  requestAction(() => {
+                    // 关标签同时丢掉它的未保存骨架（守卫已在前面处理过保存/放弃）。
+                    setNewEntries((current) => {
+                      if (!(id in current)) return current;
+                      const next = { ...current };
+                      delete next[id];
+                      return next;
+                    });
+                    const tabs = tabSelectionRef.current.workflowTabs.filter(
+                      (row) => row.id !== id,
+                    );
+                    const activeId =
+                      id === activeWorkflowTabId
+                        ? (tabs.find((row) => row.workspaceId === workspaceId)?.id ?? "")
+                        : (activeWorkflowTabId ?? "");
+                    void changeTabs(tabs, activeId).catch((error: unknown) =>
+                      setLoadError(error instanceof Error ? error.message : String(error)),
+                    );
+                  })
+                }
+              />
+            ) : undefined
+          }
+          selection={selection}
+          manualRefreshToken={manualRefreshToken}
+          onEditRecipe={
+            result?.state === "available"
+              ? (instanceName, nodeName) => jumpToRecipeEdit(instanceName, nodeName)
+              : undefined
+          }
+          onOpenInstance={openInstanceSelection}
+          selectedNode={
+            selection?.kind === "instance" ? (activeTab?.selectedElementId ?? null) : undefined
+          }
+          onSelectedNodeChange={
+            selection?.kind === "instance"
+              ? (name) => updateSelectedElement(name ?? undefined)
+              : undefined
+          }
+          onSelectionChange={openSelection}
+          canSelect={(next) => {
+            if (
+              (!dirty && !injectionDirty) ||
+              (next.kind === selection?.kind &&
+                next.name === selection.name &&
+                next.path === selection.path)
+            )
+              return true;
+            requestAction(() => openSelection(next));
+            return false;
+          }}
+          recipeEditor={
+            editorEntry && catalog ? (
+              <RecipeCanvasEditor
+                key={JSON.stringify([workspaceId, editorEntry.name, editorEntry.revision])}
+                api={api}
+                entry={editorEntry}
+                catalog={catalog}
+                editorRef={editorRef}
+                identity={identity}
+                initialSelectedElementId={activeTab?.selectedElementId}
+                onSelectedElementIdChange={updateSelectedElement}
+                editingFromInstance={activeTab?.recipeSourceInstance}
+                onOpenScriptChat={handleOpenScriptChat}
+                onDirtyChange={setDirty}
+                onSaved={(name) => {
+                  setDirty(false);
+                  // 只删本次保存的骨架（属主标签或同名槽），别的标签的骨架不动。
+                  setNewEntries((current) => {
+                    const next: Record<string, RecipeEditorEntry> = {};
+                    for (const [key, value] of Object.entries(current)) {
+                      if (key === activeTab?.id || value.name === name) continue;
+                      next[key] = value;
+                    }
+                    return next;
+                  });
+                  setSelection({ kind: "recipe", name });
+                  if (activeTab && onUpdateTabs) {
+                    const tabs = workflowTabs.map((tab) =>
+                      tab.id === activeTab.id ? { ...tab, title: name, recipeName: name } : tab,
+                    );
+                    // 这份整表写入就是最新标签事实：同步登记进 ref。守卫「保存并继续」
+                    // 的 pendingAction 在保存 .then 微任务里立即执行，早于快照回传引发
+                    // 的重渲染，届时只有 ref 能拿到改名后的表；否则旧闭包整表写会覆掉
+                    // 新名（主进程整表替换后到者胜，S3 对抗审核 P3-1）。
+                    tabSelectionRef.current = { ...tabSelectionRef.current, workflowTabs: tabs };
+                    void onUpdateTabs(tabs, activeTab.id).catch((error: unknown) =>
+                      setLoadError(error instanceof Error ? error.message : String(error)),
+                    );
+                  }
+                  refresh();
+                }}
+              />
+            ) : undefined
+          }
+          api={api}
+          workspaceId={workspaceId}
+          workspaces={workspaces}
+          snapshotReadAt={readAt}
+          result={result ?? { state: "unavailable", code: "aggregates-unavailable", message: "" }}
+          loading={loading}
+          loadError={loadError}
+          onRefresh={() => requestAction(refresh)}
+          onStartWorkflow={() =>
+            requestAction(() => {
+              beforeStartPaths.current = new Set(
+                result?.state === "available" ? result.instances.map((row) => row.path) : [],
+              );
+              setWizardOpen(true);
+            })
+          }
+          onNewRecipe={createNewRecipe}
+          masterSessionLabel={
+            identity ? "主控会话已建立" : controllerBusy ? "正在建立主控会话…" : "建立主控会话"
+          }
+          masterSessionDisabled={controllerBusy || !!identity}
+          onOpenMasterSession={
+            onCreateController && selection
+              ? () => {
+                  if (controllerBusy || identity) return;
+                  setControllerBusy(true);
+                  // 创建即同批绑定到活动标签（主进程同次状态发布），身份随后由标签绑定派生。
+                  void onCreateController(`${selection.name} · 主控`, activeTab?.id)
+                    .catch((error: unknown) =>
+                      setLoadError(error instanceof Error ? error.message : String(error)),
+                    )
+                    .finally(() => setControllerBusy(false));
+                }
+              : undefined
+          }
+          onOpenSessionThread={
+            onOpenSessionThread
+              ? (sessionId) => {
+                  // 跳会话线程离开画布上下文：注入草稿未发送时同守卫（m2，与 dirty 并联）。
+                  if (dirty || injectionDirty) {
+                    requestAction(() => {
+                      onOpenSessionThread(sessionId);
+                    });
+                    return true;
+                  }
+                  return onOpenSessionThread(sessionId);
+                }
+              : undefined
+          }
+          onRequestMainControl={onRequestMainControl}
+          sessionId={identity?.sessionId}
+          guardLeave={requestAction}
+          onInjectionDirtyChange={handleInjectionDirty}
+        />
+      </Panel>
+      {chatLive ? (
+        <>
+          <Separator className="workflow-chat-separator" />
+          <Panel id="workflow-surface-chat" defaultSize="30%" minSize="100px">
+            <EmbeddedChat key={identity!.sessionId}>{embeddedChat}</EmbeddedChat>
+          </Panel>
+        </>
+      ) : null}
+    </Group>
+  );
+}
+
+export function CanvasPageView({
+  viewMode = "graph",
+  onViewModeChange,
+  listView,
+  catalog,
+  projectTabs = [],
+  activeTab,
+  onInstallTemplate,
+  canInstallTemplate,
+  onDeleteRecipe,
+  onOpenInNewTab,
+  hideLibrary,
+  onExitSingleView,
+  tabs,
+  recipeEditor,
+  runtimeInfo,
+  canSelect,
+  result,
+  loading,
+  loadError,
+  onRefresh,
+  onStartWorkflow,
+  onNewRecipe,
+  onOpenMasterSession,
+  masterSessionLabel,
+  masterSessionDisabled,
+  onOpenSessionThread,
+  onRequestMainControl,
+  onEditRecipe,
+  onOpenInstance,
+  api,
+  workspaceId,
+  workspaces,
+  snapshotReadAt,
+  selection,
+  onSelectionChange,
+  selectedNode,
+  manualRefreshToken,
+  onSelectedNodeChange,
+  sessionId,
+  guardLeave,
+  onInjectionDirtyChange,
+}: CanvasPageViewProps) {
+  const { t } = useI18n();
+  const [innerSelection, setInnerSelection] = useState<CanvasSelection | null>(null);
+  const [innerNode, setInnerNode] = useState<string | null>(null);
+  const [layoutPreference, setLayoutPreference] = useState(() =>
+    readCanvasViewPreference("pao:canvas-layout:v1"),
+  );
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 980px)").matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 980px)");
+    const update = () => setNarrow(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const [narrowLibraryExpanded, setNarrowLibraryExpanded] = useState(false);
+  const libraryCollapsed = narrow
+    ? !narrowLibraryExpanded
+    : (layoutPreference.libraryCollapsed ?? false);
+  const setLibraryCollapsed = (value: boolean) => {
+    if (narrow) setNarrowLibraryExpanded(!value);
+    else setLayoutPreference((current) => ({ ...current, libraryCollapsed: value }));
+  };
+  useEffect(() => {
+    saveCanvasViewPreference("pao:canvas-layout:v1", layoutPreference);
+  }, [layoutPreference]);
+  const [canvasExpanded, setCanvasExpanded] = useState(false);
+  useEffect(() => {
+    if (!canvasExpanded) return;
+    const exit = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCanvasExpanded(false);
+    };
+    window.addEventListener("keydown", exit);
+    return () => window.removeEventListener("keydown", exit);
+  }, [canvasExpanded]);
+  const activeSelection = selection !== undefined ? selection : innerSelection;
+  const activeNode = selectedNode !== undefined ? selectedNode : innerNode;
+  const select = (next: CanvasSelection) => {
+    if (canSelect && !canSelect(next)) return;
+    setInnerSelection(next);
+    setInnerNode(null);
+    onSelectionChange?.(next);
+  };
+  /**
+   * 批3a 注入草稿脏位（本地镜像）：详情栏经 onInjectionDirtyChange 上报后，
+   * selectNode 用它拦「切节点离开」（L168）——守卫走 guardLeave（CanvasPage 的
+   * requestAction 确认流）；同时原样上报给页级守卫拦「切选择/关窗」。
+   */
+  const injectionDirtyRef = useRef(false);
+  const handleInjectionDirty = useCallback(
+    (next: boolean) => {
+      injectionDirtyRef.current = next;
+      onInjectionDirtyChange?.(next);
+    },
+    [onInjectionDirtyChange],
+  );
+  const selectNode = (name: string | null) => {
+    const apply = () => {
+      setInnerNode(name);
+      onSelectedNodeChange?.(name);
+    };
+    if (guardLeave && injectionDirtyRef.current) guardLeave(apply);
+    else apply();
+  };
+
+  return (
+    <section
+      className={`canvas canvas-view${canvasExpanded ? " canvas-view--expanded" : ""}`}
+      data-testid="canvas-view"
+      data-expanded={canvasExpanded}
+    >
+      {tabs}
+      <header className="view-header canvas-toolbar">
+        <div className="view-header__actions">
+          {onViewModeChange ? (
+            <div className="canvas-view-switch" aria-label="工作流视图">
+              {(["graph", "list"] as const).map((mode) => (
+                <button
+                  className="button"
+                  type="button"
+                  key={mode}
+                  data-testid={`workflow-view-${mode}`}
+                  aria-pressed={viewMode === mode}
+                  onClick={() => onViewModeChange(mode)}
+                >
+                  {mode === "graph" ? "图" : "列表"}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {onStartWorkflow ? (
+            <button
+              className="button button--primary"
+              data-testid="canvas-start-workflow"
+              type="button"
+              onClick={onStartWorkflow}
+            >
+              {t("Start a workflow")}
+            </button>
+          ) : null}
+          {onOpenMasterSession ? (
+            <button
+              className="button"
+              data-testid="canvas-open-master-session"
+              type="button"
+              onClick={onOpenMasterSession}
+              disabled={masterSessionDisabled}
+            >
+              {masterSessionLabel ?? t("Open master session")}
+            </button>
+          ) : null}
+          <span className="canvas-toolbar__spacer" />
+          <button
+            className="button icon-button"
+            data-testid="canvas-refresh"
+            type="button"
+            disabled={loading}
+            onClick={onRefresh}
+            aria-label={t("Refresh")}
+            title={
+              snapshotReadAt
+                ? "画布最近读取：" + snapshotReadAt + " · 打开期间每 30 秒刷新"
+                : t("Refresh")
+            }
+          >
+            <RefreshIcon />
+          </button>
+          {!(activeSelection?.kind === "recipe" && recipeEditor) ? (
+            <button
+              type="button"
+              className="button canvas-expand"
+              data-testid="canvas-expand"
+              aria-pressed={canvasExpanded}
+              onClick={() => setCanvasExpanded((current) => !current)}
+            >
+              {canvasExpanded ? "退出专注画布（Esc）" : "专注画布"}
+            </button>
+          ) : null}
+          <details className="canvas-more">
+            <summary className="button" data-testid="canvas-more" aria-label="更多工作流操作">
+              <MoreIcon />
+              <span>更多</span>
+            </summary>
+            <div className="canvas-more__menu">
+              {!hideLibrary ? (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => setLibraryCollapsed(!libraryCollapsed)}
+                >
+                  {libraryCollapsed ? "展开工作流库" : "收起工作流库"}
+                </button>
+              ) : null}
+              {onExitSingleView ? (
+                <button
+                  className="button"
+                  data-testid="canvas-exit-single-view"
+                  type="button"
+                  onClick={onExitSingleView}
+                >
+                  返回工作流中心
+                </button>
+              ) : null}
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <div className="canvas-graph-content" hidden={viewMode !== "graph"}>
+        {runtimeInfo ? <div className="canvas-runtime-info">{runtimeInfo}</div> : null}
+        {loading ? (
+          <p className="canvas-status" role="status">
+            {t("Loading…")}
+          </p>
+        ) : null}
+
+        {loadError ? (
+          <p className="error-banner" role="alert" data-testid="canvas-load-error">
+            {t("The workflow canvas could not be loaded.")} {loadError}
+            {result.state === "available" ? " 上次成功内容仍保留，可能已过期。" : ""}
+            <button
+              className="button"
+              data-testid="canvas-load-error-retry"
+              type="button"
+              disabled={loading}
+              onClick={onRefresh}
+            >
+              重新读取
+            </button>
+          </p>
+        ) : null}
+
+        {!loading && result.state === "unavailable" ? (
+          <p className="error-banner" role="alert" data-testid="canvas-unavailable">
+            {result.message}
+          </p>
+        ) : null}
+
+        {/* S6-D1 视口不跳：刷新进行中（loading）只叠一行状态，不卸载已挂载的画布——
+          整块卸载重挂会把 ReactFlow 视口重置回 fitView，用户平移/缩放全丢。
+          首次加载时 result 是 unavailable 占位，本分支自然不进。 */}
+        {result.state === "available" ? (
+          <>
+            {result.error ? (
+              <p className="error-banner" role="alert" data-testid="canvas-top-error">
+                {result.error} 上次成功内容仍保留，可能已过期，请刷新重试。
+                <button
+                  className="button"
+                  data-testid="canvas-top-error-retry"
+                  type="button"
+                  disabled={loading}
+                  onClick={onRefresh}
+                >
+                  重新读取
+                </button>
+              </p>
+            ) : null}
+            <div
+              className={`canvas-layout${libraryCollapsed ? " canvas-layout--library-collapsed" : ""}${hideLibrary ? " canvas-layout--no-library" : ""}${!(activeSelection?.kind === "recipe" && recipeEditor) && activeNode ? " canvas-layout--with-detail" : ""}`}
+            >
+              {hideLibrary ? null : libraryCollapsed ? (
+                <button
+                  type="button"
+                  className="button canvas-library-expand"
+                  aria-label="展开工作流库"
+                  onClick={() => setLibraryCollapsed(false)}
+                >
+                  工作流库 ›
+                </button>
+              ) : (
+                <RecipeLibrary
+                  snapshot={result}
+                  catalog={catalog}
+                  projectTabs={projectTabs}
+                  activeTab={activeTab}
+                  canInstallTemplate={canInstallTemplate}
+                  onInstallTemplate={onInstallTemplate ?? (() => {})}
+                  onDeleteRecipe={onDeleteRecipe}
+                  onOpenInNewTab={onOpenInNewTab}
+                  selection={activeSelection}
+                  onSelect={select}
+                  onOpenInstance={onOpenInstance}
+                  onCollapse={() => setLibraryCollapsed(true)}
+                  workspaces={workspaces}
+                />
+              )}
+              {activeSelection?.kind === "recipe" && recipeEditor ? (
+                recipeEditor
+              ) : (
+                <CanvasDagPanel
+                  snapshot={result}
+                  selection={activeSelection}
+                  selectedNode={activeNode}
+                  api={api}
+                  onSelectNode={selectNode}
+                  onRequestMainControl={onRequestMainControl}
+                  onEditRecipe={onEditRecipe}
+                  onNewRecipe={onNewRecipe}
+                />
+              )}
+              {!(activeSelection?.kind === "recipe" && recipeEditor) && activeNode ? (
+                <CanvasDetailPanel
+                  snapshot={result}
+                  selection={activeSelection}
+                  selectedNode={activeNode}
+                  api={api}
+                  workspaceId={workspaceId}
+                  sessionId={sessionId}
+                  snapshotReadAt={snapshotReadAt}
+                  manualRefreshToken={manualRefreshToken}
+                  onOpenSessionThread={onOpenSessionThread}
+                  onRequestMainControl={onRequestMainControl}
+                  onEditRecipe={onEditRecipe}
+                  onInjectionDirtyChange={handleInjectionDirty}
+                  onClose={() => selectNode(null)}
+                />
+              ) : null}
+            </div>
+          </>
+        ) : null}
+      </div>
+      <div className="canvas-list-content" hidden={viewMode !== "list"}>
+        {listView}
+      </div>
+    </section>
+  );
+}
+
+/** 当前选中的 DAG 节点视图集：配方＝模板，实例＝清单＋卡现读（配方不可读时退化清单-only）。 */
+function dagNodesFor(
+  snapshot: CanvasSnapshot,
+  selection: CanvasSelection | null,
+): { nodes: CanvasNodeView[]; degraded: boolean; ambiguous: boolean } {
+  if (!selection) return { nodes: [], degraded: false, ambiguous: false };
+  if (selection.kind === "recipe") {
+    const entry = snapshot.recipes.find((row) => row.available && row.name === selection.name);
+    return {
+      nodes: entry?.available ? recipeDagNodes(entry.recipe) : [],
+      degraded: false,
+      ambiguous: false,
+    };
+  }
+  const { instance, ambiguous } = resolveInstance(snapshot.instances, selection);
+  if (!instance) return { nodes: [], degraded: false, ambiguous };
+  const recipe = recipeForInstance(snapshot, instance);
+  return {
+    nodes: instanceDagNodes(instance, recipe),
+    degraded: recipe === undefined,
+    ambiguous: false,
+  };
+}
+
+/** 节点持有的卡引用（去重保序），供「停止这张卡」指令与查卡入口使用。 */
+function canvasNodeCardRefs(node: CanvasNodeView): string[] {
+  const refs = [
+    ...(node.cardRef ? [node.cardRef] : []),
+    ...(node.cards ?? []).map((card) => card.cardRef),
+  ];
+  return [...new Set(refs)];
+}
+
+/** 「讨论这一步」指令：上交主控输入框，用户接着补讨论点。 */
+function discussNodeInstruction(instanceName: string, nodeName: string): string {
+  return `我想讨论运行记录「${instanceName}」里的节点「${nodeName}」：`;
+}
+
+/** 「停止这张卡」指令：与卡片工作台同口径，只停指定卡、不动流程定义。 */
+function stopNodeCardsInstruction(
+  instanceName: string,
+  nodeName: string,
+  cardRefs: readonly string[],
+): string {
+  return `把运行记录「${instanceName}」里节点「${nodeName}」的卡 ${cardRefs.join("、")} 停掉：请用 pao_change_status 改成 canceled 并写明依据；只停这几张卡，不要动流程定义，也不要把整条流程停掉。`;
+}
+
+/**
+ * 画布节点动作集（批3c）：详情栏按钮行与只读画布右键菜单共用。
+ * instance 选择才有卡语境；item 形态由父层决定（.button 或菜单项）。
+ */
+function CanvasNodeActions({
+  node,
+  instanceName,
+  instancePath,
+  api,
+  onRequestMainControl,
+  onEditRecipe,
+  onDone,
+}: {
+  readonly node: CanvasNodeView;
+  readonly instanceName: string;
+  readonly instancePath?: string;
+  readonly api?: PiDesktopApi;
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  /** 批4：实例→配方编辑跳转；带节点名时同名节点被选中。 */
+  readonly onEditRecipe?: (instanceName: string, nodeName?: string) => void;
+  readonly onDone?: () => void;
+}) {
+  const { t } = useI18n();
+  const cardRefs = canvasNodeCardRefs(node);
+  const viewCard = () => {
+    if (api && instancePath && cardRefs.length > 0) {
+      void api.openCanvasCard({ instancePath, nodeName: node.name }).catch(() => undefined);
+    }
+    onDone?.();
+  };
+  const discuss = () => {
+    onRequestMainControl?.(discussNodeInstruction(instanceName, node.name), t("Discuss this step"));
+    onDone?.();
+  };
+  const stop = () => {
+    onRequestMainControl?.(
+      stopNodeCardsInstruction(instanceName, node.name, cardRefs),
+      t("Stop this card"),
+    );
+    onDone?.();
+  };
+  return (
+    <>
+      {onEditRecipe ? (
+        <button
+          className="button canvas-node-action"
+          data-testid="canvas-node-action-edit-recipe"
+          type="button"
+          onClick={() => {
+            onEditRecipe(instanceName, node.name);
+            onDone?.();
+          }}
+        >
+          {t("Edit this recipe")}
+        </button>
+      ) : null}
+      {api && instancePath && cardRefs.length > 0 ? (
+        <button
+          className="button canvas-node-action"
+          data-testid="canvas-node-action-card"
+          type="button"
+          onClick={viewCard}
+        >
+          {t("Expand this card")}
+        </button>
+      ) : null}
+      {onRequestMainControl ? (
+        <button
+          className="button canvas-node-action"
+          data-testid="canvas-node-action-discuss"
+          type="button"
+          onClick={discuss}
+        >
+          {t("Discuss this step")}
+        </button>
+      ) : null}
+      {onRequestMainControl && cardRefs.length > 0 ? (
+        <button
+          className="button canvas-node-action"
+          data-testid="canvas-node-action-stop"
+          type="button"
+          onClick={stop}
+        >
+          {t("Stop this card")}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function CanvasDagPanel({
+  snapshot,
+  selection,
+  selectedNode,
+  api,
+  onSelectNode,
+  onRequestMainControl,
+  onEditRecipe,
+  onNewRecipe,
+}: {
+  readonly snapshot: CanvasSnapshot;
+  readonly selection: CanvasSelection | null;
+  readonly onNewRecipe?: () => void;
+  readonly selectedNode: string | null;
+  readonly api?: PiDesktopApi;
+  readonly onSelectNode: (name: string | null) => void;
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  readonly onEditRecipe?: (instanceName: string, nodeName?: string) => void;
+}) {
+  const { t } = useI18n();
+  const { nodes, degraded } = dagNodesFor(snapshot, selection);
+  const [menu, setMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
+  const menuNode = menu ? nodes.find((node) => node.name === menu.nodeId) : undefined;
+  if (selection?.kind === "instance") {
+    return (
+      <>
+        <InstanceWorkflowView
+          snapshot={snapshot}
+          instanceName={selection.name}
+          instancePath={selection.path}
+          selectedNode={selectedNode}
+          onEditRecipe={onEditRecipe}
+          onSelectNode={(name) => {
+            setMenu(null);
+            onSelectNode(name);
+          }}
+          onNodeContextMenu={(event, nodeId) => {
+            onSelectNode(nodeId);
+            setMenu({ x: event.clientX, y: event.clientY, nodeId });
+          }}
+        />
+        {menu && menuNode ? (
+          <div
+            className="canvas-node-menu"
+            data-testid="canvas-node-menu"
+            role="menu"
+            style={{ left: menu.x, top: menu.y }}
+            onPointerLeave={() => setMenu(null)}
+          >
+            <CanvasNodeActions
+              node={menuNode}
+              instanceName={selection.name}
+              instancePath={selection.path}
+              api={api}
+              onRequestMainControl={onRequestMainControl}
+              onEditRecipe={onEditRecipe}
+              onDone={() => setMenu(null)}
+            />
+          </div>
+        ) : null}
+      </>
+    );
+  }
+  return (
+    <div className="canvas-board" data-testid="canvas-dag">
+      {degraded ? (
+        <p className="canvas-status" role="status" data-testid="canvas-dag-degraded">
+          {t("The recipe for this instance could not be read; nodes are listed without edges.")}
+        </p>
+      ) : null}
+      {nodes.length === 0 ? (
+        <EmptyState
+          icon={<ForkIcon />}
+          title="选择左侧的工作流，或新建一个。"
+          action={
+            onNewRecipe ? (
+              <button className="button" type="button" onClick={onNewRecipe}>
+                新建工作流
+              </button>
+            ) : undefined
+          }
+          data-testid="canvas-dag-empty"
+        />
+      ) : (
+        <WorkflowEditor
+          nodes={nodes}
+          readOnly
+          selectedNode={selectedNode}
+          onSelectNode={(name) => onSelectNode(name)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * 详情分区初始折叠态：只开基本区；当前快照失败默认展开回执区
+ * （历史失败但当前已恢复不触发，批1 §4 L95）。导出供直测。
+ */
+export function initialDetailSections(node: CanvasNodeView | undefined): CanvasDetailSectionState {
+  return {
+    basics: true,
+    session: false,
+    io: false,
+    script: false,
+    receipts: node?.status === "failed",
+    artifacts: false,
+    usage: false,
+    logs: false,
+    supervision: false,
+    injection: false,
+  };
+}
+
+// ── 批2 会话与监督分区 ──────────────────────────────────────────────────────
+
+/** 会话分区目标：worker＝当前卡执行锚点；minister＝节点绑定部长（需 instanceId+round+绑定齐）。 */
+export type CanvasSessionTarget = "worker" | "minister";
+
+/**
+ * worker 锚点解析（批2 §4 L118）：detail.executions 已按所选卡过滤且只含当前轮锚点。
+ * 唯一 current → 自动选；多个 current 或无 current 但有锚点 → 不猜，交给可见选择器；
+ * 用户显式选中的 selectedExecId 必须在锚点集内才算数。
+ */
+export function canvasWorkerAnchor(
+  executions: readonly CanvasNodeExecutionRef[],
+  selectedExecId: string | undefined,
+): { readonly execId?: string; readonly needsPick: boolean } {
+  if (selectedExecId && executions.some((row) => row.execId === selectedExecId)) {
+    return { execId: selectedExecId, needsPick: false };
+  }
+  const currents = executions.filter((row) => row.current === true);
+  if (currents.length === 1) return { execId: currents[0]!.execId, needsPick: false };
+  return { needsPick: executions.length > 0 };
+}
+
+/**
+ * 会话 input 组装（批2）：worker 走 executionId；minister 三件套缺一给具体原因，
+ * 不发空参数请求。返回 {input} 或 {reason}——reason 是语义码（CanvasSessionReason），
+ * 不是文案；渲染处经 sessionReasonLabel 映射 t()，本函数保持纯逻辑不引 i18n。
+ * workspaceId 缺省＝无会话通道语境。
+ */
+export function canvasSessionInput(input: {
+  readonly target: CanvasSessionTarget;
+  readonly workspaceId?: string;
+  readonly detail?: CanvasNodeDetailData;
+  readonly node?: CanvasNodeView;
+  readonly instanceId?: string;
+  readonly selectedExecId?: string;
+  /** 锚点详情还在深读途中：worker 缺锚点先显示读取中而非「没有锚点」。 */
+  readonly detailLoading?: boolean;
+}): { readonly input: WorkboardSessionInput } | { readonly reason: CanvasSessionReason } {
+  if (!input.workspaceId) return { reason: "no-workspace" };
+  if (input.target === "minister") {
+    if (!input.instanceId) return { reason: "missing-instance-id" };
+    if (input.node?.round === undefined) return { reason: "missing-round" };
+    if (!input.node?.ministerSessionId) return { reason: "missing-minister" };
+    if (!input.node.name) return { reason: "missing-node-name" };
+    return {
+      input: {
+        kind: "minister",
+        workspaceId: input.workspaceId,
+        instanceId: input.instanceId,
+        nodeName: input.node.name,
+        round: input.node.round,
+      },
+    };
+  }
+  const executions = input.detail?.executions;
+  if (!executions) {
+    return { reason: input.detailLoading ? "anchors-loading" : "anchors-not-read" };
+  }
+  const anchor = canvasWorkerAnchor(executions, input.selectedExecId);
+  if (anchor.execId) {
+    return {
+      input: { kind: "worker", workspaceId: input.workspaceId, executionId: anchor.execId },
+    };
+  }
+  if (anchor.needsPick) return { reason: "pick-anchor" };
+  return { reason: "no-anchor" };
+}
+
+/**
+ * 监督分区状态枚举（批2 §4 L126/L128）：部长＝不适用(直接|脚本)/尚未绑定/已断开/状态未知。
+ * 死判信号：holdKind="minister_disconnected"（内核挂起类投影）。ministerDropped 是 driver
+ * 侧函数语义不是 canvas 投影字段——画布经 holdKind 到达，无同名字段可读；字段缺省→按未知
+ * 处理，不从 ministerSessionId 有值推导存活。
+ */
+export function canvasMinisterStatus(
+  node: CanvasNodeView | undefined,
+): "not-applicable" | "unbound" | "disconnected" | "unknown" {
+  if (!node) return "unknown";
+  if (node.executionMode === "直接" || node.executionMode === "脚本") return "not-applicable";
+  if (!node.ministerSessionId) return "unbound";
+  if (node.holdKind === "minister_disconnected") return "disconnected";
+  return "unknown";
+}
+
+// ── 批3a 注入分区 ─────────────────────────────────────────────────────────
+
+/** 注入目标种类（与 §4 命令面 target 同值）。 */
+export type CanvasInjectionTarget = CanvasInjectionTargetKind;
+
+/** 注入目标解析结果（批3a §4 L168）：节点面板 worker → 显式选择 → 部长 → owner；实例入口 owner。 */
+export interface CanvasInjectionPlan {
+  /** 目标选项（含身份摘要；worker 带执行标识）。 */
+  readonly options: readonly CanvasInjectionSectionProps["options"][number][];
+  /** 默认目标（options 内第一项优先顺位命中的）。 */
+  readonly target: CanvasInjectionSectionProps["target"];
+  /** 多 worker 需要显式选择时为 true（target 仍回落顺位最高项，但界面应展示选择器）。 */
+  readonly workerNeedsPick: boolean;
+}
+
+/**
+ * 注入目标解析（批3a §4 L168；纯函数不引 i18n/React）：
+ * - worker 候选＝detail.executions 中「在途」执行锚点（映射状态 运行中 或 current=true；
+ *   内核 readDesktopWorkerActivity 以执行映射最近一条为准）。唯一在途→默认；多个→全部列出
+ *   交用户显式选择；显式选中不在在途集内→回落顺位。
+ * - minister 候选＝executionMode 非「脚本/直接」且 ministerSessionId 已绑定。
+ * - owner 候选＝instance.ownerSessionId 存在。
+ * - 顺位：worker（唯一 in-flight）→ 多 worker 时仍给选项但标记 needsPick → minister → owner。
+ * - 脚本节点（executionMode==="脚本"）不提供 worker/minister 注入（L168）。
+ */
+export function canvasInjectionPlan(input: {
+  readonly detail?: CanvasNodeDetailData;
+  readonly node?: CanvasNodeView;
+  readonly ownerSessionId?: string;
+  /** 用户显式选中的目标（kind＋worker 执行标识）；失效时按顺位回落。 */
+  readonly selected?: { readonly kind: CanvasInjectionTargetKind; readonly executionId?: string };
+}): CanvasInjectionPlan {
+  const options: CanvasInjectionSectionProps["options"][number][] = [];
+  const executions = input.detail?.executions ?? [];
+  /**
+   * 在途＝执行映射最近一条「运行中」（与内核 pickSession 同口径，canvas.ts L361）。
+   * 卡回执回填的锚点没有映射状态，不算在途；「启动」态尚未拉起（pid>0 才写运行中），
+   * 也不注入——runner.injectWorkerMessage 按 #active 定位，执行映射里无 active entry 会拒。
+   */
+  const inFlight = executions.filter((row) => row.status === "运行中");
+  /**
+   * 脚本节点（executionMode==="脚本"）不提供 worker/minister 注入（L168）——
+   * 脚本无会话宿主可注；worker 选项与部长选项一并剔除，只留 owner。
+   * 直接节点无部长（canvasMinisterStatus 同口径），worker 在途锚点仍有效。
+   */
+  const scriptNode = input.node?.executionMode === "脚本";
+  const ministerEligible =
+    !scriptNode &&
+    input.node?.executionMode !== "直接" &&
+    input.node?.ministerSessionId !== undefined;
+  if (!scriptNode) {
+    for (const row of inFlight) {
+      options.push({
+        kind: "worker",
+        executionId: row.execId,
+        label: `worker ${row.execId}${row.attempt !== undefined ? ` · attempt ${row.attempt}` : ""}`,
+      });
+    }
+  }
+  if (ministerEligible && input.node?.ministerSessionId) {
+    options.push({
+      kind: "minister",
+      label: `minister ${input.node.ministerSessionId}`,
+    });
+  }
+  if (input.ownerSessionId) {
+    options.push({ kind: "owner", label: `owner ${input.ownerSessionId}` });
+  }
+  const workerNeedsPick = inFlight.length > 1;
+  /** 显式选中仍在选项内→用显式值；否则按顺位回落第一个可用项。target 只带身份不带 label。 */
+  const selected = input.selected
+    ? options.find(
+        (option) =>
+          option.kind === input.selected?.kind &&
+          (option.kind !== "worker" || option.executionId === input.selected?.executionId),
+      )
+    : undefined;
+  const fallback = selected ?? options[0];
+  const target: CanvasInjectionSectionProps["target"] = fallback
+    ? {
+        kind: fallback.kind,
+        ...(fallback.executionId !== undefined ? { executionId: fallback.executionId } : {}),
+      }
+    : { kind: "owner" as const };
+  return { options, target, workerNeedsPick };
+}
+
+// 批2 会话正文体＝共享件 WorkboardSessionBody（workboard/session-body.tsx，与看板页同源）。
+// 父层以 key={input 序列化} 强制重建清空旧内容与 offset；折叠态函数组件不被调用即零请求。
+
+/**
+ * 批3a 注入命令组装（纯函数供定向测试）：按目标组 controlWorkflow 入参。
+ * - owner 不携带 nodeName/round（契约禁止伪造节点关联）；
+ * - minister/worker 需要 nodeName+round；round 缺省返回 {block} 不发 0 编数；
+ * - worker 还需要 executionId/cardRef/attempt，缺件返回 {block} 不发空串/0。
+ * 返回 {command} 或 {block: reasonKey}——调用方把 reasonKey 经 i18n 显示为拒绝原因。
+ */
+export function canvasInjectionCommand(input: {
+  readonly workspaceId: string;
+  readonly sessionId: string;
+  readonly instanceId: string;
+  readonly nodeName: string;
+  readonly round?: number;
+  readonly text: string;
+  readonly target: {
+    readonly kind: CanvasInjectionTargetKind;
+    readonly executionId?: string;
+  };
+  /** worker 目标的卡引用（selectedCard ?? node.cardRef ?? detail.card.cardRef 决议后的值）。 */
+  readonly cardRef?: string;
+  /** worker 目标的尝试号（detail.executions 匹配项 ?? detail.card.attempts 决议后的值）。 */
+  readonly attempt?: number;
+}):
+  | { readonly command: WorkflowControlCommandInput; readonly block?: undefined }
+  | { readonly block: string; readonly command?: undefined } {
+  const base = {
+    workspaceId: input.workspaceId,
+    sessionId: input.sessionId,
+    instanceId: input.instanceId,
+    action: "inject" as const,
+    target: input.target.kind,
+    text: input.text,
+  };
+  if (input.target.kind === "owner") {
+    return { command: base };
+  }
+  if (input.round === undefined) {
+    return { block: "The current node round is not bound; the injection cannot be sent." };
+  }
+  const nodePart = { nodeName: input.nodeName, round: input.round };
+  if (input.target.kind === "minister") {
+    return { command: { ...base, ...nodePart } };
+  }
+  // worker
+  if (!input.target.executionId) {
+    return { block: "The worker execution anchor is missing; pick an in-flight worker first." };
+  }
+  if (!input.cardRef) {
+    return { block: "The card reference for the worker execution cannot be determined." };
+  }
+  if (!input.attempt) {
+    return { block: "The attempt number for the worker execution cannot be determined." };
+  }
+  return {
+    command: {
+      ...base,
+      ...nodePart,
+      cardRef: input.cardRef,
+      executionId: input.target.executionId,
+      attempt: input.attempt,
+    },
+  };
+}
+
+function CanvasDetailPanel({
+  snapshot,
+  selection,
+  selectedNode,
+  api,
+  workspaceId,
+  sessionId,
+  snapshotReadAt,
+  onOpenSessionThread,
+  onRequestMainControl,
+  onEditRecipe,
+  manualRefreshToken,
+  onInjectionDirtyChange,
+  onClose,
+}: {
+  readonly snapshot: CanvasSnapshot;
+  readonly selection: CanvasSelection | null;
+  readonly selectedNode: string | null;
+  /** 供 D8d 深读与「查看卡」；缺省＝右栏只渲染 v1 摘要字段（受控组件测试）。 */
+  readonly api?: PiDesktopApi;
+  /** 批2：会话读取入参必须绑定已登记工作区；缺省时分区如实提示。 */
+  readonly workspaceId?: string;
+  /** 批3a：注入发起会话（本标签 owner sessionId）；缺省＝注入区如实提示不发命令。 */
+  readonly sessionId?: string;
+  /** 批3a 注入草稿脏位上报（有未发送正文→true）；供页级离开守卫拦「切节点/切选择」。 */
+  readonly onInjectionDirtyChange?: (dirty: boolean) => void;
+  /** 画布快照最近读取时间，用于监督状态“读取时间”。 */
+  readonly snapshotReadAt?: string;
+  readonly onOpenSessionThread?: (sessionId: string) => boolean;
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  readonly onEditRecipe?: (instanceName: string, nodeName?: string) => void;
+  /** 非静默刷新代际：递增时清详情缓存，展开分区经懒加载判定重读（批1 §4 L96）。 */
+  readonly manualRefreshToken?: number;
+  readonly onClose?: () => void;
+}) {
+  const { t } = useI18n();
+  const { nodes, ambiguous: ambiguousInstance } = dagNodesFor(snapshot, selection);
+  const node = selectedNode ? nodes.find((item) => item.name === selectedNode) : undefined;
+  const instance =
+    selection?.kind === "instance"
+      ? resolveInstance(snapshot.instances, selection).instance
+      : undefined;
+  const [cardMessage, setCardMessage] = useState<string | undefined>();
+  const [sessionNote, setSessionNote] = useState<string | undefined>();
+  const [cardSelection, setCardSelection] = useState<{ key: string; ref: string }>();
+  const cardKey = `${instance?.path ?? ""}\u0000${selectedNode ?? ""}`;
+  const selectedCard =
+    cardSelection?.key === cardKey &&
+    node?.cards?.some((card) => card.cardRef === cardSelection.ref)
+      ? cardSelection.ref
+      : undefined;
+
+  const instancePath = instance?.path;
+  /**
+   * 分区折叠态（批1 懒加载挂钩点）：按选择键记账，键不匹配回落当前节点初始态
+   * （当前快照失败→回执区默认展开）。不走 effect 重置——渲染当拍即是新键初始态，
+   * 懒加载判定不会拿旧键展开态误触发新选择的读取。
+   */
+  const [expandedState, setExpandedState] = useState<{
+    readonly key: string;
+    readonly value: CanvasDetailSectionState;
+  }>();
+  /** 详情缓存键：实例路径＋节点＋所选卡三者唯一；切实例/节点/卡后旧响应不得落入。 */
+  const detailKey = `${instancePath ?? ""}\u0000${selectedNode ?? ""}\u0000${selectedCard ?? ""}`;
+  const expanded: CanvasDetailSectionState =
+    expandedState?.key === detailKey ? expandedState.value : initialDetailSections(node);
+  const onToggleSection = (id: CanvasDetailSectionId, next: boolean) =>
+    setExpandedState({ key: detailKey, value: { ...expanded, [id]: next } });
+  /** 会话分区目标按详情键记账；切实例/节点/卡后回到 worker 默认并清空锚点选择。 */
+  const [sessionTargetState, setSessionTargetState] = useState<{
+    readonly key: string;
+    readonly target: CanvasSessionTarget;
+    readonly execId?: string;
+  }>();
+  const sessionTarget =
+    sessionTargetState?.key === detailKey
+      ? sessionTargetState
+      : { key: detailKey, target: "worker" as const };
+  const setSessionTarget = (target: CanvasSessionTarget, execId?: string) =>
+    setSessionTargetState({ key: detailKey, target, ...(execId ? { execId } : {}) });
+  /**
+   * 注入草稿（批3a）：按详情键记账——text/target/sending/result 同键成组。
+   * 切实例/节点/卡后新键回落空草稿（自然满足「切节点离开」由既有 dirty/选择守卫承接，
+   * 旧键正文不冒充新节点的草稿）；同键内切目标保留 text（L168「切目标保留正文但更新目标标识」）。
+   */
+  const [injectionState, setInjectionState] = useState<{
+    readonly key: string;
+    readonly text: string;
+    readonly target?: { readonly kind: CanvasInjectionTargetKind; readonly executionId?: string };
+    readonly sending?: boolean;
+    readonly result?: {
+      readonly kind: "delivered" | "queued" | "refused" | "unknown";
+      readonly message?: string;
+    };
+  }>();
+  const injection =
+    injectionState?.key === detailKey ? injectionState : { key: detailKey, text: "" };
+  /** 批3a：未发送正文上报离开守卫（与编辑器 dirty 并联）；detailKey 变化时本组件已回落空草稿。 */
+  const injectionDirty = injection.text.trim().length > 0;
+  const lastReportedDirty = useRef(false);
+  useEffect(() => {
+    if (lastReportedDirty.current === injectionDirty) return;
+    lastReportedDirty.current = injectionDirty;
+    onInjectionDirtyChange?.(injectionDirty);
+  }, [injectionDirty, onInjectionDirtyChange]);
+  // 卸载（切实例/关详情栏/组件卸载）时归还脏位——否则旧脏位残留在页级守卫上拦一切离开。
+  useEffect(
+    () => () => {
+      if (lastReportedDirty.current) onInjectionDirtyChange?.(false);
+    },
+    [onInjectionDirtyChange],
+  );
+  /**
+   * 详情缓存（按选择键记账）：detail/message/readAt/stats 同键成组；
+   * 键不匹配＝当前选择未拉过，切回已读选择即时恢复，旧键值不冒充已读。
+   */
+  const [detailState, setDetailState] = useState<{
+    readonly key: string;
+    readonly detail?: CanvasNodeDetailData;
+    readonly message?: string;
+    readonly readAt?: string;
+    /** 本条目详情已含会话日志统计（执行日志区第二趟请求置位）。 */
+    readonly stats?: boolean;
+  }>();
+  const detailEntry = detailState?.key === detailKey ? detailState : undefined;
+  const detail = detailEntry?.detail;
+  const detailMessage = detailEntry?.message;
+  const detailReadAt = detailEntry?.readAt;
+  /** 在途请求的选择键集合：同键在途不重复发，异键并行允许（旧键响应由守卫丢弃）。 */
+  const inFlightKeys = useRef(new Set<string>());
+  /** 当前选择键：响应落地时比对，切实例/节点/卡后旧响应不写入（批1 §4 L96）。 */
+  const selectionKeyRef = useRef(detailKey);
+  selectionKeyRef.current = detailKey;
+  /** 手动重试计数：失败后点「重试」自增，重新进入一次懒加载判定（不自动重发）。 */
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  useEffect(() => {
+    setCardMessage(undefined);
+    setSessionNote(undefined);
+    // detailState/expandedState 均按选择键记账，旧键值不冒充已读；detail 缓存切回已读
+    // 选择可恢复，但 expandedState 随选择键重置（回初始分区态，不保留旧展开态）；
+    // 在途旧键响应由 selectionKeyRef 守卫丢弃（批1 §4 L96）。
+  }, [api, instancePath, selectedNode, selectedCard]);
+
+  // 非静默刷新（手动/初载/运行控制变更后重读）：清详情缓存，仅当前展开分区
+  // 沿下方懒加载判定重读；30s 轮询不递增 manualRefreshToken（§4 L96）。
+  const lastRefreshToken = useRef(manualRefreshToken);
+  useEffect(() => {
+    if (lastRefreshToken.current === manualRefreshToken) return;
+    lastRefreshToken.current = manualRefreshToken;
+    setDetailState(undefined);
+  }, [manualRefreshToken]);
+
+  // 详情懒加载：任一详情分区（worker 会话锚点/io/回执/产物/用量/日志）展开才发
+  // getCanvasNodeDetail；worker 会话需要 detail.executions 解析锚点，minister 会话不需要。
+  // 同选择键只拉一次；日志统计随 logs 区首次展开单独带 includeSessionStats 重拉一趟
+  // （结果整体替换缓存——详情 IPC 一次回全部，stats 是同一详情上的增读选项）。
+  const deepOpen =
+    (expanded.session && sessionTarget.target === "worker") ||
+    expanded.io ||
+    // 批3b-U 脚本区：正文/超时/声明产物来自 detail.card 冻结字段，展开即拉详情。
+    expanded.script ||
+    expanded.receipts ||
+    expanded.artifacts ||
+    expanded.usage ||
+    expanded.logs ||
+    // 批3a 注入：worker 目标需 detail.executions 判在途锚点，展开注入区即拉详情。
+    expanded.injection;
+  useEffect(() => {
+    const key = detailKey;
+    const decision = canvasDetailFetchPlan({
+      fetchable: Boolean(api && instancePath && selectedNode),
+      deepOpen,
+      logsOpen: expanded.logs,
+      detailLoaded: detailEntry !== undefined && detailEntry.detail !== undefined,
+      statsLoaded: detailEntry?.stats === true,
+      inFlight: inFlightKeys.current.has(key),
+    });
+    if (decision.action !== "fetch" || !api || !instancePath || !selectedNode) return;
+    inFlightKeys.current.add(key);
+    api
+      .getCanvasNodeDetail({
+        instancePath,
+        nodeName: selectedNode,
+        ...(selectedCard ? { cardRef: selectedCard } : {}),
+        ...(decision.includeSessionStats ? { includeSessionStats: true } : {}),
+      })
+      .then((result) => {
+        inFlightKeys.current.delete(key);
+        if (selectionKeyRef.current !== key) return; // 拒旧：选择已切走
+        if (result.state === "ok") {
+          setDetailState({
+            key,
+            detail: result.detail,
+            readAt: new Date().toLocaleTimeString(),
+            ...(decision.includeSessionStats ? { stats: true } : {}),
+          });
+        } else {
+          setDetailState((prev) => ({
+            key,
+            ...(prev?.key === key && prev.detail !== undefined
+              ? { detail: prev.detail, readAt: prev.readAt }
+              : {}),
+            message: result.message,
+          }));
+        }
+      })
+      .catch((error: unknown) => {
+        inFlightKeys.current.delete(key);
+        if (selectionKeyRef.current !== key) return;
+        setDetailState((prev) => ({
+          key,
+          ...(prev?.key === key && prev.detail !== undefined
+            ? { detail: prev.detail, readAt: prev.readAt }
+            : {}),
+          message: error instanceof Error ? error.message : String(error),
+        }));
+      });
+    // retryNonce 是失败后手动重试的重新触发口，不直接进入判定输入。
+  }, [
+    api,
+    instancePath,
+    selectedNode,
+    selectedCard,
+    detailKey,
+    deepOpen,
+    expanded.logs,
+    detailEntry?.detail,
+    detailEntry?.stats,
+    retryNonce,
+  ]);
+
+  /**
+   * 批3b-U 当前机脚本解释器探测：仅脚本节点展开脚本分区时经 api 拉一次（只读零输入）。
+   * 结果按「当前机将用」如实显示——执行时未持久化 interpreter，不是历史执行当时值。
+   * 按选择键记账（与 detailState 同口径）：切实例/节点/卡后旧值不冒充，切回已读选择即时恢复；
+   * 在途请求按选择键集合判重，旧键响应由 selectionKeyRef 守卫丢弃（批1 §4 L96 同款）。
+   */
+  const [interpreterState, setInterpreterState] = useState<{
+    readonly key: string;
+    readonly value?: CanvasScriptInterpreter;
+    readonly loading: boolean;
+  }>();
+  const scriptNode = node?.executionMode === "脚本";
+  const interpreterEntry = interpreterState?.key === detailKey ? interpreterState : undefined;
+  const interpreterInFlight = useRef(new Set<string>());
+  useEffect(() => {
+    if (!api || !scriptNode || !expanded.script) return;
+    const key = detailKey;
+    if (interpreterEntry !== undefined || interpreterInFlight.current.has(key)) return;
+    interpreterInFlight.current.add(key);
+    setInterpreterState({ key, loading: true });
+    let cancelled = false;
+    const settle = (value: CanvasScriptInterpreter) => {
+      interpreterInFlight.current.delete(key);
+      if (cancelled || selectionKeyRef.current !== key) return;
+      setInterpreterState({ key, value, loading: false });
+    };
+    api
+      .getCanvasScriptInterpreter()
+      .then(settle)
+      .catch((error: unknown) => {
+        settle({
+          available: false,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, scriptNode, expanded.script, detailKey, interpreterEntry]);
+
+  const openCard = () => {
+    if (!api || !instancePath || !selectedNode) return;
+    setCardMessage(undefined);
+    void api
+      .openCanvasCard({
+        instancePath,
+        nodeName: selectedNode,
+        ...(selectedCard ? { cardRef: selectedCard } : {}),
+      })
+      .then((result) => {
+        if (!result.ok) setCardMessage(result.message);
+      })
+      .catch((error: unknown) =>
+        setCardMessage(error instanceof Error ? error.message : String(error)),
+      );
+  };
+
+  const openSession = (sessionId: string) => {
+    setSessionNote(undefined);
+    if (!onOpenSessionThread || !onOpenSessionThread(sessionId)) {
+      setSessionNote(t("This session is not open in this app."));
+    }
+  };
+
+  const detailLoading = deepOpen && detail === undefined && detailMessage === undefined;
+  /**
+   * 会话 input 稳定引用（F-major）：canvasSessionInput 每次返回新对象，直接内联会让
+   * WorkboardSessionBody 的 useCallback([input,read]) 随父层任何重渲染换引用、effect 清场重读。
+   * 这里按「决定 input/reason 内容的输入」记忆返回值——deps 列 canvasSessionInput 的全部入参
+   * 身份（node 按字段展开，因 dagNodesFor 每次渲染新建节点对象）；输入没变时返回同一
+   * resolution 对象，session.input 引用稳定，换会话目标/锚点时 deps 变化自然重算。
+   */
+  const sessionResolution = useMemo(
+    () =>
+      canvasSessionInput({
+        target: sessionTarget.target,
+        workspaceId,
+        detail,
+        node,
+        instanceId: instance?.instanceId,
+        selectedExecId: sessionTarget.execId,
+        detailLoading,
+      }),
+    // node 字段展开见上注释（exhaustive-deps 规则本仓未启用，无需 disable）。
+    [
+      sessionTarget.target,
+      sessionTarget.execId,
+      workspaceId,
+      detail,
+      detailLoading,
+      instance?.instanceId,
+      node?.name,
+      node?.round,
+      node?.ministerSessionId,
+    ],
+  );
+  /**
+   * 会话读取入口稳定引用（F-major，与看板 execution-session-view 同款）：
+   * 内联箭头函数每次渲染新建 → WorkboardSessionBody 的 run 依赖 [input,read] 被击穿。
+   */
+  const readWorkboardSession = useCallback(
+    (query: WorkboardSessionInput) => api!.getWorkboardSession(query),
+    [api],
+  );
+  const ministerStatus = canvasMinisterStatus(node);
+  const openMinisterSession = () => {
+    setSessionTarget("minister");
+    setExpandedState({ key: detailKey, value: { ...expanded, session: true } });
+  };
+
+  /**
+   * 批3a 注入目标解析：worker 需要 detail.executions（与会话 worker 锚点同一深读数据，
+   * 懒加载挂钩即 expanded.injection ——注入分区展开即拉详情）；minister/owner 只看快照字段。
+   * 注入分区展开计入 deepOpen：worker 顺位必须等 detail.executions 到位才能判。
+   */
+  const injectionPlan = useMemo(
+    () =>
+      canvasInjectionPlan({
+        detail,
+        node,
+        ownerSessionId: instance?.ownerSessionId,
+        selected: injection.target,
+      }),
+    // node 字段展开与 sessionResolution 同口径（exhaustive-deps 本仓未启用）。
+    [
+      detail,
+      instance?.ownerSessionId,
+      injection.target,
+      node?.name,
+      node?.executionMode,
+      node?.ministerSessionId,
+    ],
+  );
+  /**
+   * 注入发送（批3a §4）：按当前目标组 controlWorkflow 的 inject 命令。
+   * 契约依赖：WorkflowControlCommandInput 的 inject/target/text/cardRef/executionId/attempt
+   * 字段由内核代理落地（批3a 并行）；缺字段处按 §4 面组并在 typecheck 标注。
+   * 发送在途禁重复点击（sending 置位）；拒绝保留正文＋reason，接受后清空。
+   */
+  const sendInjection = async () => {
+    if (!api || !workspaceId || !sessionId || !instance?.instanceId || !node) return;
+    const text = injection.text.trim();
+    if (!text || injection.sending) return;
+    const target = injectionPlan.target;
+    // 组命令前先本地校验目标身份缺件：缺数据拦在本地给明确原因，不发空串/0 让
+    // decoder 拒成 unknown（M1）。
+    const planned = canvasInjectionCommand({
+      workspaceId,
+      sessionId,
+      instanceId: instance.instanceId,
+      nodeName: node.name,
+      round: node.round,
+      text,
+      target,
+      cardRef: selectedCard ?? node.cardRef ?? detail?.card?.cardRef,
+      attempt:
+        detail?.executions.find((row) => row.execId === target.executionId)?.attempt ??
+        detail?.card?.attempts,
+    });
+    if (planned.block !== undefined) {
+      setInjectionState({
+        key: detailKey,
+        text,
+        target,
+        result: { kind: "refused", message: t(planned.block) },
+      });
+      return;
+    }
+    setInjectionState({ key: detailKey, text, target, sending: true });
+    try {
+      const result = await api.controlWorkflow(planned.command);
+      if (result.state === "error") {
+        // 拒绝：保留正文，显示原因（L168「拒绝保留正文」）。
+        setInjectionState({
+          key: detailKey,
+          text,
+          target,
+          result: { kind: "refused", message: result.message },
+        });
+        return;
+      }
+      // state:"ok"＋disposition：delivered/queued 按如实展示；rejected 也落到拒绝分支保正文。
+      if (result.disposition === "rejected") {
+        setInjectionState({
+          key: detailKey,
+          text,
+          target,
+          result: { kind: "refused", message: result.detail },
+        });
+        return;
+      }
+      // 接受（delivered/queued）：清空正文（L168「接受后清空」）；「已投递＝宿主接受非已执行」。
+      setInjectionState({
+        key: detailKey,
+        text: "",
+        target,
+        result: {
+          kind: result.disposition === "queued" ? "queued" : "delivered",
+          message: result.detail,
+        },
+      });
+    } catch (error) {
+      // 传输层异常（IPC 断/超时）：结果未知，不自动重发（L160）。
+      setInjectionState({
+        key: detailKey,
+        text,
+        target,
+        result: {
+          kind: "unknown",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  };
+  const selectInjectionTarget = (kind: CanvasInjectionTargetKind, executionId?: string) => {
+    // 切目标保留正文但更新目标标识（L168）；发送结果不残留到新目标上。
+    setInjectionState({ key: detailKey, text: injection.text, target: { kind, executionId } });
+  };
+
+  return (
+    <aside className="canvas-detail" data-testid="canvas-node-detail">
+      <div className="canvas-detail__header">
+        <h2 className="canvas-panel__title">{t("Node details")}</h2>
+        {onClose ? (
+          <button
+            className="button canvas-detail__close"
+            data-testid="canvas-detail-close"
+            type="button"
+            onClick={onClose}
+          >
+            隐藏
+          </button>
+        ) : null}
+      </div>
+      {detailReadAt ? <p className="canvas-detail__note">详情最近读取：{detailReadAt}</p> : null}
+      {ambiguousInstance ? (
+        <p className="canvas-detail__error" role="alert" data-testid="canvas-instance-ambiguous">
+          {AMBIGUOUS_INSTANCE_MESSAGE}
+        </p>
+      ) : !node ? (
+        <EmptyState
+          title={t("Select a node on the canvas to see its details.")}
+          data-testid="canvas-node-detail-empty"
+        />
+      ) : (
+        <CanvasNodeDetailBody
+          node={node}
+          instance={
+            instance
+              ? { name: instance.name, path: instance.path, instanceId: instance.instanceId }
+              : undefined
+          }
+          api={api}
+          hasDetail={Boolean(instance && selectedNode && api)}
+          detail={detail}
+          detailMessage={detailMessage}
+          detailLoading={deepOpen}
+          session={
+            "input" in sessionResolution
+              ? {
+                  input: sessionResolution.input,
+                  anchors: detail?.executions ?? [],
+                  selectedExecId: sessionTarget.execId,
+                  onSelectAnchor: (execId) => setSessionTarget("worker", execId),
+                  renderBody: api
+                    ? (sessionInput) => (
+                        <WorkboardSessionBody input={sessionInput} read={readWorkboardSession} />
+                      )
+                    : undefined,
+                }
+              : {
+                  input: null,
+                  reason: sessionResolution.reason,
+                  anchors: detail?.executions ?? [],
+                  selectedExecId: sessionTarget.execId,
+                  onSelectAnchor: (execId) => setSessionTarget("worker", execId),
+                }
+          }
+          supervision={{
+            ministerSessionId: node.ministerSessionId,
+            status: ministerStatus,
+            readAt: snapshotReadAt,
+            onOpenMinisterSession: node.ministerSessionId ? openMinisterSession : undefined,
+          }}
+          script={{
+            applicable: node.executionMode === "脚本",
+            ...(interpreterEntry?.value !== undefined
+              ? { interpreter: interpreterEntry.value }
+              : {}),
+          }}
+          injection={
+            injectionPlan.options.length
+              ? {
+                  options: injectionPlan.options,
+                  target: injectionPlan.target,
+                  onSelectTarget: selectInjectionTarget,
+                  text: injection.text,
+                  onTextChange: (next) =>
+                    setInjectionState({ key: detailKey, text: next, target: injection.target }),
+                  sending: injection.sending,
+                  onSend: () => {
+                    sendInjection().catch(() => {});
+                  },
+                  blockReason: !api
+                    ? t("The injection channel is not available.")
+                    : !sessionId
+                      ? t("No initiating session is bound to this tab yet.")
+                      : !instance?.instanceId
+                        ? t(
+                            "The instance id is missing, so the injection target cannot be located.",
+                          )
+                        : detailLoading
+                          ? t("Reading execution anchors for the injection targets…")
+                          : !injection.text.trim()
+                            ? t("Write the message to inject first.")
+                            : (() => {
+                                const planned = canvasInjectionCommand({
+                                  workspaceId: workspaceId!,
+                                  sessionId,
+                                  instanceId: instance.instanceId,
+                                  nodeName: node.name,
+                                  round: node.round,
+                                  text: injection.text,
+                                  target: injectionPlan.target,
+                                  cardRef: selectedCard ?? node.cardRef ?? detail?.card?.cardRef,
+                                  attempt:
+                                    detail?.executions.find(
+                                      (row) => row.execId === injectionPlan.target.executionId,
+                                    )?.attempt ?? detail?.card?.attempts,
+                                });
+                                return planned.block !== undefined ? t(planned.block) : undefined;
+                              })(),
+                  result: injection.result,
+                }
+              : undefined
+          }
+          onRetryDetail={
+            detailMessage !== undefined ? () => setRetryNonce((nonce) => nonce + 1) : undefined
+          }
+          selectedCard={selectedCard}
+          onSelectCard={(ref) => setCardSelection({ key: cardKey, ref })}
+          onRequestMainControl={onRequestMainControl}
+          onEditRecipe={onEditRecipe}
+          cardMessage={cardMessage}
+          sessionNote={sessionNote}
+          expanded={expanded}
+          onToggleSection={onToggleSection}
+          onOpenCard={openCard}
+          onOpenSession={openSession}
+        />
+      )}
+    </aside>
+  );
+}
+
+/**
+ * D8d 详情渲染体（导出供组件直测；fetch 外壳在 CanvasDetailPanel 的 effect 里）。
+ * 批1 折叠分区版：六个 DetailSection 由 NodeRuntimeDetails 统一渲染（基本/输入与输出/回执轮次/
+ * 产物/用量与错误/执行日志），回执只在「回执轮次」区出现一次；expanded/onToggleSection 缺省＝
+ * 分区全部展开（受控直测与无懒加载挂钩的兜底）。多卡选择器与节点操作不是分区内容，放
+ * afterBasics 插槽保持「基本」为首区。
+ */
+export function CanvasNodeDetailBody({
+  detail,
+  node,
+  instance,
+  api,
+  hasDetail,
+  selectedCard,
+  onSelectCard,
+  onRequestMainControl,
+  onEditRecipe,
+  expanded,
+  onToggleSection,
+  session,
+  supervision,
+  injection,
+  script: scriptSection,
+  detailMessage,
+  detailLoading,
+  onRetryDetail,
+  cardMessage,
+  sessionNote,
+  onOpenCard,
+  onOpenSession,
+}: {
+  /** 深读结果；未读/未到时缺省，分区入口仍渲染（展开显示占位）。 */
+  readonly detail?: CanvasNodeDetailData;
+  /** 当前快照（基本区数据源）；受控测试可只传 detail。 */
+  readonly node?: CanvasNodeView;
+  readonly instance?: {
+    readonly name: string;
+    readonly path: string;
+    readonly instanceId?: string;
+  };
+  readonly api?: PiDesktopApi;
+  /** 实例节点＋api 时才渲染详情分区；配方节点只渲染基本区。缺省按有无 detail 推断。 */
+  readonly hasDetail?: boolean;
+  readonly selectedCard?: string;
+  readonly onSelectCard?: (cardRef: string) => void;
+  readonly onRequestMainControl?: (text: string, label?: string) => string | void;
+  readonly onEditRecipe?: (instanceName: string, nodeName?: string) => void;
+  readonly expanded?: CanvasDetailSectionState;
+  readonly onToggleSection?: (id: CanvasDetailSectionId, next: boolean) => void;
+  /** 批2 会话与监督分区均由父层组装，组件本身不直接读取运行状态。 */
+  readonly session?: CanvasSessionSectionProps;
+  readonly supervision?: CanvasSupervisionSectionProps;
+  /** 批3a 注入分区：目标选项/发送态由父层组装；缺省＝不渲染注入分区。 */
+  readonly injection?: CanvasInjectionSectionProps;
+  /** 批3b-U 脚本分区：适用性与当前机解释器由父层组装；缺省＝不渲染脚本分区。 */
+  readonly script?: CanvasScriptSectionProps;
+  readonly detailMessage?: string;
+  /** 是否有深读分区展开（懒加载即将/已经发起）；false＝纯选中只渲基本区，不显示加载态。 */
+  readonly detailLoading?: boolean;
+  /** 详情读取失败后的手动重试入口（批1：不自动重发，失败保留提示＋重试按钮）。 */
+  readonly onRetryDetail?: () => void;
+  readonly cardMessage?: string;
+  readonly sessionNote?: string;
+  readonly onOpenCard: () => void;
+  readonly onOpenSession: (sessionId: string) => void;
+}) {
+  const { t } = useI18n();
+  /** 缺省按有无 detail 推断，兼容只传 detail 的受控直测；配方视图由面板显式传 false。 */
+  const showDetail = hasDetail ?? Boolean(detail);
+  return (
+    <div className="canvas-detail__d8d" data-testid="canvas-node-detail-d8d">
+      {detail?.error ? (
+        <p className="canvas-detail__error" role="alert">
+          {detail.error}
+        </p>
+      ) : null}
+      {detailMessage ? (
+        <p className="canvas-detail__error" role="alert">
+          {detailMessage}。已有详情可能过期，请刷新重试。
+          {onRetryDetail ? (
+            <button
+              className="button"
+              data-testid="canvas-detail-retry"
+              type="button"
+              onClick={onRetryDetail}
+            >
+              {t("Retry")}
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+      {showDetail && !detail && !detailMessage && detailLoading !== false ? (
+        <p className="canvas-detail__note" role="status">
+          {t("Loading…")}
+        </p>
+      ) : null}
+      <NodeRuntimeDetails
+        detail={detail}
+        node={node}
+        selectedCard={selectedCard}
+        hasDetail={showDetail}
+        hasRuntime={Boolean(instance && node)}
+        expanded={expanded}
+        onToggleSection={onToggleSection}
+        session={session}
+        supervision={supervision}
+        injection={injection}
+        script={scriptSection}
+        artifacts={
+          instance && node
+            ? {
+                instancePath: instance.path,
+                nodeName: node.name,
+                ...((selectedCard ?? node.cardRef ?? detail?.card?.cardRef)
+                  ? { cardRef: selectedCard ?? node.cardRef ?? detail?.card?.cardRef }
+                  : {}),
+                // 卡面「尝试」次数即最新 attempt 号（attempt 从 1 递增）；
+                // detail 未到/无卡时缺省，预览组件回退按该路径 attempts 最大值。
+                ...(detail?.card?.attempts !== undefined && detail.card.attempts > 0
+                  ? { latestAttempt: detail.card.attempts }
+                  : {}),
+                api: api ?? undefined,
+              }
+            : undefined
+        }
+        sessionNote={sessionNote}
+        onOpenSession={onOpenSession}
+        afterBasics={
+          <>
+            {node?.cards && node.cards.length > 1 ? (
+              <section data-testid="canvas-node-cards">
+                <h3 className="canvas-detail__section">本轮 {node.cards.length} 张卡</h3>
+                {node.cards.map((card) => (
+                  <button
+                    type="button"
+                    className="canvas-node-result"
+                    key={card.cardRef}
+                    aria-pressed={(selectedCard ?? node.cardRef) === card.cardRef}
+                    onClick={() => onSelectCard?.(card.cardRef)}
+                  >
+                    {card.cardRef} · {cardStatusLabel(card.status)}
+                    {card.error ? <small>{card.error}</small> : null}
+                  </button>
+                ))}
+              </section>
+            ) : null}
+            {instance && node ? (
+              <div className="canvas-detail__node-actions" data-testid="canvas-node-actions">
+                <CanvasNodeActions
+                  node={node}
+                  instanceName={instance.name}
+                  instancePath={instance.path}
+                  api={api}
+                  onRequestMainControl={onRequestMainControl}
+                  onEditRecipe={onEditRecipe}
+                />
+              </div>
+            ) : null}
+          </>
+        }
+      />
+      {showDetail ? (
+        <div className="canvas-detail__actions">
+          <button
+            className="button"
+            data-testid="canvas-detail-view-card"
+            disabled={!detail?.card}
+            type="button"
+            onClick={onOpenCard}
+          >
+            {t("View card")}
+          </button>
+          <span className="canvas-detail__actions-note">{cardMessage ?? ""}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}

@@ -1,0 +1,175 @@
+
+> @pao/desktop@1.0.1 test:e2e:runner D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm build && sh -c 'if [ "$1" = "--" ]; then shift; fi; pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts "$@"' -- "apps/desktop/tests/core/d5-workflow-layout.spec.ts" "apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts"
+
+
+> @pao/desktop@1.0.1 build D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm run build:deps && pnpm run build:notification-helper && electron-vite build
+
+
+> @pao/desktop@1.0.1 build:deps D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm --dir ../.. --filter @pao/session-driver --filter @pao/sdk-driver --filter @pao/extension-ui --filter @pao/catalogs run build
+
+Scope: 4 of 13 workspace projects
+packages/session-driver build$ tsc -p tsconfig.json
+packages/extension-ui build$ tsc -p tsconfig.json && node scripts/build-browser.mjs
+packages/session-driver build: Done
+packages/extension-ui build: Done
+packages/catalogs build$ tsc -p tsconfig.json
+packages/catalogs build: Done
+packages/pi-sdk-driver build$ tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+packages/pi-sdk-driver build: Done
+
+> @pao/desktop@1.0.1 build:notification-helper D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/build-notification-status-helper.mjs
+
+Skipping notification status helper build outside macOS.
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 128 modules transformed.
+rendering chunks...
+out/main/main.js  1,324.25 kB
+✓ built in 1.05s
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 3 modules transformed.
+rendering chunks...
+out/preload/preload.js  34.80 kB
+✓ built in 32ms
+vite v6.4.1 building for production...
+transforming...
+✓ 729 modules transformed.
+rendering chunks...
+out/renderer/index.html                     0.46 kB
+out/renderer/assets/index-DzUlOSwC.css    387.09 kB
+out/renderer/assets/wasm-DDgzZJey.js      622.45 kB
+out/renderer/assets/index-GZj_zx8n.js   5,031.70 kB
+✓ built in 14.72s
+
+Running 7 tests using 1 worker
+
+(node:73900) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:73900) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 apps\desktop\tests\core\d5-workflow-layout.spec.ts:278:5 › U01：窄窗侧栏浮层关闭与宽屏偏好恢复 (46.9s)
+  ok 2 apps\desktop\tests\core\d5-workflow-layout.spec.ts:357:5 › U01：浅色宽窄窗与深色宽窗取证 (22.2s)
+[D5] 700px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 700px 栏位实测: .workflow-cards 宽 700 左 0 | .workflow-cards__main 宽 700 左 0 | .workflow-cards__center 宽 642 左 24 | .workflow-cards__inspector 宽 642 左 24 | .workflow-cards__body 宽 642 左 24
+[D5] 700px 待办区 宽642 高33
+[D5] 900px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 900px 栏位实测: .workflow-cards 宽 900 左 0 | .workflow-cards__main 宽 900 左 0 | .workflow-cards__center 宽 842 左 24 | .workflow-cards__inspector 宽 842 左 24 | .workflow-cards__body 宽 842 左 24
+[D5] 900px 待办区 宽842 高31
+[D5] 1280px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 1280px 栏位实测: .workflow-cards 宽 700 左 236 | .workflow-cards__main 宽 516 左 420 | .workflow-cards__center 宽 156 左 444 | .workflow-cards__inspector 宽 280 左 622 | .workflow-cards__body 宽 458 左 444
+[D5] 1280px 待办区 宽458 高31
+  x  3 apps\desktop\tests\core\d5-workflow-layout.spec.ts:399:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 (1.3m)
+(node:49968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 apps\desktop\tests\core\d5-workflow-layout.spec.ts:626:5 › 键盘可操作：中文名可见、Tab 落点有序、Enter/Space 生效、Escape 收起并归还焦点 (45.9s)
+(node:49968) PromiseRejectionHandledWarning: Promise rejection was handled asynchronously (rejection id: 7)
+(node:79152) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79152) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:219:5 › T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上 (39.1s)
+(node:54184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:276:5 › T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢步骤详情里的按键 (11.9s)
+  ok 7 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:336:5 › T22 中文界面不漏英文源串：侧栏与本页可见文案都走词典 (28.3s)
+
+
+  1) apps\desktop\tests\core\d5-workflow-layout.spec.ts:399:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 
+
+    TimeoutError: electronApplication.waitForEvent: Timeout 30000ms exceeded while waiting for event "close"
+
+       at helpers\electron-app.ts:350
+
+      348 |         }
+      349 |       })();
+    > 350 |       const appClosed = electronApp.waitForEvent("close");
+          |                                     ^
+      351 |       const closed = electronApp
+      352 |         .evaluate(({ app, BrowserWindow }) => {
+      353 |           const log = (stage: string) => process.stderr.write(`[test quit] ${stage}\n`);
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:350:37)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d5-workflow-layout.spec.ts:622:15
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d5-workflow-layout-三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\d5-workflow-layout.spec.ts:626:5 › 键盘可操作：中文名可见、Tab 落点有序、Enter/Space 生效、Escape 收起并归还焦点 
+
+    TimeoutError: electronApplication.waitForEvent: Timeout 30000ms exceeded while waiting for event "close"
+
+       at helpers\electron-app.ts:350
+
+      348 |         }
+      349 |       })();
+    > 350 |       const appClosed = electronApp.waitForEvent("close");
+          |                                     ^
+      351 |       const closed = electronApp
+      352 |         .evaluate(({ app, BrowserWindow }) => {
+      353 |           const log = (stage: string) => process.stderr.write(`[test quit] ${stage}\n`);
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:350:37)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d5-workflow-layout.spec.ts:715:15
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-键盘-15b34-ter-Space-生效、Escape-收起并归还焦点\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-键盘-15b34-ter-Space-生效、Escape-收起并归还焦点\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d5-workflow-layout-键盘-15b34-ter-Space-生效、Escape-收起并归还焦点\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:219:5 › T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上 ───────
+
+    TimeoutError: electronApplication.waitForEvent: Timeout 30000ms exceeded while waiting for event "close"
+
+       at helpers\electron-app.ts:350
+
+      348 |         }
+      349 |       })();
+    > 350 |       const appClosed = electronApp.waitForEvent("close");
+          |                                     ^
+      351 |       const closed = electronApp
+      352 |         .evaluate(({ app, BrowserWindow }) => {
+      353 |           const log = (stage: string) => process.stderr.write(`[test quit] ${stage}\n`);
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:350:37)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:272:15
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-f-desktop-t22-a11y-T22-侧栏入口可按中文名找到，Tab-能落到导航卡片上\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-f-desktop-t22-a11y-T22-侧栏入口可按中文名找到，Tab-能落到导航卡片上\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-f-desktop-t22-a11y-T22-侧栏入口可按中文名找到，Tab-能落到导航卡片上\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\d5-workflow-layout.spec.ts:399:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 ─
+    apps\desktop\tests\core\d5-workflow-layout.spec.ts:626:5 › 键盘可操作：中文名可见、Tab 落点有序、Enter/Space 生效、Escape 收起并归还焦点 
+    apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:219:5 › T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上 ────────
+  4 passed (5.0m)
+ ELIFECYCLE  Command failed with exit code 1.

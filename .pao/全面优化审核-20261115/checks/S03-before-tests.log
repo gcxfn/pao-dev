@@ -1,0 +1,103 @@
+
+ RUN  v4.1.11 D:/AI/workspace/pao-dev/PAO/packages/coding-agent
+
+·····················PAO 宿主:未收到原生费用收齐标记；硬杀或异常退出的在途费用未知，已记录成本仅为下界
+······PAO 宿主:[部长完成] 部门 前端｜会话 task-session｜项目 C:\Users\ASUS\AppData\Local\Temp\pao-host-life-task-proj-h3LVuq
+摘要:simulated complete
+完整会话仍可按会话标识查询
+PAO 宿主:[部长失败] 部门 前端｜会话 task-session｜项目 C:\Users\ASUS\AppData\Local\Temp\pao-host-life-task-proj-h3LVuq
+原因:部长模型请求失败:fixture provider terminal
+完整会话仍可按会话标识查询
+····x····················································x···········xx·PAO 宿主:[部长完成] 部门 后台｜会话 fake-background｜项目 C:\Users\ASUS\AppData\Local\Temp\pao-host-tools-background-for-GlQ3uH
+摘要:(部长未返回正文)
+完整会话仍可按会话标识查询
+··PAO 宿主:[部长完成] 部门 后端｜会话 fake-background｜项目 C:\Users\ASUS\AppData\Local\Temp\pao-host-tools-background-count-h4vXiy
+摘要:(部长未返回正文)
+完整会话仍可按会话标识查询
+···························x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/pao/host-fuse.test.ts > 空闲熔断(唯一熔断线):先落短交接→树杀→登记表摘除 > 保险丝核对失败(树杀异常):事件边界吞掉 rejection 记 stderr,不崩进程
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/pao/host-fuse.test.ts:266:2
+    264|  });
+    265|
+    266|  it("保险丝核对失败(树杀异常):事件边界吞掉 rejection 记 stderr,不崩进程", async () => {
+       |  ^
+    267|   const home = tempDir("fuseerr-home");
+    268|   mkdirSync(join(home, "pao配置"), { recursive: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  test/pao/host-handoff.test.ts > 散场落交接:renderHandoff 四段＋新盖旧＋同名不同根不覆盖 > 落盘路径与四段结构;同 key 再散场覆盖同文件(旧内容被顶掉)
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/pao/host-handoff.test.ts:65:2
+     63|
+     64| describe("散场落交接:renderHandoff 四段＋新盖旧＋同名不同根不覆盖", () => {
+     65|  it("落盘路径与四段结构;同 key 再散场覆盖同文件(旧内容被顶掉)", async () => {
+       |  ^
+     66|   const { host, home, script } = makeFixture("basic");
+     67|   const projectRoot = tempDir("proj1");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  test/pao/host-inventory-dispatch.test.ts > pao_inventory:部长会话行(pid/轮次/调用/指纹/活性)与全局热会话观测 > 全局热会话数超 8:仅提示不拒
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ test/pao/host-inventory-dispatch.test.ts:35:1
+     33| }
+     34|
+     35| afterEach(async () => {
+       | ^
+     36|  await fireSessionShutdownHandlers(shutdowns.splice(0));
+     37|  for (const host of hosts.splice(0)) await host.stopAll("测试清理").catch(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  test/pao/host-lifecycle.test.ts > 输入投递(保温三类输入的通道)与会话标识握手 > 显式短预算失败后先留证再主动树杀，迟到响应不能改写结果
+AssertionError: expected '- 部门:前端\n- pid:85940\n- 会话标识:rpc-8594…' to contain 'short-budget fixture stderr'
+
+- Expected
++ Received
+
+- short-budget fixture stderr
++ - 部门:前端
++ - pid:85940
++ - 会话标识:rpc-85940
++ - 启动时间:2026-11-17T04:08:10.722Z
++ - 留证原因:部长启动失败：Error: 部长 RPC 握手超时（预算 250ms，实际已等待 261ms）
++ - stderr尾部:（无 stderr 输出）
++
+
+ ❯ test/pao/host-lifecycle.test.ts:514:26
+    512|   expect(evidenceAtKill).toMatch(/留证原因:.*部长 RPC 握手超时（预算 250ms，实际已等待 \d…
+    513|   expect(evidenceAtKill).toContain(`- pid:${killedPid}`);
+    514|   expect(evidenceAtKill).toContain("short-budget fixture stderr");
+       |                          ^
+    515|   await new Promise((done) => setTimeout(done, 300));
+    516|   expect(evidenceFiles(fixture.项目根)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  test/pao/host-lifecycle.test.ts > 主会话关闭全停与崩溃摘除(定案7,架构 §1 无常驻) > stopAll 后可再拉起(主控 reload/new 后同进程扩展重注册,宿主不封锁)
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/pao/host-lifecycle.test.ts:982:2
+    980|  }, 20000);
+    981|
+    982|  it("stopAll 后可再拉起(主控 reload/new 后同进程扩展重注册,宿主不封锁)", async () => {
+       |  ^
+    983|   const fixture = makeFixture("relaunch");
+    984|   const first = await spawnFakeMinister(fixture);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  4 failed | 9 passed (13)
+      Tests  5 failed | 124 passed (129)
+   Start at  12:05:42
+   Duration  319.22s (transform 228.41s, setup 0ms, import 331.60s, tests 1095.22s, environment 1ms)
+

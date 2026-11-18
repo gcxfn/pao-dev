@@ -1,0 +1,538 @@
+packages\coding-agent\src\pao\evolution\control.ts:441:56 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    439 │ 				try {
+    440 │ 					sourceLinks = JSON.parse(row.source_links_json) as Record<string, unknown>;
+  > 441 │ 					effective = row.kind === "publish" && sourceLinks["activation"] === "effective";
+        │ 					                                                  ^^^^^^^^^^^^
+    442 │ 				} catch {
+    443 │ 					// 非 JSON 行当无 sourceLinks。
+  
+  i Unsafe fix: Use a literal key instead.
+  
+    439 439 │   				try {
+    440 440 │   					sourceLinks = JSON.parse(row.source_links_json) as Record<string, unknown>;
+    441     │ - → → → → → effective·=·row.kind·===·"publish"·&&·sourceLinks["activation"]·===·"effective";
+        441 │ + → → → → → effective·=·row.kind·===·"publish"·&&·sourceLinks.activation·===·"effective";
+    442 442 │   				} catch {
+    443 443 │   					// 非 JSON 行当无 sourceLinks。
+  
+
+packages\coding-agent\src\pao\evolution\recovery.ts:205:15 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    203 │ 			if (act.kind === "publish") {
+    204 │ 				const links = parseSourceLinks(act.source_links_json);
+  > 205 │ 				if (links["activation"] === "effective") {
+        │ 				          ^^^^^^^^^^^^
+    206 │ 					cur.effective = true;
+    207 │ 				} else if (typeof links["candidateId"] === "string") {
+  
+  i Unsafe fix: Use a literal key instead.
+  
+    203 203 │   			if (act.kind === "publish") {
+    204 204 │   				const links = parseSourceLinks(act.source_links_json);
+    205     │ - → → → → if·(links["activation"]·===·"effective")·{
+        205 │ + → → → → if·(links.activation·===·"effective")·{
+    206 206 │   					cur.effective = true;
+    207 207 │   				} else if (typeof links["candidateId"] === "string") {
+  
+
+packages\coding-agent\src\pao\evolution\recovery.ts:207:29 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    205 │ 				if (links["activation"] === "effective") {
+    206 │ 					cur.effective = true;
+  > 207 │ 				} else if (typeof links["candidateId"] === "string") {
+        │ 				                        ^^^^^^^^^^^^^
+    208 │ 					cur.publishCandidateId = links["candidateId"];
+    209 │ 					cur.publishAt = act.created_at;
+  
+  i Unsafe fix: Use a literal key instead.
+  
+    205 205 │   				if (links["activation"] === "effective") {
+    206 206 │   					cur.effective = true;
+    207     │ - → → → → }·else·if·(typeof·links["candidateId"]·===·"string")·{
+        207 │ + → → → → }·else·if·(typeof·links.candidateId·===·"string")·{
+    208 208 │   					cur.publishCandidateId = links["candidateId"];
+    209 209 │   					cur.publishAt = act.created_at;
+  
+
+packages\coding-agent\src\pao\evolution\recovery.ts:208:37 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    206 │ 					cur.effective = true;
+    207 │ 				} else if (typeof links["candidateId"] === "string") {
+  > 208 │ 					cur.publishCandidateId = links["candidateId"];
+        │ 					                               ^^^^^^^^^^^^^
+    209 │ 					cur.publishAt = act.created_at;
+    210 │ 				}
+  
+  i Unsafe fix: Use a literal key instead.
+  
+    206 206 │   					cur.effective = true;
+    207 207 │   				} else if (typeof links["candidateId"] === "string") {
+    208     │ - → → → → → cur.publishCandidateId·=·links["candidateId"];
+        208 │ + → → → → → cur.publishCandidateId·=·links.candidateId;
+    209 209 │   					cur.publishAt = act.created_at;
+    210 210 │   				}
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:197:7 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    195 │ 		.all(resourceId, versionId) as unknown as ActivationRow[];
+    196 │ 	for (const row of rows) {
+  > 197 │ 		if (row.reason !== null && row.reason.startsWith("停用:")) continue;
+        │ 		    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    198 │ 		if (row.source_links_json === null) return {};
+    199 │ 		try {
+  
+  i Unsafe fix: Change to an optional chain.
+  
+    195 195 │   		.all(resourceId, versionId) as unknown as ActivationRow[];
+    196 196 │   	for (const row of rows) {
+    197     │ - → → if·(row.reason·!==·null·&&·row.reason.startsWith("停用:"))·continue;
+        197 │ + → → if·(row.reason?.startsWith("停用:"))·continue;
+    198 198 │   		if (row.source_links_json === null) return {};
+    199 199 │   		try {
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:221:2 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+  
+    219 │ function checkRestoreSourceLinksIntact(
+    220 │ 	store: MemoryStore,
+  > 221 │ 	resourceId: string,
+        │ 	^^^^^^^^^^
+    222 │ 	candidateId: string | undefined,
+    223 │ ): string | undefined {
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend resourceId with an underscore.
+  
+    219 219 │   function checkRestoreSourceLinksIntact(
+    220 220 │   	store: MemoryStore,
+    221     │ - → resourceId:·string,
+        221 │ + → _resourceId:·string,
+    222 222 │   	candidateId: string | undefined,
+    223 223 │   ): string | undefined {
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:455:15 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    453 │ 				...(sourceLinks === undefined ? {} : { sourceLinks }),
+    454 │ 				createdAt: row.created_at,
+  > 455 │ 				disabled: row.reason !== null && row.reason.startsWith("停用:"),
+        │ 				          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    456 │ 				effective,
+    457 │ 			};
+  
+  i Unsafe fix: Change to an optional chain.
+  
+    453 453 │   				...(sourceLinks === undefined ? {} : { sourceLinks }),
+    454 454 │   				createdAt: row.created_at,
+    455     │ - → → → → disabled:·row.reason·!==·null·&&·row.reason.startsWith("停用:"),
+        455 │ + → → → → disabled:·row.reason?.startsWith("停用:"),
+    456 456 │   				effective,
+    457 457 │   			};
+  
+
+packages\coding-agent\src\pao\evolution\policy.ts:23:2 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    21 │ 	type EvolutionResource,
+    22 │ 	type EvolutionResourceKind,
+  > 23 │ 	EVOLUTION_RESOURCE_OPS,
+       │ 	^^^^^^^^^^^^^^^^^^^^^^^
+  > 24 │ 	type EvolutionResourceOp,
+  > 25 │ 	formatResourceId,
+  > 26 │ 	parseResourceId,
+       │ 	^^^^^^^^^^^^^^^
+    27 │ } from "./types.ts";
+    28 │ 
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     21  21 │   	type EvolutionResource,
+     22  22 │   	type EvolutionResourceKind,
+     23     │ - → EVOLUTION_RESOURCE_OPS,
+     24  23 │   	type EvolutionResourceOp,
+     25  24 │   	formatResourceId,
+     26     │ - → parseResourceId,
+     27  25 │   } from "./types.ts";
+     28  26 │   
+  
+
+packages\coding-agent\src\pao\evolution\recovery.ts:202:8 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    200 │ 				disabled: false,
+    201 │ 			};
+  > 202 │ 			if (act.reason !== null && act.reason.startsWith("停用:")) cur.disabled = true;
+        │ 			    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    203 │ 			if (act.kind === "publish") {
+    204 │ 				const links = parseSourceLinks(act.source_links_json);
+  
+  i Unsafe fix: Change to an optional chain.
+  
+    200 200 │   				disabled: false,
+    201 201 │   			};
+    202     │ - → → → if·(act.reason·!==·null·&&·act.reason.startsWith("停用:"))·cur.disabled·=·true;
+        202 │ + → → → if·(act.reason?.startsWith("停用:"))·cur.disabled·=·true;
+    203 203 │   			if (act.kind === "publish") {
+    204 204 │   				const links = parseSourceLinks(act.source_links_json);
+  
+
+packages\coding-agent\src\pao\collab\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    293 293 │   			// 打回/升级人是同一次工具调用的两种落点——eventId 用调用 ID，
+    294 294 │   			// 同一调用重报同值幂等（O10/E02）。
+    295     │ - → → → identity·===·undefined·?·undefined·:·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:打回`·},
+        295 │ + → → → identity·===·undefined
+        296 │ + → → → → ?·undefined
+        297 │ + → → → → :·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:打回`·},
+    296 298 │   		);
+    297 299 │   		return {
+    ······· │ 
+    308 310 │   			.join("；")}`,
+    309 311 │   		cardsDir,
+    310     │ - → → identity·===·undefined·?·undefined·:·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:升级人`·},
+        312 │ + → → identity·===·undefined
+        313 │ + → → → ?·undefined
+        314 │ + → → → :·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:升级人`·},
+    311 315 │   	);
+    312 316 │   	return { text: `${result.裁决摘要 ?? "协作卡待主控裁决（未落队列）。"}${scanNote}${审计告警}`, result };
+  
+
+packages\coding-agent\src\pao\desktop\host-mount.ts:14:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    12 │  *   登记，等同无绑定，不拿裸 SQLite 错当业务结果。
+    13 │  */
+  > 14 │ import { existsSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    15 │ import type { MemoryResult } from "../memory/types.ts";
+    16 │ import { memoryPaths } from "../memory/paths.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     13  13 │    */
+     14  14 │   import { existsSync } from "node:fs";
+     15     │ - import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     16     │ - import·{·memoryPaths·}·from·"../memory/paths.ts";
+     17     │ - import·{·openMemoryStore·}·from·"../memory/store.ts";
+     18     │ - import·{·switchTaskResourceAtSafePoint,·type·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+     19     │ - import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     20     │ - import·{·recoverEvolutionState,·type·RecoveryReport·}·from·"../evolution/recovery.ts";
+         15 │ + import·{·type·SwitchTaskResourceResult,·switchTaskResourceAtSafePoint·}·from·"../evolution/binding.ts";
+         16 │ + import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         17 │ + import·{·type·RecoveryReport,·recoverEvolutionState·}·from·"../evolution/recovery.ts";
+         18 │ + import·{·memoryPaths·}·from·"../memory/paths.ts";
+         19 │ + import·{·openMemoryStore·}·from·"../memory/store.ts";
+         20 │ + import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     21  21 │   
+     22     │ - export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     23     │ - export·type·{·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+         22 │ + export·type·{·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+         23 │ + export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     24  24 │   
+     25  25 │   /**
+  
+
+packages\coding-agent\src\pao\desktop\host-mount.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     17  17 │   import { openMemoryStore } from "../memory/store.ts";
+     18  18 │   import { switchTaskResourceAtSafePoint, type SwitchTaskResourceResult } from "../evolution/binding.ts";
+     19     │ - import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         19 │ + import·{
+         20 │ + → ensureTaskBindings,
+         21 │ + → resolveTaskBoundResourcePaths,
+         22 │ + → type·TaskBoundResourcePaths,
+         23 │ + }·from·"../evolution/host-mount.ts";
+     20  24 │   import { recoverEvolutionState, type RecoveryReport } from "../evolution/recovery.ts";
+     21  25 │   
+     22     │ - export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         26 │ + export·type·{
+         27 │ + → MissingTaskBinding,
+         28 │ + → MountedTaskResource,
+         29 │ + → SkippedTaskBinding,
+         30 │ + → TaskBoundResourcePaths,
+         31 │ + }·from·"../evolution/host-mount.ts";
+     23  32 │   export type { SwitchTaskResourceResult } from "../evolution/binding.ts";
+     24  33 │   
+  
+
+packages\coding-agent\src\pao\desktop\index.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { createHash, randomUUID } from "node:crypto";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { readdirSync, readFileSync, realpathSync } from "node:fs";
+    3 │ import { dirname, join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     41  41 │   export * from "./dept.ts";
+     42  42 │   export * from "./editor.ts";
+     43     │ - export·*·from·"./host-mount.ts";
+     44     │ - export·type·{·DesktopFlowControlPayloadInput·}·from·"./flow-control-payload.ts";
+     45     │ - export·{·desktopFlowControlPayload·}·from·"./flow-control-payload.ts";
+         43 │ + export·type·{·DesktopFlowControlPayloadInput·}·from·"./flow-control-payload.ts";
+         44 │ + export·{·desktopFlowControlPayload·}·from·"./flow-control-payload.ts";
+         45 │ + export·*·from·"./host-mount.ts";
+     46  46 │   export * from "./maintenance.ts";
+     47  47 │   export * from "./memory.ts";
+  
+
+packages\coding-agent\src\pao\evolution\binding.ts:19:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    17 │  *   只有 `switchTaskResourceAtSafePoint` 在安全点显式换版。
+    18 │  */
+  > 19 │ import { randomUUID } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 │ import { join } from "node:path";
+    21 │ import type { MemoryError, MemoryResult } from "../memory/types.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     19  19 │   import { randomUUID } from "node:crypto";
+     20  20 │   import { join } from "node:path";
+     21     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         21 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     22  22 │   import type { MemoryStore } from "../memory/store.ts";
+     23     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+         23 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     24  24 │   
+     25  25 │   // ════════════════════════════════════════════════════════════════════════
+  
+
+packages\coding-agent\src\pao\evolution\binding.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    222 222 │   			 WHERE task_id = ? AND resource_id = ?`,
+    223 223 │   		)
+    224     │ - → → .get(input.taskId,·input.resourceId)·as
+    225     │ - → → |·{·binding_id:·string;·version_id:·string;·active:·number·}
+    226     │ - → → |·undefined;
+        224 │ + → → .get(input.taskId,·input.resourceId)·as·{·binding_id:·string;·version_id:·string;·active:·number·}·|·undefined;
+    227 225 │   	if (!row) {
+    228 226 │   		return fail(
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:24:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    22 │  *   事务不含模型/进程调用。
+    23 │  */
+  > 24 │ import { randomUUID } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    25 │ import { existsSync, statSync } from "node:fs";
+    26 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     25  25 │   import { existsSync, statSync } from "node:fs";
+     26  26 │   import { join } from "node:path";
+     27     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         27 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     28  28 │   import type { MemoryStore } from "../memory/store.ts";
+     29     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+         29 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     30  30 │   import { checkOwnerSourceLinksIntact } from "./observe.ts";
+     31     │ - import·{·setAutoEvolution,·getResource·}·from·"./resources.ts";
+         31 │ + import·{·getResource,·setAutoEvolution·}·from·"./resources.ts";
+     32  32 │   import type { EvolutionResource } from "./types.ts";
+     33  33 │   import { fingerprintResourceRoot } from "./versions.ts";
+  
+
+packages\coding-agent\src\pao\evolution\control.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    224 224 │   	if (candidateId === undefined) return undefined;
+    225 225 │   	const cand = store.db
+    226     │ - → → .prepare(
+    227     │ - → → → `SELECT·candidate_id,·problem_id,·test_plan_id·FROM·evolution_candidates·WHERE·candidate_id·=·?`,
+    228     │ - → → )
+    229     │ - → → .get(candidateId)·as
+    230     │ - → → |·{·candidate_id:·string;·problem_id:·string;·test_plan_id:·string·}
+    231     │ - → → |·undefined;
+        226 │ + → → .prepare(`SELECT·candidate_id,·problem_id,·test_plan_id·FROM·evolution_candidates·WHERE·candidate_id·=·?`)
+        227 │ + → → .get(candidateId)·as·{·candidate_id:·string;·problem_id:·string;·test_plan_id:·string·}·|·undefined;
+    232 228 │   	if (!cand) return `候选 ${candidateId} 已不存在（凭据指向的候选行丢失）`;
+    233 229 │   
+    ······· │ 
+    289 285 │   				`expectedEffectiveVersion ${input.expectedEffectiveVersion} 与当前指向 ` +
+    290 286 │   				`${resource.effective_version ?? "（空）"} 不一致`,
+    291     │ - → → → ...(resource.effective_version·===·null
+    292     │ - → → → → ?·{}
+    293     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        287 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    294 288 │   		};
+    295 289 │   	}
+    ······· │ 
+    299 293 │   			status: "conflict",
+    300 294 │   			reason: `目标版本 ${input.targetVersionId} 已是当前生效版，无需恢复`,
+    301     │ - → → → ...(resource.effective_version·===·null
+    302     │ - → → → → ?·{}
+    303     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        295 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    304 296 │   		};
+    305 297 │   	}
+    306 298 │   
+    307 299 │   	// 判据 b：目录完整 + 有未停用 publish 凭据。
+    308     │ - → const·versionDir·=·join(
+    309     │ - → → evolutionPaths(input.paoHome).versions,
+    310     │ - → → dirSafeId(input.resourceId),
+    311     │ - → → input.targetVersionId,
+    312     │ - → );
+        300 │ + → const·versionDir·=·join(evolutionPaths(input.paoHome).versions,·dirSafeId(input.resourceId),·input.targetVersionId);
+    313 301 │   	if (!isVersionDirComplete(versionDir, input.targetVersionId)) {
+    314 302 │   		return {
+    ······· │ 
+    318 306 │   				`版本目录缺失或指纹不匹配:${versionDir}（versionId ${input.targetVersionId} 是内容` +
+    319 307 │   				`清单哈希，文件被删/改都会改变指纹；不完整版本不能直接恢复，须重新评估）`,
+    320     │ - → → → ...(resource.effective_version·===·null
+    321     │ - → → → → ?·{}
+    322     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        308 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    323 309 │   		};
+    324 310 │   	}
+    ······· │ 
+    331 317 │   				`版本 ${input.targetVersionId} 无可用发布凭据（kind='publish' 行缺失或已被「停用:」` +
+    332 318 │   				`标记——曾失败/被回退的版本不能直接恢复，须重新评估）`,
+    333     │ - → → → ...(resource.effective_version·===·null
+    334     │ - → → → → ?·{}
+    335     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        319 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    336 320 │   		};
+    337 321 │   	}
+    ······· │ 
+    344 328 │   			status: "needs_reevaluation",
+    345 329 │   			reason: `来源依据失效：${sourceViolation}`,
+    346     │ - → → → ...(resource.effective_version·===·null
+    347     │ - → → → → ?·{}
+    348     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        330 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    349 331 │   		};
+    350 332 │   	}
+    ······· │ 
+    361 343 │   					`恢复期间指向已由 ${input.expectedEffectiveVersion} 变为 ` +
+    362 344 │   					`${inTx.effective_version ?? "（空）"}，不覆盖`,
+    363     │ - → → → → ...(inTx.effective_version·===·null
+    364     │ - → → → → → ?·{}
+    365     │ - → → → → → :·{·currentEffectiveVersion:·inTx.effective_version·}),
+        345 │ + → → → → ...(inTx.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·inTx.effective_version·}),
+    366 346 │   			} as MemoryResult<RestoreResult | RestoreRejected>;
+    367 347 │   		}
+  
+
+packages\coding-agent\src\pao\evolution\host-mount.ts:19:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    17 │  * - 本模块只做解析与分流，不开 store、不碰 loader；store 由调用方开闭。
+    18 │  */
+  > 19 │ import { existsSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 │ import type { MemoryResult } from "../memory/types.ts";
+    21 │ import type { MemoryStore } from "../memory/store.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     18  18 │    */
+     19  19 │   import { existsSync } from "node:fs";
+     20     │ - import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     21     │ - import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         20 │ + import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         21 │ + import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     22  22 │   import { bindTaskResources, listTaskBindings, resolveTaskResourceVersion, type TaskBinding } from "./binding.ts";
+     23  23 │   import { getResource } from "./resources.ts";
+  
+
+packages\coding-agent\src\pao\evolution\policy.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    13 │  * - 资源登记不重复请求已授予的类别权限（同一 resourceId 幂等复用）。
+    14 │  */
+  > 15 │ import { join } from "node:path";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 │ import type { MemoryError, MemoryResult } from "../memory/types.ts";
+    17 │ import {
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     17  17 │   import {
+     18  18 │   	EVOLUTION_RESOURCE_KINDS,
+     19     │ - → type·EvolutionFileDiff,
+         19 │ + → EVOLUTION_RESOURCE_OPS,
+         20 │ + → type·EvolutionFileDiff,
+     20  21 │   	type EvolutionProblemAction,
+     21  22 │   	type EvolutionResource,
+     22     │ - → type·EvolutionResourceKind,
+     23     │ - → EVOLUTION_RESOURCE_OPS,
+         23 │ + → type·EvolutionResourceKind,
+     24  24 │   	type EvolutionResourceOp,
+     25  25 │   	formatResourceId,
+  
+
+packages\coding-agent\src\pao\evolution\recovery.ts:19:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    17 │  *   （通知是瞬时的——宿主重启后从 activations 表能还原全部已发生事件）。
+    18 │  */
+  > 19 │ import { existsSync, statSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 │ import { join } from "node:path";
+    21 │ import type { MemoryResult } from "../memory/types.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     19  19 │   import { existsSync, statSync } from "node:fs";
+     20  20 │   import { join } from "node:path";
+     21     │ - import·type·{·MemoryResult·}·from·"../memory/types.ts";
+         21 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     22  22 │   import type { MemoryStore } from "../memory/store.ts";
+     23     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+         23 │ + import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     24  24 │   import { fingerprintResourceRoot } from "./versions.ts";
+     25  25 │   
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 159.
+Checked 648 files in 6s. No fixes applied.
+Found 130 errors.
+Found 44 warnings.
+Found 5 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+

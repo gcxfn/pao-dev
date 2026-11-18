@@ -1,0 +1,100 @@
+
+Running 5 tests using 1 worker
+
+(node:25032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\memory-layout.spec.ts:38:7 › 记忆长正文标题操作、跨记忆草稿重置与布局截图：light (1.0m)
+(node:66140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 apps\desktop\tests\core\memory-layout.spec.ts:38:7 › 记忆长正文标题操作、跨记忆草稿重置与布局截图：dark (45.9s)
+  x  3 apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 (18.2s)
+(node:31916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 (22.7s)
+(node:39276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 5 apps\desktop\tests\core\memory.spec.ts:1260:5 › S5-11 任务接续：worktree 删除后从主仓查看历史、回原会话并保持只读 (27.6s)
+
+
+  1) apps\desktop\tests\core\memory-layout.spec.ts:38:7 › 记忆长正文标题操作、跨记忆草稿重置与布局截图：light ─────────────
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-layout-记忆长正文标题操作、跨记忆草稿重置与布局截图：light\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-layout-记忆长正文标题操作、跨记忆草稿重置与布局截图：light\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 ─────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: >= [32m6[39m
+    Received:    [31m5[39m
+
+      429 |         }).length,
+      430 |     );
+    > 431 |     expect(visibleRows).toBeGreaterThanOrEqual(6);
+          |                         ^
+      432 |     await page.screenshot({
+      433 |       path: test.info().outputPath("memory-1280.png"),
+      434 |       animations: "disabled",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory.spec.ts:431:25
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 ──────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeHidden[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('memory-project-context-details')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeHidden" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('memory-project-context-details')[22m
+    [2m    9 × locator resolved to <div id="memory-project-context-details" class="memory-project-context__details" data-testid="memory-project-context-details">…</div>[22m
+    [2m      - unexpected value "visible"[22m
+
+
+      873 |     await expect(page.getByTestId("memory-project-goal-edit")).toBeFocused();
+      874 |     await expect(goalSummary).toHaveText(firstGoal);
+    > 875 |     await expect(contextDetails).toBeHidden();
+          |                                  ^
+      876 |     await contextToggle.click();
+      877 |     await expect(page.getByTestId("memory-project-current-goal")).toContainText(firstGoal);
+      878 |     await expect(contextPanel.getByText("未设置正式文档。", { exact: true })).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory.spec.ts:875:34
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-S5-11-项目背景：空项目目标来源、修订历史、文件引用与项目隔离\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-memory-refined-results\core-memory-S5-11-项目背景：空项目目标来源、修订历史、文件引用与项目隔离\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\memory-layout.spec.ts:38:7 › 记忆长正文标题操作、跨记忆草稿重置与布局截图：light ──────────────
+    apps\desktop\tests\core\memory.spec.ts:353:5 › 独立记忆页只读链：搜索、历史、来源分页、本会话参考与窄屏往返 ──────────────────
+    apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 ───────────────
+  2 passed (3.3m)

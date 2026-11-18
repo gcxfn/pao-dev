@@ -1,0 +1,189 @@
+
+> @pao/desktop@1.0.1 test:e2e:runner D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm build && sh -c 'if [ "$1" = "--" ]; then shift; fi; pnpm --dir ../.. exec playwright test -c apps/desktop/playwright.config.ts "$@"' -- "apps/desktop/tests/core/d5-workflow-layout.spec.ts" "apps/desktop/tests/core/f-desktop-t22-a11y.spec.ts"
+
+
+> @pao/desktop@1.0.1 build D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm run build:deps && pnpm run build:notification-helper && electron-vite build
+
+
+> @pao/desktop@1.0.1 build:deps D:\AI\workspace\pao-dev\desktop\apps\desktop
+> pnpm --dir ../.. --filter @pao/session-driver --filter @pao/sdk-driver --filter @pao/extension-ui --filter @pao/catalogs run build
+
+Scope: 4 of 13 workspace projects
+packages/session-driver build$ tsc -p tsconfig.json
+packages/extension-ui build$ tsc -p tsconfig.json && node scripts/build-browser.mjs
+packages/session-driver build: Done
+packages/extension-ui build: Done
+packages/catalogs build$ tsc -p tsconfig.json
+packages/catalogs build: Done
+packages/pi-sdk-driver build$ tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+packages/pi-sdk-driver build: Done
+
+> @pao/desktop@1.0.1 build:notification-helper D:\AI\workspace\pao-dev\desktop\apps\desktop
+> node scripts/build-notification-status-helper.mjs
+
+Skipping notification status helper build outside macOS.
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 128 modules transformed.
+rendering chunks...
+out/main/main.js  1,324.25 kB
+✓ built in 1.10s
+vite v6.4.1 building SSR bundle for production...
+transforming...
+✓ 3 modules transformed.
+rendering chunks...
+out/preload/preload.js  34.80 kB
+✓ built in 33ms
+vite v6.4.1 building for production...
+transforming...
+✓ 729 modules transformed.
+rendering chunks...
+out/renderer/index.html                     0.46 kB
+out/renderer/assets/index-DzUlOSwC.css    387.09 kB
+out/renderer/assets/wasm-DDgzZJey.js      622.45 kB
+out/renderer/assets/index-CdouJbE3.js   5,031.47 kB
+✓ built in 37.67s
+
+Running 7 tests using 1 worker
+
+(node:23488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 apps\desktop\tests\core\d5-workflow-layout.spec.ts:279:5 › U01：窄窗侧栏浮层关闭与宽屏偏好恢复 (48.5s)
+(node:82760) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82760) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 apps\desktop\tests\core\d5-workflow-layout.spec.ts:346:5 › U01：浅色宽窄窗与深色宽窗取证 (53.1s)
+(node:20516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[D5] 700px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 700px 栏位实测: .workflow-cards 宽 700 左 0 | .workflow-cards__main 宽 700 左 0 | .workflow-cards__center 宽 642 左 24 | .workflow-cards__inspector 宽 642 左 24 | .workflow-cards__body 宽 642 左 24
+[D5] 700px 待办区 宽642 高33
+[D5] 900px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 900px 栏位实测: .workflow-cards 宽 900 左 0 | .workflow-cards__main 宽 900 左 0 | .workflow-cards__center 宽 842 左 24 | .workflow-cards__inspector 宽 842 左 24 | .workflow-cards__body 宽 842 左 24
+[D5] 900px 待办区 宽842 高31
+[D5] 1280px 结构类样式 ｜ 已验有样式(9): __group-head、__records、__record、__record-raw、__record-reason、__record-round、__record-verdict、__todos、__todo-list ｜ 未验: 无
+[D5] 1280px 栏位实测: .workflow-cards 宽 700 左 236 | .workflow-cards__main 宽 516 左 420 | .workflow-cards__center 宽 156 左 444 | .workflow-cards__inspector 宽 280 左 622 | .workflow-cards__body 宽 458 左 444
+[D5] 1280px 待办区 宽458 高31
+  x  3 apps\desktop\tests\core\d5-workflow-layout.spec.ts:387:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 (55.3s)
+(node:66188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 apps\desktop\tests\core\d5-workflow-layout.spec.ts:613:5 › 键盘可操作：中文名可见、Tab 落点有序、Enter/Space 生效、Escape 收起并归还焦点 (28.1s)
+  ok 5 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:219:5 › T22 侧栏入口可按中文名找到，Tab 能落到导航卡片上 (7.0s)
+  ok 6 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:276:5 › T22 右栏模式切换与 Escape：焦点始终有着落，且不越权抢步骤详情里的按键 (11.6s)
+  ok 7 apps\desktop\tests\core\f-desktop-t22-a11y.spec.ts:336:5 › T22 中文界面不漏英文源串：侧栏与本页可见文案都走词典 (5.3s)
+
+
+  1) apps\desktop\tests\core\d5-workflow-layout.spec.ts:279:5 › U01：窄窗侧栏浮层关闭与宽屏偏好恢复 ────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.sidebar')
+    Expected: [32m0[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('.sidebar')[22m
+    [2m    9 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      321 |
+      322 |     await page.setViewportSize({ width: 700, height: 700 });
+    > 323 |     await toggle.click();
+          |                          ^
+      324 |     await expect(sidebar).toHaveCSS("z-index", "24");
+      325 |     await page.setViewportSize({ width: 1280, height: 800 });
+      326 |     await expect(sidebar).toBeVisible();
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d5-workflow-layout.spec.ts:323:27
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-U01：窄窗侧栏浮层关闭与宽屏偏好恢复\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d5-workflow-layout-U01：窄窗侧栏浮层关闭与宽屏偏好恢复\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) apps\desktop\tests\core\d5-workflow-layout.spec.ts:346:5 › U01：浅色宽窄窗与深色宽窗取证 ───────────────────
+
+    Error: The app did not finish closing within 30 s of quitting, so it was killed. The app is still running.
+    Processes left in its group:
+    (not listed on this platform)
+    Last app output:
+    [test quit] before-quit
+    [test quit] before-quit
+    [test quit] before-quit
+    [test quit] window 1 close
+    [test quit] will-quit
+    Waiting for the debugger to disconnect...
+
+       at helpers\electron-app.ts:397
+
+      395 |         appProcess.kill("SIGKILL");
+      396 |       }
+    > 397 |       throw new Error(
+          |             ^
+      398 |         [
+      399 |           `The app did not finish closing within ${APP_EXIT_TIMEOUT_MS / 1000} s of quitting, so it was killed. The app ${exitState}.`,
+      400 |           `Processes left in its group:\n${leftovers}`,
+        at Object.close (D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\helpers\electron-app.ts:397:13)
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d5-workflow-layout.spec.ts:371:5
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-U01：浅色宽窄窗与深色宽窗取证\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d5-workflow-layout-U01：浅色宽窄窗与深色宽窗取证\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) apps\desktop\tests\core\d5-workflow-layout.spec.ts:387:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  getByTestId('sidebar-toggle')
+    Expected: [32m"[7mfals[27me"[39m
+    Received: [31m"[7mtru[27me"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveAttribute" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('sidebar-toggle')[22m
+    [2m    8 × locator resolved to <button type="button" aria-pressed="true" aria-label="显示/隐藏侧栏" data-testid="sidebar-toggle" class="icon-button sidebar-toggle__button">…</button>[22m
+    [2m      - unexpected value "true"[22m
+
+
+      567 |         `[D5] ${label}px 待办区 宽${Math.round(todoBox!.width)} 高${Math.round(todoBox!.height)}`,
+      568 |       );
+    > 569 |       await saveProof(page, `工作流-${label}-待办.png`);
+          |                               ^
+      570 |
+      571 |       await saveProof(page, `工作流-${label}.png`);
+      572 |     }
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\d5-workflow-layout.spec.ts:569:31
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    apps\desktop\test-results\core-d5-workflow-layout-三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace apps\desktop\test-results\core-d5-workflow-layout-三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    apps\desktop\tests\core\d5-workflow-layout.spec.ts:279:5 › U01：窄窗侧栏浮层关闭与宽屏偏好恢复 ─────────────────
+    apps\desktop\tests\core\d5-workflow-layout.spec.ts:346:5 › U01：浅色宽窄窗与深色宽窗取证 ────────────────────
+    apps\desktop\tests\core\d5-workflow-layout.spec.ts:387:5 › 三档宽度下工作流主页与右栏都可用：不横向溢出、触控目标达标、焦点不被抢 ─
+  4 passed (3.9m)
+ ELIFECYCLE  Command failed with exit code 1.

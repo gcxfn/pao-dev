@@ -1,0 +1,56 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[31mx[39m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[31mx[39m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m[33m[39m[2m[90m-[39m[22m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/dispatch-brief-artifacts.test.ts[2m > [22mdispatch-brief persistence and map[2m > [22m影响分析保留坏引用前后的正常影响，并显示只有问题的结果
+[31m[1mDispatchBriefError[22m: dispatch 引用缺少合法 sha256 摘要：pao-map://broken[39m
+[36m [2m❯[22m parseDispatchUri src/pao/dispatch-brief/uri.ts:[2m48:9[22m[39m
+    [90m 46|[39m  [35mconst[39m digest [33m=[39m url[33m.[39msearchParams[33m.[39m[35mget[39m([32m"digest"[39m)[33m;[39m
+    [90m 47|[39m  [35mif[39m ([33m![39m[34misSha256Digest[39m(digest [33m??[39m undefined)) {
+    [90m 48|[39m   throw new DispatchBriefError("bad_reference", `dispatch 引用缺少合法 sha25…
+    [90m   |[39m         [31m^[39m
+    [90m 49|[39m  }
+    [90m 50|[39m  [35mconst[39m version [33m=[39m url[33m.[39msearchParams[33m.[39m[35mget[39m([32m"version"[39m) [33m??[39m undefined[33m;[39m
+[90m [2m❯[22m src/pao/dispatch-brief/impact.ts:[2m82:25[22m[39m
+[90m [2m❯[22m directCardRefs src/pao/dispatch-brief/impact.ts:[2m82:4[22m[39m
+[90m [2m❯[22m findDispatchReferenceImpact src/pao/dispatch-brief/impact.ts:[2m166:18[22m[39m
+[90m [2m❯[22m test/pao/dispatch-brief-artifacts.test.ts:[2m205:18[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/dispatch-brief-artifacts.test.ts[2m > [22mdispatch-brief persistence and map[2m > [22m升版工具保留首段 JSON 并追加坏引用数量
+[31m[1mAssertionError[22m: expected true not to be true // Object.is equality[39m
+[36m [2m❯[22m test/pao/dispatch-brief-artifacts.test.ts:[2m238:30[22m[39m
+    [90m236|[39m    previous_ref[33m:[39m old[33m.[39mref[33m,[39m supersession_reason[33m:[39m [32m"更新输入"[39m[33m,[39m
+    [90m237|[39m   }[33m,[39m undefined[33m,[39m undefined[33m,[39m undefined [35mas[39m never)[33m;[39m
+    [90m238|[39m   [34mexpect[39m(result[33m.[39misError)[33m.[39mnot[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m239|[39m   expect(JSON.parse((result.content[0] as { text: string }).text).impa…
+    [90m240|[39m   expect(result.content).toContainEqual({ type: "text", text: "另有 1 条引…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/runtime-impact.test.ts[2m > [22mdispatch 输入升版影响回流[2m > [22m三张受影响卡中间损坏时，其余两张仍通知复核并回传问题
+[31m[1mPaoCardError[22m: 卡 frontmatter 缺必需字段：goal、dept、acceptance、attempt、created、status（文件：C:\Users\ASUS\AppData\Local\Temp\pao-runtime-impact-bad-card-gZMuIS\卡\卡0002-复核.md）[39m
+[36m [2m❯[22m parseCardContent src/pao/cards/cardfile.ts:[2m238:10[22m[39m
+    [90m236|[39m   [90m// 工具输出纪律(M1-04):关键失败必须带完整文件路径,坏卡错误不让用户猜是哪张卡[39m
+    [90m237|[39m   [35mif[39m (error [35minstanceof[39m [33mPaoCardError[39m) {
+    [90m238|[39m    throw new PaoCardError(error.code, `${error.message}（文件：${filePath}…
+    [90m   |[39m          [31m^[39m
+    [90m239|[39m   }
+    [90m240|[39m   [35mthrow[39m error[33m;[39m
+[90m [2m❯[22m readCard src/pao/cards/cardfile.ts:[2m258:9[22m[39m
+[90m [2m❯[22m reconcileDispatchReferenceImpact src/pao/runtime-impact.ts:[2m38:16[22m[39m
+[90m [2m❯[22m test/pao/runtime-impact.test.ts:[2m267:24[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[33m34 skipped[39m[90m (37)[39m
+[2m   Start at [22m 17:17:17
+[2m   Duration [22m 4.86s[2m (transform 5.06s, setup 0ms, import 6.96s, tests 1.64s, environment 0ms)[22m
+

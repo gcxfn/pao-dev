@@ -1,0 +1,696 @@
+packages\coding-agent\src\pao\evolution\control.ts:441:56 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+  
+    439 │ 				try {
+    440 │ 					sourceLinks = JSON.parse(row.source_links_json) as Record<string, unknown>;
+  > 441 │ 					effective = row.kind === "publish" && sourceLinks["activation"] === "effective";
+        │ 					                                                  ^^^^^^^^^^^^
+    442 │ 				} catch {
+    443 │ 					// 非 JSON 行当无 sourceLinks。
+  
+  i Unsafe fix: Use a literal key instead.
+  
+    439 439 │   				try {
+    440 440 │   					sourceLinks = JSON.parse(row.source_links_json) as Record<string, unknown>;
+    441     │ - → → → → → effective·=·row.kind·===·"publish"·&&·sourceLinks["activation"]·===·"effective";
+        441 │ + → → → → → effective·=·row.kind·===·"publish"·&&·sourceLinks.activation·===·"effective";
+    442 442 │   				} catch {
+    443 443 │   					// 非 JSON 行当无 sourceLinks。
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:197:7 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    195 │ 		.all(resourceId, versionId) as unknown as ActivationRow[];
+    196 │ 	for (const row of rows) {
+  > 197 │ 		if (row.reason !== null && row.reason.startsWith("停用:")) continue;
+        │ 		    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    198 │ 		if (row.source_links_json === null) return {};
+    199 │ 		try {
+  
+  i Unsafe fix: Change to an optional chain.
+  
+    195 195 │   		.all(resourceId, versionId) as unknown as ActivationRow[];
+    196 196 │   	for (const row of rows) {
+    197     │ - → → if·(row.reason·!==·null·&&·row.reason.startsWith("停用:"))·continue;
+        197 │ + → → if·(row.reason?.startsWith("停用:"))·continue;
+    198 198 │   		if (row.source_links_json === null) return {};
+    199 199 │   		try {
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:221:2 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+  
+    219 │ function checkRestoreSourceLinksIntact(
+    220 │ 	store: MemoryStore,
+  > 221 │ 	resourceId: string,
+        │ 	^^^^^^^^^^
+    222 │ 	candidateId: string | undefined,
+    223 │ ): string | undefined {
+  
+  i Unused parameters might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: If this is intentional, prepend resourceId with an underscore.
+  
+    219 219 │   function checkRestoreSourceLinksIntact(
+    220 220 │   	store: MemoryStore,
+    221     │ - → resourceId:·string,
+        221 │ + → _resourceId:·string,
+    222 222 │   	candidateId: string | undefined,
+    223 223 │   ): string | undefined {
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:455:15 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    453 │ 				...(sourceLinks === undefined ? {} : { sourceLinks }),
+    454 │ 				createdAt: row.created_at,
+  > 455 │ 				disabled: row.reason !== null && row.reason.startsWith("停用:"),
+        │ 				          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    456 │ 				effective,
+    457 │ 			};
+  
+  i Unsafe fix: Change to an optional chain.
+  
+    453 453 │   				...(sourceLinks === undefined ? {} : { sourceLinks }),
+    454 454 │   				createdAt: row.created_at,
+    455     │ - → → → → disabled:·row.reason·!==·null·&&·row.reason.startsWith("停用:"),
+        455 │ + → → → → disabled:·row.reason?.startsWith("停用:"),
+    456 456 │   				effective,
+    457 457 │   			};
+  
+
+packages\coding-agent\src\pao\evolution\policy.ts:23:2 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    21 │ 	type EvolutionResource,
+    22 │ 	type EvolutionResourceKind,
+  > 23 │ 	EVOLUTION_RESOURCE_OPS,
+       │ 	^^^^^^^^^^^^^^^^^^^^^^^
+  > 24 │ 	type EvolutionResourceOp,
+  > 25 │ 	formatResourceId,
+  > 26 │ 	parseResourceId,
+       │ 	^^^^^^^^^^^^^^^
+    27 │ } from "./types.ts";
+    28 │ 
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+     21  21 │   	type EvolutionResource,
+     22  22 │   	type EvolutionResourceKind,
+     23     │ - → EVOLUTION_RESOURCE_OPS,
+     24  23 │   	type EvolutionResourceOp,
+     25  24 │   	formatResourceId,
+     26     │ - → parseResourceId,
+     27  25 │   } from "./types.ts";
+     28  26 │   
+  
+
+packages\coding-agent\src\pao\collab\index.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    293 293 │   			// 打回/升级人是同一次工具调用的两种落点——eventId 用调用 ID，
+    294 294 │   			// 同一调用重报同值幂等（O10/E02）。
+    295     │ - → → → identity·===·undefined·?·undefined·:·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:打回`·},
+        295 │ + → → → identity·===·undefined
+        296 │ + → → → → ?·undefined
+        297 │ + → → → → :·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:打回`·},
+    296 298 │   		);
+    297 299 │   		return {
+    ······· │ 
+    308 310 │   			.join("；")}`,
+    309 311 │   		cardsDir,
+    310     │ - → → identity·===·undefined·?·undefined·:·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:升级人`·},
+        312 │ + → → identity·===·undefined
+        313 │ + → → → ?·undefined
+        314 │ + → → → :·{·...identity,·eventId:·`${identity.toolCallId·??·identity.eventId·??·"collab"}:升级人`·},
+    311 315 │   	);
+    312 316 │   	return { text: `${result.裁决摘要 ?? "协作卡待主控裁决（未落队列）。"}${scanNote}${审计告警}`, result };
+  
+
+packages\coding-agent\src\pao\desktop\host-mount.ts:14:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    12 │  *   登记，等同无绑定，不拿裸 SQLite 错当业务结果。
+    13 │  */
+  > 14 │ import { existsSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    15 │ import type { MemoryResult } from "../memory/types.ts";
+    16 │ import { memoryPaths } from "../memory/paths.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     13  13 │    */
+     14  14 │   import { existsSync } from "node:fs";
+     15     │ - import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     16     │ - import·{·memoryPaths·}·from·"../memory/paths.ts";
+     17     │ - import·{·openMemoryStore·}·from·"../memory/store.ts";
+     18     │ - import·{·switchTaskResourceAtSafePoint,·type·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+     19     │ - import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     20     │ - import·{·recoverEvolutionState,·type·RecoveryReport·}·from·"../evolution/recovery.ts";
+         15 │ + import·{·type·SwitchTaskResourceResult,·switchTaskResourceAtSafePoint·}·from·"../evolution/binding.ts";
+         16 │ + import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         17 │ + import·{·type·RecoveryReport,·recoverEvolutionState·}·from·"../evolution/recovery.ts";
+         18 │ + import·{·memoryPaths·}·from·"../memory/paths.ts";
+         19 │ + import·{·openMemoryStore·}·from·"../memory/store.ts";
+         20 │ + import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     21  21 │   
+     22     │ - export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     23     │ - export·type·{·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+         22 │ + export·type·{·SwitchTaskResourceResult·}·from·"../evolution/binding.ts";
+         23 │ + export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+     24  24 │   
+     25  25 │   /**
+  
+
+packages\coding-agent\src\pao\desktop\host-mount.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     17  17 │   import { openMemoryStore } from "../memory/store.ts";
+     18  18 │   import { switchTaskResourceAtSafePoint, type SwitchTaskResourceResult } from "../evolution/binding.ts";
+     19     │ - import·{·ensureTaskBindings,·resolveTaskBoundResourcePaths,·type·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         19 │ + import·{
+         20 │ + → ensureTaskBindings,
+         21 │ + → resolveTaskBoundResourcePaths,
+         22 │ + → type·TaskBoundResourcePaths,
+         23 │ + }·from·"../evolution/host-mount.ts";
+     20  24 │   import { recoverEvolutionState, type RecoveryReport } from "../evolution/recovery.ts";
+     21  25 │   
+     22     │ - export·type·{·MissingTaskBinding,·MountedTaskResource,·SkippedTaskBinding,·TaskBoundResourcePaths·}·from·"../evolution/host-mount.ts";
+         26 │ + export·type·{
+         27 │ + → MissingTaskBinding,
+         28 │ + → MountedTaskResource,
+         29 │ + → SkippedTaskBinding,
+         30 │ + → TaskBoundResourcePaths,
+         31 │ + }·from·"../evolution/host-mount.ts";
+     23  32 │   export type { SwitchTaskResourceResult } from "../evolution/binding.ts";
+     24  33 │   
+  
+
+packages\coding-agent\src\pao\desktop\index.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+  > 1 │ import { createHash, randomUUID } from "node:crypto";
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { readdirSync, readFileSync, realpathSync } from "node:fs";
+    3 │ import { dirname, join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     41  41 │   export * from "./dept.ts";
+     42  42 │   export * from "./editor.ts";
+     43     │ - export·*·from·"./host-mount.ts";
+     44     │ - export·type·{·DesktopFlowControlPayloadInput·}·from·"./flow-control-payload.ts";
+     45     │ - export·{·desktopFlowControlPayload·}·from·"./flow-control-payload.ts";
+         43 │ + export·type·{·DesktopFlowControlPayloadInput·}·from·"./flow-control-payload.ts";
+         44 │ + export·{·desktopFlowControlPayload·}·from·"./flow-control-payload.ts";
+         45 │ + export·*·from·"./host-mount.ts";
+     46  46 │   export * from "./maintenance.ts";
+     47  47 │   export * from "./memory.ts";
+  
+
+packages\coding-agent\src\pao\evolution\activation.ts:32:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    30 │  *   属生效历史修订，不扩表）。指向已非 badVersion → no_change，不覆盖其他已生效修复。
+    31 │  */
+  > 32 │ import { randomUUID } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    33 │ import { existsSync, statSync } from "node:fs";
+    34 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     33  33 │   import { existsSync, statSync } from "node:fs";␍
+     34  34 │   import { join } from "node:path";␍
+     35     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";␍
+         35 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";␍
+     36  36 │   import type { MemoryStore } from "../memory/store.ts";␍
+     37     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";␍
+         37 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";␍
+     38  38 │   import { checkOwnerSourceLinksIntact, recordPatched } from "./observe.ts";␍
+     39  39 │   import { fingerprintResourceRoot } from "./versions.ts";␍
+  
+
+packages\coding-agent\src\pao\evolution\activation.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+      1     │ - /**␍
+      2     │ - ·*·受控自进化版本生效与回退事务（S9-02/03）。␍
+      3     │ - ·*␍
+      4     │ - ·*·职责：␍
+      5     │ - ·*·-·`activateCandidate`：前置核对（事务外快筛·+·事务内重读确认）后单事务␍
+      6     │ - ·*···UPDATE·`evolution_resources.effective_version`·+·INSERT·`evolution_activations`。␍
+      7     │ - ·*·-·`rollbackResource`：事务体执行回退——当前指向仍是坏版才切回上一版；␍
+      8     │ - ·*···退步判定（哪些证据算·regression）归批·D，本模块只暴露执行入口。␍
+      9     │ - ·*·-·`getEffectiveVersion`：当前生效·versionId·+·目录存在性。␍
+     10     │ - ·*␍
+     11     │ - ·*·契约（S9·任务书·§5）：␍
+     12     │ - ·*·-·生效凭据复用·`kind='publish'`·行（批·A·已建表·CHECK('publish','restore','rollback')，␍
+     13     │ - ·*···不改表）；落盘凭据·vs·生效凭据由·`source_links_json.activation`·区分：␍
+     14     │ - ·*···`published`（候选已固化进版本目录）vs·`effective`（已切指向）。␍
+     15     │ - ·*···判生效行时按·kind='publish'·+·activation='effective'·过滤，不看·reason·文案。␍
+     16     │ - ·*·-·事务内不含模型调用或进程执行；只记已完整发布的版本路径。␍
+     17     │ - ·*·-·核对口径：expectedEffectiveVersion·===·effective_version·===·候选·baseVersion；␍
+     18     │ - ·*···授权未收回（auto_evolution_enabled）；最新验证仍·passed·且同一条；␍
+     19     │ - ·*···资源根当前指纹·===·baseVersion·快照指纹（重算·sha256·清单哈希，与␍
+     20     │ - ·*···snapshotResourceFiles·同口径，不复制磁盘内容，只在内存比对）；␍
+     21     │ - ·*···候选/冻结计划/验证三方各自的·evolution_source_links·行仍在␍
+     22     │ - ·*···（关联缺失或引用的记忆行已不存在·→·依据失效·→·标待重评估）。␍
+     23     │ - ·*·-·任一前置不满足·→·`{status:"conflict"}`：保留旧指向，并沿␍
+     24     │ - ·*···markStaleCandidates·口径把同资源同·baseVersion·的未终态候选标·cancelled␍
+     25     │ - ·*···待重评估（旧候选不得直接重新排发布；本候选保持·passed·终态不再出库）。␍
+     26     │ - ·*·-·`rollbackResource`·只在前置（资源存在、当前指向仍是·badVersion）成立时写：␍
+     27     │ - ·*···同事务·UPDATE·effective_version→previousVersion·+·INSERT·activation␍
+     28     │ - ·*···kind='rollback'·+·UPDATE·坏版·publish·凭据的·reason·前缀「停用:」␍
+     29     │ - ·*···（activations·行不可原位修改语义指版本文件不被覆盖，reason·标停用␍
+     30     │ - ·*···属生效历史修订，不扩表）。指向已非·badVersion·→·no_change，不覆盖其他已生效修复。␍
+     31     │ - ·*/␍
+     32     │ - import·{·randomUUID·}·from·"node:crypto";␍
+     33     │ - import·{·existsSync,·statSync·}·from·"node:fs";␍
+     34     │ - import·{·join·}·from·"node:path";␍
+     35     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";␍
+     36     │ - import·type·{·MemoryStore·}·from·"../memory/store.ts";␍
+     37     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";␍
+     38     │ - import·{·checkOwnerSourceLinksIntact,·recordPatched·}·from·"./observe.ts";␍
+     39     │ - import·{·fingerprintResourceRoot·}·from·"./versions.ts";␍
+     40     │ - ␍
+     41     │ - //·════════════════════════════════════════════════════════════════════════␍
+     42     │ - //·1.·输入输出契约␍
+     43     │ - //·════════════════════════════════════════════════════════════════════════␍
+     44     │ - ␍
+     45     │ - /**·`activateCandidate`·的输入。·*/␍
+     46     │ - export·interface·ActivateCandidateInput·{␍
+     47     │ - → /**·已发布成固定版本的候选·ID。·*/␍
+     48     │ - → candidateId:·string;␍
+     49     │ - → /**·调用方持有的当前生效版本（CAS；与·effective_version·不一致即冲突）。·*/␍
+     50     │ - → expectedEffectiveVersion:·string;␍
+     51     │ - → /**·PAO_HOME·根。·*/␍
+     52     │ - → paoHome:·string;␍
+     53     │ - → /**·生效授权引用（宿主侧的批准凭据身份，记入·source_links_json.authRef）。·*/␍
+     54     │ - → authRef?:·string;␍
+     55     │ - → /**·生效原因（人读，记入·activation.reason）。·*/␍
+     56     │ - → reason?:·string;␍
+     57     │ - → /**·生效时间（夹具注入；缺省取当前）。·*/␍
+     58     │ - → createdAt?:·string;␍
+     59     │ - }␍
+     60     │ - ␍
+     61     │ - /**·`activateCandidate`·的成功输出。·*/␍
+     62     │ - export·interface·ActivateResult·{␍
+     63     │ - → /**·生效后的版本·ID（=·该候选的·publish·凭据·to_version）。·*/␍
+     64     │ - → versionId:·string;␍
+     65     │ - → /**·本次写入的·activation·行·ID（kind='publish'，activation='effective'）。·*/␍
+     66     │ - → activationId:·string;␍
+     67     │ - → /**·生效前指向（=·候选·baseVersion）。·*/␍
+     68     │ - → fromVersion:·string;␍
+     69     │ - }␍
+     70     │ - ␍
+     71     │ - /**·`activateCandidate`·的冲突输出（业务拒绝，不是系统错误）。·*/␍
+     72     │ - export·interface·ActivateConflict·{␍
+     73     │ - → status:·"conflict";␍
+     74     │ - → /**·冲突原因（前置核对失败的逐条说明）。·*/␍
+     75     │ - → reason:·string;␍
+     76     │ - → /**·资源当前实际生效版本（供调用方重取后继续判断；资源行缺失时缺省）。·*/␍
+     77     │ - → currentEffectiveVersion?:·string;␍
+     78     │ - }␍
+     79     │ - ␍
+     80     │ - /**·`rollbackResource`·的输入。·*/␍
+     81     │ - export·interface·RollbackResourceInput·{␍
+     82     │ - → resourceId:·string;␍
+     83     │ - → /**·被判退步的版本（当前指向必须是它才执行回退）。·*/␍
+     84     │ - → badVersion:·string;␍
+     85     │ - → /**·回退目标（上一有效版）。·*/␍
+     86     │ - → previousVersion:·string;␍
+     87     │ - → /**·退步证据来源·ID（记入·rollback·行的·source_links_json）。·*/␍
+     88     │ - → sourceIds:·string[];␍
+     89     │ - → /**·回退原因（人读）。·*/␍
+     90     │ - → reason:·string;␍
+     91     │ - → /**·回退时间（夹具注入；缺省取当前）。·*/␍
+     92     │ - → createdAt?:·string;␍
+     93     │ - }␍
+     94     │ - ␍
+     95     │ - /**·`rollbackResource`·的输出。·*/␍
+     96     │ - export·type·RollbackResult·=␍
+     97     │ - → |·{␍
+     98     │ - → → → status:·"rolled_back";␍
+     99     │ - → → → /**·本次写入的·rollback·activation·ID。·*/␍
+    100     │ - → → → activationId:·string;␍
+    101     │ - → ··}␍
+    102     │ - → |·{␍
+    103     │ - → → → /**·当前指向已不是·badVersion：另一修复已生效，不覆盖。·*/␍
+    104     │ - → → → status:·"no_change";␍
+    105     │ - → → → currentEffectiveVersion?:·string;␍
+    106     │ - → → → reason:·string;␍
+    107     │ - → ··};␍
+    108     │ - ␍
+    109     │ - /**·`getEffectiveVersion`·的输出。·*/␍
+    110     │ - export·interface·EffectiveVersionInfo·{␍
+    111     │ - → /**·当前生效版本·ID（未设过·effective_version·时缺省）。·*/␍
+    112     │ - → versionId?:·string;␍
+    113     │ - → /**·指向版本目录是否存在且非空（无指向时为·false）。·*/␍
+    114     │ - → available:·boolean;␍
+    115     │ - → /**·指向版本目录绝对路径（有指向时给出，不论存在与否）。·*/␍
+    116     │ - → versionDir?:·string;␍
+    117     │ - }␍
+    118     │ - ␍
+    119     │ - //·════════════════════════════════════════════════════════════════════════␍
+    120     │ - //·2.·内部：行读取与指纹␍
+    121     │ - //·════════════════════════════════════════════════════════════════════════␍
+    122     │ - ␍
+    123     │ - function·fail(code:·MemoryError["code"],·message:·string,·refId?:·string):·MemoryResult<never>·{␍
+    124     │ - → return·{·ok:·false,·error:·{·code,·message,·...(refId·===·undefined·?·{}·:·{·refId·})·}·};␍
+    125     │ - }␍
+    126     │ - ␍
+    127     │ - /**·把·resourceId·转为目录安全名（`:`·→·`_`，与·versions.ts·同规则）。·*/␍
+    128     │ - function·dirSafeId(resourceId:·string):·string·{␍
+    129     │ - → return·resourceId.replace(/:/g,·"_");␍
+    130     │ - }␍
+    131     │ - ␍
+    132     │ - /**␍
+    133     │ - ·*·目录指纹·=·`v-{sha256(文件清单[路径,sha256])前12位}`，与·snapshotResourceFiles␍
+    134     │ - ·*·同口径：只重算哈希比对，不把快照文件复制到版本目录（本模块是核对不是快照）。␍
+    135     │ - ·*·O12/E12：三处私有重复收拢为·versions.ts·的·fingerprintResourceRoot·共享实现；␍
+    136     │ - ·*·本模块仍要求「目录形态」——文件型根不支持，激活判据只认目录型版本底座。␍
+    137     │ - ·*/␍
+    138     │ - function·fingerprintDirectory(root:·string):·{·versionId:·string;·fileCount:·number·}·{␍
+    139     │ - → return·fingerprintResourceRoot(root);␍
+    140     │ - }␍
+    141     │ - ␍
+    142     │ - /**␍
+    143     │ - ·*·版本目录完整性核对。versionId·即内容清单哈希（`v-{sha12}`），␍
+    144     │ - ·*·重算目录指纹与版本号比对：文件被删/被改都会改变指纹——比只数文件更严。␍
+    145     │ - ·*·非哈希形·versionId（理论上不会出现：snapshot/publish·都是·v-sha12）退化为非空核对。␍
+    146     │ - ·*/␍
+    147     │ - function·isVersionDirComplete(versionDir:·string,·versionId:·string):·boolean·{␍
+    148     │ - → if·(!existsSync(versionDir)·||·!statSync(versionDir).isDirectory())·return·false;␍
+    149     │ - → const·current·=·fingerprintDirectory(versionDir);␍
+    150     │ - → if·(current.fileCount·===·0)·return·false;␍
+  1145 more lines truncated
+  
+
+packages\coding-agent\src\pao\evolution\binding.ts:19:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    17 │  *   只有 `switchTaskResourceAtSafePoint` 在安全点显式换版。
+    18 │  */
+  > 19 │ import { randomUUID } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 │ import { join } from "node:path";
+    21 │ import type { MemoryError, MemoryResult } from "../memory/types.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     19  19 │   import { randomUUID } from "node:crypto";
+     20  20 │   import { join } from "node:path";
+     21     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         21 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     22  22 │   import type { MemoryStore } from "../memory/store.ts";
+     23     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+         23 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     24  24 │   
+     25  25 │   // ════════════════════════════════════════════════════════════════════════
+  
+
+packages\coding-agent\src\pao\evolution\binding.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    222 222 │   			 WHERE task_id = ? AND resource_id = ?`,
+    223 223 │   		)
+    224     │ - → → .get(input.taskId,·input.resourceId)·as
+    225     │ - → → |·{·binding_id:·string;·version_id:·string;·active:·number·}
+    226     │ - → → |·undefined;
+        224 │ + → → .get(input.taskId,·input.resourceId)·as·{·binding_id:·string;·version_id:·string;·active:·number·}·|·undefined;
+    227 225 │   	if (!row) {
+    228 226 │   		return fail(
+  
+
+packages\coding-agent\src\pao\evolution\control.ts:24:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    22 │  *   事务不含模型/进程调用。
+    23 │  */
+  > 24 │ import { randomUUID } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    25 │ import { existsSync, statSync } from "node:fs";
+    26 │ import { join } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     25  25 │   import { existsSync, statSync } from "node:fs";
+     26  26 │   import { join } from "node:path";
+     27     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         27 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     28  28 │   import type { MemoryStore } from "../memory/store.ts";
+     29     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+         29 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     30  30 │   import { checkOwnerSourceLinksIntact } from "./observe.ts";
+     31     │ - import·{·setAutoEvolution,·getResource·}·from·"./resources.ts";
+         31 │ + import·{·getResource,·setAutoEvolution·}·from·"./resources.ts";
+     32  32 │   import type { EvolutionResource } from "./types.ts";
+     33  33 │   import { fingerprintResourceRoot } from "./versions.ts";
+  
+
+packages\coding-agent\src\pao\evolution\control.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    224 224 │   	if (candidateId === undefined) return undefined;
+    225 225 │   	const cand = store.db
+    226     │ - → → .prepare(
+    227     │ - → → → `SELECT·candidate_id,·problem_id,·test_plan_id·FROM·evolution_candidates·WHERE·candidate_id·=·?`,
+    228     │ - → → )
+    229     │ - → → .get(candidateId)·as
+    230     │ - → → |·{·candidate_id:·string;·problem_id:·string;·test_plan_id:·string·}
+    231     │ - → → |·undefined;
+        226 │ + → → .prepare(`SELECT·candidate_id,·problem_id,·test_plan_id·FROM·evolution_candidates·WHERE·candidate_id·=·?`)
+        227 │ + → → .get(candidateId)·as·{·candidate_id:·string;·problem_id:·string;·test_plan_id:·string·}·|·undefined;
+    232 228 │   	if (!cand) return `候选 ${candidateId} 已不存在（凭据指向的候选行丢失）`;
+    233 229 │   
+    ······· │ 
+    289 285 │   				`expectedEffectiveVersion ${input.expectedEffectiveVersion} 与当前指向 ` +
+    290 286 │   				`${resource.effective_version ?? "（空）"} 不一致`,
+    291     │ - → → → ...(resource.effective_version·===·null
+    292     │ - → → → → ?·{}
+    293     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        287 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    294 288 │   		};
+    295 289 │   	}
+    ······· │ 
+    299 293 │   			status: "conflict",
+    300 294 │   			reason: `目标版本 ${input.targetVersionId} 已是当前生效版，无需恢复`,
+    301     │ - → → → ...(resource.effective_version·===·null
+    302     │ - → → → → ?·{}
+    303     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        295 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    304 296 │   		};
+    305 297 │   	}
+    306 298 │   
+    307 299 │   	// 判据 b：目录完整 + 有未停用 publish 凭据。
+    308     │ - → const·versionDir·=·join(
+    309     │ - → → evolutionPaths(input.paoHome).versions,
+    310     │ - → → dirSafeId(input.resourceId),
+    311     │ - → → input.targetVersionId,
+    312     │ - → );
+        300 │ + → const·versionDir·=·join(evolutionPaths(input.paoHome).versions,·dirSafeId(input.resourceId),·input.targetVersionId);
+    313 301 │   	if (!isVersionDirComplete(versionDir, input.targetVersionId)) {
+    314 302 │   		return {
+    ······· │ 
+    318 306 │   				`版本目录缺失或指纹不匹配:${versionDir}（versionId ${input.targetVersionId} 是内容` +
+    319 307 │   				`清单哈希，文件被删/改都会改变指纹；不完整版本不能直接恢复，须重新评估）`,
+    320     │ - → → → ...(resource.effective_version·===·null
+    321     │ - → → → → ?·{}
+    322     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        308 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    323 309 │   		};
+    324 310 │   	}
+    ······· │ 
+    331 317 │   				`版本 ${input.targetVersionId} 无可用发布凭据（kind='publish' 行缺失或已被「停用:」` +
+    332 318 │   				`标记——曾失败/被回退的版本不能直接恢复，须重新评估）`,
+    333     │ - → → → ...(resource.effective_version·===·null
+    334     │ - → → → → ?·{}
+    335     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        319 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    336 320 │   		};
+    337 321 │   	}
+    ······· │ 
+    344 328 │   			status: "needs_reevaluation",
+    345 329 │   			reason: `来源依据失效：${sourceViolation}`,
+    346     │ - → → → ...(resource.effective_version·===·null
+    347     │ - → → → → ?·{}
+    348     │ - → → → → :·{·currentEffectiveVersion:·resource.effective_version·}),
+        330 │ + → → → ...(resource.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·resource.effective_version·}),
+    349 331 │   		};
+    350 332 │   	}
+    ······· │ 
+    361 343 │   					`恢复期间指向已由 ${input.expectedEffectiveVersion} 变为 ` +
+    362 344 │   					`${inTx.effective_version ?? "（空）"}，不覆盖`,
+    363     │ - → → → → ...(inTx.effective_version·===·null
+    364     │ - → → → → → ?·{}
+    365     │ - → → → → → :·{·currentEffectiveVersion:·inTx.effective_version·}),
+        345 │ + → → → → ...(inTx.effective_version·===·null·?·{}·:·{·currentEffectiveVersion:·inTx.effective_version·}),
+    366 346 │   			} as MemoryResult<RestoreResult | RestoreRejected>;
+    367 347 │   		}
+  
+
+packages\coding-agent\src\pao\evolution\host-mount.ts:19:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    17 │  * - 本模块只做解析与分流，不开 store、不碰 loader；store 由调用方开闭。
+    18 │  */
+  > 19 │ import { existsSync } from "node:fs";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 │ import type { MemoryResult } from "../memory/types.ts";
+    21 │ import type { MemoryStore } from "../memory/store.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     18  18 │    */
+     19  19 │   import { existsSync } from "node:fs";
+     20     │ - import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     21     │ - import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         20 │ + import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         21 │ + import·type·{·MemoryResult·}·from·"../memory/types.ts";
+     22  22 │   import { bindTaskResources, listTaskBindings, resolveTaskResourceVersion, type TaskBinding } from "./binding.ts";
+     23  23 │   import { getResource } from "./resources.ts";
+  
+
+packages\coding-agent\src\pao\evolution\policy.ts:15:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    13 │  * - 资源登记不重复请求已授予的类别权限（同一 resourceId 幂等复用）。
+    14 │  */
+  > 15 │ import { join } from "node:path";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 │ import type { MemoryError, MemoryResult } from "../memory/types.ts";
+    17 │ import {
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     17  17 │   import {
+     18  18 │   	EVOLUTION_RESOURCE_KINDS,
+     19     │ - → type·EvolutionFileDiff,
+         19 │ + → EVOLUTION_RESOURCE_OPS,
+         20 │ + → type·EvolutionFileDiff,
+     20  21 │   	type EvolutionProblemAction,
+     21  22 │   	type EvolutionResource,
+     22     │ - → type·EvolutionResourceKind,
+     23     │ - → EVOLUTION_RESOURCE_OPS,
+         23 │ + → type·EvolutionResourceKind,
+     24  24 │   	type EvolutionResourceOp,
+     25  25 │   	formatResourceId,
+  
+
+packages\coding-agent\src\pao\evolution\resources.ts:16:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    14 │  * 文件归 `<PAO_HOME>/evolution/versions/<resourceId>/<versionId>/`。
+    15 │  */
+  > 16 │ import { createHash } from "node:crypto";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+    18 │ import { join, dirname } from "node:path";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     17  17 │   import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+     18  18 │   import { join, dirname } from "node:path";
+     19     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         19 │ + import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     20  20 │   import type { MemoryStore } from "../memory/store.ts";
+     21     │ - import·{·evolutionPaths·}·from·"../memory/paths.ts";
+     22     │ - import·{
+     23     │ - → EVOLUTION_RESOURCE_KINDS,
+     24     │ - → type·EvolutionResource,
+     25     │ - → type·EvolutionResourceKind,
+     26     │ - → parseResourceId,
+     27     │ - }·from·"./types.ts";
+     28     │ - import·{·resolveEvolutionResource·}·from·"./policy.ts";
+         21 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+         22 │ + import·{·resolveEvolutionResource·}·from·"./policy.ts";
+         23 │ + import·{
+         24 │ + → EVOLUTION_RESOURCE_KINDS,
+         25 │ + → type·EvolutionResource,
+         26 │ + → type·EvolutionResourceKind,
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 157.
+Checked 677 files in 9s. No fixes applied.
+Found 128 errors.
+Found 44 warnings.
+Found 5 infos.
+         27 │ + → parseResourceId,
+         28 │ + }·from·"./types.ts";
+     29  29 │   import { fingerprintResourceRoot, listResourceFiles } from "./versions.ts";
+     30  30 │   
+  
+
+packages\coding-agent\src\pao\evolution\resources.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    182 182 │   		if (!row) return fail("invalid_input", `资源未登记:${input.resourceId}`, input.resourceId);
+    183 183 │   		store.db
+    184     │ - → → → .prepare(
+    185     │ - → → → → `UPDATE·evolution_resources·SET·auto_evolution_enabled·=·?,·updated_at·=·?·WHERE·resource_id·=·?`,
+    186     │ - → → → )
+        184 │ + → → → .prepare(`UPDATE·evolution_resources·SET·auto_evolution_enabled·=·?,·updated_at·=·?·WHERE·resource_id·=·?`)
+    187 185 │   			.run(input.enabled ? 1 : 0, now, input.resourceId);
+    188 186 │   		return { ok: true, ...rowToResource({ ...row, auto_evolution_enabled: input.enabled ? 1 : 0, updated_at: now }) };
+    ······· │ 
+    261 259 │   	if (resource.effectiveVersion === undefined) {
+    262 260 │   		store.db
+    263     │ - → → → .prepare(
+    264     │ - → → → → `UPDATE·evolution_resources·SET·effective_version·=·?,·updated_at·=·?·WHERE·resource_id·=·?`,
+    265     │ - → → → )
+        261 │ + → → → .prepare(`UPDATE·evolution_resources·SET·effective_version·=·?,·updated_at·=·?·WHERE·resource_id·=·?`)
+    266 262 │   			.run(versionId, now, input.resourceId);
+    267 263 │   	}
+  
+
+packages\coding-agent\src\pao\evolution\select.ts:13:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+  
+    11 │  * - 不要求每问题都产补丁；没有「必须产补丁」的完成条件。
+    12 │  */
+  > 13 │ import type { MemoryError, MemoryResult } from "../memory/types.ts";
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    14 │ import type { MemoryStore } from "../memory/store.ts";
+    15 │ import { getProblemRow, rowToProblem } from "./problems.ts";
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     11  11 │    * - 不要求每问题都产补丁；没有「必须产补丁」的完成条件。
+     12  12 │    */
+     13     │ - import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     14     │ - import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         13 │ + 
+         14 │ + import·type·{·MemoryStore·}·from·"../memory/store.ts";
+         15 │ + import·type·{·MemoryError,·MemoryResult·}·from·"../memory/types.ts";
+     15  16 │   import { getProblemRow, rowToProblem } from "./problems.ts";
+     16  17 │   import {
+  
+
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some warnings were emitted while running checks.
+  
+

@@ -1,0 +1,45 @@
+
+> pi-gui@1.0.1 lint D:\AI\workspace\pao-dev\desktop
+> pnpm build:shared && eslint . --max-warnings 0
+
+
+> pi-gui@1.0.1 build:shared D:\AI\workspace\pao-dev\desktop
+> pnpm --filter @pao/session-driver build && pnpm --filter @pao/catalogs build && pnpm --filter @pao/extension-ui build && pnpm --filter @pao/sdk-driver build
+
+
+> @pao/session-driver@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\session-driver
+> tsc -p tsconfig.json
+
+
+> @pao/catalogs@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\catalogs
+> tsc -p tsconfig.json
+
+
+> @pao/extension-ui@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\extension-ui
+> tsc -p tsconfig.json && node scripts/build-browser.mjs
+
+
+> @pao/sdk-driver@0.0.0 build D:\AI\workspace\pao-dev\desktop\packages\pi-sdk-driver
+> tsc -p extensions/pao/tsconfig.json && node extensions/pao/build.mjs && tsc -p tsconfig.json
+
+
+<--- Last few GCs --->
+
+[33672:000001FF4D7AB000]   423347 ms: Scavenge (interleaved) 4075.8 (4104.6) -> 4071.5 (4106.8) MB, pooled: 0 MB, 44.80 / 0.00 ms  (average mu = 0.206, current mu = 0.185) allocation failure; 
+[33672:000001FF4D7AB000]   426695 ms: Mark-Compact (reduce) 4078.7 (4107.5) -> 4076.5 (4098.7) MB, pooled: 0 MB, 2484.62 / 0.00 ms  (+ 540.1 ms in 104 steps since start of marking, biggest step 7.2 ms, walltime since start of marking 3347 ms) (average mu 
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF7E8113D9F node::OnFatalError+1343
+ 2: 00007FF7E6D5DCB7 v8::Function::NewInstance+423
+ 3: 00007FF7E6B5E4F7 uv_udp_get_send_queue_count+54423
+ 4: 00007FF7E6B62204 uv_udp_get_send_queue_count+70052
+ 5: 00007FF7E6B7116C v8::internal::StrongRootAllocatorBase::deallocate_impl+16604
+ 6: 00007FF7E6B709AB v8::internal::StrongRootAllocatorBase::deallocate_impl+14619
+ 7: 00007FF7E84424AD node::AsyncResource::CallbackScope::CallbackScope+2184429
+ 8: 00007FF7E6B5BFC0 uv_udp_get_send_queue_count+44896
+ 9: 00007FF7E6B7681A X509_STORE_set_cleanup+5098
+10: 00007FF7E6B82CB6 uv_timer_set_repeat+20694
+11: 00007FF7E6753907 v8::CodeEvent::GetFunctionName+131959
+12: 000001FF1FE775FA 
+ ELIFECYCLE  Command failed with exit code 134.

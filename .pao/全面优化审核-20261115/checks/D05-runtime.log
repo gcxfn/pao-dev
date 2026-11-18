@@ -1,0 +1,28 @@
+
+Running 2 tests using 1 worker
+
+(node:44668) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44668) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[BABEL] Note: The code generator has deoptimised the styling of D:\AI\workspace\pao-dev\.pao\全面优化审核-20261115\scripts\vite-cache\deps\react-dom_client.js?v=773257b5 as it exceeds the max of 500KB.
+  ok 1 ..\.pao\全面优化审核-20261115\scripts\d05-perf.spec.ts:57:5 › D05 默认关闭计数 (1.1m)
+  x  2 ..\.pao\全面优化审核-20261115\scripts\d05-perf.spec.ts:71:5 › D05 两百条历史消息与一分钟真实 SDK 流式输出 (48ms)
+
+
+  1) ..\.pao\全面优化审核-20261115\scripts\d05-perf.spec.ts:71:5 › D05 两百条历史消息与一分钟真实 SDK 流式输出 ────────────
+
+    Error: No "exports" main defined in D:\AI\workspace\pao-dev\desktop\apps\desktop\node_modules\@pao\coding-agent\package.json
+
+      82 |   process.env.PI_CODING_AGENT_DIR=agentDir;
+      83 |   process.env.PAO_CODING_AGENT_DIR=agentDir;
+    > 84 |   const { SessionManager } = await import(pathToFileURL(requireDesktop.resolve("@pao/coding-agent")).href);
+         |                                                                        ^
+      85 |   for(const [title,count] of [["性能长会话",200],["切换对照会话",2]] as const) {
+      86 |     const manager = SessionManager.create(workspacePath);
+      87 |     for(let i=0;i<count;i++) manager.appendMessage({role:"user",content:`历史消息 ${i}：`+"正文内容。".repeat(80),timestamp:Date.now()+i});
+        at D:\AI\workspace\pao-dev\.pao\全面优化审核-20261115\scripts\d05-perf.spec.ts:84:72
+
+  1 failed
+    ..\.pao\全面优化审核-20261115\scripts\d05-perf.spec.ts:71:5 › D05 两百条历史消息与一分钟真实 SDK 流式输出 ─────────────
+  1 passed (1.1m)

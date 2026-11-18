@@ -1,0 +1,315 @@
+desktop/apps\desktop\tests\production\worktree-host-electron.spec.ts:289:async function git(repoPath: string, ...args: string[]): Promise<string> {
+desktop/apps\desktop\tests\production\worktree-host-electron.spec.ts:290:  const { stdout } = await execFileAsync("git", ["-C", repoPath, ...args]);
+desktop/apps\desktop\tests\unit\workspace-files.spec.ts:140:  const { path: repoPath } = await makeGitRepo("repo-ignoring-folder");
+desktop/apps\desktop\tests\unit\workspace-files.spec.ts:141:  await writeFile(join(repoPath, ".gitignore"), "*\n", "utf8");
+desktop/apps\desktop\tests\unit\workspace-files.spec.ts:142:  const workspacePath = join(repoPath, "projects", "app");
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:60:  private readonly runGit: GitRunner;
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:67:    this.runGit = (args) => runGit(args, this.gitTimeoutMs);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:94:    const repoRoot = await resolveRepositoryRoot(workspace.path, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:103:      await listGitWorktrees(repoRoot, workspace, existing.worktrees, this.runGit),
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:156:    return inspectGitWorkspace(workspace.path, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:163:    const repoRoot = await resolveRepositoryRoot(workspace.path, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:177:    await this.runGit(args);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:200:    const repoRoot = await resolveRepositoryRoot(workspace.path, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:215:      await this.runGit([
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:226:        await deleteAppWorktreeBranch(repoRoot, existing?.branchName, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:233:    await deleteAppWorktreeBranch(repoRoot, existing?.branchName, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:244:    const info = await inspectLinkedWorktree(path, this.runGit).catch(() => undefined);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:260:      repoRoot = await resolveRepositoryRoot(workspace.path, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:266:      await this.runGit(["-C", repoRoot, "worktree", "remove", "--force", targetPath]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:272:        await this.runGit(["-C", repoRoot, "branch", "-D", input.branchName]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:302:        const info = await inspectLinkedWorktree(candidatePath, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:316:        !(await isBranchMergedIntoHead(repoRoot, branchName, this.runGit))
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:324:        await this.runGit(["-C", repoRoot, "worktree", "remove", candidatePath]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:326:        await deleteAppWorktreeBranch(repoRoot, branchName, this.runGit);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:345:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:351:    await runGitCommand(["-C", repoRoot, "branch", "-d", branchName]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:362:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:365:    await runGitCommand([
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:408:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:410:  const output = await runGitCommand(["-C", worktreePath, "worktree", "list", "--porcelain"]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:443:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:445:  const output = await runGitCommand(["-C", workspacePath, "rev-parse", "--show-toplevel"]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:451:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:455:    await runGitCommand([
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:474:  runGitCommand: GitRunner,
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:476:  const output = await runGitCommand(["-C", repoRoot, "worktree", "list", "--porcelain"]);
+desktop/apps\desktop\electron\platform\worktrees\worktree-manager.ts:612:async function runGit(args: readonly string[], timeoutMs: number): Promise<string> {
+desktop/apps\desktop\electron\platform\pao\temporary-plans-query.ts:722:    if (!samePathIgnoringCase(realTarget, target))
+desktop/apps\desktop\electron\platform\pao\temporary-plans-query.ts:781:function samePathIgnoringCase(left: string, right: string): boolean {
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:183:    await runGit(workspacePath, ["init", "-b", "main"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:184:    await runGit(workspacePath, ["config", "user.name", "Pi App Tests"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:185:    await runGit(workspacePath, ["config", "user.email", "pi-gui-tests@example.com"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:187:    await runGit(workspacePath, ["add", "--", sourcePath]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:188:    await runGit(workspacePath, ["commit", "-m", "base"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:227:    await runGit(workspacePath, ["init", "-b", "main"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:228:    await runGit(workspacePath, ["config", "user.name", "Pi App Tests"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:229:    await runGit(workspacePath, ["config", "user.email", "pi-gui-tests@example.com"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:235:    await runGit(workspacePath, ["add", "-A"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:236:    await runGit(workspacePath, ["commit", "-m", "base"]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:240:    await runGit(workspacePath, ["add", "--", stagedPath]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:242:    await runGit(workspacePath, ["add", "--", addedPath]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:247:    await runGit(workspacePath, ["mv", "--", renameSourcePath, renamedPath]);
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:313:    const stagedNames = await runGit(workspacePath, [
+desktop/apps\desktop\tests\unit\changed-files.spec.ts:348:async function runGit(workspacePath: string, args: readonly string[]): Promise<string> {
+desktop/apps\desktop\electron\platform\pao\canvas-artifact-query.ts:217:function samePathIgnoringCase(left: string, right: string): boolean {
+desktop/apps\desktop\electron\platform\pao\canvas-artifact-query.ts:379:    if (!samePathIgnoringCase(realTarget, target))
+desktop/apps\desktop\electron\platform\pao\canvas-artifact-query.ts:454:      same = samePathIgnoringCase(await fs.realpath(item.path), await fs.realpath(cardPath));
+desktop/apps\desktop\electron\platform\pao\canvas-artifact-query.ts:456:      same = samePathIgnoringCase(resolve(item.path), resolve(cardPath));
+desktop/apps\desktop\tests\core\worktrees.spec.ts:21:async function git(repoPath: string, ...args: string[]): Promise<string> {
+desktop/apps\desktop\tests\core\worktrees.spec.ts:22:  const { stdout } = await execFileAsync("git", ["-C", repoPath, ...args]);
+desktop/apps\desktop\tests\core\worktrees.spec.ts:27:  repoPath: string,
+desktop/apps\desktop\tests\core\worktrees.spec.ts:32:  await git(repoPath, "worktree", "add", "-b", branchName, worktreePath, "HEAD");
+PAO/packages/coding-agent\src\core\package-manager.ts:1586:			const remoteHead = await this.runGitRemoteCommand(installedPath, ["ls-remote", "origin", upstreamRef]);
+PAO/packages/coding-agent\src\core\package-manager.ts:1593:		const remoteHead = await this.runGitRemoteCommand(installedPath, ["ls-remote", "origin", "HEAD"]);
+PAO/packages/coding-agent\src\core\package-manager.ts:1681:	private runGitRemoteCommand(installedPath: string, args: string[]): Promise<string> {
+PAO/packages/coding-agent\src\utils\git.ts:27:		const repoPath = pathWithMaybeRef.slice(0, refSeparator);
+PAO/packages/coding-agent\src\utils\git.ts:29:		if (!repoPath || !ref) return { repo: url };
+PAO/packages/coding-agent\src\utils\git.ts:31:			repo: `git@${scpLikeMatch[1] ?? ""}:${repoPath}`,
+PAO/packages/coding-agent\src\utils\git.ts:42:			const repoPath = pathWithMaybeRef.slice(0, refSeparator);
+PAO/packages/coding-agent\src\utils\git.ts:44:			if (!repoPath || !ref) return { repo: url };
+PAO/packages/coding-agent\src\utils\git.ts:45:			parsed.pathname = `/${repoPath}`;
+PAO/packages/coding-agent\src\utils\git.ts:65:	const repoPath = pathWithMaybeRef.slice(0, refSeparator);
+PAO/packages/coding-agent\src\utils\git.ts:67:	if (!repoPath || !ref) {
+PAO/packages/coding-agent\src\utils\git.ts:71:		repo: `${host}/${repoPath}`,
+desktop/apps\desktop\tests\core\memory-artifacts.spec.ts:38: * fixtureJson：{ git?: { filePath, commitV1, commitV2, repoPath }, managed?: { filePath } }
+desktop/apps\desktop\tests\core\memory-artifacts.spec.ts:137:        repoRoot: fixture.git.repoPath,
+desktop/apps\desktop\tests\core\memory-artifacts.spec.ts:257:          git: { filePath: genPath, commitV1, commitV2, repoPath: project },
+PAO/packages/coding-agent\src\pao\worktrees\local-host\host.ts:579:		const gitObjects = await inspectGitObjectState(executionRoot);
+PAO/packages/coding-agent\src\pao\worktrees\local-host\host.ts:580:		const worktreeChanged = gitObjects.indexDigest !== baseline.treeId || gitObjects.worktreeDigest.trim() !== "";
+PAO/packages/coding-agent\src\pao\worker\runner.ts:1471:			const samePath = [...this.#active.values()].filter(
+PAO/packages/coding-agent\src\pao\worker\runner.ts:1476:			if (samePath.length === 0) return issueStopConfirmation([]);
+PAO/packages/coding-agent\src\pao\memory\task-continuation.ts:131:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\memory\task-continuation.ts:423:			if (!samePath(binding.executionRoot, identity.executionRoot)) {
+PAO/packages/coding-agent\src\pao\memory\task-continuation.ts:883:					if (!samePath(binding.executionRoot, continuation.executionRoot)) {
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:53:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:69:		!samePath(input.key.cardsDir, live.key.cardsDir)
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:73:	if (!samePath(input.projectRoot, live.projectRoot)) return "调用方执行绑定任务根与持久绑定不一致";
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:74:	if (!samePath(input.executionRoot, live.executionRoot)) return "调用方执行绑定执行根与持久绑定不一致";
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:75:	if (!samePath(input.repositoryRoot, live.repositoryRoot)) return "调用方执行绑定仓库根与持久绑定不一致";
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:87:async function readAttemptBaseline(
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:132:		!samePath(baseline.projectRoot, binding.projectRoot) ||
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:133:		!samePath(baseline.executionRoot, binding.executionRoot) ||
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:134:		!samePath(baseline.repositoryRoot, binding.repositoryRoot)
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:220:	if (!samePath(card.path, input.cardPath)) {
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:228:	if (!samePath(input.baselinePath, expectedBaselinePath)) {
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:241:	const parsedBaseline = await readAttemptBaseline(input.baselinePath, live, input.signal);
+PAO/packages/coding-agent\src\pao\worker\change-facts.ts:247:	if (!diff.当前ContentRoot || !samePath(diff.当前ContentRoot, input.binding.executionRoot)) {
+PAO/packages/coding-agent\src\pao\memory\artifact-registration.ts:162:			files: staged.map((repoPath) => ({
+PAO/packages/coding-agent\src\pao\memory\artifact-registration.ts:163:				name: basename(repoPath),
+PAO/packages/coding-agent\src\pao\memory\artifact-registration.ts:164:				path: join(repoRoot, repoPath),
+PAO/packages/coding-agent\src\pao\memory\artifact-registration.ts:165:				git: { commit: fullSha.sha, path: repoPath.split("\\").join("/") },
+PAO/packages/coding-agent\src\pao\cards\verifier.ts:562:		if (!diff.项目根 || !samePath(diff.项目根, execution.projectRoot)) {
+PAO/packages/coding-agent\src\pao\cards\verifier.ts:567:		if (!diff.当前ContentRoot || !samePath(diff.当前ContentRoot, execution.canonicalExecutionRoot)) {
+PAO/packages/coding-agent\src\pao\cards\verifier.ts:599:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\verifier.ts:647:	if (!diff.当前ContentRoot || !samePath(diff.当前ContentRoot, execution.canonicalExecutionRoot)) {
+PAO/packages/coding-agent\src\pao\cards\integration.ts:125:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\integration.ts:555:				!samePath(record.source.cardsDir, source.cardsDir) ||
+PAO/packages/coding-agent\src\pao\cards\integration.ts:563:				samePath(record.target.projectRoot, target.projectRoot) &&
+PAO/packages/coding-agent\src\pao\cards\integration.ts:564:				samePath(record.target.executionRoot, target.canonicalExecutionRoot) &&
+PAO/packages/coding-agent\src\pao\cards\integration.ts:565:				samePath(record.target.repositoryRoot, target.repositoryRoot) &&
+PAO/packages/coding-agent\src\pao\cards\integration.ts:583:			!samePath(sourceExecution.projectRoot, target.projectRoot) &&
+PAO/packages/coding-agent\src\pao\cards\integration.ts:760:		!samePath(projectRootForCards(input.sourceExecutionKey.cardsDir), input.context.projectRoot) ||
+PAO/packages/coding-agent\src\pao\cards\integration.ts:761:		!samePath(projectRootForCards(input.targetExecutionKey.cardsDir), input.context.projectRoot)
+PAO/packages/coding-agent\src\pao\status\results.ts:11: * git 调用走注入点（options.runGit，缺省 execFile 真跑），hermetic 测试注入假输出；
+PAO/packages/coding-agent\src\pao\status\results.ts:58:	runGit?: ResultsRunGit;
+PAO/packages/coding-agent\src\pao\status\results.ts:175:function memoizeRunGit(runGit: ResultsRunGit): ResultsRunGit {
+PAO/packages/coding-agent\src\pao\status\results.ts:179:		// 查询；找不到目录时保留原 cwd 交给 runGit，从而不改变原错误语义。
+PAO/packages/coding-agent\src\pao\status\results.ts:184:			// 缓存键退回原值；真正的目录错误仍由 runGit 报告。
+PAO/packages/coding-agent\src\pao\status\results.ts:189:		const current = Promise.resolve().then(() => runGit(args, cwd));
+PAO/packages/coding-agent\src\pao\status\results.ts:222:async function outOfScopeLeftover(cardsDir: string, card: ParsedCard, runGit: ResultsRunGit): Promise<string[]> {
+PAO/packages/coding-agent\src\pao\status\results.ts:230:		const status = await runGit(
+PAO/packages/coding-agent\src\pao\status\results.ts:271:	runGit: ResultsRunGit,
+PAO/packages/coding-agent\src\pao\status\results.ts:293:			const nameStatus = await runGit(
+PAO/packages/coding-agent\src\pao\status\results.ts:305:			const stat = await runGit(
+PAO/packages/coding-agent\src\pao\status\results.ts:309:			const untracked = await runGit(
+PAO/packages/coding-agent\src\pao\status\results.ts:354:	for (const card of cards) leftover.push(...(await outOfScopeLeftover(flow.卡目录, card, runGit)));
+PAO/packages/coding-agent\src\pao\status\results.ts:531:	runGit: ResultsRunGit,
+PAO/packages/coding-agent\src\pao\status\results.ts:544:			nodeResult.push(await nodeResultSection(flow, node, runGit));
+PAO/packages/coding-agent\src\pao\status\results.ts:593:	const runGit = memoizeRunGit(options.runGit ?? defaultRunGit);
+PAO/packages/coding-agent\src\pao\status\results.ts:608:			line.push(await instanceResultLine(file.path, file.projectName, file.projectRoot, runGit));
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:125:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:161:	if (!samePath(projectRoot, taskRoot)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:168:	if (!samePath(executionRoot, worktreePath)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:178:	if (!samePath(repositoryRoot, worktreePath)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:431:			if (!statSync(root).isDirectory() || !samePath(realpathSync.native(root), root)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:435:		if (!roots.every((root) => samePath(root, binding.executionRoot))) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:451:	if (!samePath(topLevel, binding.repositoryRoot)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:457:	if (!samePath(commonGitDir, binding.worktree.commonGitDir)) {
+PAO/packages/coding-agent\src\pao\cards\execution-context.ts:498:		!samePath(binding.key.cardsDir, normalizedKey.cardsDir)
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:52:function runGit(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:69:async function runGitWithRetry(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:78:		last = await runGit(args, cwd, 60000, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:167:interface ControlledDeliveryResult extends SubmissionResult {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:172:interface PersistedDeliveryResult {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:185:interface AttemptBaselineEvidence {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:200:interface CumulativeDeliveryEvidence {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:207:function samePath(left: string, right: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:213:function noWorkerChangesSubmission(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:236:function cumulativeFailure(card: ParsedCard, detail: string): { 原因: string; 消息: string } {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:243:function repoPath(value: string, projectRoot: string): string {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:252:function entryPaths(entry: { 状态: string; 文件: string }): string[] {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:257:function declarationMatches(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:262:	const declared = repoPath(declaration.路径, projectRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:263:	const paths = entryPaths(entry).map((item) => repoPath(item, projectRoot));
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:277:function pathClaimedByChange(change: ReceiptChange, path: string, projectRoot: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:279:	const declared = repoPath(change.路径, projectRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:280:	const target = repoPath(path, projectRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:284:function readAttemptBaseline(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:288:): { ok: true; evidence: AttemptBaselineEvidence } | { ok: false; reason: string } {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:296:	const evidence: AttemptBaselineEvidence = {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:326:		!samePath(evidence.projectRoot, binding.projectRoot) ||
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:327:		!samePath(evidence.executionRoot, binding.executionRoot) ||
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:328:		!samePath(evidence.repositoryRoot, binding.repositoryRoot) ||
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:343:async function gitCommonDir(root: string, signal?: AbortSignal): Promise<string> {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:344:	const result = await runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"], root, 60000, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:348:async function bindingBelongsToRepository(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:353:	if (!binding.worktree.commonGitDir || !samePath(binding.worktree.commonGitDir, currentCommonDir)) return false;
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:356:	const liveCommonDir = await gitCommonDir(binding.repositoryRoot, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:357:	return Boolean(liveCommonDir) && samePath(liveCommonDir, currentCommonDir);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:360:async function treeChanges(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:367:	const result = await runGit(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:388:	return entries.filter((entry) => !entryPaths(entry).some(isDispatchSystemPath));
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:391:async function validateBaselineObjects(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:393:	evidence: AttemptBaselineEvidence,
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:396:	const tree = await runGit(["rev-parse", `${evidence.tree}^{tree}`], repoRoot, 60000, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:398:	const ref = await runGit(["rev-parse", `${evidence.ref}^{tree}`], repoRoot, 60000, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:403:function latestAttemptReceipt(card: ParsedCard, attempt: number) {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:409:async function inspectCumulativeDelivery(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:415:): Promise<{ ok: true; evidence: CumulativeDeliveryEvidence } | { ok: false; 原因: string; 消息: string }> {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:423:		return { ok: false, ...cumulativeFailure(card, "当前尝试缺少真实内容 tree 或仓库根") };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:425:	const currentCommonDir = await gitCommonDir(repoRoot, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:426:	if (!currentCommonDir) return { ok: false, ...cumulativeFailure(card, "当前仓库缺少共同 Git 目录证据") };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:428:	const baselines: AttemptBaselineEvidence[] = [];
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:435:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 缺少真实执行绑定`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:440:			!samePath(binding.projectRoot, binding.worktree.taskRoot) ||
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:441:			!(await bindingBelongsToRepository(binding, currentCommonDir, signal))
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:443:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的执行绑定不属于当前共同 Git 仓库`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:445:		const parsed = readAttemptBaseline(baselineSnapshotPath(cardsDir, card.card_no, attempt), key, binding);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:446:		if (!parsed.ok) return { ok: false, ...cumulativeFailure(card, parsed.reason) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:447:		const objectFailure = await validateBaselineObjects(repoRoot, parsed.evidence, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:448:		if (objectFailure) return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt}：${objectFailure}`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:454:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的执行绑定在核验期间不可读`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:456:		const stored = readAttemptBaseline(baselineSnapshotPath(cardsDir, card.card_no, attempt), boundaryKey, boundary);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:463:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的基线在核验期间发生变化`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:474:			truth = await treeChanges(repoRoot, baseline.tree, nextTree, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:478:				...cumulativeFailure(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:484:		const receipt = latestAttemptReceipt(card, attempt);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:485:		if (!receipt) return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 缺少历史回执`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:489:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的历史回执没有可归属改动`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:498:				...cumulativeFailure(card, `尝试 ${attempt} 的只读复验缺少带证据的 pass 结论`),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:502:			const declared = repoPath(change.路径, baseline.projectRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:504:				entryPaths(entry).some((dirtyPath) => {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:505:					const normalizedDirty = repoPath(dirtyPath, baseline.projectRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:516:					...cumulativeFailure(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:527:				const matches = meaningful.filter((change) => declarationMatches(change, entry, baseline.projectRoot));
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:536:				...cumulativeFailure(card, `尝试 ${attempt} 的回执声明与相邻基线 tree 差不能逐项对应`),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:540:			truth.flatMap((entry) => entryPaths(entry).map((path) => repoPath(path, baseline.projectRoot))),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:544:				[...claimedTruth].every((path) => !pathClaimedByChange(change, path, baseline.projectRoot)),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:547:			return { ok: false, ...cumulativeFailure(card, `尝试 ${attempt} 的改动声明越过真实 tree 差`) };
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:570:		if (otherProjectRoot && !samePath(otherProjectRoot, repoRoot)) {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:571:			let sameRepository = otherRepositoryRoot !== undefined && samePath(otherRepositoryRoot, repoRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:573:				const otherCommonDir = await gitCommonDir(otherRepositoryRoot, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:574:				sameRepository = Boolean(otherCommonDir) && samePath(otherCommonDir, currentCommonDir);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:579:					sameRepository = await bindingBelongsToRepository(otherBinding, currentCommonDir, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:590:				const changedPath = repoPath(change.路径, repoRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:603:				...cumulativeFailure(card, `路径 ${path} 已被其他卡 ${owner[1]} 声明，拒绝混入同一交付`),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:619:async function runGitWithEnv(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:635:async function treeForPaths(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:645:		const read = await runGitWithEnv(["read-tree", baselineTree], repoRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:657:			const entry = await runGitWithEnv(["ls-tree", "-z", currentTree, "--", path], repoRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:665:				const update = await runGitWithEnv(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:673:				const remove = await runGitWithEnv(["update-index", "--force-remove", "--", path], repoRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:677:		const write = await runGitWithEnv(["write-tree"], repoRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:686:async function pathsAlreadyCommitted(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:694:	const result = await runGit(["diff", "--quiet", head, currentTree, "--", ...paths], repoRoot, 60000, signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:714:function controlledDeliveryRef(key: ExecutionKey): string {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:718:function controlledBaselineRef(key: ExecutionKey): string {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:722:function deliveryResultPath(key: ExecutionKey): string {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:730:function parseLatestExecutionVerdict(card: ParsedCard):
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:756:async function assertDeliveryContentMatchesVerification(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:763:	const verdict = parseLatestExecutionVerdict(card);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:802:async function gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:817:async function createControlledDeliveryCommit(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:820:	deliveryEvidence: CumulativeDeliveryEvidence,
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:822:): Promise<ControlledDeliveryResult> {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:823:	const resultPath = deliveryResultPath(execution.key);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:826:		createControlledDeliveryCommitLocked(card, execution, deliveryEvidence, options),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:830:async function publishDeliveryRef(repository: string, ref: string, commit: string): Promise<void> {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:831:	const existing = await gitObject(["rev-parse", "--verify", `${ref}^{commit}`], repository);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:834:	const update = await gitObject(["update-ref", ref, commit, "0".repeat(commit.length)], repository);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:839:async function createControlledDeliveryCommitLocked(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:842:	deliveryEvidence: CumulativeDeliveryEvidence,
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:844:): Promise<ControlledDeliveryResult> {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:849:	const ref = controlledDeliveryRef(key);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:850:	const resultPath = deliveryResultPath(key);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:854:		let persisted: PersistedDeliveryResult;
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:856:			persisted = readJsonRaw(savedPath) as PersistedDeliveryResult;
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:871:			!samePath(persisted.key.cardsDir, key.cardsDir) ||
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:883:		const recordedTree = await gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:888:		const boundary = await gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:889:			["rev-parse", "--verify", `${controlledBaselineRef(key)}^{commit}`],
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:894:				? await gitObject(["rev-parse", `${boundary.stdout.trim()}^{tree}`], execution.repositoryRoot)
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:907:			await publishDeliveryRef(execution.repositoryRoot, ref, persisted.deliveryCommit);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:911:		const recordedObject = await gitObject(["rev-parse", `${ref}^{commit}`], execution.repositoryRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:915:		const sameContent = await pathsAlreadyCommitted(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:937:	const baselineRef = controlledBaselineRef(key);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:938:	const existingBaseline = await gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:945:		const existingTree = await gitObject(["show", "-s", "--format=%T", boundaryCommit], execution.repositoryRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:952:		const baselineHead = await gitObject(["rev-parse", "HEAD"], execution.repositoryRoot);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:954:		const boundary = await gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:972:		await publishDeliveryRef(execution.repositoryRoot, baselineRef, boundaryCommit);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:976:	const deliveryTree = await treeForPaths(execution.repositoryRoot, baselineTree, currentTree, paths, options?.signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:977:	const delivery = await gitObject(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:995:	const persisted: PersistedDeliveryResult = {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1009:	await publishDeliveryRef(execution.repositoryRoot, ref, deliveryCommit);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1121:		Boolean(execution && !samePath(execution.projectRoot, execution.canonicalExecutionRoot));
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1150:		if (!samePath(diff.当前ContentRoot, execution.canonicalExecutionRoot)) {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1157:		if (!samePath(execution.canonicalExecutionRoot, execution.repositoryRoot)) {
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1164:		const guarded = await assertDeliveryContentMatchesVerification(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1175:			? await inspectCumulativeDelivery(card, cardsDir, diff, execution, options?.signal)
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1179:		const evidence: CumulativeDeliveryEvidence = cumulative?.ok
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1184:					paths: [...new Set(diff.worker改动.flatMap(entryPaths))].sort(),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1188:			const skipped = noWorkerChangesSubmission(card, execution, diff);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1192:				...cumulativeFailure(card, "当前受管尝试没有可交付改动"),
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1195:		const controlled = await createControlledDeliveryCommit(card, execution, evidence, options);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1209:		const skipped = execution ? noWorkerChangesSubmission(card, execution, diff) : undefined;
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1225:		: [...new Set(diff.worker改动.flatMap(entryPaths))].sort();
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1231:		const add = await runGitWithRetry(["add", "--", p], diff.项目根 ?? cardsDir, 3, options?.signal);
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1246:	const commit = await runGitWithRetry(
+PAO/packages/coding-agent\src\pao\cards\delivery.ts:1272:	const head = await runGit(["rev-parse", "--short", "HEAD"], projectRoot);
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:115:async function runGit(args: string[], cwd: string, signal?: AbortSignal): Promise<string> {
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:144:	const out = await runGit(pathspecs, projectRoot, signal);
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:215:		await runGit(["rev-parse", "--path-format=absolute", "--show-toplevel", "HEAD", "--git-common-dir"], cwd, signal)
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:221:		const root = (await runGit(["rev-parse", "--show-toplevel"], cwd, signal)).trim();
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:225:			(await runGit(["rev-parse", "HEAD"], root, signal)).trim(),
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:226:			(await runGit(["rev-parse", "--path-format=absolute", "--git-common-dir"], root, signal)).trim(),
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:294:	await runGitWithEnv(["read-tree", "HEAD"], repositoryRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:295:	await runGitWithEnv(["add", "-A", "--", ...PROJECT_CONTENT_PATHSPECS], repositoryRoot, env, signal);
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:296:	return (await runGitWithEnv(["write-tree"], repositoryRoot, env, signal)).trim();
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:299:async function runGitWithEnv(
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:421:		await runGit(["update-ref", ref, first.tree], first.repositoryRoot, options.signal);
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:677:	const out = await runGit(
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:754:function samePath(a: string, b: string): boolean {
+PAO/packages/coding-agent\src\pao\cards\baseline.ts:760:	if (samePath(declarationPath, truthPath)) return true;
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:4: * 停因字段直写正本（真停因字段口径同 pending.test.ts 改流）；git 输出经 options.runGit 注入假值，
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:256:			runGit: fakeGit({
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:291:			runGit: fakeGit({ diffNameStatus: "M\tsrc/a.ts", diffStat: " 1 file changed" }),
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:309:		const { line } = await collectInstanceResults(s.home, { runGit: fakeGit({ diff失败: true }) });
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:363:			runGit: fakeGit({ status: "M  src/declared.ts\0?? extra.txt\0 M 既有.txt\0" }),
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:397:		// 真实 git 仓库（不注入 runGit）：认领时非仓库无节点基线，越界核查走真 git status
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:412:		const fail = await collectInstanceResults(s.home, { runGit: fakeGit({ status失败: true }) });
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:415:		const missingRoot = await collectInstanceResults(s.home, { runGit: fakeGit({ status: "?? x.txt\0" }) });
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:424:		const { line } = await collectInstanceResults(s.home, { runGit: fakeGit({ status: "?? new.txt\0" }) });
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:598:		const runGit: ResultsRunGit = async (args) => {
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:606:		const collected = await collectInstanceResults(s.home, { runGit });
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:636:		const runGit: ResultsRunGit = async (args) => {
+PAO/packages/coding-agent\test\pao\results-aggregate.test.ts:640:		const collected = await collectInstanceResults(s.home, { runGit });
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:210:function deliveryResultPath(f: Fixture): string {
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:234:	expect(existsSync(deliveryResultPath(f))).toBe(false);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:283:		expect(existsSync(deliveryResultPath(f))).toBe(true);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:525:		const resultPath = deliveryResultPath(f);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:585:		expect(existsSync(deliveryResultPath(f))).toBe(false);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:630:			const resultPath = deliveryResultPath(f);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:695:			const resultPath = deliveryResultPath(f);
+PAO/packages/coding-agent\test\pao\workflow-pending-resolution.test.ts:713:			const resultPath = deliveryResultPath(f);

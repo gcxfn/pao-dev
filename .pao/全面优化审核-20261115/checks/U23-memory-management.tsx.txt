@@ -1,0 +1,1582 @@
+import { revisionLabel } from "./memory-labels";
+import { useEffect, useRef, useState } from "react";
+import type {
+  PaoMemoryDeleteConfirmResult,
+  PaoMemoryDeletePreviewResult,
+  PaoMemoryDeletionOperation,
+  PaoMemoryListItem,
+  PaoMemoryUsageState,
+  PaoReadDesktopMemoryDetailResult,
+  PaoSharedSourcePolicy,
+} from "@pao/sdk-driver";
+import type { MemoryMutationResult } from "../../../contracts/memory";
+import type { PiDesktopApi } from "../../../contracts/ipc";
+import { useI18n } from "../../i18n/react";
+import { formatMemoryTime } from "./memory-list";
+import {
+  additionalMemoryDeletionTargets,
+  buildMemoryCorrectionOp,
+  canConfirmMemoryDeletion,
+  createMemoryCorrectionDraft,
+  describeMemoryDeletionPendingKind,
+  describeMemoryDeletionSessionAvailability,
+  describeMemoryDeletionSourceAction,
+  describeMemoryDeletionSourceResolution,
+  hasCurrentRevisionConflict,
+  isMemoryRevisionConflict,
+  memoryDeleteSource,
+  memoryOperationSource,
+  selectableMergeCandidates,
+  validateMemoryMerge,
+  type MemoryCorrectionDraft,
+} from "./memory-management-model";
+
+type EditorMode = "none" | "correct" | "merge";
+type BusyOperation =
+  | "correct"
+  | "merge"
+  | "usage"
+  | "deletePreview"
+  | "deleteConfirm"
+  | "deleteQuery"
+  | "deleteResume";
+
+interface CorrectionConflict {
+  readonly message: string;
+  readonly latest?: PaoReadDesktopMemoryDetailResult;
+  readonly loading: boolean;
+}
+
+export interface MemoryManagementProps {
+  readonly api: PiDesktopApi;
+  readonly workspaceId: string;
+  readonly detail: PaoReadDesktopMemoryDetailResult;
+  readonly mergeCandidates: readonly PaoMemoryListItem[];
+  readonly allowMerge: boolean;
+  readonly onMutationComplete: (result: MemoryMutationResult, memoryId: string) => void;
+  readonly onDeletionOperation: (operation: PaoMemoryDeletionOperation) => void;
+}
+
+export function useMemoryManagement({
+  api,
+  workspaceId,
+  detail,
+  mergeCandidates,
+  allowMerge,
+  onMutationComplete,
+  onDeletionOperation,
+}: MemoryManagementProps) {
+  const { language, t } = useI18n();
+  const copy = (zh: string, en: string) => (language === "zh" ? zh : en);
+  const [mode, setMode] = useState<EditorMode>("none");
+  const [busy, setBusy] = useState<BusyOperation>();
+  const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
+  const [correctionDraft, setCorrectionDraft] = useState<MemoryCorrectionDraft>();
+  const [correctionConflict, setCorrectionConflict] = useState<CorrectionConflict>();
+  const [conflictAcknowledged, setConflictAcknowledged] = useState(false);
+  const [mergeId, setMergeId] = useState<string>();
+  const [keepId, setKeepId] = useState(detail.memory.id);
+  const [mergeRationale, setMergeRationale] = useState("");
+  const [deletePreview, setDeletePreview] = useState<PaoMemoryDeletePreviewResult>();
+  const [deletePreviewPolicy, setDeletePreviewPolicy] = useState<PaoSharedSourcePolicy>();
+  const [deletionResult, setDeletionResult] = useState<PaoMemoryDeleteConfirmResult>();
+  const [sharedSourcePolicy, setSharedSourcePolicy] = useState<PaoSharedSourcePolicy>("retain");
+  const [recursiveTargetAcknowledged, setRecursiveTargetAcknowledged] = useState(false);
+  const correctionTriggerRef = useRef<HTMLButtonElement>(null);
+  const mergeTriggerRef = useRef<HTMLButtonElement>(null);
+  const correctionFormRef = useRef<HTMLFormElement>(null);
+  const mergeFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    setMode("none");
+    setBusy(undefined);
+    setError(undefined);
+    setNotice(undefined);
+    setCorrectionDraft(undefined);
+    setCorrectionConflict(undefined);
+    setConflictAcknowledged(false);
+    setMergeId(undefined);
+    setKeepId(detail.memory.id);
+    setMergeRationale("");
+    setDeletePreview(undefined);
+    setDeletePreviewPolicy(undefined);
+    setDeletionResult(undefined);
+    setSharedSourcePolicy("retain");
+    setRecursiveTargetAcknowledged(false);
+  }, [detail.memory.id, workspaceId]);
+
+  useEffect(() => {
+    if (mode === "none") return;
+    const form = mode === "correct" ? correctionFormRef.current : mergeFormRef.current;
+    form?.querySelector<HTMLElement>("textarea, input, select")?.focus();
+  }, [mode]);
+
+  const operationSource = memoryOperationSource();
+  const candidateItems = selectableMergeCandidates(detail.memory.id, mergeCandidates);
+  const selectedMergeItem = candidateItems.find((item) => item.memoryId === mergeId);
+  const mergeUnavailable = Boolean(busy) || !allowMerge || candidateItems.length === 0;
+
+  const beginCorrection = () => {
+    setMode("correct");
+    setCorrectionDraft(createMemoryCorrectionDraft(detail));
+    setCorrectionConflict(undefined);
+    setConflictAcknowledged(false);
+    setError(undefined);
+    setNotice(undefined);
+  };
+
+  const restoreEditorFocus = (editor: Exclude<EditorMode, "none">) => {
+    requestAnimationFrame(() => {
+      (editor === "correct" ? correctionTriggerRef : mergeTriggerRef).current?.focus();
+    });
+  };
+
+  const closeEditor = () => {
+    if (busy || mode === "none") return;
+    const closedEditor = mode;
+    setMode("none");
+    setError(undefined);
+    restoreEditorFocus(closedEditor);
+  };
+
+  const submitCorrection = async () => {
+    if (!correctionDraft || busy) return;
+    if (!correctionDraft.conclusion.trim()) {
+      setError(copy("纠正结论不能为空。", "The corrected conclusion cannot be empty."));
+      return;
+    }
+    setBusy("correct");
+    setError(undefined);
+    setNotice(undefined);
+    try {
+      const result = await api.mutateMemory({
+        workspaceId,
+        op: buildMemoryCorrectionOp(correctionDraft),
+      });
+      if (isMemoryRevisionConflict(result)) {
+        setCorrectionConflict({
+          message:
+            "op" in result && result.ok === false
+              ? result.error.message
+              : copy("记忆已被其他操作更新。", "The memory changed in another operation."),
+          loading: true,
+        });
+        setConflictAcknowledged(false);
+        const latest = await api.getMemoryDetail({
+          workspaceId,
+          id: correctionDraft.memoryId,
+        });
+        setCorrectionConflict((current) =>
+          current
+            ? {
+                ...current,
+                ...(latest.ok ? { latest } : {}),
+                loading: false,
+              }
+            : current,
+        );
+        if (!latest.ok) {
+          setError(
+            copy(
+              "已检测到版本冲突，但最新版本读取失败：",
+              "Revision conflict detected; loading the latest revision failed: ",
+            ) + latest.error.message,
+          );
+        }
+        return;
+      }
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      if (!("op" in result) || result.op !== "correct") {
+        setError(copy("服务未返回纠正确认。", "The service did not confirm the correction."));
+        return;
+      }
+      setNotice(
+        copy(
+          `已保存为版本 ${revisionLabel(result.revision)}。`,
+          `Saved as revision ${revisionLabel(result.revision)}.`,
+        ),
+      );
+      setMode("none");
+      setCorrectionConflict(undefined);
+      restoreEditorFocus("correct");
+      onMutationComplete(result, detail.memory.id);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const acknowledgeLatestCorrection = () => {
+    const latest = correctionConflict?.latest;
+    if (!latest || !correctionDraft) return;
+    setCorrectionDraft({
+      ...correctionDraft,
+      expectedRevision: latest.currentRevision,
+    });
+    setConflictAcknowledged(true);
+    setError(undefined);
+  };
+
+  const submitMerge = async () => {
+    if (!selectedMergeItem || busy) return;
+    const validation = validateMemoryMerge(
+      { keepId, mergeId: selectedMergeItem.memoryId },
+      mergeRationale,
+    );
+    if (validation) {
+      setError(
+        copy(
+          "请选择两条不同记忆、明确保留项并填写合并理由。",
+          "Select two different memories, an explicit item to keep, and a rationale.",
+        ),
+      );
+      return;
+    }
+    setBusy("merge");
+    setError(undefined);
+    setNotice(undefined);
+    try {
+      const result = await api.mutateMemory({
+        workspaceId,
+        op: {
+          op: "merge",
+          keepId,
+          keepExpectedRevision:
+            keepId === detail.memory.id ? detail.currentRevision : selectedMergeItem.revision,
+          mergeId: selectedMergeItem.memoryId,
+          mergeExpectedRevision:
+            selectedMergeItem.memoryId === detail.memory.id
+              ? detail.currentRevision
+              : selectedMergeItem.revision,
+          rationale: mergeRationale.trim(),
+          source: operationSource,
+        },
+      });
+      if (!result.ok) {
+        setError(
+          isMemoryRevisionConflict(result)
+            ? copy(
+                "合并项已变化，当前选择与理由已保留；请刷新后重新确认。",
+                "A merge item changed. Your selection and rationale were retained; refresh and confirm again.",
+              )
+            : result.error.message,
+        );
+        return;
+      }
+      if (!("op" in result) || result.op !== "merge") {
+        setError(copy("服务未返回合并确认。", "The service did not confirm the merge."));
+        return;
+      }
+      setNotice(
+        copy(
+          `已合并到保留项的版本 ${revisionLabel(result.keepRevision)}。`,
+          `Merged into the retained revision ${revisionLabel(result.keepRevision)}.`,
+        ),
+      );
+      setMode("none");
+      restoreEditorFocus("merge");
+      onMutationComplete(result, keepId);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const setUsage = async (target: PaoMemoryUsageState) => {
+    if (busy) return;
+    setBusy("usage");
+    setError(undefined);
+    setNotice(undefined);
+    try {
+      const result = await api.mutateMemory({
+        workspaceId,
+        op: {
+          op: "setUsage",
+          id: detail.memory.id,
+          expectedRevision: detail.currentRevision,
+          target,
+          source: operationSource,
+        },
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      if (!("op" in result) || result.op !== "setUsage") {
+        setError(copy("服务未返回状态更新确认。", "The service did not confirm the usage change."));
+        return;
+      }
+      setNotice(
+        target === "stopped"
+          ? copy(
+              `已停用，当前版本 ${revisionLabel(result.revision)}。`,
+              `Stopped at revision ${revisionLabel(result.revision)}.`,
+            )
+          : copy(
+              `已恢复使用，当前版本 ${revisionLabel(result.revision)}。`,
+              `Restored at revision ${revisionLabel(result.revision)}.`,
+            ),
+      );
+      onMutationComplete(result, detail.memory.id);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const previewDeletion = async (policy: PaoSharedSourcePolicy = sharedSourcePolicy) => {
+    if (busy) return;
+    setBusy("deletePreview");
+    setError(undefined);
+    setNotice(undefined);
+    setDeletionResult(undefined);
+    setSharedSourcePolicy(policy);
+    setDeletePreviewPolicy(undefined);
+    setRecursiveTargetAcknowledged(false);
+    try {
+      const result = await api.mutateMemory({
+        workspaceId,
+        op: {
+          op: "deletePreview",
+          memoryId: detail.memory.id,
+          sharedSourcePolicy: policy,
+        },
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      if (!("op" in result) || result.op !== "deletePreview") {
+        setError(copy("服务未返回删除预览。", "The service did not return a deletion preview."));
+        return;
+      }
+      setDeletePreview(result);
+      setDeletePreviewPolicy(policy);
+      setDeletionResult(undefined);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const confirmDeletion = async () => {
+    if (!deletePreview || busy) return;
+    const memoryIds = deletePreview.targets.map((target) => target.memoryId);
+    const revisions = Object.fromEntries(
+      deletePreview.targets.map((target) => [target.memoryId, target.currentRevision]),
+    );
+    setBusy("deleteConfirm");
+    setError(undefined);
+    try {
+      const result = await api.mutateMemory({
+        workspaceId,
+        op: {
+          op: "deleteConfirm",
+          memoryIds,
+          revisions,
+          source: memoryDeleteSource(),
+          sharedSourcePolicy,
+        },
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      if (!("op" in result) || result.op !== "deleteConfirm") {
+        setError(copy("服务未返回删除操作状态。", "The service did not return a deletion status."));
+        return;
+      }
+      setDeletionResult(result);
+      onDeletionOperation(result);
+      if (result.status === "complete") {
+        setNotice(copy("删除已完成。", "Deletion completed."));
+        onMutationComplete(result, detail.memory.id);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const queryDeletion = async () => {
+    if (!deletionResult || busy) return;
+    setBusy("deleteQuery");
+    setError(undefined);
+    try {
+      const result = await api.getMemoryDeletionOperation({
+        workspaceId,
+        operationId: deletionResult.operationId,
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      setDeletionResult(result);
+      onDeletionOperation(result);
+      if (result.status === "complete") {
+        setNotice(copy("删除已完成。", "Deletion completed."));
+        onMutationComplete({ op: "deleteConfirm", ...result }, detail.memory.id);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const resumeDeletion = async () => {
+    if (!deletionResult || busy) return;
+    setBusy("deleteResume");
+    setError(undefined);
+    try {
+      const result = await api.resumeMemoryDeletion({
+        workspaceId,
+        operationId: deletionResult.operationId,
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      setDeletionResult(result);
+      onDeletionOperation(result);
+      if (result.status === "complete") {
+        setNotice(copy("删除已完成。", "Deletion completed."));
+        onMutationComplete({ op: "deleteConfirm", ...result }, detail.memory.id);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const additionalTargets = deletePreview
+    ? additionalMemoryDeletionTargets(deletePreview, detail.memory.id)
+    : [];
+  const recursiveConfirmationRequired =
+    sharedSourcePolicy === "include-referencing-memories" && additionalTargets.length > 0;
+  const deletionCanBeConfirmed = canConfirmMemoryDeletion({
+    preview: deletePreview,
+    previewedPolicy: deletePreviewPolicy,
+    policy: sharedSourcePolicy,
+    currentMemoryId: detail.memory.id,
+    recursiveTargetAcknowledged,
+    busy: Boolean(busy),
+    hasOperationResult: Boolean(deletionResult),
+  });
+
+  return {
+    detail,
+    allowMerge,
+    language,
+    t,
+    copy,
+    mode,
+    setMode,
+    busy,
+    error,
+    setError,
+    notice,
+    setNotice,
+    correctionDraft,
+    setCorrectionDraft,
+    correctionConflict,
+    conflictAcknowledged,
+    mergeId,
+    setMergeId,
+    keepId,
+    setKeepId,
+    mergeRationale,
+    setMergeRationale,
+    deletePreview,
+    setDeletePreview,
+    setDeletePreviewPolicy,
+    deletionResult,
+    sharedSourcePolicy,
+    recursiveTargetAcknowledged,
+    setRecursiveTargetAcknowledged,
+    correctionTriggerRef,
+    mergeTriggerRef,
+    correctionFormRef,
+    mergeFormRef,
+    candidateItems,
+    selectedMergeItem,
+    mergeUnavailable,
+    beginCorrection,
+    closeEditor,
+    submitCorrection,
+    acknowledgeLatestCorrection,
+    submitMerge,
+    setUsage,
+    previewDeletion,
+    confirmDeletion,
+    queryDeletion,
+    resumeDeletion,
+    additionalTargets,
+    recursiveConfirmationRequired,
+    deletionCanBeConfirmed,
+  };
+}
+
+export type MemoryManagementState = ReturnType<typeof useMemoryManagement>;
+
+export function MemoryManagement({
+  state,
+  placement,
+}: {
+  readonly state: MemoryManagementState;
+  readonly placement: "header-actions" | "forms";
+}) {
+  const {
+    detail,
+    allowMerge,
+    language,
+    t,
+    copy,
+    mode,
+    setMode,
+    busy,
+    error,
+    setError,
+    notice,
+    setNotice,
+    correctionDraft,
+    setCorrectionDraft,
+    correctionConflict,
+    conflictAcknowledged,
+    mergeId,
+    setMergeId,
+    keepId,
+    setKeepId,
+    mergeRationale,
+    setMergeRationale,
+    deletePreview,
+    setDeletePreview,
+    setDeletePreviewPolicy,
+    deletionResult,
+    sharedSourcePolicy,
+    recursiveTargetAcknowledged,
+    setRecursiveTargetAcknowledged,
+    correctionTriggerRef,
+    mergeTriggerRef,
+    correctionFormRef,
+    mergeFormRef,
+    candidateItems,
+    selectedMergeItem,
+    mergeUnavailable,
+    beginCorrection,
+    closeEditor,
+    submitCorrection,
+    acknowledgeLatestCorrection,
+    submitMerge,
+    setUsage,
+    previewDeletion,
+    confirmDeletion,
+    queryDeletion,
+    resumeDeletion,
+    additionalTargets,
+    recursiveConfirmationRequired,
+    deletionCanBeConfirmed,
+  } = state;
+  if (detail.isHistorical || detail.readOnly) return null;
+  if (placement === "header-actions")
+    return (
+      <div className="memory-management__actions">
+        <button
+          ref={correctionTriggerRef}
+          type="button"
+          className="button"
+          data-testid="memory-action-correct"
+          disabled={Boolean(busy)}
+          onClick={beginCorrection}
+        >
+          {copy("纠正结论", "Correct")}
+        </button>
+        <button
+          ref={mergeTriggerRef}
+          type="button"
+          className="button"
+          data-testid="memory-action-merge"
+          aria-disabled={mergeUnavailable}
+          title={
+            allowMerge
+              ? candidateItems.length === 0
+                ? copy(
+                    "当前没有可合并的其他记忆。",
+                    "No other current memories are available to merge.",
+                  )
+                : undefined
+              : copy("请在仅当前版的列表视图执行合并。", "Merge from current-only list mode.")
+          }
+          onClick={() => {
+            if (mergeUnavailable) return;
+            setMode("merge");
+            setKeepId(detail.memory.id);
+            setMergeId(undefined);
+            setMergeRationale("");
+            setError(undefined);
+            setNotice(undefined);
+          }}
+        >
+          {copy("合并两条", "Merge two")}
+        </button>
+        <button
+          type="button"
+          className="button"
+          data-testid="memory-action-usage"
+          disabled={Boolean(busy)}
+          onClick={() => {
+            setUsage(detail.memory.usageState === "active" ? "stopped" : "active").catch(() => {});
+          }}
+        >
+          {busy === "usage"
+            ? t("Loading…")
+            : detail.memory.usageState === "active"
+              ? copy("停用", "Stop")
+              : copy("恢复使用", "Restore")}
+        </button>
+        <button
+          type="button"
+          className="button button--danger"
+          data-testid="memory-action-delete"
+          disabled={Boolean(busy)}
+          onClick={() => {
+            previewDeletion().catch(() => {});
+          }}
+        >
+          {busy === "deletePreview"
+            ? copy("正在预览…", "Preparing preview…")
+            : copy("彻底删除", "Delete permanently")}
+        </button>
+      </div>
+    );
+  return (
+    <section className="memory-management" data-testid="memory-management">
+      {notice ? (
+        <div
+          className="memory-inline-state memory-inline-state--success"
+          role="status"
+          data-testid="memory-management-notice"
+        >
+          {notice}
+        </div>
+      ) : null}
+      {error ? (
+        <div
+          className="memory-inline-state memory-inline-state--error"
+          role="alert"
+          data-testid="memory-management-error"
+        >
+          {error}
+        </div>
+      ) : null}
+
+      {mode === "correct" && correctionDraft ? (
+        <form
+          ref={correctionFormRef}
+          className="memory-editor"
+          data-testid="memory-correction-form"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              closeEditor();
+            }
+          }}
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitCorrection().catch(() => {});
+          }}
+        >
+          <div className="memory-editor__head">
+            <div>
+              <h3>{copy("纠正当前记忆", "Correct this memory")}</h3>
+              <p>
+                {copy("打开时版本", "Opened at revision")}{" "}
+                {revisionLabel(correctionDraft.expectedRevision)}
+              </p>
+            </div>
+            <button type="button" className="button" disabled={Boolean(busy)} onClick={closeEditor}>
+              {copy("关闭", "Close")}
+            </button>
+          </div>
+          <label className="memory-editor__field">
+            <span>{copy("纠正结论", "Corrected conclusion")}</span>
+            <textarea
+              aria-label={copy("纠正结论", "Corrected conclusion")}
+              rows={3}
+              value={correctionDraft.conclusion}
+              onChange={(event) =>
+                setCorrectionDraft({ ...correctionDraft, conclusion: event.currentTarget.value })
+              }
+            />
+          </label>
+          <label className="memory-editor__field">
+            <span>{copy("适用条件", "Conditions")}</span>
+            <textarea
+              aria-label={copy("适用条件", "Conditions")}
+              rows={2}
+              value={correctionDraft.conditions}
+              onChange={(event) =>
+                setCorrectionDraft({ ...correctionDraft, conditions: event.currentTarget.value })
+              }
+            />
+          </label>
+          <label className="memory-editor__field">
+            <span>{copy("纠正理由", "Rationale")}</span>
+            <textarea
+              aria-label={copy("纠正理由", "Rationale")}
+              rows={2}
+              value={correctionDraft.rationale}
+              onChange={(event) =>
+                setCorrectionDraft({ ...correctionDraft, rationale: event.currentTarget.value })
+              }
+            />
+          </label>
+          <div className="memory-editor__row">
+            <label className="memory-editor__field">
+              <span>{copy("确认信息", "Confirmation")}</span>
+              <select
+                aria-label={copy("确认信息", "Confirmation")}
+                value={correctionDraft.confirmation}
+                onChange={(event) =>
+                  setCorrectionDraft({
+                    ...correctionDraft,
+                    confirmation: event.currentTarget
+                      .value as MemoryCorrectionDraft["confirmation"],
+                  })
+                }
+              >
+                <option value="confirmed">{t("Confirmed")}</option>
+                <option value="tentative">{t("Tentative")}</option>
+                <option value="rejected">{t("Rejected")}</option>
+              </select>
+            </label>
+            <div className="memory-editor__evidence">
+              <span>{copy("证据类别", "Evidence kind")}</span>
+              <strong>{t("User statement")}</strong>
+              <small>{copy("由用户纠正语义确定", "Set by this user-correction action")}</small>
+            </div>
+          </div>
+
+          {correctionConflict ? (
+            <div className="memory-conflict" role="alert" data-testid="memory-correction-conflict">
+              <strong>
+                {copy("检测到版本冲突；草稿已保留", "Revision conflict; your draft was retained")}
+              </strong>
+              <p>{correctionConflict.message}</p>
+              {correctionConflict.loading ? (
+                <p>{copy("正在读取最新版本…", "Loading the latest revision…")}</p>
+              ) : correctionConflict.latest ? (
+                <div className="memory-conflict__latest" data-testid="memory-correction-latest">
+                  <span>
+                    {copy("最新版本", "Latest revision")} r
+                    {correctionConflict.latest.currentRevision}
+                  </span>
+                  <strong>{correctionConflict.latest.memory.content.conclusion}</strong>
+                  <p>
+                    {copy("最新条件：", "Latest conditions: ")}
+                    {correctionConflict.latest.memory.content.conditions ||
+                      copy("未记录", "Not recorded")}
+                  </p>
+                  <p>
+                    {copy("最新理由：", "Latest rationale: ")}
+                    {correctionConflict.latest.memory.content.rationale ||
+                      copy("未记录", "Not recorded")}
+                  </p>
+                  <time>{formatMemoryTime(correctionConflict.latest.memory.updatedAt)}</time>
+                  <button
+                    type="button"
+                    className="button"
+                    data-testid="memory-conflict-continue"
+                    disabled={conflictAcknowledged || Boolean(busy)}
+                    onClick={acknowledgeLatestCorrection}
+                  >
+                    {conflictAcknowledged
+                      ? copy("已采用最新版作为保存基准", "Using latest as save baseline")
+                      : copy("基于最新版本继续", "Continue from latest revision")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="memory-editor__footer">
+            <button type="submit" className="button button--primary" disabled={Boolean(busy)}>
+              {busy === "correct"
+                ? copy("保存中…", "Saving…")
+                : copy("保存纠正", "Save correction")}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {mode === "merge" ? (
+        <form
+          ref={mergeFormRef}
+          className="memory-editor"
+          data-testid="memory-merge-form"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              closeEditor();
+            }
+          }}
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitMerge().catch(() => {});
+          }}
+        >
+          <div className="memory-editor__head">
+            <div>
+              <h3>{copy("合并两条记忆", "Merge two memories")}</h3>
+              <p>
+                {copy(
+                  "一次只合并两条；保留项与并入项由你明确选择。",
+                  "Merge exactly two items and explicitly choose what to keep and what to merge.",
+                )}
+              </p>
+            </div>
+            <button type="button" className="button" disabled={Boolean(busy)} onClick={closeEditor}>
+              {copy("关闭", "Close")}
+            </button>
+          </div>
+          <div className="memory-merge-current">
+            <span>
+              {copy("当前条目", "Current item")} · {revisionLabel(detail.currentRevision)}
+            </span>
+            <strong>{detail.memory.content.conclusion}</strong>
+          </div>
+          <fieldset className="memory-merge-candidates">
+            <legend>{copy("选择第二条", "Choose the second item")}</legend>
+            {candidateItems.length === 0 ? (
+              <p>
+                {copy(
+                  "当前列表没有第二条可合并记忆。",
+                  "No second merge candidate is available in this list.",
+                )}
+              </p>
+            ) : null}
+            {candidateItems.map((item) => (
+              <label key={item.memoryId}>
+                <input
+                  type="radio"
+                  name="merge-candidate"
+                  checked={mergeId === item.memoryId}
+                  onChange={() => {
+                    setMergeId(item.memoryId);
+                    setKeepId(detail.memory.id);
+                  }}
+                />
+                <span>
+                  <strong>{item.conclusion}</strong>
+                  <small>
+                    {revisionLabel(item.revision)} ·{" "}
+                    {item.usageState === "active" ? t("Active") : t("Stopped")}
+                  </small>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="memory-merge-keep">
+            <legend>{copy("明确保留项", "Choose the item to keep")}</legend>
+            <label>
+              <input
+                type="radio"
+                name="merge-keep"
+                checked={keepId === detail.memory.id}
+                onChange={() => setKeepId(detail.memory.id)}
+              />
+              <span>{copy("保留当前条目", "Keep current item")}</span>
+            </label>
+            {selectedMergeItem ? (
+              <label>
+                <input
+                  type="radio"
+                  name="merge-keep"
+                  checked={keepId === selectedMergeItem.memoryId}
+                  onChange={() => setKeepId(selectedMergeItem.memoryId)}
+                />
+                <span>{copy("保留第二条", "Keep second item")}</span>
+              </label>
+            ) : null}
+          </fieldset>
+          <label className="memory-editor__field">
+            <span>{copy("合并理由", "Merge rationale")}</span>
+            <textarea
+              aria-label={copy("合并理由", "Merge rationale")}
+              rows={2}
+              value={mergeRationale}
+              onChange={(event) => setMergeRationale(event.currentTarget.value)}
+            />
+          </label>
+          <div className="memory-editor__footer">
+            <button
+              type="submit"
+              className="button button--primary"
+              disabled={Boolean(busy) || !selectedMergeItem}
+            >
+              {busy === "merge" ? copy("合并中…", "Merging…") : copy("确认合并", "Confirm merge")}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {deletePreview ? (
+        <section
+          className="memory-delete-preview"
+          role="dialog"
+          aria-modal="true"
+          aria-label={copy("删除预览", "Deletion preview")}
+          data-testid="memory-delete-preview"
+        >
+          <div className="memory-delete-preview__head">
+            <div>
+              <h3>{copy("确认彻底删除", "Confirm permanent deletion")}</h3>
+              <p>
+                {copy(
+                  "以下是服务返回的实际影响范围。确认前不会删除。",
+                  "This is the service-returned impact. Nothing is deleted until you confirm.",
+                )}
+              </p>
+            </div>
+            {!busy && !deletionResult ? (
+              <button
+                type="button"
+                className="button"
+                onClick={() => {
+                  setDeletePreview(undefined);
+                  setDeletePreviewPolicy(undefined);
+                }}
+              >
+                {copy("取消", "Cancel")}
+              </button>
+            ) : null}
+          </div>
+          <p
+            className="memory-delete-preview__warning"
+            data-testid="memory-delete-preservation-warning"
+          >
+            {copy(
+              "共享来源以及无法精确定位的正文可能保留；请核对以下服务返回范围后再确认。",
+              "Shared sources and text that cannot be located precisely may remain. Review the service-returned scope before confirming.",
+            )}
+          </p>
+          <label className="memory-delete-preview__policy">
+            <span>{copy("共享来源处理", "Shared-source handling")}</span>
+            <select
+              aria-label={copy("共享来源处理", "Shared-source handling")}
+              value={sharedSourcePolicy}
+              disabled={Boolean(busy) || Boolean(deletionResult)}
+              onChange={(event) => {
+                const policy = event.currentTarget.value as PaoSharedSourcePolicy;
+                previewDeletion(policy).catch(() => {});
+              }}
+            >
+              <option value="retain">{copy("保留共享引用", "Retain shared references")}</option>
+              <option value="include-referencing-memories">
+                {copy("递归纳入引用记忆", "Include referencing memories")}
+              </option>
+            </select>
+            <small>
+              {busy === "deletePreview"
+                ? copy("策略已变化，正在重新生成预览…", "Policy changed; rebuilding the preview…")
+                : copy(
+                    "切换策略会重新请求服务端影响预览。",
+                    "Changing policy requests a fresh server-side impact preview.",
+                  )}
+            </small>
+          </label>
+          <h4>{copy("删除对象", "Targets")}</h4>
+          <ul>
+            {deletePreview.targets.map((target) => (
+              <li key={target.memoryId}>
+                <strong>{target.conclusion}</strong>
+                <span>
+                  {target.memoryId === detail.memory.id
+                    ? copy("当前记忆", "Current memory")
+                    : copy("因引用关系一并纳入", "Included through a reference")}
+                </span>
+                <details className="memory-technical-details">
+                  <summary>{copy("记录详情", "Record details")}</summary>
+                  <dl>
+                    <dt>{copy("记忆 ID", "Memory ID")}</dt>
+                    <dd>{target.memoryId}</dd>
+                    <dt>{copy("类型", "Kind")}</dt>
+                    <dd>{target.kind}</dd>
+                    <dt>{copy("当前版本", "Current revision")}</dt>
+                    <dd>{target.currentRevision}</dd>
+                  </dl>
+                </details>
+              </li>
+            ))}
+          </ul>
+          {recursiveConfirmationRequired ? (
+            <label className="memory-delete-preview__acknowledgement">
+              <input
+                type="checkbox"
+                data-testid="memory-delete-recursive-ack"
+                checked={recursiveTargetAcknowledged}
+                disabled={Boolean(busy) || Boolean(deletionResult)}
+                onChange={(event) => setRecursiveTargetAcknowledged(event.currentTarget.checked)}
+              />
+              <span>
+                {copy(
+                  `已核对额外纳入的 ${additionalTargets.length} 条引用记忆及其来源范围。`,
+                  `I reviewed the ${additionalTargets.length} additional referencing memories and their sources.`,
+                )}
+              </span>
+            </label>
+          ) : null}
+          <div className="memory-delete-preview__grid">
+            <section>
+              <h4>{copy("受影响会话", "Affected sessions")}</h4>
+              {deletePreview.sessions.length === 0 ? (
+                <p>{copy("无已记录会话。", "No recorded sessions.")}</p>
+              ) : (
+                <ul>
+                  {deletePreview.sessions.map((session) => (
+                    <li key={session.sessionId}>
+                      <span>{copy("已登记的会话记录", "Registered session record")}</span>
+                      <small>
+                        {describeMemoryDeletionSessionAvailability(session.availability, language)}{" "}
+                        ·{" "}
+                        {copy(
+                          `${session.sourceEntryIds.length} 条来源，${session.derivedEntryIds.length} 条派生正文`,
+                          `${session.sourceEntryIds.length} sources, ${session.derivedEntryIds.length} derived entries`,
+                        )}
+                      </small>
+                      <details
+                        className="memory-technical-details"
+                        data-testid="memory-delete-session-details"
+                      >
+                        <summary>{copy("技术信息", "Technical details")}</summary>
+                        <dl>
+                          <dt>{copy("会话 ID", "Session ID")}</dt>
+                          <dd>{session.sessionId}</dd>
+                          <dt>{copy("状态", "Status")}</dt>
+                          <dd>
+                            {describeMemoryDeletionSessionAvailability(
+                              session.availability,
+                              language,
+                            )}
+                          </dd>
+                          {session.sessionFile ? (
+                            <>
+                              <dt>{copy("会话文件", "Session file")}</dt>
+                              <dd>{session.sessionFile}</dd>
+                            </>
+                          ) : null}
+                          {session.reason ? (
+                            <>
+                              <dt>{copy("原因", "Reason")}</dt>
+                              <dd>{session.reason}</dd>
+                            </>
+                          ) : null}
+                          {session.sourceEntryIds.length > 0 ? (
+                            <>
+                              <dt>{copy("来源条目", "Source entries")}</dt>
+                              <dd>{session.sourceEntryIds.join("、")}</dd>
+                            </>
+                          ) : null}
+                        </dl>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            <section>
+              <h4>{copy("引用与不受管来源", "References and unmanaged sources")}</h4>
+              {deletePreview.referencedBy.length === 0 &&
+              deletePreview.unmanagedSources.length === 0 ? (
+                <p>{copy("未发现额外引用。", "No additional references found.")}</p>
+              ) : null}
+              <ul>
+                {deletePreview.referencedBy.map((reference) => (
+                  <li key={`${reference.memoryId}:${reference.referencedBy}`}>
+                    <span>
+                      {copy("另有记忆引用此对象", "Another memory references this object")}
+                    </span>
+                    <details className="memory-technical-details">
+                      <summary>{copy("关联详情", "Reference details")}</summary>
+                      <dl>
+                        <dt>{copy("关系", "Relation")}</dt>
+                        <dd>{reference.relation}</dd>
+                        <dt>{copy("来源记忆", "Referring memory")}</dt>
+                        <dd>{reference.memoryId}</dd>
+                      </dl>
+                    </details>
+                  </li>
+                ))}
+                {deletePreview.unmanagedSources.map((source) => (
+                  <li key={source.sourceId}>
+                    <span>
+                      {copy(
+                        "来源不在当前记忆库管理范围内",
+                        "Source outside the managed memory store",
+                      )}
+                    </span>
+                    <small>
+                      {copy(
+                        "删除记忆时不会移动或清理此来源。",
+                        "This source will not be moved or cleaned up when the memory is deleted.",
+                      )}
+                    </small>
+                    <details className="memory-technical-details">
+                      <summary>{copy("技术信息", "Technical details")}</summary>
+                      <dl>
+                        <dt>{copy("来源 ID", "Source ID")}</dt>
+                        <dd>{source.sourceId}</dd>
+                        <dt>{copy("原因", "Reason")}</dt>
+                        <dd>{source.reason}</dd>
+                      </dl>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+          <div className="memory-delete-preview__grid">
+            <section>
+              <h4>{copy("实际来源", "Actual sources")}</h4>
+              {deletePreview.sources.length === 0 ? (
+                <p>{copy("没有可展示的来源。", "No sources to show.")}</p>
+              ) : (
+                <ul>
+                  {deletePreview.sources.map((source, index) => (
+                    <li key={`${source.sourceId}:${source.entryId}`}>
+                      <span>{copy(`来源 ${index + 1}`, `Source ${index + 1}`)}</span>
+                      <small>
+                        {describeMemoryDeletionSourceResolution(source.resolution, language)} ·{" "}
+                        {describeMemoryDeletionSourceAction(source.action, language)}
+                        {source.sharedWithMemoryIds.length > 0
+                          ? copy(
+                              ` · 另有 ${source.sharedWithMemoryIds.length} 条记忆引用`,
+                              ` · referenced by ${source.sharedWithMemoryIds.length} other memories`,
+                            )
+                          : ""}
+                      </small>
+                      <details
+                        className="memory-technical-details"
+                        data-testid="memory-delete-source-details"
+                      >
+                        <summary>{copy("技术信息", "Technical details")}</summary>
+                        <dl>
+                          <dt>{copy("事件类型", "Event type")}</dt>
+                          <dd>{source.eventType}</dd>
+                          <dt>{copy("会话 ID", "Session ID")}</dt>
+                          <dd>{source.sessionId}</dd>
+                          <dt>{copy("条目 ID", "Entry ID")}</dt>
+                          <dd>{source.entryId}</dd>
+                          <dt>{copy("来源位置", "Source location")}</dt>
+                          <dd>
+                            {describeMemoryDeletionSourceResolution(source.resolution, language)}
+                          </dd>
+                          <dt>{copy("处理动作", "Action")}</dt>
+                          <dd>{describeMemoryDeletionSourceAction(source.action, language)}</dd>
+                          <dt>{copy("来源 ID", "Source ID")}</dt>
+                          <dd>{source.sourceId}</dd>
+                          {source.sharedWithMemoryIds.length > 0 ? (
+                            <>
+                              <dt>{copy("引用此来源的记忆", "Memories using this source")}</dt>
+                              <dd>{source.sharedWithMemoryIds.join("、")}</dd>
+                            </>
+                          ) : null}
+                          <dt>{copy("采集时间", "Captured")}</dt>
+                          <dd>{formatMemoryTime(source.capturedAt)}</dd>
+                        </dl>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            <section>
+              <h4>{copy("提交后仍待清理", "Pending after commit")}</h4>
+              {deletePreview.pendingObjects.length === 0 ? (
+                <p>{copy("预览未发现待清理对象。", "The preview found no pending objects.")}</p>
+              ) : (
+                <ul>
+                  {deletePreview.pendingObjects.map((pending, index) => (
+                    <li
+                      key={`${pending.kind}:${pending.sessionId ?? ""}:${pending.sourceId ?? ""}:${pending.entryId ?? ""}:${index}`}
+                    >
+                      <span>{describeMemoryDeletionPendingKind(pending.kind, language)}</span>
+                      <small>
+                        {copy(
+                          "此对象会在删除后继续清理。",
+                          "This object will be cleaned up after deletion.",
+                        )}
+                      </small>
+                      <details className="memory-technical-details">
+                        <summary>{copy("技术信息", "Technical details")}</summary>
+                        <dl>
+                          <dt>{copy("对象类型", "Object type")}</dt>
+                          <dd>{describeMemoryDeletionPendingKind(pending.kind, language)}</dd>
+                          {pending.sessionId ? (
+                            <>
+                              <dt>{copy("会话 ID", "Session ID")}</dt>
+                              <dd>{pending.sessionId}</dd>
+                            </>
+                          ) : null}
+                          {pending.sourceId ? (
+                            <>
+                              <dt>{copy("来源 ID", "Source ID")}</dt>
+                              <dd>{pending.sourceId}</dd>
+                            </>
+                          ) : null}
+                          {pending.entryId ? (
+                            <>
+                              <dt>{copy("条目 ID", "Entry ID")}</dt>
+                              <dd>{pending.entryId}</dd>
+                            </>
+                          ) : null}
+                          {pending.segmentId ? (
+                            <>
+                              <dt>{copy("归档段", "Archive segment")}</dt>
+                              <dd>{pending.segmentId}</dd>
+                            </>
+                          ) : null}
+                          <dt>{copy("原因", "Reason")}</dt>
+                          <dd>{pending.reason}</dd>
+                        </dl>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+          {deletionResult ? (
+            <div
+              className={`memory-delete-status memory-delete-status--${deletionResult.status}`}
+              role={deletionResult.status === "complete" ? "status" : "alert"}
+              data-testid="memory-deletion-status"
+              data-status={deletionResult.status}
+            >
+              <strong>
+                {deletionResult.status === "complete"
+                  ? copy("删除完成", "Deletion complete")
+                  : deletionResult.status === "pending"
+                    ? copy("删除尚未完成", "Deletion pending")
+                    : copy("删除失败", "Deletion failed")}
+              </strong>
+              <details
+                className="memory-technical-details"
+                data-testid="memory-deletion-operation-details"
+              >
+                <summary>{copy("任务详情", "Operation details")}</summary>
+                <p>
+                  {copy("任务编号", "Operation ID")}: <code>{deletionResult.operationId}</code>
+                </p>
+              </details>
+              {deletionResult.failureReason ? (
+                <details className="memory-technical-details">
+                  <summary>{copy("失败详情", "Failure details")}</summary>
+                  <p>{deletionResult.failureReason}</p>
+                </details>
+              ) : null}
+              {deletionResult.pendingObjects?.length ? (
+                <ul>
+                  {deletionResult.pendingObjects.map((pending, index) => (
+                    <li
+                      key={`${pending.kind}:${pending.sessionId ?? ""}:${pending.sourceId ?? ""}:${pending.entryId ?? ""}:${index}`}
+                    >
+                      <span>{describeMemoryDeletionPendingKind(pending.kind, language)}</span>
+                      <details className="memory-technical-details">
+                        <summary>{copy("技术信息", "Technical details")}</summary>
+                        <dl>
+                          <dt>{copy("对象类型", "Object type")}</dt>
+                          <dd>{describeMemoryDeletionPendingKind(pending.kind, language)}</dd>
+                          {pending.sessionId ? (
+                            <>
+                              <dt>{copy("会话 ID", "Session ID")}</dt>
+                              <dd>{pending.sessionId}</dd>
+                            </>
+                          ) : null}
+                          {pending.sourceId ? (
+                            <>
+                              <dt>{copy("来源 ID", "Source ID")}</dt>
+                              <dd>{pending.sourceId}</dd>
+                            </>
+                          ) : null}
+                          {pending.entryId ? (
+                            <>
+                              <dt>{copy("条目 ID", "Entry ID")}</dt>
+                              <dd>{pending.entryId}</dd>
+                            </>
+                          ) : null}
+                          <dt>{copy("原因", "Reason")}</dt>
+                          <dd>{pending.reason}</dd>
+                        </dl>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {deletionResult.status !== "complete" ? (
+                <div className="memory-delete-preview__footer">
+                  <button
+                    type="button"
+                    className="button"
+                    data-testid="memory-delete-query"
+                    disabled={Boolean(busy)}
+                    onClick={() => {
+                      queryDeletion().catch(() => {});
+                    }}
+                  >
+                    {busy === "deleteQuery"
+                      ? copy("查询中…", "Checking…")
+                      : copy("查询当前状态", "Check status")}
+                  </button>
+                  <button
+                    type="button"
+                    className="button button--primary"
+                    data-testid="memory-delete-resume"
+                    disabled={Boolean(busy)}
+                    onClick={() => {
+                      resumeDeletion().catch(() => {});
+                    }}
+                  >
+                    {busy === "deleteResume"
+                      ? copy("恢复中…", "Resuming…")
+                      : copy("恢复删除作业", "Resume deletion")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="memory-delete-preview__footer">
+              <button
+                type="button"
+                className="button button--danger"
+                data-testid="memory-delete-confirm"
+                disabled={!deletionCanBeConfirmed}
+                onClick={() => {
+                  confirmDeletion().catch(() => {});
+                }}
+              >
+                {busy === "deleteConfirm"
+                  ? copy("提交中…", "Submitting…")
+                  : copy("确认彻底删除", "Confirm permanent deletion")}
+              </button>
+            </div>
+          )}
+        </section>
+      ) : null}
+    </section>
+  );
+}
+
+export function MemoryDeletionRecovery({
+  api,
+  workspaceId,
+  operationIds,
+  onOperationUpdate,
+  onCompleted,
+}: {
+  readonly api: PiDesktopApi;
+  readonly workspaceId: string;
+  readonly operationIds: readonly string[];
+  readonly onOperationUpdate: (operation: PaoMemoryDeletionOperation) => void;
+  readonly onCompleted: (operation: PaoMemoryDeletionOperation) => void;
+}) {
+  const { language } = useI18n();
+  const copy = (zh: string, en: string) => (language === "zh" ? zh : en);
+  const [operations, setOperations] = useState<
+    Readonly<Record<string, PaoMemoryDeletionOperation>>
+  >({});
+  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+  const [busyId, setBusyId] = useState<string>();
+  const operationKey = operationIds.join("\0");
+
+  useEffect(() => {
+    let active = true;
+    setOperations({});
+    setErrors({});
+    Promise.all(
+      operationIds.map(async (operationId) => {
+        const result = await api.getMemoryDeletionOperation({ workspaceId, operationId });
+        return { operationId, result };
+      }),
+    )
+      .then((entries) => {
+        if (!active) return;
+        const nextOperations: Record<string, PaoMemoryDeletionOperation> = {};
+        const nextErrors: Record<string, string> = {};
+        for (const { operationId, result } of entries) {
+          if (result.ok) {
+            nextOperations[operationId] = result;
+            onOperationUpdate(result);
+            if (result.status === "complete") onCompleted(result);
+          } else {
+            nextErrors[operationId] = result.error.message;
+          }
+        }
+        setOperations(nextOperations);
+        setErrors(nextErrors);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [api, onCompleted, onOperationUpdate, operationIds, operationKey, workspaceId]);
+
+  if (operationIds.length === 0) return null;
+
+  const resume = async (operationId: string) => {
+    if (busyId) return;
+    setBusyId(operationId);
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[operationId];
+      return next;
+    });
+    try {
+      const result = await api.resumeMemoryDeletion({ workspaceId, operationId });
+      if (!result.ok) {
+        setErrors((current) => ({
+          ...current,
+          [operationId]: result.error.message,
+        }));
+        return;
+      }
+      setOperations((current) => ({ ...current, [operationId]: result }));
+      onOperationUpdate(result);
+      if (result.status === "complete") onCompleted(result);
+    } catch (reason) {
+      setErrors((current) => ({
+        ...current,
+        [operationId]: reason instanceof Error ? reason.message : String(reason),
+      }));
+    } finally {
+      setBusyId(undefined);
+    }
+  };
+
+  return (
+    <section
+      className="memory-delete-recovery"
+      data-testid="memory-delete-recovery"
+      aria-label={copy("删除作业恢复", "Deletion recovery")}
+    >
+      <header>
+        <div>
+          <strong>{copy("尚未完成的删除", "Unfinished deletions")}</strong>
+          <span>
+            {copy(
+              "这里保留仍需继续处理的删除；确认完成后会自动从本区移除。",
+              "Deletions that still need attention remain here and leave automatically once confirmed complete.",
+            )}
+          </span>
+        </div>
+      </header>
+      <ul>
+        {operationIds.map((operationId) => {
+          const operation = operations[operationId];
+          const error = errors[operationId];
+          return (
+            <li
+              key={operationId}
+              className={`memory-delete-recovery__item memory-delete-recovery__item--${operation?.status ?? "loading"}`}
+              data-testid="memory-delete-recovery-item"
+              data-operation-id={operationId}
+              data-status={operation?.status ?? "loading"}
+            >
+              <div>
+                <strong>
+                  {operation?.status === "pending"
+                    ? copy("等待继续处理", "Waiting to continue")
+                    : operation?.status === "failed"
+                      ? copy("删除失败", "Failed")
+                      : copy("正在查询", "Checking")}
+                </strong>
+              </div>
+              {operation?.failureReason ? (
+                <details className="memory-technical-details">
+                  <summary>{copy("失败详情", "Failure details")}</summary>
+                  <p>{operation.failureReason}</p>
+                </details>
+              ) : null}
+              {operation?.pendingObjects.length ? (
+                <ul>
+                  {operation.pendingObjects.map((pending, index) => (
+                    <li
+                      key={`${pending.kind}:${pending.sessionId ?? ""}:${pending.sourceId ?? ""}:${index}`}
+                    >
+                      <span>{describeMemoryDeletionPendingKind(pending.kind, language)}</span>
+                      <details className="memory-technical-details">
+                        <summary>{copy("技术信息", "Technical details")}</summary>
+                        <dl>
+                          <dt>{copy("对象类型", "Object type")}</dt>
+                          <dd>{describeMemoryDeletionPendingKind(pending.kind, language)}</dd>
+                          {pending.sessionId ? (
+                            <>
+                              <dt>{copy("会话 ID", "Session ID")}</dt>
+                              <dd>{pending.sessionId}</dd>
+                            </>
+                          ) : null}
+                          {pending.sourceId ? (
+                            <>
+                              <dt>{copy("来源 ID", "Source ID")}</dt>
+                              <dd>{pending.sourceId}</dd>
+                            </>
+                          ) : null}
+                          {pending.entryId ? (
+                            <>
+                              <dt>{copy("条目 ID", "Entry ID")}</dt>
+                              <dd>{pending.entryId}</dd>
+                            </>
+                          ) : null}
+                          <dt>{copy("原因", "Reason")}</dt>
+                          <dd>{pending.reason}</dd>
+                        </dl>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <details className="memory-technical-details">
+                <summary>{copy("任务详情", "Operation details")}</summary>
+                <p>
+                  {copy("任务编号", "Operation ID")}: <code>{operationId}</code>
+                </p>
+              </details>
+              {operation ? (
+                <small>
+                  {copy("更新时间", "Updated")} {formatMemoryTime(operation.updatedAt)}
+                </small>
+              ) : null}
+              {error ? (
+                <p className="memory-inline-state memory-inline-state--error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="button button--primary"
+                disabled={Boolean(busyId) || !operation}
+                onClick={() => {
+                  resume(operationId).catch(() => {});
+                }}
+              >
+                {busyId === operationId
+                  ? copy("继续处理中…", "Continuing…")
+                  : copy("继续删除", "Continue deletion")}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}

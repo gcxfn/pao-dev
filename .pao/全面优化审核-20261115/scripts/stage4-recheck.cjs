@@ -1,0 +1,15 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const {spawnSync}=require('node:child_process');
+const root=path.resolve(__dirname,'../../..');
+const task=process.argv[2]??'S10';
+const log=fs.readFileSync(path.resolve(__dirname,`../checks/${task}-after-tests.log`),'utf8');
+const names=[...new Set(log.split(/\r?\n/).flatMap(l=>{const m=/^\s*FAIL\s+test\/pao\/workflow-auto-chain.test.ts > M2-06 自动执行链 > (.+)$/.exec(l);return m?[m[1]]:[];}))];
+if(!names.length)throw new Error('No matching failures');
+const pattern=names.map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+const home=path.join(root,'../临时文件夹',`pao-stage4-${task}-recheck-${Date.now()}`);
+fs.mkdirSync(home,{recursive:true});
+const file=path.resolve(__dirname,`../checks/${task}-after-autochain-target.log`),fd=fs.openSync(file,'w');
+console.log(`Checking ${names.length} failed names in one worker`);
+const result=spawnSync(process.execPath,[path.join(root,'PAO/node_modules/vitest/vitest.mjs'),'--run','test/pao/workflow-auto-chain.test.ts','--maxWorkers=1','-t',pattern],{cwd:path.join(root,'PAO/packages/coding-agent'),env:{...process.env,PAO_HOME:home},stdio:['ignore',fd,fd]});
+fs.closeSync(fd);console.log(`${task} target exit ${result.status}`);process.exit(result.status??1);

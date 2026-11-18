@@ -1,0 +1,62 @@
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'../../..'),dir=path.resolve(__dirname,'..');
+const specs=JSON.parse(fs.readFileSync(path.join(__dirname,'stage4-tasks.json'),'utf8'));
+const count=p=>fs.readFileSync(p,'utf8').trimEnd().split(/\r?\n/).length;
+const regressions={S01:'153 项前后通过',S02:'246 项前后通过',S03:'128 通过；1 项既有清理超时',S04:'104 通过、2 跳过',S05:'250 通过；13 项相同基线失败',S06:'17 项单元前后通过；开发窗口及配置提示完成',S07:'3003 行文本集合一致；五帧可见布局一致',S08:'逐块类型、函数／副作用／会话 JSX 与 hook 顺序比对通过',S09:'202 项前后通过',S10:'交付文件专项与完整自动链均有通过证据',S11:'158 项前后通过',S12:'204 项前后通过',S13:'214 通过；2 项原有预期失败',S14:'完整 240 项通过'};
+const rows=[];
+for(let i=1;i<=14;i++){
+ const task='S'+String(i).padStart(2,'0');
+ const rel=task==='S07'?'desktop/apps/desktop/src/styles/main.css':task==='S08'?'desktop/apps/desktop/src/app/App.tsx':specs[task].file;
+ const before=path.join(dir,'checks/stage4/before',rel),after=path.join(root,rel);
+ rows.push(`| [${task}](${task}-执行回报.md) | ${rel.replace('PAO/packages/coding-agent/src/pao/','内核/').replace('desktop/','桌面/')} | ${count(before)} → ${count(after)} | ${regressions[task]} |`);
+}
+const text=`# 第四阶段执行回报
+
+核实日期：2026-11-17。
+
+S01—S14 全部完成。内核、桌面主进程、样式和应用外壳按职责拆分，原公开入口保持兼容；模块级共享表保持单一实例，类的私有成员与核心编排留在原模块。源码、逐项回报和证据保留在当前工作区，未提交、未推送，正式 PAO_HOME 未读写。
+
+## 交付
+
+原文件行数按当前源码和搬移前快照统计；任务书中的目标为估计值。
+
+| 任务 | 原文件 | 搬移前 → 后 | 验收结果 |
+|---|---|---:|---|
+${rows.join('\n')}
+
+S04 的 SDK 错误解释留在 store，通用工具保持原依赖边界。S06 的外链组留在入口；登录回调传入窗口解析器。S07 的混合窄窗媒体规则位于基础规则之后，保留覆盖顺序。S08 保留状态、派生值、会话区域及原 hook 顺序。
+
+## 整合验证
+
+| 检查 | 结果 | 证据（checks/） |
+|---|---|---|
+| 内核本阶段 38 个文件 Biome | 通过 | S-final-kernel-targeted-biome.log |
+| 内核完整 Biome | 128 错误、44 警告、5 提示；涉及文件定向检查通过 | S-final-kernel-biome.log |
+| 内核完整类型检查 | 仅既有 memory-f14-review.test.ts:371 的 TS2339 | S-final-kernel-typecheck.log |
+| 内核导入与完整门禁 | B5 既有失败；执行侧 B7 通过 | S-final-kernel-kernel.log、S-final-kernel-gates.log |
+| 桌面完整格式、完整类型、架构 | 全部通过 | S-final-desktop-format.log、S-final-desktop-typecheck.log、S-final-desktop-architecture.log |
+| 桌面涉及的 TypeScript 文件定向 lint | 全部通过 | S04-eslint.log、S05-after-lint.log、S06-after-lint.log、S08-after-lint.log |
+| 最终 Electron Vite 构建 | 通过 | S-final-build.log |
+| 真实 Electron 界面，10 个文件、29 个用例 | 25 通过、3 失败、1 跳过；改动前 22 通过、6 失败、1 跳过，无新增失败 | S-final-ui-tests.log、S-ui-before-tests.log、S-ui-test-comparison.json |
+| 会话、菜单、终端、宽窄窗设置 | 五帧可见布局与尺寸一致；两档设置页原始像素一致 | S-final-layout-comparison.json、S07-pixel-comparison.json |
+| 开发模式窗口与缺配置提示 | 已完成；发送按钮按缺授权配置禁用，退出超时单列 | S06-development-proof.json、S06-development.log |
+
+函数体、类型声明、原公开导出及调用方路径的比较分别见各任务回报。样式的 3003 行非空文本集合一致，见 checks/S07-css-comparison.json。截图位于 ui-screenshots/stage4/{before,s07,final}/，开发模式截图为 ui-screenshots/stage4/S06-development.png。对比脚本和任务命令保存在 scripts/。
+
+## 已知问题与验证范围
+
+- 内核完整检查保留上述 TS2339、受保护目录等既有 Biome 诊断及 B5 导出闭包引用 CLI；完整门禁被 B5 短路，后续路径探针未执行。
+- 桌面完整 lint 的基线存在堆内存耗尽，未取得完整 lint 结果；本阶段涉及文件的定向 lint 通过。
+- 两项终端失败在改动前后均为 cmd 命令语法进入当前 PowerShell 5.1，触发 AmpersandNotAllowed；记忆只读链在改动前后均多出一个旧用户来源条目。三项均保留原断言。
+- 开发模式及截图专项的界面断言、取证和布局采集完成，退出阶段仍触发 30 秒超时，不能计作整个专项通过。S03 保留一个已有清理超时，S05 保留 13 项相同的 driver 基线失败。
+- 本阶段界面证据来自隔离夹具中的真实 Electron；真实供应商消息与发行包未验收。
+- 文档链接检查保留既有断链：plans/未完成/2026-11-03-界面优化.md 引用的同目录 2026-11-04-工作流画布升级.md 不存在；本阶段报告链接无新增断链。
+`;
+fs.writeFileSync(path.join(dir,'第四阶段-执行回报.md'),text);
+for(let i=1;i<=14;i++){
+ const file=path.join(dir,`S${String(i).padStart(2,'0')}-执行回报.md`);
+ let body=fs.readFileSync(file,'utf8');
+ body=body.replaceAll('既有检查失败按用户授权保留为基线。','既有检查失败单列。').replaceAll('按用户授权保留既有基线失败。','既有基线失败单列。').replaceAll('既有检查失败按用户授权保留。','既有检查失败单列。').replaceAll('既有失败按用户授权保留。','既有失败单列。');
+ fs.writeFileSync(file,body);
+}
+console.log('第四阶段回报与14项任务回报已整理。');

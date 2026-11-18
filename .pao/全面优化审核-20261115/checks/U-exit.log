@@ -1,0 +1,52 @@
+
+Running 3 tests using 1 worker
+
+(node:79240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 apps\desktop\tests\core\kanban-board.spec.ts:246:5 › 窄窗看板工具条与详情返回，坏卡文件名只显示一次 (19.1s)
+  ok 2 apps\desktop\tests\core\kanban-board.spec.ts:758:5 › 混合权限批量取消逐卡准确：一张成功一张失败带原因，操作后重读磁盘换列 (19.6s)
+  x  3 apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 (1.2m)
+
+
+  1) apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 ──────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('memory-project-goal-edit')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('memory-project-goal-edit')[22m
+    [2m    8 × locator resolved to <button type="button" class="button button--primary" data-testid="memory-project-goal-edit">修改目标</button>[22m
+    [2m      - unexpected value "hidden"[22m
+
+
+      1209 |     await expect(contextPanel.getByTestId("memory-project-goal-error")).toHaveCount(0);
+      1210 |     await expect(contextPanel.getByTestId("memory-project-goal-notice")).toHaveCount(0);
+    > 1211 |     await expect(page.getByTestId("memory-project-goal-edit")).toBeVisible();
+           |                                                                ^
+      1212 |
+      1213 |     await setIpcInvokeControl(app, desktopIpc.memoryProjectGoalChange, {
+      1214 |       mode: "passthrough",
+        at D:\AI\workspace\pao-dev\desktop\apps\desktop\tests\core\memory.spec.ts:1211:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-exit-results\core-memory-S5-11-项目背景：空项目目标来源、修订历史、文件引用与项目隔离\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\.pao\全面优化审核-20261115\checks\U-exit-results\core-memory-S5-11-项目背景：空项目目标来源、修订历史、文件引用与项目隔离\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\.pao\全面优化审核-20261115\checks\U-exit-results\core-memory-S5-11-项目背景：空项目目标来源、修订历史、文件引用与项目隔离\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    apps\desktop\tests\core\memory.spec.ts:676:5 › S5-11 项目背景：空项目目标来源、修订历史、文件引用与项目隔离 ───────────────
+  2 passed (1.9m)

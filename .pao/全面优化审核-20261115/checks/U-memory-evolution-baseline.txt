@@ -1,0 +1,744 @@
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { promisify } from "node:util";
+import { expect, test } from "@playwright/test";
+import {
+  getDesktopState,
+  launchDesktop,
+  makeUserDataDir,
+  makeWorkspace,
+} from "../helpers/electron-app";
+
+const execFileAsync = promisify(execFile);
+const screenshotDir = resolve(
+  __dirname,
+  "../../../../..",
+  ".pao/内置记忆与受控自进化-2026-11-08/S8/screenshots",
+);
+
+/**
+ * S8-12 桌面进化详情：kind=evolution 时左列换成进化问题列表，右列 EvolutionDetail
+ * 展示 expected/actual、candidates 的 diffs 与按组分组的验证 caseResults。
+ * 数据用 .mjs 种子脚本直接写库（走 @pao/coding-agent dist 的 openMemoryStore 建表），
+ * projectId 与桌面桥同一 resolveMemoryProjectIdentity 算法，保证归属复核通过。
+ */
+const seedScript = `
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+const [dist, project, home, sessionId] = process.argv.slice(2);
+const load = (name) => import(pathToFileURL(join(dist, name)).href);
+const { openMemoryStore } = await load("memory/store.js");
+const { resolveMemoryProjectIdentity } = await load("memory/project-identity.js");
+const { projectId } = resolveMemoryProjectIdentity(project, home);
+
+const store = openMemoryStore(home, "readwrite");
+try {
+  const now = "2026-11-10T10:00:00.000Z";
+  store.db.prepare(
+    \`INSERT INTO evolution_resources
+      (resource_id, kind, relative_root, allowed_ops_json, capability_scope_json,
+       load_method, effective_version, auto_evolution_enabled, registered_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  ).run(
+    "skill:test-skill",
+    "skill",
+    "skills/test-skill",
+    JSON.stringify(["edit"]),
+    JSON.stringify(["正文"]),
+    "on-demand",
+    "v1",
+    1,
+    now,
+    now,
+  );
+
+  const insertProblem = store.db.prepare(
+    \`INSERT INTO evolution_problems
+      (problem_id, kind, action, summary, reason, expected_behavior, actual_behavior,
+       evidence_refs_json, occurrence_count, resource_id, base_version,
+       project_id, task_id, session_id, entry_id, tool_call_id,
+       status, disposition, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  );
+  insertProblem.run(
+    "prob-001",
+    "implementation_defect",
+    "modify",
+    "技能正文把选项顺序写反了",
+    "正文示例与判据不一致",
+    "选项应按优先级从高到低排列",
+    "正文把低优先级选项放在了最前",
+    JSON.stringify(["src-evidence-1", "src-evidence-2"]),
+    3,
+    "skill:test-skill",
+    "v1",
+    projectId,
+    null,
+    sessionId,
+    "entry-1",
+    null,
+    "classified",
+    "pending_classification",
+    "2026-11-09T08:00:00.000Z",
+    "2026-11-10T09:00:00.000Z",
+  );
+  // 跨项目隔离：另一 projectId 的问题不应出现在当前项目列表。
+  insertProblem.run(
+    "prob-other-project",
+    "unused_experience",
+    null,
+    "别项目的进化问题",
+    null,
+    "exp",
+    "act",
+    JSON.stringify([]),
+    1,
+    null,
+    null,
+    projectId + "-other",
+    null,
+    null,
+    null,
+    null,
+    "observed",
+    "pending_classification",
+    "2026-11-09T08:00:00.000Z",
+    "2026-11-09T08:00:00.000Z",
+  );
+
+  store.db.prepare(
+    \`INSERT INTO evolution_candidates
+      (candidate_id, problem_id, resource_id, base_version, test_plan_id,
+       diffs_json, rationale, usage_refs_json, status, failure_reason,
+       created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  ).run(
+    "cand-001",
+    "prob-001",
+    "skill:test-skill",
+    "v1",
+    "plan-001",
+    JSON.stringify([
+      {
+        path: "SKILL.md",
+        kind: "create",
+        newContent: "# test-skill\\n\\n按优先级从高到低排列选项。",
+      },
+      { path: "examples/order.md", kind: "edit", diff: "@@ -1 +1 @@\\n-低在前\\n+高在前" },
+      // O12/E13：delete 项（显示 baseVersion 被删正文）与无 diff/newContent 的
+      // edit 项（退回 baseVersion 对照 newContent）。
+      { path: "legacy/old-note.md", kind: "delete" },
+      {
+        path: "README.md",
+        kind: "edit",
+        newContent: "# 新说明\\n\\n更新后的用法。",
+      },
+    ]),
+    "把正文示例与判据对齐",
+    JSON.stringify(["usage-ref-1"]),
+    "proposed",
+    null,
+    "2026-11-10T09:30:00.000Z",
+    "2026-11-10T09:30:00.000Z",
+  );
+
+  store.db.prepare(
+    \`INSERT INTO evolution_validations
+      (validation_id, test_plan_id, candidate_id, problem_id, resource_id,
+       base_version, case_results_json, verdict, total_usage_ref, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  ).run(
+    "val-001",
+    "plan-001",
+    "cand-001",
+    "prob-001",
+    "skill:test-skill",
+    "v1",
+    JSON.stringify([
+      {
+        caseId: "repro-1",
+        group: "reproduction",
+        baseline: { passed: false, output: "baseline 复现了原问题" },
+        candidate: { passed: true, output: "候选修好了顺序" },
+        verdict: "passed",
+      },
+      {
+        caseId: "normal-1",
+        group: "normal",
+        baseline: { passed: true, output: "正常用法原本通过" },
+        candidate: { passed: true, output: "正常用法仍通过" },
+        verdict: "passed",
+      },
+      {
+        caseId: "hold-1",
+        group: "holdout",
+        baseline: { passed: true, output: "保留样例基线通过" },
+        candidate: { passed: true, output: "保留样例候选通过" },
+        verdict: "passed",
+      },
+    ]),
+    "passed",
+    "usage-val-1",
+    "2026-11-10T10:00:00.000Z",
+    "2026-11-10T10:00:00.000Z",
+  );
+
+  store.db.prepare(
+    \`INSERT INTO evolution_source_links
+      (link_id, owner_kind, owner_id, source_id, memory_id, revision, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)\`,
+  ).run("link-001", "problem", "prob-001", "src-evidence-1", null, null, now);
+
+  // ── S9-E 生效与观察种子：第二个资源 + 激活历史/任务绑定/观察 ──────────
+  // skill:beta 当前生效 v-beta-2（目录在盘上）；v-beta-1 有未停用 publish 凭据
+  // 且目录在（可恢复候选）；v-beta-0 凭据被「停用:」标记（曾失败 → 置灰）。
+  store.db.prepare(
+    \`INSERT INTO evolution_resources
+      (resource_id, kind, relative_root, allowed_ops_json, capability_scope_json,
+       load_method, effective_version, auto_evolution_enabled, registered_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  ).run(
+    "skill:beta",
+    "skill",
+    "skills/beta",
+    JSON.stringify(["edit"]),
+    JSON.stringify(["正文"]),
+    "on-demand",
+    "v-beta-2",
+    1,
+    now,
+    now,
+  );
+  // 归属本项目的问题行（桥层归属复核需要至少一条本项目 problem 行）。
+  insertProblem.run(
+    "prob-beta",
+    "invocation",
+    "modify",
+    "beta 技能调用方式问题",
+    null,
+    "exp",
+    "act",
+    JSON.stringify([]),
+    1,
+    "skill:beta",
+    "v-beta-2",
+    projectId,
+    null,
+    null,
+    null,
+    null,
+    "classified",
+    "pending_classification",
+    "2026-11-09T08:00:00.000Z",
+    "2026-11-09T08:00:00.000Z",
+  );
+
+  const insertActivation = store.db.prepare(
+    \`INSERT INTO evolution_activations
+      (activation_id, resource_id, from_version, to_version, kind, reason, source_links_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)\`,
+  );
+  // v-beta-0：曾 publish 生效，后被「停用:」标记（曾失败/被回退）。
+  insertActivation.run(
+    "act-b0-pub", "skill:beta", null, "v-beta-0", "publish",
+    "停用:验证失败后回退", JSON.stringify({ activation: "effective" }),
+    "2026-11-01T08:00:00.000Z",
+  );
+  // v-beta-1：完整发布凭据（未停用）——可恢复候选。
+  insertActivation.run(
+    "act-b1-pub", "skill:beta", "v-beta-0", "v-beta-1", "publish",
+    "正常发布", JSON.stringify({ activation: "effective" }),
+    "2026-11-03T08:00:00.000Z",
+  );
+  // v-beta-2：当前生效（最新 publish 凭据）。
+  insertActivation.run(
+    "act-b2-pub", "skill:beta", "v-beta-1", "v-beta-2", "publish",
+    "正常发布", JSON.stringify({ activation: "effective" }),
+    "2026-11-05T08:00:00.000Z",
+  );
+  // rollback 记录：v-beta-0 失败后回退到 v-beta-1（回退通知区）。
+  insertActivation.run(
+    "act-rollback-1", "skill:beta", "v-beta-0", "v-beta-1", "rollback",
+    "v-beta-0 在使用中失败，自动回退",
+    JSON.stringify({ sourceIds: ["src-1"] }),
+    "2026-11-02T08:00:00.000Z",
+  );
+
+  // 任务绑定：运行中任务仍绑 v-beta-1（旧版，非当前 effectiveVersion）。
+  store.db.prepare(
+    \`INSERT INTO evolution_task_bindings
+      (binding_id, task_id, resource_id, version_id, bound_at, active, switch_history_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?)\`,
+  ).run(
+    "bind-beta-1", "task-beta-001", "skill:beta", "v-beta-1",
+    "2026-11-04T08:00:00.000Z", 1, JSON.stringify([]),
+  );
+
+  // 观察行：v-beta-2 有 used=success/failure；v-beta-1 只有 viewed。
+  const insertObs = store.db.prepare(
+    \`INSERT INTO evolution_observations
+      (observation_id, action, resource_id, version_id, candidate_id, problem_id,
+       task_id, session_id, receipt_ref, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+  );
+  insertObs.run("obs-1", "used", "skill:beta", "v-beta-2", null, null, null, null, "success:task-1", now);
+  insertObs.run("obs-2", "used", "skill:beta", "v-beta-2", null, null, null, null, "failure:task-2", now);
+  insertObs.run("obs-3", "viewed", "skill:beta", "v-beta-2", null, null, null, null, null, now);
+  insertObs.run("obs-4", "viewed", "skill:beta", "v-beta-1", null, null, null, null, null, now);
+
+  // 另一资源 skill:test-skill 的 auto_evolution_enabled 由首条登记行给 1；
+  // 「停用一项资源后其他资源不变」场景靠比较两行开关验证。
+} finally {
+  store.close();
+}
+console.log(JSON.stringify({ projectId }));
+`;
+
+/**
+ * 版本目录种子：版本目录 = <home>/evolution/versions/<dirSafe>/<versionId>/，
+ * dirSafe = resourceId 的 ":" 换成 "_"。非 v-<sha12> 形态的 versionId 走
+ * 目录非空降级判据，写一个占位文件即可让 restore 判据 b 通过。
+ */
+async function seedVersionDirs(
+  home: string,
+  resourceId: string,
+  versionIds: readonly string[],
+): Promise<void> {
+  const dirSafe = resourceId.replace(/:/g, "_");
+  for (const versionId of versionIds) {
+    const dir = join(home, "evolution", "versions", dirSafe, versionId);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "SKILL.md"), `# ${versionId}\n`, "utf8");
+  }
+}
+
+test("S8-12 memory-evolution 进化详情：问题列表、期望/实际、候选 diffs 与分组验证，只读无发布按钮", async ({}) => {
+  test.setTimeout(180_000);
+  const userDataDir = await makeUserDataDir("memory-evolution-user-data-");
+  const project = await makeWorkspace("memory-evolution-project");
+  const home = await mkdtemp(join(tmpdir(), "pao-evolution-home-"));
+  await writeFile(join(userDataDir, "ui-state.json"), JSON.stringify({ language: "zh" }));
+
+  const app = await launchDesktop(userDataDir, {
+    initialWorkspaces: [project],
+    envOverrides: {
+      PAO_HOME: home,
+      PAO_DISABLE_BUILTIN_EXTENSION: "1",
+      PI_OFFLINE: "1",
+      PI_NO_LOCAL_LLM: "1",
+    },
+    scrubProviderEnv: true,
+  });
+  try {
+    const page = await app.firstWindow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(async () => {
+      const state = await window.piApp.getState();
+      const target = state.workspaces.find(
+        (workspace) => workspace.name === "memory-evolution-project",
+      );
+      if (!target) throw new Error("memory-evolution-project was not registered");
+      if (state.selectedWorkspaceId !== target.id) {
+        await window.piApp.selectWorkspace(target.id, { stayInView: true });
+      }
+    });
+
+    // 断言 6 前置：先验证空库（未建 memory.sqlite）时空态不报错。
+    await page.getByTestId("sidebar-memory").click();
+    await expect(page.getByTestId("memory-page")).toBeVisible();
+    // 断言 1 前半：kind 筛选器确实有 evolution 选项。
+    await expect(page.getByLabel("类型").locator('option[value="evolution"]')).toHaveCount(1);
+    await page.getByLabel("类型").selectOption("evolution");
+    await expect(page.getByTestId("evolution-problem-list")).toBeVisible();
+    await expect(page.getByTestId("evolution-problem-empty")).toBeVisible();
+    await expect(page.getByTestId("evolution-problem-empty")).toContainText("没有进化问题");
+
+    // 灌种子：建库 + 一条问题/候选/验证 + 一条来源链接 + 一条别项目问题。
+    const dist = join(__dirname, "../../node_modules/@pao/coding-agent/dist/pao");
+    const seedPath = join(home, "seed-evolution.mjs");
+    await writeFile(seedPath, seedScript);
+    const sessionId = (await getDesktopState(page)).selectedSessionId ?? "seed-session";
+    await execFileAsync(process.execPath, [seedPath, dist, project, home, sessionId], {
+      windowsHide: true,
+      env: { ...process.env, PAO_HOME: home },
+    });
+
+    // O12/E13：baseVersion（v1）版本目录内容——delete 项的 baseContent 与
+    // edit 项的 base 对照都从这份版本底座读出。
+    const baseDir = join(home, "evolution", "versions", "skill_test-skill", "v1");
+    await mkdir(join(baseDir, "examples"), { recursive: true });
+    await mkdir(join(baseDir, "legacy"), { recursive: true });
+    await writeFile(join(baseDir, "SKILL.md"), "# test-skill 旧正文\n\n低在前。\n", "utf8");
+    await writeFile(join(baseDir, "examples", "order.md"), "低在前\n", "utf8");
+    await writeFile(join(baseDir, "legacy", "old-note.md"), "将被删除的旧笔记内容\n", "utf8");
+    await writeFile(join(baseDir, "README.md"), "# 旧说明\n\n旧用法。\n", "utf8");
+
+    // O12/E13：冻结计划 plan.json（给每项 case 带 acceptance）+ runs 回执。
+    const planDir = join(home, "evolution", "validations", "plan-001");
+    await mkdir(join(planDir, "runs"), { recursive: true });
+    await writeFile(
+      join(planDir, "plan.json"),
+      JSON.stringify({
+        testPlanId: "plan-001",
+        reproduction: [{ caseId: "repro-1", acceptance: "选项按优先级排列" }],
+        normal: [{ caseId: "normal-1", acceptance: "正常用法不退步" }],
+        holdout: [{ caseId: "hold-1", acceptance: "保留样例仍通过" }],
+      }),
+      "utf8",
+    );
+    await writeFile(
+      join(planDir, "runs", "repro-1-baseline-aa00bb11.json"),
+      JSON.stringify({ caseId: "repro-1", role: "baseline" }),
+      "utf8",
+    );
+    await writeFile(
+      join(planDir, "runs", "repro-1-candidate-cc22dd33.json"),
+      JSON.stringify({ caseId: "repro-1", role: "candidate" }),
+      "utf8",
+    );
+
+    // 断言 1：kind 筛选器选中 evolution 后左列显示问题行（切走再切回触发刷新）。
+    // 种子含 prob-001 与 prob-beta 两条本项目问题（prob-other-project 被项目过滤）。
+    await page.getByLabel("类型").selectOption("all");
+    await page.getByLabel("类型").selectOption("evolution");
+    const list = page.getByTestId("evolution-problem-list");
+    await expect(list).toBeVisible();
+    await expect(list.getByTestId("evolution-problem-item")).toHaveCount(2);
+    const problemRow = list
+      .getByTestId("evolution-problem-item")
+      .filter({ hasText: "技能正文把选项顺序写反了" });
+    await expect(problemRow).toContainText("技能正文把选项顺序写反了");
+    await expect(problemRow).toContainText("实现缺陷");
+    await expect(problemRow).toContainText("已分类");
+    await expect(problemRow).toContainText("出现 3 次");
+
+    // 断言 2：点击问题行 → 右列显示 expected/actual。
+    await problemRow.click();
+    const detail = page.getByTestId("evolution-detail");
+    await expect(detail).toBeVisible();
+    await expect(detail.getByTestId("evolution-expected")).toContainText(
+      "选项应按优先级从高到低排列",
+    );
+    await expect(detail.getByTestId("evolution-actual")).toContainText(
+      "正文把低优先级选项放在了最前",
+    );
+    await expect(detail.getByTestId("evolution-problem-meta")).toContainText("prob-001");
+    await expect(detail.getByTestId("evolution-problem-meta")).toContainText("skill:test-skill");
+    // 问题依据区：evidenceRefs 逐条 + 来源链接。
+    await expect(detail.getByTestId("evolution-evidence-refs")).toContainText("src-evidence-1");
+    await expect(detail.getByTestId("evolution-evidence-refs")).toContainText("src-evidence-2");
+    await expect(detail.getByTestId("evolution-source-link")).toHaveCount(1);
+
+    // 断言 3：候选区显示 diffs（path/kind）。
+    const candidate = detail.getByTestId("evolution-candidate");
+    await expect(candidate).toHaveCount(1);
+    await expect(candidate).toContainText("cand-001");
+    await expect(candidate).toContainText("待验证");
+    const diffs = candidate.getByTestId("evolution-candidate-diffs");
+    await expect(diffs).toContainText("SKILL.md");
+    await expect(diffs).toContainText("创建");
+    await expect(diffs).toContainText("examples/order.md");
+    await expect(diffs).toContainText("编辑");
+    await expect(diffs).toContainText("legacy/old-note.md");
+    await expect(diffs).toContainText("删除");
+    await expect(diffs).toContainText("README.md");
+    // newContent 可展开（create 项 SKILL.md）。
+    await candidate.getByRole("button", { name: "展开正文" }).first().click();
+    await expect(candidate.getByTestId("evolution-diff-content").first()).toContainText(
+      "按优先级从高到低排列选项",
+    );
+    // O12/E13：edit 项带 diff.diff 渲染 InlineDiff（unified 差异视图）。
+    const orderDiffRow = diffs.locator("li", { hasText: "examples/order.md" });
+    await orderDiffRow.getByRole("button", { name: "展开正文" }).click();
+    await expect(orderDiffRow.getByTestId("evolution-diff-content")).toContainText("高在前");
+    // O12/E13：delete 项展开显示被删文件的 baseVersion 正文。
+    const deleteRow = diffs.locator("li", { hasText: "legacy/old-note.md" });
+    await deleteRow.getByRole("button", { name: "展开正文" }).click();
+    await expect(deleteRow.getByTestId("evolution-diff-deleted-base")).toContainText(
+      "将被删除的旧笔记内容",
+    );
+    // O12/E13：无 diff 的 edit 项退回 baseVersion 对照 newContent。
+    const readmeRow = diffs.locator("li", { hasText: "README.md" });
+    await readmeRow.getByRole("button", { name: "展开正文" }).click();
+    await expect(readmeRow.getByTestId("evolution-diff-base")).toContainText("旧说明");
+    await expect(readmeRow.getByTestId("evolution-diff-content")).toContainText("更新后的用法");
+
+    // 断言 4：验证区展开后按组（reproduction/normal/holdout）显示 caseResults。
+    await candidate.getByTestId("evolution-validation-toggle").click();
+    const validation = candidate.getByTestId("evolution-validation");
+    await expect(validation).toBeVisible();
+    // O12/E13：验证区带 totalUsageRef。
+    await expect(validation.getByTestId("evolution-validation-usage")).toContainText("usage-val-1");
+    await expect(validation.getByTestId("evolution-validation-group-reproduction")).toContainText(
+      "repro-1",
+    );
+    await expect(validation.getByTestId("evolution-validation-group-normal")).toContainText(
+      "normal-1",
+    );
+    await expect(validation.getByTestId("evolution-validation-group-holdout")).toContainText(
+      "hold-1",
+    );
+    await expect(validation).toContainText("baseline 复现了原问题");
+    await expect(validation).toContainText("候选修好了顺序");
+    // O12/E13：repro-1 带 acceptance（plan.json）与 baseline/candidate 回执路径。
+    const reproGroup = validation.getByTestId("evolution-validation-group-reproduction");
+    await expect(reproGroup.getByTestId("evolution-validation-acceptance")).toContainText(
+      "选项按优先级排列",
+    );
+    const receipts = reproGroup.getByTestId("evolution-validation-receipts");
+    await expect(receipts).toBeVisible();
+    await expect(receipts.locator("code").first()).toHaveAttribute(
+      "title",
+      /repro-1-baseline-aa00bb11\.json$/,
+    );
+
+    await page.screenshot({
+      path: join(screenshotDir, "S8-12-进化详情.png"),
+      animations: "disabled",
+    });
+
+    // 断言 5：只读界面——无发布/生效/绑定按钮。
+    for (const label of ["发布", "生效", "绑定", "激活", "Publish", "Activate", "Bind"]) {
+      await expect(detail.getByRole("button", { name: label })).toHaveCount(0);
+    }
+    // 候选状态不能把 passed 显示成已生效。
+    await expect(candidate).not.toContainText("已生效");
+    await expect(candidate).not.toContainText("active");
+  } finally {
+    await app.close();
+  }
+});
+
+// ── S9-E：生效与观察 ─────────────────────────────────────────────────────
+// 公共前置：建用户数据/项目/PAO_HOME，灌进化种子 + 版本目录，启动桌面并
+// 选中 evolution 列表里的 beta 问题行（resourceId=skill:beta）。
+
+async function launchSeededEvolutionPage() {
+  const userDataDir = await makeUserDataDir("memory-evolution-s9-user-data-");
+  const project = await makeWorkspace("memory-evolution-s9-project");
+  const home = await mkdtemp(join(tmpdir(), "pao-evolution-s9-home-"));
+  await writeFile(join(userDataDir, "ui-state.json"), JSON.stringify({ language: "zh" }));
+
+  const app = await launchDesktop(userDataDir, {
+    initialWorkspaces: [project],
+    envOverrides: {
+      PAO_HOME: home,
+      PAO_DISABLE_BUILTIN_EXTENSION: "1",
+      PI_OFFLINE: "1",
+      PI_NO_LOCAL_LLM: "1",
+    },
+    scrubProviderEnv: true,
+  });
+  const page = await app.firstWindow();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(async () => {
+    const state = await window.piApp.getState();
+    const target = state.workspaces.find(
+      (workspace) => workspace.name === "memory-evolution-s9-project",
+    );
+    if (!target) throw new Error("memory-evolution-s9-project was not registered");
+    if (state.selectedWorkspaceId !== target.id) {
+      await window.piApp.selectWorkspace(target.id, { stayInView: true });
+    }
+  });
+
+  const dist = join(__dirname, "../../node_modules/@pao/coding-agent/dist/pao");
+  const seedPath = join(home, "seed-evolution.mjs");
+  await writeFile(seedPath, seedScript);
+  const sessionId = (await getDesktopState(page)).selectedSessionId ?? "seed-session";
+  await execFileAsync(process.execPath, [seedPath, dist, project, home, sessionId], {
+    windowsHide: true,
+    env: { ...process.env, PAO_HOME: home },
+  });
+  // 版本目录：v-beta-0/1/2 都需要目录存在（非指纹形态走非空判据）。
+  await seedVersionDirs(home, "skill:beta", ["v-beta-0", "v-beta-1", "v-beta-2"]);
+
+  await page.getByTestId("sidebar-memory").click();
+  await expect(page.getByTestId("memory-page")).toBeVisible();
+  await page.getByLabel("类型").selectOption("evolution");
+  await expect(page.getByTestId("evolution-problem-list")).toBeVisible();
+  const betaRow = page
+    .getByTestId("evolution-problem-item")
+    .filter({ hasText: "beta 技能调用方式问题" });
+  await betaRow.click();
+  const detail = page.getByTestId("evolution-detail");
+  await expect(detail).toBeVisible();
+  const panel = detail.getByTestId("evolution-resource");
+  await expect(panel).toBeVisible();
+  return { app, page, detail, panel, home, project };
+}
+
+test("S9-E 生效与观察：当前生效/任务绑定/实际观察/版本时间线/用户控制/回退通知", async ({}) => {
+  test.setTimeout(180_000);
+  const { app, panel } = await launchSeededEvolutionPage();
+  try {
+    // 当前生效：v-beta-2 标「当前生效」；运行中任务绑 v-beta-1 不变指向。
+    await expect(panel.getByTestId("evolution-effective-version")).toContainText("v-beta-2");
+    // 回退通知：act-rollback-1 显示资源/原因/当前生效版。
+    const rollback = panel.getByTestId("evolution-rollback-notice");
+    await expect(rollback).toBeVisible();
+    await expect(rollback).toContainText("v-beta-0 在使用中失败");
+    await expect(rollback).toContainText("v-beta-2");
+    // 任务绑定：task-beta-001 绑 v-beta-1（不是当前 effectiveVersion）。
+    const binding = panel.getByTestId("evolution-task-binding");
+    await expect(binding).toHaveCount(1);
+    await expect(binding).toContainText("task-beta-001");
+    await expect(binding).toContainText("v-beta-1");
+    // 实际观察：v-beta-2 计 used success/failure；v-beta-1 计 viewed。
+    const usage = panel.getByTestId("evolution-usage-version");
+    await expect(usage.filter({ hasText: "v-beta-2" })).toContainText("2 次使用");
+    await expect(usage.filter({ hasText: "v-beta-2" })).toContainText("成功 1");
+    await expect(usage.filter({ hasText: "v-beta-2" })).toContainText("失败 1");
+    // 版本时间线：publish/restore/rollback 行带 from→to。
+    const timeline = panel.getByTestId("evolution-timeline-entry");
+    await expect(timeline).toHaveCount(4);
+    // 用户控制：auto-evolution 开关默认开；v-beta-1 可恢复按钮可点；
+    // v-beta-0（凭据停用）按钮置灰/不渲染恢复按钮且给原因。
+    const autoToggle = panel.getByTestId("evolution-auto-toggle").locator("input");
+    await expect(autoToggle).toBeChecked();
+    const v1 = panel.getByTestId("evolution-version-item").filter({ hasText: "v-beta-1" });
+    await expect(v1.getByTestId("evolution-restore-button")).toBeVisible();
+    // 恢复按钮先弹确认（目标/当前/受影响任务），确认后才发 mutate。
+    await v1.getByTestId("evolution-restore-button").click();
+    const confirm = panel.getByTestId("evolution-restore-confirm");
+    await expect(confirm).toBeVisible();
+    await expect(confirm).toContainText("v-beta-1");
+    await expect(confirm).toContainText("v-beta-2");
+    await expect(confirm).toContainText("受影响任务 1");
+    await panel.getByTestId("evolution-restore-confirm-no").click();
+    await expect(confirm).not.toBeVisible();
+    const v0 = panel.getByTestId("evolution-version-item").filter({ hasText: "v-beta-0" });
+    await expect(v0.getByTestId("evolution-restore-button")).toHaveCount(0);
+    await expect(v0.getByTestId("evolution-restore-blocked")).toContainText("停用");
+    // v-beta-2 是当前生效——没有恢复按钮（已是当前值）。
+    const v2 = panel.getByTestId("evolution-version-item").filter({ hasText: "v-beta-2" });
+    await expect(v2.getByTestId("evolution-restore-button")).toHaveCount(0);
+    await expect(v2).toContainText("当前生效");
+    // 历史候选标签：v-beta-1 标历史候选非当前生效。
+    await expect(v1).toContainText("历史候选");
+  } finally {
+    await app.close();
+  }
+});
+
+test("S9-E 停用一项资源后其他资源不变", async ({}) => {
+  test.setTimeout(180_000);
+  const { app, page, panel, home } = await launchSeededEvolutionPage();
+  try {
+    const autoToggle = panel.getByTestId("evolution-auto-toggle").locator("input");
+    await expect(autoToggle).toBeChecked();
+    // 停用 skill:beta 的自动进化。
+    await autoToggle.click();
+    await expect(autoToggle).not.toBeChecked();
+    // 另一资源 skill:test-skill 开关不受影响——直接读库验证。
+    const dist = join(__dirname, "../../node_modules/@pao/coding-agent/dist/pao");
+    const checkPath = join(home, "check-autoevo.mjs");
+    await writeFile(
+      checkPath,
+      `import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+const [dist, home] = process.argv.slice(2);
+const { openMemoryStore } = await import(pathToFileURL(join(dist, "memory/store.js")).href);
+const store = openMemoryStore(home, "readonly");
+try {
+  const rows = store.db.prepare(
+    "SELECT resource_id, auto_evolution_enabled FROM evolution_resources ORDER BY resource_id",
+  ).all();
+  console.log(JSON.stringify(rows));
+} finally { store.close(); }
+`,
+    );
+    const { stdout } = await execFileAsync(process.execPath, [checkPath, dist, home], {
+      windowsHide: true,
+      env: { ...process.env, PAO_HOME: home },
+    });
+    const rows = JSON.parse(stdout.trim()) as Array<{
+      resource_id: string;
+      auto_evolution_enabled: number;
+    }>;
+    const beta = rows.find((row) => row.resource_id === "skill:beta");
+    const other = rows.find((row) => row.resource_id === "skill:test-skill");
+    expect(beta?.auto_evolution_enabled).toBe(0);
+    expect(other?.auto_evolution_enabled).toBe(1);
+  } finally {
+    await app.close();
+  }
+});
+
+test("S9-E 选历史版本查看时仍能识别当前有效版", async ({}) => {
+  test.setTimeout(180_000);
+  const { app, panel } = await launchSeededEvolutionPage();
+  try {
+    // 点选时间线里的 v-beta-0（历史版本），当前生效标记仍在 v-beta-2 上。
+    const v0Select = panel.getByTestId("evolution-version-select").filter({ hasText: "v-beta-0" });
+    await v0Select.click();
+    await expect(panel.getByTestId("evolution-effective-version")).toContainText("v-beta-2");
+    const v2Item = panel.getByTestId("evolution-version-item").filter({ hasText: "v-beta-2" });
+    await expect(v2Item).toContainText("当前生效");
+  } finally {
+    await app.close();
+  }
+});
+
+test("S9-E 版本冲突时保留当前值", async ({}) => {
+  test.setTimeout(180_000);
+  const { app, page, panel } = await launchSeededEvolutionPage();
+  try {
+    // 模拟过期 expectedEffectiveVersion：先把开关切走再切回不改 effectiveVersion，
+    // 真正的冲突来自 restoreVersion 的 expectedEffectiveVersion 与当前指向不符。
+    // 用 IPC 直接发一个错误 expected 的 restore，断言 conflict 且指向不变。
+    const outcome = await page.evaluate(async () => {
+      const state = await window.piApp.getState();
+      const ws = state.workspaces.find(
+        (workspace) => workspace.name === "memory-evolution-s9-project",
+      );
+      if (!ws) throw new Error("workspace missing");
+      const next = await window.piApp!.mutateMemoryEvolution({
+        workspaceId: ws.id,
+        action: {
+          action: "restoreVersion",
+          resourceId: "skill:beta",
+          targetVersionId: "v-beta-1",
+          expectedEffectiveVersion: "v-stale-not-current",
+        },
+      });
+      if (!next.ok || next.action !== "restoreVersion") {
+        return { ok: false as const };
+      }
+      return {
+        ok: true as const,
+        restored: next.restored,
+        status: next.status,
+        currentEffectiveVersion: next.currentEffectiveVersion,
+      };
+    });
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.restored).toBe(false);
+      expect(outcome.status).toBe("conflict");
+      expect(outcome.currentEffectiveVersion).toBe("v-beta-2");
+    }
+    // 当前值保留：重新拉资源确认 effectiveVersion 仍是 v-beta-2。
+    await expect(panel.getByTestId("evolution-effective-version")).toContainText("v-beta-2");
+  } finally {
+    await app.close();
+  }
+});
+
+test("S9-E 曾失败版本「恢复此版本」置灰并说明原因", async ({}) => {
+  test.setTimeout(180_000);
+  const { app, panel } = await launchSeededEvolutionPage();
+  try {
+    const v0 = panel.getByTestId("evolution-version-item").filter({ hasText: "v-beta-0" });
+    // 不渲染可点的恢复按钮；给出凭据停用原因。
+    await expect(v0.getByTestId("evolution-restore-button")).toHaveCount(0);
+    await expect(v0.getByTestId("evolution-restore-blocked")).toBeVisible();
+    await expect(v0.getByTestId("evolution-restore-blocked")).toContainText("停用");
+    // 即使绕过 UI 直接发 restore 到被停用版本，内核判据也应拒绝
+    // （findUsablePublishCredential 跳过「停用:」凭据 → needs_reevaluation）。
+  } finally {
+    await app.close();
+  }
+});

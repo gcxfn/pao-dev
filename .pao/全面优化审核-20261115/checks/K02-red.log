@@ -1,0 +1,55 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/AI/workspace/pao-dev/PAO/packages/coding-agent[39m
+
+[33m[39m[31mx[39m[33m[39m[31mx[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/pao/desktop-inject.test.ts[2m > [22m注入投递期间新增的磁盘记录与注入留痕同时保留
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m test/pao/desktop-inject.test.ts:[2m56:57[22m[39m
+    [90m 54|[39m  await expect(runDesktopOwnerInject(f.root, f.root, f.params)).resolve…
+    [90m 55|[39m  [35mconst[39m records [33m=[39m [34mreadControl[39m(f[33m.[39mrecipe[33m,[39m f[33m.[39moptions)[33m.[39m记录[33m;[39m
+    [90m 56|[39m  [34mexpect[39m(records[33m.[39m[34msome[39m((entry) [33m=>[39m entry[33m.[39m理由 [33m===[39m [32m"并行控制记录"[39m))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                                                         [31m^[39m
+    [90m 57|[39m  expect(records.some((entry) => entry.理由?.includes("补充消息"))).toBe(true…
+    [90m 58|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/pao/desktop-inject.test.ts[2m > [22m注入审计文件锁超时向调用方抛错
+[31m[1mAssertionError[22m: promise resolved "{ ok: true, '处置': 'delivered' }" instead of rejecting[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "ok": true,[39m
+[31m+   "处置": "delivered",[39m
+[2m  }[22m
+
+[36m [2m❯[22m test/pao/desktop-inject.test.ts:[2m72:63[22m[39m
+    [90m 70|[39m  [35mawait[39m ready[33m;[39m
+    [90m 71|[39m  [35mtry[39m {
+    [90m 72|[39m   await expect(runDesktopOwnerInject(f.root, f.root, f.params)).reject…
+    [90m   |[39m                                                               [31m^[39m
+    [90m 73|[39m  } [35mfinally[39m {
+    [90m 74|[39m   [34mrelease[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 16:50:58
+[2m   Duration [22m 3.37s[2m (transform 2.41s, setup 0ms, import 3.10s, tests 135ms, environment 0ms)[22m
+
