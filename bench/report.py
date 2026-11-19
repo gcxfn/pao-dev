@@ -121,7 +121,7 @@ def render_markdown(report: dict) -> str:
         "| 项目 | 值 |",
         "|---|---|",
         *[
-            f"| {name} | {str(value).replace('|', '\\|')} |"
+            "| {} | {} |".format(name, str(value).replace("|", "\\|"))
             for name, value in rows
         ],
         "",
